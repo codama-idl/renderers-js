@@ -1,19 +1,27 @@
 import { Docs } from '@codama/nodes';
-import { BaseFragment, createFragmentTemplate, mapFragmentContent, Path } from '@codama/renderers-core';
+import { BaseFragment, createFragmentTemplate } from '@codama/renderers-core';
 
 import {
     addToImportMap,
     createImportMap,
-    getImportMapLinks,
     ImportMap,
+    importMapToString,
     mergeImportMaps,
-    PathOverrides,
+    parseImportInput,
+    removeFromImportMap,
 } from './importMap';
+import { RenderScope } from './options';
 
-export type Fragment = BaseFragment & Readonly<{ imports: ImportMap }>;
+export type FragmentFeature = 'instruction:resolverScopeVariable';
+
+export type Fragment = BaseFragment &
+    Readonly<{
+        features: ReadonlySet<FragmentFeature>;
+        imports: ImportMap;
+    }>;
 
 function createFragment(content: string): Fragment {
-    return Object.freeze({ content, imports: createImportMap() });
+    return Object.freeze({ content, features: new Set<FragmentFeature>(), imports: createImportMap() });
 }
 
 function isFragment(value: unknown): value is Fragment {
@@ -24,63 +32,62 @@ export function fragment(template: TemplateStringsArray, ...items: unknown[]): F
     return createFragmentTemplate(template, items, isFragment, mergeFragments);
 }
 
-export function mergeFragments(
-    fragments: (Fragment | undefined)[],
-    mergeContent: (contents: string[]) => string,
-): Fragment {
+export function mergeFragments(fragments: (Fragment | undefined)[], mergeContent: (contents: string[]) => string) {
     const filteredFragments = fragments.filter((f): f is Fragment => f !== undefined);
     return Object.freeze({
         content: mergeContent(filteredFragments.map(fragment => fragment.content)),
-        imports: mergeImportMaps(filteredFragments.map(fragment => fragment.imports)),
+        features: new Set(filteredFragments.flatMap(f => [...f.features])),
+        imports: mergeImportMaps(filteredFragments.map(f => f.imports)),
     });
 }
 
-export function addFragmentImports(fragment: Fragment, path: Path, names: string[] | string): Fragment {
-    return Object.freeze({ ...fragment, imports: addToImportMap(fragment.imports, path, names) });
+export function use(importInput: string, module: string): Fragment {
+    const importInfo = parseImportInput(importInput);
+    return addFragmentImports(createFragment(importInfo.usedIdentifier), module, [importInput]);
 }
 
-export function getFrontmatterFragment(title: string, description: string): Fragment {
-    return fragment`---\ntitle: ${title}\ndescription: ${description}\n---`;
+export function mergeFragmentImports(fragment: Fragment, importMaps: ImportMap[]): Fragment {
+    return Object.freeze({ ...fragment, imports: mergeImportMaps([fragment.imports, ...importMaps]) });
 }
 
-export function getTitleAndDescriptionFragment(title: string, docs?: Docs): Fragment {
-    return mergeFragments(
-        [fragment`# ${title}`, docs && docs.length > 0 ? fragment`${docs.join('\n')}` : undefined],
-        cs => cs.join('\n\n'),
-    );
+export function addFragmentImports(fragment: Fragment, module: string, importInputs: string[]): Fragment {
+    return Object.freeze({ ...fragment, imports: addToImportMap(fragment.imports, module, importInputs) });
 }
 
-export function getCodeBlockFragment(code: Fragment, language: string = ''): Fragment {
-    return mapFragmentContent(code, c => `\`\`\`${language}\n${c}\n\`\`\``);
+export function removeFragmentImports(fragment: Fragment, module: string, usedIdentifiers: string[]): Fragment {
+    return Object.freeze({ ...fragment, imports: removeFromImportMap(fragment.imports, module, usedIdentifiers) });
 }
 
-export function getTableFragment(headers: (Fragment | string)[], rows: (Fragment | string)[][]): Fragment {
-    const toFragment = (cell: Fragment | string) => (typeof cell === 'string' ? createFragment(cell) : cell);
-    const headerFragments = headers.map(toFragment);
-    const rowFragments = rows.map(row => row.map(toFragment));
-    const colWidths = headerFragments.map((header, colIndex) =>
-        Math.max(header.content.length, ...rowFragments.map(row => row[colIndex]?.content?.length ?? 0)),
-    );
-    const padCells = (f: Fragment, colIndex: number) => mapFragmentContent(f, c => c.padEnd(colWidths[colIndex] ?? 0));
-    const mergeCells = (fs: Fragment[]) => mergeFragments(fs, cs => cs.join(' | '));
-    const lines = [
-        mergeCells(headerFragments.map(padCells)),
-        mergeCells(headerFragments.map((_, colIndex) => createFragment('-'.repeat(colWidths[colIndex])))),
-        ...rowFragments.map(row => mergeCells(row.map(padCells))),
-    ];
-    return mergeFragments(
-        lines.map(line => mapFragmentContent(line, c => `| ${c} |`)),
-        cs => cs.join('\n'),
-    );
+export function addFragmentFeatures(fragment: Fragment, features: FragmentFeature[]): Fragment {
+    return Object.freeze({ ...fragment, features: new Set([...fragment.features, ...features]) });
 }
 
-export function getCommentFragment(lines: string[]): Fragment {
-    return fragment`<!--\n${lines.join('\n')}\n-->`;
+export function getExportAllFragment(module: string): Fragment {
+    return fragment`export * from '${module}';`;
 }
 
-export function getPageFragment(fragments: Fragment[], pathOverrides: PathOverrides = {}): Fragment {
-    const page = mergeFragments(fragments, cs => cs.join('\n\n'));
-    const links = getImportMapLinks(page.imports, pathOverrides);
-    if (links.length === 0) return page;
-    return fragment`${page}\n\n## See also\n\n${links.join('\n')}`;
+export function getDocblockFragment(lines: Docs, withLineJump = false): Fragment | undefined {
+    const lineJump = withLineJump ? '\n' : '';
+    if (lines.length === 0) return;
+    if (lines.length === 1) return fragment`/** ${lines[0]} */${lineJump}`;
+    const prefixedLines = lines.map(line => (line ? ` * ${line}` : ' *'));
+    return fragment`/**\n${prefixedLines.join('\n')}\n */${lineJump}`;
+}
+
+export function getPageFragment(
+    page: Fragment,
+    scope: Pick<RenderScope, 'dependencyMap' | 'useGranularImports'>,
+): Fragment {
+    const header = getDocblockFragment([
+        'This code was AUTOGENERATED using the Codama library.',
+        'Please DO NOT EDIT THIS FILE, instead use visitors',
+        'to add features, then rerun Codama to update it.',
+        '',
+        '@see https://github.com/codama-idl/codama',
+    ]);
+    const imports =
+        page.imports.size === 0
+            ? undefined
+            : fragment`${importMapToString(page.imports, scope.dependencyMap, scope.useGranularImports)}`;
+    return mergeFragments([header, imports, page], cs => cs.join('\n\n'));
 }

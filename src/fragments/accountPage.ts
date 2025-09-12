@@ -1,36 +1,39 @@
-import { AccountNode, PdaNode, titleCase } from '@codama/nodes';
-import { visit } from '@codama/visitors-core';
+import { AccountNode, resolveNestedTypeNode } from '@codama/nodes';
+import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
 
-import {
-    Fragment,
-    fragment,
-    getCodeBlockFragment,
-    getFrontmatterFragment,
-    getPageFragment,
-    getTitleAndDescriptionFragment,
-} from '../utils';
-import { TypeVisitor } from '../visitors/getTypeVisitor';
-import { getPdaFunctionUsageFragment } from './pdaFunctionUsage';
+import { Fragment, mergeFragments, RenderScope } from '../utils';
+import { getAccountFetchHelpersFragment } from './accountFetchHelpers';
+import { getAccountPdaHelpersFragment } from './accountPdaHelpers';
+import { getAccountSizeHelpersFragment } from './accountSizeHelpers';
+import { getAccountTypeFragment } from './accountType';
+import { getDiscriminatorConstantsFragment } from './discriminatorConstants';
 
 export function getAccountPageFragment(
-    node: AccountNode,
-    typeVisitor: TypeVisitor,
-    size?: number,
-    pda?: PdaNode,
+    scope: Pick<RenderScope, 'customAccountData' | 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
+        accountPath: NodePath<AccountNode>;
+        size: number | null;
+    },
 ): Fragment {
-    const title = titleCase(node.name);
-    const type = visit(node, typeVisitor);
+    const node = getLastNodeFromPath(scope.accountPath);
+    if (!findProgramNodeFromPath(scope.accountPath)) {
+        throw new Error('Account must be visited inside a program.');
+    }
 
-    return getPageFragment(
+    const typeManifest = visit(node, scope.typeManifestVisitor);
+    const fields = resolveNestedTypeNode(node.data).fields;
+    return mergeFragments(
         [
-            getFrontmatterFragment(title, `Overview of the ${title} account`),
-            getTitleAndDescriptionFragment(title, node.docs),
-            fragment`## Account data`,
-            getCodeBlockFragment(type, 'ts'),
-            ...(size ? [fragment`This account has a fixed size of ${size} bytes.`] : []),
-            ...(pda ? [fragment`## PDA`, getCodeBlockFragment(getPdaFunctionUsageFragment(pda), 'ts')] : []),
+            getDiscriminatorConstantsFragment({
+                ...scope,
+                discriminatorNodes: node.discriminators ?? [],
+                fields,
+                prefix: node.name,
+            }),
+            getAccountTypeFragment({ ...scope, typeManifest }),
+            getAccountFetchHelpersFragment({ ...scope, typeManifest }),
+            getAccountSizeHelpersFragment(scope),
+            getAccountPdaHelpersFragment({ ...scope, typeManifest }),
         ],
-        // Generated accounts are within the same directory.
-        { generatedAccounts: '.' },
+        cs => cs.join('\n\n'),
     );
 }
