@@ -11,3 +11,10 @@ updates:
       codama:
         patterns:
           - '@codama/*'
+  - package-ecosystem: 'npm'
+    directory: 'packages/renderers-js/test/e2e'
+    schedule:
+      interval: daily
+      time: '01:00'
+      timezone: America/Los_Angeles
+    open-pull-requests-limit: 10
