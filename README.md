@@ -15,23 +15,22 @@ This package generates JavaScript clients from your Codama IDLs. The generated c
 pnpm install @codama/renderers-js
 ```
 
-> [!NOTE]
-> This package is **not** included in the main [`codama`](../library) package.
->
-> However, note that the [`renderers`](../renderers) package re-exports the `renderVisitor` function of this package as `renderJavaScriptVisitor`.
-
 ## Usage
 
-Once you have a Codama IDL, you can use the `renderVisitor` of this package to generate JavaScript clients. You will need to provide the base directory where the generated files will be saved and an optional set of options to customize the output.
+Add the following script to your Codama configuration file.
 
-```ts
-// node ./codama.mjs
-import { renderVisitor } from '@codama/renderers-js';
-
-const pathToGeneratedFolder = path.join(__dirname, 'clients', 'js', 'src', 'generated');
-const options = {}; // See below.
-codama.accept(renderVisitor(pathToGeneratedFolder, options));
+```json
+{
+    "scripts": {
+        "js": {
+            "from": "@codama/renderers-js",
+            "args": ["clients/js/src/generated"]
+        }
+    }
+}
 ```
+
+An object can be passed as a second argument to further configure the renderer. See the [Options](#options) section below for more details.
 
 ## Options
 
