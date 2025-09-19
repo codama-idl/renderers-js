@@ -1,5 +1,11 @@
 # @codama/renderers-js
 
+## 1.4.2
+
+### Patch Changes
+
+- [`e0cc155`](https://github.com/codama-idl/renderers-js/commit/e0cc15557bbaa896f9b8ec6a632e6fa4703e9de3) Thanks [@lorisleiva](https://github.com/lorisleiva)! - This patch release will publish the previous patch release because there was a version mismatch.
+
 ## 1.4.1
 
 ### Patch Changes
