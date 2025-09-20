@@ -16,10 +16,14 @@ export function getAccountTypeFragment(
     if (customAccountData.has(accountNode.name)) return;
 
     return getTypeWithCodecFragment({
+        codecDocs: [`Gets the codec for {@link ${nameApi.dataType(accountNode.name)}} account data.`],
+        decoderDocs: [`Gets the decoder for {@link ${nameApi.dataType(accountNode.name)}} account data.`],
+        encoderDocs: [`Gets the encoder for {@link ${nameApi.dataArgsType(accountNode.name)}} account data.`],
         manifest: typeManifest,
         name: accountNode.name,
         nameApi,
         node: resolveNestedTypeNode(accountNode.data),
         size: scope.size,
+        typeDocs: accountNode.docs,
     });
 }

@@ -87,7 +87,7 @@
           }
         ],
         "name": "mint",
-        "docs": [],
+        "docs": ["Uniquely represents a token on the network and stores global metadata about the token."],
         "size": 82
       },
       {
@@ -199,7 +199,7 @@
           }
         ],
         "name": "token",
-        "docs": [],
+        "docs": ["Stores information about an individual's ownership of a specific token (mint). Each token account is associated with a single mint and tracks details like the token balance and owner."],
         "size": 165
       },
       {
