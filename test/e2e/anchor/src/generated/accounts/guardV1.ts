@@ -92,6 +92,7 @@ export type GuardV1Args = {
   additionalFieldsRule: Array<MetadataAdditionalFieldRuleArgs>;
 };
 
+/** Gets the encoder for {@link GuardV1Args} account data. */
 export function getGuardV1Encoder(): Encoder<GuardV1Args> {
   return transformEncoder(
     getStructEncoder([
@@ -109,6 +110,7 @@ export function getGuardV1Encoder(): Encoder<GuardV1Args> {
   );
 }
 
+/** Gets the decoder for {@link GuardV1} account data. */
 export function getGuardV1Decoder(): Decoder<GuardV1> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
@@ -123,6 +125,7 @@ export function getGuardV1Decoder(): Decoder<GuardV1> {
   ]);
 }
 
+/** Gets the codec for {@link GuardV1} account data. */
 export function getGuardV1Codec(): Codec<GuardV1Args, GuardV1> {
   return combineCodec(getGuardV1Encoder(), getGuardV1Decoder());
 }
