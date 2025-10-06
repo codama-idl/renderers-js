@@ -60,6 +60,7 @@ export type NonceArgs = {
   lamportsPerSignature: Lamports;
 };
 
+/** Gets the encoder for {@link NonceArgs} account data. */
 export function getNonceEncoder(): FixedSizeEncoder<NonceArgs> {
   return getStructEncoder([
     ['version', getNonceVersionEncoder()],
@@ -70,6 +71,7 @@ export function getNonceEncoder(): FixedSizeEncoder<NonceArgs> {
   ]);
 }
 
+/** Gets the decoder for {@link Nonce} account data. */
 export function getNonceDecoder(): FixedSizeDecoder<Nonce> {
   return getStructDecoder([
     ['version', getNonceVersionDecoder()],
@@ -80,6 +82,7 @@ export function getNonceDecoder(): FixedSizeDecoder<Nonce> {
   ]);
 }
 
+/** Gets the codec for {@link Nonce} account data. */
 export function getNonceCodec(): FixedSizeCodec<NonceArgs, Nonce> {
   return combineCodec(getNonceEncoder(), getNonceDecoder());
 }
