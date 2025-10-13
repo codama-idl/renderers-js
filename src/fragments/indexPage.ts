@@ -1,12 +1,12 @@
-import { CamelCaseString } from '@codama/nodes';
+import { camelCase } from '@codama/nodes';
 
 import { Fragment, getExportAllFragment, mergeFragments } from '../utils';
 
-export function getIndexPageFragment(items: { name: CamelCaseString }[]): Fragment | undefined {
+export function getIndexPageFragment(items: { name: string }[]): Fragment | undefined {
     if (items.length === 0) return;
 
     const names = items
-        .map(item => item.name)
+        .map(item => camelCase(item.name))
         .sort((a, b) => a.localeCompare(b))
         .map(name => getExportAllFragment(`./${name}`));
 
