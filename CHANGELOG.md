@@ -1,5 +1,11 @@
 # @codama/renderers-js
 
+## 1.4.3
+
+### Patch Changes
+
+- [#32](https://github.com/codama-idl/renderers-js/pull/32) [`a6da6dc`](https://github.com/codama-idl/renderers-js/commit/a6da6dcad11341847791eb84ac07fe8327454963) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Fix bug that did not camelcase exported modules properly
+
 ## 1.4.2
 
 ### Patch Changes
