@@ -1,5 +1,11 @@
 # @codama/renderers-js
 
+## 1.4.4
+
+### Patch Changes
+
+- [#17](https://github.com/codama-idl/renderers-js/pull/17) [`0461845`](https://github.com/codama-idl/renderers-js/commit/046184580a8d0cbb96a44e7fc867853e752652f2) Thanks [@macalinao](https://github.com/macalinao)! - Include JSDoc comments for generated accounts
+
 ## 1.4.3
 
 ### Patch Changes
