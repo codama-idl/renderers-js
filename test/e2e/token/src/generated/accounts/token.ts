@@ -43,6 +43,7 @@ import {
   type AccountStateArgs,
 } from '../types';
 
+/** Stores information about an individual's ownership of a specific token (mint). Each token account is associated with a single mint and tracks details like the token balance and owner. */
 export type Token = {
   /** The mint associated with this account. */
   mint: Address;
@@ -97,6 +98,7 @@ export type TokenArgs = {
   closeAuthority: OptionOrNullable<Address>;
 };
 
+/** Gets the encoder for {@link TokenArgs} account data. */
 export function getTokenEncoder(): FixedSizeEncoder<TokenArgs> {
   return getStructEncoder([
     ['mint', getAddressEncoder()],
@@ -128,6 +130,7 @@ export function getTokenEncoder(): FixedSizeEncoder<TokenArgs> {
   ]);
 }
 
+/** Gets the decoder for {@link Token} account data. */
 export function getTokenDecoder(): FixedSizeDecoder<Token> {
   return getStructDecoder([
     ['mint', getAddressDecoder()],
@@ -159,6 +162,7 @@ export function getTokenDecoder(): FixedSizeDecoder<Token> {
   ]);
 }
 
+/** Gets the codec for {@link Token} account data. */
 export function getTokenCodec(): FixedSizeCodec<TokenArgs, Token> {
   return combineCodec(getTokenEncoder(), getTokenDecoder());
 }

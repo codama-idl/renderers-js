@@ -41,6 +41,7 @@ import {
   type OptionOrNullable,
 } from '@solana/kit';
 
+/** Uniquely represents a token on the network and stores global metadata about the token. */
 export type Mint = {
   /**
    * Optional authority used to mint new tokens. The mint authority may only
@@ -75,6 +76,7 @@ export type MintArgs = {
   freezeAuthority: OptionOrNullable<Address>;
 };
 
+/** Gets the encoder for {@link MintArgs} account data. */
 export function getMintEncoder(): FixedSizeEncoder<MintArgs> {
   return getStructEncoder([
     [
@@ -97,6 +99,7 @@ export function getMintEncoder(): FixedSizeEncoder<MintArgs> {
   ]);
 }
 
+/** Gets the decoder for {@link Mint} account data. */
 export function getMintDecoder(): FixedSizeDecoder<Mint> {
   return getStructDecoder([
     [
@@ -119,6 +122,7 @@ export function getMintDecoder(): FixedSizeDecoder<Mint> {
   ]);
 }
 
+/** Gets the codec for {@link Mint} account data. */
 export function getMintCodec(): FixedSizeCodec<MintArgs, Mint> {
   return combineCodec(getMintEncoder(), getMintDecoder());
 }
