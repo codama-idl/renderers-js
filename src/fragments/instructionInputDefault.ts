@@ -9,9 +9,9 @@ import {
     Fragment,
     fragment,
     isAsyncDefaultValue,
-    mergeFragmentImports,
     mergeFragments,
     RenderScope,
+    use,
 } from '../utils';
 
 export function getInstructionInputDefaultFragment(
@@ -32,7 +32,7 @@ export function getInstructionInputDefaultFragment(
     }
 
     const { defaultValue } = input;
-    const defaultFragment = (renderedValue: string, isWritable?: boolean): Fragment => {
+    const defaultFragment = (renderedValue: Fragment, isWritable?: boolean): Fragment => {
         const inputName = camelCase(input.name);
         if (input.kind === 'instructionAccountNode' && isNode(defaultValue, 'resolverValueNode')) {
             return fragment`accounts.${inputName} = { ...accounts.${inputName}, ...${renderedValue} };`;
@@ -46,38 +46,43 @@ export function getInstructionInputDefaultFragment(
         return fragment`args.${inputName} = ${renderedValue};`;
     };
 
+    const expectTransactionSigner = use('expectTransactionSigner', 'shared');
+    const expectSome = use('expectSome', 'shared');
+    const expectAddress = use('expectAddress', 'shared');
+    const expectProgramDerivedAddress = use('expectProgramDerivedAddress', 'shared');
+    const addressType = use('type Address', 'solanaAddresses');
+
     switch (defaultValue.kind) {
         case 'accountValueNode':
             const name = camelCase(defaultValue.name);
             if (input.kind === 'instructionAccountNode' && input.resolvedIsSigner && !input.isSigner) {
-                return pipe(defaultFragment(`expectTransactionSigner(accounts.${name}.value).address`), f =>
-                    addFragmentImports(f, 'shared', ['expectTransactionSigner']),
-                );
+                return defaultFragment(fragment`${expectTransactionSigner}(accounts.${name}.value).address`);
             }
             if (input.kind === 'instructionAccountNode') {
-                return pipe(defaultFragment(`expectSome(accounts.${name}.value)`), f =>
-                    addFragmentImports(f, 'shared', ['expectSome']),
-                );
+                return defaultFragment(fragment`${expectSome}(accounts.${name}.value)`);
             }
-            return pipe(defaultFragment(`expectAddress(accounts.${name}.value)`), f =>
-                addFragmentImports(f, 'shared', ['expectAddress']),
-            );
+            return defaultFragment(fragment`${expectAddress}(accounts.${name}.value)`);
 
         case 'pdaValueNode':
+            let pdaProgramValue: Fragment | undefined;
+            if (isNode(defaultValue.programId, 'accountValueNode')) {
+                pdaProgramValue = fragment`${expectAddress}(accounts.${camelCase(defaultValue.programId.name)}.value)`;
+            }
+            if (isNode(defaultValue.programId, 'argumentValueNode')) {
+                pdaProgramValue = fragment`${expectAddress}(args.${camelCase(defaultValue.programId.name)})`;
+            }
+
             // Inlined PDA value.
             if (isNode(defaultValue.pda, 'pdaNode')) {
-                const pdaProgram = defaultValue.pda.programId
-                    ? pipe(fragment`'${defaultValue.pda.programId}' as Address<'${defaultValue.pda.programId}'>`, f =>
-                          addFragmentImports(f, 'solanaAddresses', ['type Address']),
-                      )
-                    : fragment`programAddress`;
+                let pdaProgram = fragment`programAddress`;
+                if (pdaProgramValue) {
+                    pdaProgram = pdaProgramValue;
+                } else if (defaultValue.pda.programId) {
+                    pdaProgram = fragment`'${defaultValue.pda.programId}' as ${addressType}<'${defaultValue.pda.programId}'>`;
+                }
                 const pdaSeeds = defaultValue.pda.seeds.flatMap((seed): Fragment[] => {
                     if (isNode(seed, 'constantPdaSeedNode') && isNode(seed.value, 'programIdValueNode')) {
-                        return [
-                            pipe(fragment`getAddressEncoder().encode(${pdaProgram})`, f =>
-                                addFragmentImports(f, 'solanaAddresses', ['getAddressEncoder']),
-                            ),
-                        ];
+                        return [fragment`${use('getAddressEncoder', 'solanaAddresses')}().encode(${pdaProgram})`];
                     }
                     if (isNode(seed, 'constantPdaSeedNode') && !isNode(seed.value, 'programIdValueNode')) {
                         const typeManifest = visit(seed.type, typeManifestVisitor);
@@ -90,18 +95,12 @@ export function getInstructionInputDefaultFragment(
                         if (!valueSeed) return [];
                         if (isNode(valueSeed, 'accountValueNode')) {
                             return [
-                                pipe(
-                                    fragment`${typeManifest.encoder}.encode(expectAddress(accounts.${camelCase(valueSeed.name)}.value))`,
-                                    f => addFragmentImports(f, 'shared', ['expectAddress']),
-                                ),
+                                fragment`${typeManifest.encoder}.encode(${expectAddress}(accounts.${camelCase(valueSeed.name)}.value))`,
                             ];
                         }
                         if (isNode(valueSeed, 'argumentValueNode')) {
                             return [
-                                pipe(
-                                    fragment`${typeManifest.encoder}.encode(expectSome(args.${camelCase(valueSeed.name)}))`,
-                                    f => addFragmentImports(f, 'shared', ['expectSome']),
-                                ),
+                                fragment`${typeManifest.encoder}.encode(${expectSome}(args.${camelCase(valueSeed.name)}))`,
                             ];
                         }
                         const valueManifest = visit(valueSeed, typeManifestVisitor);
@@ -109,30 +108,24 @@ export function getInstructionInputDefaultFragment(
                     }
                     return [];
                 });
-                return pipe(
-                    mergeFragments([pdaProgram, ...pdaSeeds], ([p, ...s]) => {
-                        const programAddress = p === 'programAddress' ? p : `programAddress: ${p}`;
-                        return `await getProgramDerivedAddress({ ${programAddress}, seeds: [${s.join(', ')}] })`;
-                    }),
-                    f => addFragmentImports(f, 'solanaAddresses', ['getProgramDerivedAddress']),
-                    f => mapFragmentContent(f, c => defaultFragment(c).content),
+                const getProgramDerivedAddress = use('getProgramDerivedAddress', 'solanaAddresses');
+                const programAddress =
+                    pdaProgram.content === 'programAddress' ? pdaProgram : fragment`programAddress: ${pdaProgram}`;
+                const seeds = mergeFragments(pdaSeeds, s => s.join(', '));
+                return defaultFragment(
+                    fragment`await ${getProgramDerivedAddress}({ ${programAddress}, seeds: [${seeds}] })`,
                 );
             }
 
             // Linked PDA value.
-            const pdaFunction = nameApi.pdaFindFunction(defaultValue.pda.name);
-            const pdaArgs = [];
+            const pdaFunction = use(nameApi.pdaFindFunction(defaultValue.pda.name), getImportFrom(defaultValue.pda));
+            const pdaArgs: Fragment[] = [];
             const pdaSeeds = defaultValue.seeds.map((seed): Fragment => {
                 if (isNode(seed.value, 'accountValueNode')) {
-                    return pipe(
-                        fragment`${seed.name}: expectAddress(accounts.${camelCase(seed.value.name)}.value)`,
-                        f => addFragmentImports(f, 'shared', ['expectAddress']),
-                    );
+                    return fragment`${seed.name}: ${expectAddress}(accounts.${camelCase(seed.value.name)}.value)`;
                 }
                 if (isNode(seed.value, 'argumentValueNode')) {
-                    return pipe(fragment`${seed.name}: expectSome(args.${camelCase(seed.value.name)})`, f =>
-                        addFragmentImports(f, 'shared', ['expectSome']),
-                    );
+                    return fragment`${seed.name}: ${expectSome}(args.${camelCase(seed.value.name)})`;
                 }
                 return pipe(visit(seed.value, typeManifestVisitor).value, f =>
                     mapFragmentContent(f, c => `${seed.name}: ${c}`),
@@ -143,25 +136,21 @@ export function getInstructionInputDefaultFragment(
                 f => mapFragmentContent(f, c => `{ ${c} }`),
             );
             if (pdaSeeds.length > 0) {
-                pdaArgs.push(pdaSeedsFragment.content);
+                pdaArgs.push(pdaSeedsFragment);
             }
-            const module = getImportFrom(defaultValue.pda);
-            return pipe(
-                defaultFragment(`await ${pdaFunction}(${pdaArgs.join(', ')})`),
-                f => mergeFragmentImports(f, [pdaSeedsFragment.imports]),
-                f => addFragmentImports(f, module, [pdaFunction]),
-            );
+            if (pdaProgramValue) {
+                pdaArgs.push(fragment`{ programAddress: ${pdaProgramValue} }`);
+            }
+            return defaultFragment(fragment`await ${pdaFunction}(${mergeFragments(pdaArgs, c => c.join(', '))})`);
 
         case 'publicKeyValueNode':
-            return pipe(defaultFragment(`'${defaultValue.publicKey}' as Address<'${defaultValue.publicKey}'>`), f =>
-                addFragmentImports(f, 'solanaAddresses', ['type Address']),
+            return defaultFragment(
+                fragment`'${defaultValue.publicKey}' as ${addressType}<'${defaultValue.publicKey}'>`,
             );
 
         case 'programLinkNode':
-            const programAddress = nameApi.programAddressConstant(defaultValue.name);
-            return pipe(defaultFragment(programAddress, false), f =>
-                addFragmentImports(f, getImportFrom(defaultValue), [programAddress]),
-            );
+            const programAddress = use(nameApi.programAddressConstant(defaultValue.name), getImportFrom(defaultValue));
+            return defaultFragment(programAddress, false);
 
         case 'programIdValueNode':
             if (
@@ -171,30 +160,25 @@ export function getInstructionInputDefaultFragment(
             ) {
                 return fragment``;
             }
-            return defaultFragment('programAddress', false);
+            return defaultFragment(fragment`programAddress`, false);
 
         case 'identityValueNode':
         case 'payerValueNode':
             return fragment``;
 
         case 'accountBumpValueNode':
-            return pipe(
-                defaultFragment(`expectProgramDerivedAddress(accounts.${camelCase(defaultValue.name)}.value)[1]`),
-                f => addFragmentImports(f, 'shared', ['expectProgramDerivedAddress']),
+            return defaultFragment(
+                fragment`${expectProgramDerivedAddress}(accounts.${camelCase(defaultValue.name)}.value)[1]`,
             );
 
         case 'argumentValueNode':
-            return pipe(defaultFragment(`expectSome(args.${camelCase(defaultValue.name)})`), f =>
-                addFragmentImports(f, 'shared', ['expectSome']),
-            );
+            return defaultFragment(fragment`${expectSome}(args.${camelCase(defaultValue.name)})`);
 
         case 'resolverValueNode':
-            const resolverFunction = nameApi.resolverFunction(defaultValue.name);
+            const resolverFunction = use(nameApi.resolverFunction(defaultValue.name), getImportFrom(defaultValue));
             const resolverAwait = useAsync && asyncResolvers.includes(defaultValue.name) ? 'await ' : '';
-            return pipe(
-                defaultFragment(`${resolverAwait}${resolverFunction}(resolverScope)`),
-                f => addFragmentImports(f, getImportFrom(defaultValue), [resolverFunction]),
-                f => addFragmentFeatures(f, ['instruction:resolverScopeVariable']),
+            return pipe(defaultFragment(fragment`${resolverAwait}${resolverFunction}(resolverScope)`), f =>
+                addFragmentFeatures(f, ['instruction:resolverScopeVariable']),
             );
 
         case 'conditionalValueNode':
@@ -259,7 +243,7 @@ export function getInstructionInputDefaultFragment(
 
         default:
             const valueManifest = visit(defaultValue, typeManifestVisitor).value;
-            return pipe(valueManifest, f => mapFragmentContent(f, c => defaultFragment(c).content));
+            return defaultFragment(valueManifest);
     }
 }
 
