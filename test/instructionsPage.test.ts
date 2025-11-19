@@ -203,6 +203,54 @@ test('it renders instruction accounts with linked PDAs as default value', async 
     await renderMapContainsImports(renderMap, 'instructions/increment.ts', { '../pdas': ['findCounterPda'] });
 });
 
+test('it renders instruction accounts with linked PDA default values that point to another account as the program', async () => {
+    // Given the following program with a PDA node and an instruction account using it as default value
+    // such that the program used to derive the PDA is another account in the instruction.
+    const node = programNode({
+        instructions: [
+            instructionNode({
+                accounts: [
+                    instructionAccountNode({ isSigner: true, isWritable: false, name: 'authority' }),
+                    instructionAccountNode({ isSigner: false, isWritable: false, name: 'myProgram' }),
+                    instructionAccountNode({
+                        defaultValue: pdaValueNode(
+                            'counter',
+                            [pdaSeedValueNode('authority', accountValueNode('authority'))],
+                            accountValueNode('myProgram'),
+                        ),
+                        isSigner: false,
+                        isWritable: false,
+                        name: 'counter',
+                    }),
+                ],
+                name: 'increment',
+            }),
+        ],
+        name: 'counter',
+        pdas: [
+            pdaNode({
+                name: 'counter',
+                seeds: [
+                    constantPdaSeedNodeFromString('utf8', 'counter'),
+                    variablePdaSeedNode('authority', publicKeyTypeNode()),
+                ],
+            }),
+        ],
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then we expect the following default value to be rendered.
+    await renderMapContains(renderMap, 'instructions/increment.ts', [
+        'if (!accounts.counter.value) { ' +
+            'accounts.counter.value = await findCounterPda( { authority: expectAddress ( accounts.authority.value ) }, { programAddress: expectAddress ( accounts.myProgram.value ) } ); ' +
+            '}',
+    ]);
+    await renderMapContainsImports(renderMap, 'instructions/increment.ts', { '../pdas': ['findCounterPda'] });
+});
+
 test('it renders instruction accounts with inlined PDAs as default value', async () => {
     // Given the following instruction with an inlined PDA default value.
     const node = programNode({
@@ -241,6 +289,59 @@ test('it renders instruction accounts with inlined PDAs as default value', async
         'if (!accounts.counter.value) { ' +
             'accounts.counter.value = await getProgramDerivedAddress( { ' +
             '  programAddress, ' +
+            '  seeds: [ ' +
+            "    getUtf8Encoder().encode('counter'), " +
+            '    getAddressEncoder().encode(expectAddress(accounts.authority.value)) ' +
+            '  ] ' +
+            '} ); ' +
+            '}',
+    ]);
+    await renderMapContainsImports(renderMap, 'instructions/increment.ts', {
+        '@solana/kit': ['getProgramDerivedAddress'],
+    });
+});
+
+test('it renders instruction accounts with inlined PDA default values that point to another account as the program', async () => {
+    // Given the following instruction with an inlined PDA default value
+    // such that the program used to derive the PDA is another account in the instruction.
+    const node = programNode({
+        instructions: [
+            instructionNode({
+                accounts: [
+                    instructionAccountNode({ isSigner: true, isWritable: false, name: 'authority' }),
+                    instructionAccountNode({ isSigner: false, isWritable: false, name: 'myProgram' }),
+                    instructionAccountNode({
+                        defaultValue: pdaValueNode(
+                            pdaNode({
+                                name: 'counter',
+                                seeds: [
+                                    constantPdaSeedNodeFromString('utf8', 'counter'),
+                                    variablePdaSeedNode('authority', publicKeyTypeNode()),
+                                ],
+                            }),
+                            [pdaSeedValueNode('authority', accountValueNode('authority'))],
+                            accountValueNode('myProgram'),
+                        ),
+                        isSigner: false,
+                        isWritable: false,
+                        name: 'counter',
+                    }),
+                ],
+                name: 'increment',
+            }),
+        ],
+        name: 'counter',
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then we expect the following default value to be rendered.
+    await renderMapContains(renderMap, 'instructions/increment.ts', [
+        'if (!accounts.counter.value) { ' +
+            'accounts.counter.value = await getProgramDerivedAddress( { ' +
+            '  programAddress: expectAddress(accounts.myProgram.value), ' +
             '  seeds: [ ' +
             "    getUtf8Encoder().encode('counter'), " +
             '    getAddressEncoder().encode(expectAddress(accounts.authority.value)) ' +
