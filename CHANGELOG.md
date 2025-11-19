@@ -1,5 +1,15 @@
 # @codama/renderers-js
 
+## 1.5.0
+
+### Minor Changes
+
+- [#62](https://github.com/codama-idl/renderers-js/pull/62) [`62211b3`](https://github.com/codama-idl/renderers-js/commit/62211b37d12d658cb37714b138f20ed95b843a10) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Use the programId attribute of the PdaValueNode when provided to render default values. This enables PDA derivations to set the program address to another account in the same instruction.
+
+### Patch Changes
+
+- [#17](https://github.com/codama-idl/renderers-js/pull/17) [`0461845`](https://github.com/codama-idl/renderers-js/commit/046184580a8d0cbb96a44e7fc867853e752652f2) Thanks [@macalinao](https://github.com/macalinao)! - Include JSDoc comments for generated accounts
+
 ## 1.4.3
 
 ### Patch Changes
