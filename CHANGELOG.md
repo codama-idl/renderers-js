@@ -1,5 +1,11 @@
 # @codama/renderers-js
 
+## 1.5.1
+
+### Patch Changes
+
+- [#67](https://github.com/codama-idl/renderers-js/pull/67) [`21326d4`](https://github.com/codama-idl/renderers-js/commit/21326d4dd3aee0079ce49e6eb58658811074b797) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Use latest RenderMap type from renderers-core
+
 ## 1.5.0
 
 ### Minor Changes
