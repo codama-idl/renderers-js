@@ -82,7 +82,7 @@ export function getRenderMapVisitor(options: GetRenderMapOptions = {}) {
     };
 
     return pipe(
-        staticVisitor(() => createRenderMap(), {
+        staticVisitor(() => createRenderMap<Fragment>(), {
             keys: ['rootNode', 'programNode', 'pdaNode', 'accountNode', 'definedTypeNode', 'instructionNode'],
         }),
         v =>

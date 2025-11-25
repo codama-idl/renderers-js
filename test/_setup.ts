@@ -5,6 +5,8 @@ import * as typeScriptPlugin from 'prettier/plugins/typescript';
 import { format } from 'prettier/standalone';
 import { expect } from 'vitest';
 
+import type { Fragment } from '../src/utils';
+
 const PRETTIER_OPTIONS: Parameters<typeof format>[1] = {
     arrowParens: 'always',
     parser: 'typescript',
@@ -17,18 +19,22 @@ const PRETTIER_OPTIONS: Parameters<typeof format>[1] = {
     useTabs: false,
 };
 
-export function renderMapContains(renderMap: RenderMap, key: string, expected: (RegExp | string)[] | RegExp | string) {
-    expect(renderMap.has(key), `RenderMap is missing key "${key}".`).toBe(true);
-    return codeContains(getFromRenderMap(renderMap, key), expected);
-}
-
-export function renderMapDoesNotContain(
-    renderMap: RenderMap,
+export function renderMapContains(
+    renderMap: RenderMap<Fragment>,
     key: string,
     expected: (RegExp | string)[] | RegExp | string,
 ) {
     expect(renderMap.has(key), `RenderMap is missing key "${key}".`).toBe(true);
-    return codeDoesNotContain(getFromRenderMap(renderMap, key), expected);
+    return codeContains(getFromRenderMap(renderMap, key).content, expected);
+}
+
+export function renderMapDoesNotContain(
+    renderMap: RenderMap<Fragment>,
+    key: string,
+    expected: (RegExp | string)[] | RegExp | string,
+) {
+    expect(renderMap.has(key), `RenderMap is missing key "${key}".`).toBe(true);
+    return codeDoesNotContain(getFromRenderMap(renderMap, key).content, expected);
 }
 
 export async function codeContains(actual: string, expected: (RegExp | string)[] | RegExp | string) {
@@ -55,18 +61,22 @@ export async function codeDoesNotContain(actual: string, expected: (RegExp | str
     });
 }
 
-export function renderMapContainsImports(renderMap: RenderMap, key: string, expectedImports: Record<string, string[]>) {
-    expect(renderMap.has(key), `RenderMap is missing key "${key}".`).toBe(true);
-    return codeContainsImports(getFromRenderMap(renderMap, key), expectedImports);
-}
-
-export function renderMapDoesNotContainImports(
-    renderMap: RenderMap,
+export function renderMapContainsImports(
+    renderMap: RenderMap<Fragment>,
     key: string,
     expectedImports: Record<string, string[]>,
 ) {
     expect(renderMap.has(key), `RenderMap is missing key "${key}".`).toBe(true);
-    return codeDoesNotContainImports(getFromRenderMap(renderMap, key), expectedImports);
+    return codeContainsImports(getFromRenderMap(renderMap, key).content, expectedImports);
+}
+
+export function renderMapDoesNotContainImports(
+    renderMap: RenderMap<Fragment>,
+    key: string,
+    expectedImports: Record<string, string[]>,
+) {
+    expect(renderMap.has(key), `RenderMap is missing key "${key}".`).toBe(true);
+    return codeDoesNotContainImports(getFromRenderMap(renderMap, key).content, expectedImports);
 }
 
 export async function codeContainsImports(actual: string, expectedImports: Record<string, string[]>) {

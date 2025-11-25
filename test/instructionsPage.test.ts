@@ -110,7 +110,7 @@ test('it renders the args variable on the async function only if the extra argum
     const renderMap = visit(node, getRenderMapVisitor({ asyncResolvers: ['myAsyncResolver'] }));
 
     // And split the async and sync functions.
-    const [asyncFunction, syncFunction] = getFromRenderMap(renderMap, 'instructions/create.ts').split(
+    const [asyncFunction, syncFunction] = getFromRenderMap(renderMap, 'instructions/create.ts').content.split(
         /export\s+function\s+getCreateInstruction/,
     );
 
@@ -150,7 +150,7 @@ test('it only renders the args variable on the async function if the extra argum
     const renderMap = visit(node, getRenderMapVisitor({ asyncResolvers: ['myAsyncResolver'] }));
 
     // And split the async and sync functions.
-    const [asyncFunction, syncFunction] = getFromRenderMap(renderMap, 'instructions/create.ts').split(
+    const [asyncFunction, syncFunction] = getFromRenderMap(renderMap, 'instructions/create.ts').content.split(
         /export\s+function\s+getCreateInstruction/,
     );
 
