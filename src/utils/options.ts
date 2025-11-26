@@ -12,7 +12,9 @@ type PrettierOptions = Parameters<typeof format>[1];
 export type RenderOptions = GetRenderMapOptions & {
     deleteFolderBeforeRendering?: boolean;
     formatCode?: boolean;
+    packageFolder?: string;
     prettierOptions?: PrettierOptions;
+    syncPackageJson?: boolean;
 };
 
 export type GetRenderMapOptions = {
@@ -20,6 +22,7 @@ export type GetRenderMapOptions = {
     customAccountData?: CustomDataOptions[];
     customInstructionData?: CustomDataOptions[];
     dependencyMap?: Record<string, string>;
+    dependencyVersions?: Record<string, string>;
     internalNodes?: string[];
     linkOverrides?: LinkOverrides;
     nameTransformers?: Partial<NameTransformers>;
@@ -33,6 +36,7 @@ export type RenderScope = {
     customAccountData: ParsedCustomDataOptions;
     customInstructionData: ParsedCustomDataOptions;
     dependencyMap: Record<string, string>;
+    dependencyVersions: Record<string, string>;
     getImportFrom: GetImportFromFunction;
     linkables: LinkableDictionary;
     nameApi: NameApi;
