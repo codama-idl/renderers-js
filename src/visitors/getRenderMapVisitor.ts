@@ -56,6 +56,7 @@ export function getRenderMapVisitor(options: GetRenderMapOptions = {}) {
         customAccountData,
         customInstructionData,
         dependencyMap: options.dependencyMap ?? {},
+        dependencyVersions: options.dependencyVersions ?? {},
         getImportFrom: getImportFromFactory(options.linkOverrides ?? {}, customAccountData, customInstructionData),
         linkables,
         nameApi: getNameApi({ ...DEFAULT_NAME_TRANSFORMERS, ...options.nameTransformers }),

@@ -144,6 +144,15 @@ export function importMapToString(
         .join('\n');
 }
 
+export function getExternalDependencies(
+    importMap: ImportMap,
+    dependencyMap: Record<string, string>,
+    useGranularImports: boolean,
+): Set<string> {
+    const resolvedImports = resolveImportMapModules(importMap, dependencyMap, useGranularImports);
+    return new Set([...resolvedImports.keys()].filter(module => !module.startsWith('.')));
+}
+
 function resolveImportMapModules(
     importMap: ImportMap,
     dependencyMap: Record<string, string>,
