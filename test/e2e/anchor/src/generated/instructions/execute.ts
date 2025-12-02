@@ -53,9 +53,8 @@ export type ExecuteInstruction<
   TAccountOwnerDelegate extends string | AccountMeta<string> = string,
   TAccountExtraMetasAccount extends string | AccountMeta<string> = string,
   TAccountGuard extends string | AccountMeta<string> = string,
-  TAccountInstructionSysvarAccount extends
-    | string
-    | AccountMeta<string> = 'Sysvar1nstructions1111111111111111111111111',
+  TAccountInstructionSysvarAccount extends string | AccountMeta<string> =
+    'Sysvar1nstructions1111111111111111111111111',
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &

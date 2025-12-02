@@ -44,21 +44,18 @@ export function getRecoverNestedAssociatedTokenDiscriminatorBytes() {
 
 export type RecoverNestedAssociatedTokenInstruction<
   TProgram extends string = typeof ASSOCIATED_TOKEN_PROGRAM_ADDRESS,
-  TAccountNestedAssociatedAccountAddress extends
-    | string
-    | AccountMeta<string> = string,
+  TAccountNestedAssociatedAccountAddress extends string | AccountMeta<string> =
+    string,
   TAccountNestedTokenMintAddress extends string | AccountMeta<string> = string,
   TAccountDestinationAssociatedAccountAddress extends
     | string
     | AccountMeta<string> = string,
-  TAccountOwnerAssociatedAccountAddress extends
-    | string
-    | AccountMeta<string> = string,
+  TAccountOwnerAssociatedAccountAddress extends string | AccountMeta<string> =
+    string,
   TAccountOwnerTokenMintAddress extends string | AccountMeta<string> = string,
   TAccountWalletAddress extends string | AccountMeta<string> = string,
-  TAccountTokenProgram extends
-    | string
-    | AccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+  TAccountTokenProgram extends string | AccountMeta<string> =
+    'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &

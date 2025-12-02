@@ -50,12 +50,10 @@ export type CreateAssociatedTokenIdempotentInstruction<
   TAccountAta extends string | AccountMeta<string> = string,
   TAccountOwner extends string | AccountMeta<string> = string,
   TAccountMint extends string | AccountMeta<string> = string,
-  TAccountSystemProgram extends
-    | string
-    | AccountMeta<string> = '11111111111111111111111111111111',
-  TAccountTokenProgram extends
-    | string
-    | AccountMeta<string> = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+  TAccountSystemProgram extends string | AccountMeta<string> =
+    '11111111111111111111111111111111',
+  TAccountTokenProgram extends string | AccountMeta<string> =
+    'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &

@@ -75,12 +75,10 @@ export type UpdateGuardInstruction<
   TAccountMint extends string | AccountMeta<string> = string,
   TAccountTokenAccount extends string | AccountMeta<string> = string,
   TAccountGuardAuthority extends string | AccountMeta<string> = string,
-  TAccountTokenProgram extends
-    | string
-    | AccountMeta<string> = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
-  TAccountSystemProgram extends
-    | string
-    | AccountMeta<string> = '11111111111111111111111111111111',
+  TAccountTokenProgram extends string | AccountMeta<string> =
+    'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
+  TAccountSystemProgram extends string | AccountMeta<string> =
+    '11111111111111111111111111111111',
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &

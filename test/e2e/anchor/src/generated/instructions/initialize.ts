@@ -53,9 +53,8 @@ export type InitializeInstruction<
   TAccountGuard extends string | AccountMeta<string> = string,
   TAccountMint extends string | AccountMeta<string> = string,
   TAccountTransferHookAuthority extends string | AccountMeta<string> = string,
-  TAccountSystemProgram extends
-    | string
-    | AccountMeta<string> = '11111111111111111111111111111111',
+  TAccountSystemProgram extends string | AccountMeta<string> =
+    '11111111111111111111111111111111',
   TAccountPayer extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
