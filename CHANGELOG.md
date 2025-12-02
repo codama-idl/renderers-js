@@ -1,5 +1,11 @@
 # @codama/renderers-js
 
+## 1.5.2
+
+### Patch Changes
+
+- [#70](https://github.com/codama-idl/renderers-js/pull/70) [`ad5cc9b`](https://github.com/codama-idl/renderers-js/commit/ad5cc9bb866dc8a4e4d406bcadeb1583eb2ae7fc) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add `syncPackageJson`, `packageFolder` and `dependencyVersions` options in order to create or update the package.json of the JS client when generating its code.
+
 ## 1.5.1
 
 ### Patch Changes
