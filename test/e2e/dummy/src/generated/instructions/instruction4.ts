@@ -7,85 +7,77 @@
  */
 
 import {
-  combineCodec,
-  getStructDecoder,
-  getStructEncoder,
-  getU64Decoder,
-  getU64Encoder,
-  type AccountMeta,
-  type Address,
-  type FixedSizeCodec,
-  type FixedSizeDecoder,
-  type FixedSizeEncoder,
-  type Instruction,
-  type InstructionWithAccounts,
-  type InstructionWithData,
-  type ReadonlyUint8Array,
+    combineCodec,
+    getStructDecoder,
+    getStructEncoder,
+    getU64Decoder,
+    getU64Encoder,
+    type AccountMeta,
+    type Address,
+    type FixedSizeCodec,
+    type FixedSizeDecoder,
+    type FixedSizeEncoder,
+    type Instruction,
+    type InstructionWithAccounts,
+    type InstructionWithData,
+    type ReadonlyUint8Array,
 } from '@solana/kit';
 import { DUMMY_PROGRAM_ADDRESS } from '../programs';
 
 export type Instruction4Instruction<
-  TProgram extends string = typeof DUMMY_PROGRAM_ADDRESS,
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
-> = Instruction<TProgram> &
-  InstructionWithData<ReadonlyUint8Array> &
-  InstructionWithAccounts<TRemainingAccounts>;
+    TProgram extends string = typeof DUMMY_PROGRAM_ADDRESS,
+    TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+> = Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array> & InstructionWithAccounts<TRemainingAccounts>;
 
 export type Instruction4InstructionData = { myArgument: bigint };
 
 export type Instruction4InstructionDataArgs = { myArgument: number | bigint };
 
 export function getInstruction4InstructionDataEncoder(): FixedSizeEncoder<Instruction4InstructionDataArgs> {
-  return getStructEncoder([['myArgument', getU64Encoder()]]);
+    return getStructEncoder([['myArgument', getU64Encoder()]]);
 }
 
 export function getInstruction4InstructionDataDecoder(): FixedSizeDecoder<Instruction4InstructionData> {
-  return getStructDecoder([['myArgument', getU64Decoder()]]);
+    return getStructDecoder([['myArgument', getU64Decoder()]]);
 }
 
 export function getInstruction4InstructionDataCodec(): FixedSizeCodec<
-  Instruction4InstructionDataArgs,
-  Instruction4InstructionData
+    Instruction4InstructionDataArgs,
+    Instruction4InstructionData
 > {
-  return combineCodec(
-    getInstruction4InstructionDataEncoder(),
-    getInstruction4InstructionDataDecoder()
-  );
+    return combineCodec(getInstruction4InstructionDataEncoder(), getInstruction4InstructionDataDecoder());
 }
 
 export type Instruction4Input = {
-  myArgument: Instruction4InstructionDataArgs['myArgument'];
+    myArgument: Instruction4InstructionDataArgs['myArgument'];
 };
 
-export function getInstruction4Instruction<
-  TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS,
->(
-  input: Instruction4Input,
-  config?: { programAddress?: TProgramAddress }
+export function getInstruction4Instruction<TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS>(
+    input: Instruction4Input,
+    config?: { programAddress?: TProgramAddress }
 ): Instruction4Instruction<TProgramAddress> {
-  // Program address.
-  const programAddress = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
+    // Program address.
+    const programAddress = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
 
-  // Original args.
-  const args = { ...input };
+    // Original args.
+    const args = { ...input };
 
-  return Object.freeze({
-    data: getInstruction4InstructionDataEncoder().encode(
-      args as Instruction4InstructionDataArgs
-    ),
-    programAddress,
-  } as Instruction4Instruction<TProgramAddress>);
+    return Object.freeze({
+        data: getInstruction4InstructionDataEncoder().encode(args as Instruction4InstructionDataArgs),
+        programAddress,
+    } as Instruction4Instruction<TProgramAddress>);
 }
 
-export type ParsedInstruction4Instruction<
-  TProgram extends string = typeof DUMMY_PROGRAM_ADDRESS,
-> = { programAddress: Address<TProgram>; data: Instruction4InstructionData };
+export type ParsedInstruction4Instruction<TProgram extends string = typeof DUMMY_PROGRAM_ADDRESS> = {
+    programAddress: Address<TProgram>;
+    data: Instruction4InstructionData;
+};
 
 export function parseInstruction4Instruction<TProgram extends string>(
-  instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>
+    instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>
 ): ParsedInstruction4Instruction<TProgram> {
-  return {
-    programAddress: instruction.programAddress,
-    data: getInstruction4InstructionDataDecoder().decode(instruction.data),
-  };
+    return {
+        programAddress: instruction.programAddress,
+        data: getInstruction4InstructionDataDecoder().decode(instruction.data),
+    };
 }

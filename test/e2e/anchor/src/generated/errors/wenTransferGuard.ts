@@ -7,10 +7,10 @@
  */
 
 import {
-  isProgramError,
-  type Address,
-  type SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM,
-  type SolanaError,
+    isProgramError,
+    type Address,
+    type SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM,
+    type SolanaError,
 } from '@solana/kit';
 import { WEN_TRANSFER_GUARD_PROGRAM_ADDRESS } from '../programs';
 
@@ -32,57 +32,42 @@ export const WEN_TRANSFER_GUARD_ERROR__MUST_BE_INITIALIZED_BY_TRANSFER_HOOK_AUTH
 export const WEN_TRANSFER_GUARD_ERROR__MINT_ASSIGNED_TRANSFER_HOOK_PROGRAM_IS_NOT_THIS_ONE = 0x1777; // 6007
 
 export type WenTransferGuardError =
-  | typeof WEN_TRANSFER_GUARD_ERROR__CPI_RULE_ENFORCEMENT_FAILED
-  | typeof WEN_TRANSFER_GUARD_ERROR__GUARD_TOKEN_AMOUNT_SHOULD_BE_AT_LEAST_ONE
-  | typeof WEN_TRANSFER_GUARD_ERROR__METADATA_FIELD_DOES_NOT_EXIST
-  | typeof WEN_TRANSFER_GUARD_ERROR__METADATA_FIELD_DOES_NOT_PASS
-  | typeof WEN_TRANSFER_GUARD_ERROR__MINT_ASSIGNED_TRANSFER_HOOK_PROGRAM_IS_NOT_THIS_ONE
-  | typeof WEN_TRANSFER_GUARD_ERROR__MUST_BE_INITIALIZED_BY_TRANSFER_HOOK_AUTHORITY
-  | typeof WEN_TRANSFER_GUARD_ERROR__NOT_OWNED_BY_TOKEN2022_PROGRAM
-  | typeof WEN_TRANSFER_GUARD_ERROR__TRANSFER_AMOUNT_RULE_ENFORCE_FAILED;
+    | typeof WEN_TRANSFER_GUARD_ERROR__CPI_RULE_ENFORCEMENT_FAILED
+    | typeof WEN_TRANSFER_GUARD_ERROR__GUARD_TOKEN_AMOUNT_SHOULD_BE_AT_LEAST_ONE
+    | typeof WEN_TRANSFER_GUARD_ERROR__METADATA_FIELD_DOES_NOT_EXIST
+    | typeof WEN_TRANSFER_GUARD_ERROR__METADATA_FIELD_DOES_NOT_PASS
+    | typeof WEN_TRANSFER_GUARD_ERROR__MINT_ASSIGNED_TRANSFER_HOOK_PROGRAM_IS_NOT_THIS_ONE
+    | typeof WEN_TRANSFER_GUARD_ERROR__MUST_BE_INITIALIZED_BY_TRANSFER_HOOK_AUTHORITY
+    | typeof WEN_TRANSFER_GUARD_ERROR__NOT_OWNED_BY_TOKEN2022_PROGRAM
+    | typeof WEN_TRANSFER_GUARD_ERROR__TRANSFER_AMOUNT_RULE_ENFORCE_FAILED;
 
-let wenTransferGuardErrorMessages:
-  | Record<WenTransferGuardError, string>
-  | undefined;
+let wenTransferGuardErrorMessages: Record<WenTransferGuardError, string> | undefined;
 if (process.env.NODE_ENV !== 'production') {
-  wenTransferGuardErrorMessages = {
-    [WEN_TRANSFER_GUARD_ERROR__CPI_RULE_ENFORCEMENT_FAILED]: `Cpi Rule Enforcement Failed`,
-    [WEN_TRANSFER_GUARD_ERROR__GUARD_TOKEN_AMOUNT_SHOULD_BE_AT_LEAST_ONE]: `Guard token amount should be at least 1`,
-    [WEN_TRANSFER_GUARD_ERROR__METADATA_FIELD_DOES_NOT_EXIST]: `Metadata Field Does Not Exist`,
-    [WEN_TRANSFER_GUARD_ERROR__METADATA_FIELD_DOES_NOT_PASS]: `Metadata Field Does Not Pass`,
-    [WEN_TRANSFER_GUARD_ERROR__MINT_ASSIGNED_TRANSFER_HOOK_PROGRAM_IS_NOT_THIS_ONE]: `Mint's assigned Transfer Hook Program is not this one`,
-    [WEN_TRANSFER_GUARD_ERROR__MUST_BE_INITIALIZED_BY_TRANSFER_HOOK_AUTHORITY]: `Must be initialized by Transfer Hook Authority`,
-    [WEN_TRANSFER_GUARD_ERROR__NOT_OWNED_BY_TOKEN2022_PROGRAM]: `Not owned by token 2022 program`,
-    [WEN_TRANSFER_GUARD_ERROR__TRANSFER_AMOUNT_RULE_ENFORCE_FAILED]: `Transfer Amount Rule Enforce Failed`,
-  };
+    wenTransferGuardErrorMessages = {
+        [WEN_TRANSFER_GUARD_ERROR__CPI_RULE_ENFORCEMENT_FAILED]: `Cpi Rule Enforcement Failed`,
+        [WEN_TRANSFER_GUARD_ERROR__GUARD_TOKEN_AMOUNT_SHOULD_BE_AT_LEAST_ONE]: `Guard token amount should be at least 1`,
+        [WEN_TRANSFER_GUARD_ERROR__METADATA_FIELD_DOES_NOT_EXIST]: `Metadata Field Does Not Exist`,
+        [WEN_TRANSFER_GUARD_ERROR__METADATA_FIELD_DOES_NOT_PASS]: `Metadata Field Does Not Pass`,
+        [WEN_TRANSFER_GUARD_ERROR__MINT_ASSIGNED_TRANSFER_HOOK_PROGRAM_IS_NOT_THIS_ONE]: `Mint's assigned Transfer Hook Program is not this one`,
+        [WEN_TRANSFER_GUARD_ERROR__MUST_BE_INITIALIZED_BY_TRANSFER_HOOK_AUTHORITY]: `Must be initialized by Transfer Hook Authority`,
+        [WEN_TRANSFER_GUARD_ERROR__NOT_OWNED_BY_TOKEN2022_PROGRAM]: `Not owned by token 2022 program`,
+        [WEN_TRANSFER_GUARD_ERROR__TRANSFER_AMOUNT_RULE_ENFORCE_FAILED]: `Transfer Amount Rule Enforce Failed`,
+    };
 }
 
-export function getWenTransferGuardErrorMessage(
-  code: WenTransferGuardError
-): string {
-  if (process.env.NODE_ENV !== 'production') {
-    return (
-      wenTransferGuardErrorMessages as Record<WenTransferGuardError, string>
-    )[code];
-  }
+export function getWenTransferGuardErrorMessage(code: WenTransferGuardError): string {
+    if (process.env.NODE_ENV !== 'production') {
+        return (wenTransferGuardErrorMessages as Record<WenTransferGuardError, string>)[code];
+    }
 
-  return 'Error message not available in production bundles.';
+    return 'Error message not available in production bundles.';
 }
 
-export function isWenTransferGuardError<
-  TProgramErrorCode extends WenTransferGuardError,
->(
-  error: unknown,
-  transactionMessage: {
-    instructions: Record<number, { programAddress: Address }>;
-  },
-  code?: TProgramErrorCode
+export function isWenTransferGuardError<TProgramErrorCode extends WenTransferGuardError>(
+    error: unknown,
+    transactionMessage: { instructions: Record<number, { programAddress: Address }> },
+    code?: TProgramErrorCode
 ): error is SolanaError<typeof SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM> &
-  Readonly<{ context: Readonly<{ code: TProgramErrorCode }> }> {
-  return isProgramError<TProgramErrorCode>(
-    error,
-    transactionMessage,
-    WEN_TRANSFER_GUARD_PROGRAM_ADDRESS,
-    code
-  );
+    Readonly<{ context: Readonly<{ code: TProgramErrorCode }> }> {
+    return isProgramError<TProgramErrorCode>(error, transactionMessage, WEN_TRANSFER_GUARD_PROGRAM_ADDRESS, code);
 }

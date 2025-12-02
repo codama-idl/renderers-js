@@ -7,28 +7,28 @@
  */
 
 import {
-  addDecoderSizePrefix,
-  addEncoderSizePrefix,
-  combineCodec,
-  getOptionDecoder,
-  getOptionEncoder,
-  getStructDecoder,
-  getStructEncoder,
-  getU32Decoder,
-  getU32Encoder,
-  getUtf8Decoder,
-  getUtf8Encoder,
-  type Codec,
-  type Decoder,
-  type Encoder,
-  type Option,
-  type OptionOrNullable,
+    addDecoderSizePrefix,
+    addEncoderSizePrefix,
+    combineCodec,
+    getOptionDecoder,
+    getOptionEncoder,
+    getStructDecoder,
+    getStructEncoder,
+    getU32Decoder,
+    getU32Encoder,
+    getUtf8Decoder,
+    getUtf8Encoder,
+    type Codec,
+    type Decoder,
+    type Encoder,
+    type Option,
+    type OptionOrNullable,
 } from '@solana/kit';
 import {
-  getMetadataAdditionalFieldRestrictionDecoder,
-  getMetadataAdditionalFieldRestrictionEncoder,
-  type MetadataAdditionalFieldRestriction,
-  type MetadataAdditionalFieldRestrictionArgs,
+    getMetadataAdditionalFieldRestrictionDecoder,
+    getMetadataAdditionalFieldRestrictionEncoder,
+    type MetadataAdditionalFieldRestriction,
+    type MetadataAdditionalFieldRestrictionArgs,
 } from '.';
 
 /**
@@ -36,41 +36,32 @@ import {
  * The field must exist and the value must pass the restriction.
  */
 export type MetadataAdditionalFieldRule = {
-  field: string;
-  valueRestrictions: Option<MetadataAdditionalFieldRestriction>;
+    field: string;
+    valueRestrictions: Option<MetadataAdditionalFieldRestriction>;
 };
 
 export type MetadataAdditionalFieldRuleArgs = {
-  field: string;
-  valueRestrictions: OptionOrNullable<MetadataAdditionalFieldRestrictionArgs>;
+    field: string;
+    valueRestrictions: OptionOrNullable<MetadataAdditionalFieldRestrictionArgs>;
 };
 
 export function getMetadataAdditionalFieldRuleEncoder(): Encoder<MetadataAdditionalFieldRuleArgs> {
-  return getStructEncoder([
-    ['field', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
-    [
-      'valueRestrictions',
-      getOptionEncoder(getMetadataAdditionalFieldRestrictionEncoder()),
-    ],
-  ]);
+    return getStructEncoder([
+        ['field', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
+        ['valueRestrictions', getOptionEncoder(getMetadataAdditionalFieldRestrictionEncoder())],
+    ]);
 }
 
 export function getMetadataAdditionalFieldRuleDecoder(): Decoder<MetadataAdditionalFieldRule> {
-  return getStructDecoder([
-    ['field', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
-    [
-      'valueRestrictions',
-      getOptionDecoder(getMetadataAdditionalFieldRestrictionDecoder()),
-    ],
-  ]);
+    return getStructDecoder([
+        ['field', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
+        ['valueRestrictions', getOptionDecoder(getMetadataAdditionalFieldRestrictionDecoder())],
+    ]);
 }
 
 export function getMetadataAdditionalFieldRuleCodec(): Codec<
-  MetadataAdditionalFieldRuleArgs,
-  MetadataAdditionalFieldRule
+    MetadataAdditionalFieldRuleArgs,
+    MetadataAdditionalFieldRule
 > {
-  return combineCodec(
-    getMetadataAdditionalFieldRuleEncoder(),
-    getMetadataAdditionalFieldRuleDecoder()
-  );
+    return combineCodec(getMetadataAdditionalFieldRuleEncoder(), getMetadataAdditionalFieldRuleDecoder());
 }

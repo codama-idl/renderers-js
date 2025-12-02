@@ -7,52 +7,48 @@
  */
 
 import {
-  AccountRole,
-  type AccountMeta,
-  type Address,
-  type Instruction,
-  type InstructionWithAccounts,
+    AccountRole,
+    type AccountMeta,
+    type Address,
+    type Instruction,
+    type InstructionWithAccounts,
 } from '@solana/kit';
 import { DUMMY_PROGRAM_ADDRESS } from '../programs';
 
 export type Instruction2Instruction<
-  TProgram extends string = typeof DUMMY_PROGRAM_ADDRESS,
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+    TProgram extends string = typeof DUMMY_PROGRAM_ADDRESS,
+    TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> & InstructionWithAccounts<TRemainingAccounts>;
 
 export type Instruction2Input = {
-  remainingAccounts?: Array<Address>;
+    remainingAccounts?: Array<Address>;
 };
 
-export function getInstruction2Instruction<
-  TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS,
->(
-  input: Instruction2Input,
-  config?: { programAddress?: TProgramAddress }
+export function getInstruction2Instruction<TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS>(
+    input: Instruction2Input,
+    config?: { programAddress?: TProgramAddress }
 ): Instruction2Instruction<TProgramAddress> {
-  // Program address.
-  const programAddress = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
+    // Program address.
+    const programAddress = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
 
-  // Original args.
-  const args = { ...input };
+    // Original args.
+    const args = { ...input };
 
-  // Remaining accounts.
-  const remainingAccounts: AccountMeta[] = (args.remainingAccounts ?? []).map(
-    (address) => ({ address, role: AccountRole.READONLY })
-  );
+    // Remaining accounts.
+    const remainingAccounts: AccountMeta[] = (args.remainingAccounts ?? []).map(address => ({
+        address,
+        role: AccountRole.READONLY,
+    }));
 
-  return Object.freeze({
-    accounts: remainingAccounts,
-    programAddress,
-  } as Instruction2Instruction<TProgramAddress>);
+    return Object.freeze({ accounts: remainingAccounts, programAddress } as Instruction2Instruction<TProgramAddress>);
 }
 
-export type ParsedInstruction2Instruction<
-  TProgram extends string = typeof DUMMY_PROGRAM_ADDRESS,
-> = { programAddress: Address<TProgram> };
+export type ParsedInstruction2Instruction<TProgram extends string = typeof DUMMY_PROGRAM_ADDRESS> = {
+    programAddress: Address<TProgram>;
+};
 
 export function parseInstruction2Instruction<TProgram extends string>(
-  instruction: Instruction<TProgram>
+    instruction: Instruction<TProgram>
 ): ParsedInstruction2Instruction<TProgram> {
-  return { programAddress: instruction.programAddress };
+    return { programAddress: instruction.programAddress };
 }

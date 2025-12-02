@@ -7,93 +7,78 @@
  */
 
 import {
-  type AccountMeta,
-  type Address,
-  type Instruction,
-  type InstructionWithAccounts,
-  type WritableAccount,
+    type AccountMeta,
+    type Address,
+    type Instruction,
+    type InstructionWithAccounts,
+    type WritableAccount,
 } from '@solana/kit';
 import { DUMMY_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export type Instruction7Instruction<
-  TProgram extends string = typeof DUMMY_PROGRAM_ADDRESS,
-  TAccountMyAccount extends string | AccountMeta<string> = string,
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+    TProgram extends string = typeof DUMMY_PROGRAM_ADDRESS,
+    TAccountMyAccount extends string | AccountMeta<string> = string,
+    TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
-  InstructionWithAccounts<
-    [
-      TAccountMyAccount extends string
-        ? WritableAccount<TAccountMyAccount>
-        : TAccountMyAccount,
-      ...TRemainingAccounts,
-    ]
-  >;
+    InstructionWithAccounts<
+        [
+            TAccountMyAccount extends string ? WritableAccount<TAccountMyAccount> : TAccountMyAccount,
+            ...TRemainingAccounts,
+        ]
+    >;
 
 export type Instruction7Input<TAccountMyAccount extends string = string> = {
-  myAccount?: Address<TAccountMyAccount>;
+    myAccount?: Address<TAccountMyAccount>;
 };
 
 export function getInstruction7Instruction<
-  TAccountMyAccount extends string,
-  TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS,
+    TAccountMyAccount extends string,
+    TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS,
 >(
-  input: Instruction7Input<TAccountMyAccount>,
-  config?: { programAddress?: TProgramAddress }
+    input: Instruction7Input<TAccountMyAccount>,
+    config?: { programAddress?: TProgramAddress }
 ): Instruction7Instruction<TProgramAddress, TAccountMyAccount> {
-  // Program address.
-  const programAddress = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
+    // Program address.
+    const programAddress = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
 
-  // Original accounts.
-  const originalAccounts = {
-    myAccount: { value: input.myAccount ?? null, isWritable: true },
-  };
-  const accounts = originalAccounts as Record<
-    keyof typeof originalAccounts,
-    ResolvedAccount
-  >;
+    // Original accounts.
+    const originalAccounts = { myAccount: { value: input.myAccount ?? null, isWritable: true } };
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
 
-  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
-  return Object.freeze({
-    accounts: [getAccountMeta(accounts.myAccount)],
-    programAddress,
-  } as Instruction7Instruction<TProgramAddress, TAccountMyAccount>);
+    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+    return Object.freeze({ accounts: [getAccountMeta(accounts.myAccount)], programAddress } as Instruction7Instruction<
+        TProgramAddress,
+        TAccountMyAccount
+    >);
 }
 
 export type ParsedInstruction7Instruction<
-  TProgram extends string = typeof DUMMY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
+    TProgram extends string = typeof DUMMY_PROGRAM_ADDRESS,
+    TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
 > = {
-  programAddress: Address<TProgram>;
-  accounts: {
-    myAccount?: TAccountMetas[0] | undefined;
-  };
+    programAddress: Address<TProgram>;
+    accounts: {
+        myAccount?: TAccountMetas[0] | undefined;
+    };
 };
 
-export function parseInstruction7Instruction<
-  TProgram extends string,
-  TAccountMetas extends readonly AccountMeta[],
->(
-  instruction: Instruction<TProgram> & InstructionWithAccounts<TAccountMetas>
+export function parseInstruction7Instruction<TProgram extends string, TAccountMetas extends readonly AccountMeta[]>(
+    instruction: Instruction<TProgram> & InstructionWithAccounts<TAccountMetas>
 ): ParsedInstruction7Instruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 1) {
-    // TODO: Coded error.
-    throw new Error('Not enough accounts');
-  }
-  let accountIndex = 0;
-  const getNextAccount = () => {
-    const accountMeta = (instruction.accounts as TAccountMetas)[accountIndex]!;
-    accountIndex += 1;
-    return accountMeta;
-  };
-  const getNextOptionalAccount = () => {
-    const accountMeta = getNextAccount();
-    return accountMeta.address === DUMMY_PROGRAM_ADDRESS
-      ? undefined
-      : accountMeta;
-  };
-  return {
-    programAddress: instruction.programAddress,
-    accounts: { myAccount: getNextOptionalAccount() },
-  };
+    if (instruction.accounts.length < 1) {
+        // TODO: Coded error.
+        throw new Error('Not enough accounts');
+    }
+    let accountIndex = 0;
+    const getNextAccount = () => {
+        const accountMeta = (instruction.accounts as TAccountMetas)[accountIndex]!;
+        accountIndex += 1;
+        return accountMeta;
+    };
+    const getNextOptionalAccount = () => {
+        const accountMeta = getNextAccount();
+        return accountMeta.address === DUMMY_PROGRAM_ADDRESS ? undefined : accountMeta;
+    };
+    return { programAddress: instruction.programAddress, accounts: { myAccount: getNextOptionalAccount() } };
 }
