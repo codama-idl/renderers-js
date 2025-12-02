@@ -6,54 +6,45 @@
  * @see https://github.com/codama-idl/codama
  */
 
+import { containsBytes, getU8Encoder, type Address, type ReadonlyUint8Array } from '@solana/kit';
 import {
-  containsBytes,
-  getU8Encoder,
-  type Address,
-  type ReadonlyUint8Array,
-} from '@solana/kit';
-import {
-  type ParsedCreateAssociatedTokenIdempotentInstruction,
-  type ParsedCreateAssociatedTokenInstruction,
-  type ParsedRecoverNestedAssociatedTokenInstruction,
+    type ParsedCreateAssociatedTokenIdempotentInstruction,
+    type ParsedCreateAssociatedTokenInstruction,
+    type ParsedRecoverNestedAssociatedTokenInstruction,
 } from '../instructions';
 
 export const ASSOCIATED_TOKEN_PROGRAM_ADDRESS =
-  'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
+    'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
 
 export enum AssociatedTokenInstruction {
-  CreateAssociatedToken,
-  CreateAssociatedTokenIdempotent,
-  RecoverNestedAssociatedToken,
+    CreateAssociatedToken,
+    CreateAssociatedTokenIdempotent,
+    RecoverNestedAssociatedToken,
 }
 
 export function identifyAssociatedTokenInstruction(
-  instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array
+    instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array
 ): AssociatedTokenInstruction {
-  const data = 'data' in instruction ? instruction.data : instruction;
-  if (containsBytes(data, getU8Encoder().encode(0), 0)) {
-    return AssociatedTokenInstruction.CreateAssociatedToken;
-  }
-  if (containsBytes(data, getU8Encoder().encode(1), 0)) {
-    return AssociatedTokenInstruction.CreateAssociatedTokenIdempotent;
-  }
-  if (containsBytes(data, getU8Encoder().encode(2), 0)) {
-    return AssociatedTokenInstruction.RecoverNestedAssociatedToken;
-  }
-  throw new Error(
-    'The provided instruction could not be identified as a associatedToken instruction.'
-  );
+    const data = 'data' in instruction ? instruction.data : instruction;
+    if (containsBytes(data, getU8Encoder().encode(0), 0)) {
+        return AssociatedTokenInstruction.CreateAssociatedToken;
+    }
+    if (containsBytes(data, getU8Encoder().encode(1), 0)) {
+        return AssociatedTokenInstruction.CreateAssociatedTokenIdempotent;
+    }
+    if (containsBytes(data, getU8Encoder().encode(2), 0)) {
+        return AssociatedTokenInstruction.RecoverNestedAssociatedToken;
+    }
+    throw new Error('The provided instruction could not be identified as a associatedToken instruction.');
 }
 
-export type ParsedAssociatedTokenInstruction<
-  TProgram extends string = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
-> =
-  | ({
-      instructionType: AssociatedTokenInstruction.CreateAssociatedToken;
-    } & ParsedCreateAssociatedTokenInstruction<TProgram>)
-  | ({
-      instructionType: AssociatedTokenInstruction.CreateAssociatedTokenIdempotent;
-    } & ParsedCreateAssociatedTokenIdempotentInstruction<TProgram>)
-  | ({
-      instructionType: AssociatedTokenInstruction.RecoverNestedAssociatedToken;
-    } & ParsedRecoverNestedAssociatedTokenInstruction<TProgram>);
+export type ParsedAssociatedTokenInstruction<TProgram extends string = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'> =
+    | ({
+          instructionType: AssociatedTokenInstruction.CreateAssociatedToken;
+      } & ParsedCreateAssociatedTokenInstruction<TProgram>)
+    | ({
+          instructionType: AssociatedTokenInstruction.CreateAssociatedTokenIdempotent;
+      } & ParsedCreateAssociatedTokenIdempotentInstruction<TProgram>)
+    | ({
+          instructionType: AssociatedTokenInstruction.RecoverNestedAssociatedToken;
+      } & ParsedRecoverNestedAssociatedTokenInstruction<TProgram>);

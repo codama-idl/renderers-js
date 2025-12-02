@@ -3,7 +3,6 @@
 const path = require('node:path');
 const process = require('node:process');
 
-const { rootNode } = require('@codama/nodes');
 const { rootNodeFromAnchor } = require('@codama/nodes-from-anchor');
 const { readJson } = require('@codama/renderers-core');
 const { visit } = require('@codama/visitors-core');
@@ -19,17 +18,15 @@ async function main() {
 }
 
 async function generateProject(project) {
-    const idl = readJson(path.join(__dirname, project, 'idl.json'));
+    const packageFolder = path.join(__dirname, project);
+    const idl = readJson(path.join(packageFolder, 'idl.json'));
+    const node = idl?.metadata?.spec ? rootNodeFromAnchor(idl) : idl;
+    const visitor = renderVisitor(
+        path.join(packageFolder, 'src', 'generated'),
+        { packageFolder, syncPackageJson: true }
+    );
 
-    let node;
-
-    if (idl?.metadata?.spec) {
-        node = rootNodeFromAnchor(idl);
-    } else {
-        node = rootNode(idl.program, idl.additionalPrograms);
-    }
-
-    await visit(node, renderVisitor(path.join(__dirname, project, 'src', 'generated')));
+    await visit(node, visitor);
 }
 
 main().catch(err => {

@@ -6,40 +6,31 @@
  * @see https://github.com/codama-idl/codama
  */
 
-import {
-  type AccountMeta,
-  type Address,
-  type Instruction,
-  type InstructionWithAccounts,
-} from '@solana/kit';
+import { type AccountMeta, type Address, type Instruction, type InstructionWithAccounts } from '@solana/kit';
 import { DUMMY_PROGRAM_ADDRESS } from '../programs';
 
 export type Instruction1Instruction<
-  TProgram extends string = typeof DUMMY_PROGRAM_ADDRESS,
-  TRemainingAccounts extends readonly AccountMeta<string>[] = [],
+    TProgram extends string = typeof DUMMY_PROGRAM_ADDRESS,
+    TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> & InstructionWithAccounts<TRemainingAccounts>;
 
 export type Instruction1Input = {};
 
-export function getInstruction1Instruction<
-  TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS,
->(config?: {
-  programAddress?: TProgramAddress;
+export function getInstruction1Instruction<TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS>(config?: {
+    programAddress?: TProgramAddress;
 }): Instruction1Instruction<TProgramAddress> {
-  // Program address.
-  const programAddress = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
+    // Program address.
+    const programAddress = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
 
-  return Object.freeze({
-    programAddress,
-  } as Instruction1Instruction<TProgramAddress>);
+    return Object.freeze({ programAddress } as Instruction1Instruction<TProgramAddress>);
 }
 
-export type ParsedInstruction1Instruction<
-  TProgram extends string = typeof DUMMY_PROGRAM_ADDRESS,
-> = { programAddress: Address<TProgram> };
+export type ParsedInstruction1Instruction<TProgram extends string = typeof DUMMY_PROGRAM_ADDRESS> = {
+    programAddress: Address<TProgram>;
+};
 
 export function parseInstruction1Instruction<TProgram extends string>(
-  instruction: Instruction<TProgram>
+    instruction: Instruction<TProgram>
 ): ParsedInstruction1Instruction<TProgram> {
-  return { programAddress: instruction.programAddress };
+    return { programAddress: instruction.programAddress };
 }

@@ -7,26 +7,26 @@
  */
 
 import {
-  addDecoderSizePrefix,
-  addEncoderSizePrefix,
-  combineCodec,
-  getArrayDecoder,
-  getArrayEncoder,
-  getDiscriminatedUnionDecoder,
-  getDiscriminatedUnionEncoder,
-  getStructDecoder,
-  getStructEncoder,
-  getTupleDecoder,
-  getTupleEncoder,
-  getU32Decoder,
-  getU32Encoder,
-  getUtf8Decoder,
-  getUtf8Encoder,
-  type Codec,
-  type Decoder,
-  type Encoder,
-  type GetDiscriminatedUnionVariant,
-  type GetDiscriminatedUnionVariantContent,
+    addDecoderSizePrefix,
+    addEncoderSizePrefix,
+    combineCodec,
+    getArrayDecoder,
+    getArrayEncoder,
+    getDiscriminatedUnionDecoder,
+    getDiscriminatedUnionEncoder,
+    getStructDecoder,
+    getStructEncoder,
+    getTupleDecoder,
+    getTupleEncoder,
+    getU32Decoder,
+    getU32Encoder,
+    getUtf8Decoder,
+    getUtf8Encoder,
+    type Codec,
+    type Decoder,
+    type Encoder,
+    type GetDiscriminatedUnionVariant,
+    type GetDiscriminatedUnionVariantContent,
 } from '@solana/kit';
 
 /**
@@ -35,123 +35,71 @@ import {
  * * Excludes - The field must not include any of the values in the vector.
  */
 export type MetadataAdditionalFieldRestriction =
-  | { __kind: 'Includes'; fields: readonly [Array<string>] }
-  | { __kind: 'Excludes'; fields: readonly [Array<string>] };
+    | { __kind: 'Includes'; fields: readonly [Array<string>] }
+    | { __kind: 'Excludes'; fields: readonly [Array<string>] };
 
-export type MetadataAdditionalFieldRestrictionArgs =
-  MetadataAdditionalFieldRestriction;
+export type MetadataAdditionalFieldRestrictionArgs = MetadataAdditionalFieldRestriction;
 
 export function getMetadataAdditionalFieldRestrictionEncoder(): Encoder<MetadataAdditionalFieldRestrictionArgs> {
-  return getDiscriminatedUnionEncoder([
-    [
-      'Includes',
-      getStructEncoder([
+    return getDiscriminatedUnionEncoder([
         [
-          'fields',
-          getTupleEncoder([
-            getArrayEncoder(
-              addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())
-            ),
-          ]),
+            'Includes',
+            getStructEncoder([
+                ['fields', getTupleEncoder([getArrayEncoder(addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder()))])],
+            ]),
         ],
-      ]),
-    ],
-    [
-      'Excludes',
-      getStructEncoder([
         [
-          'fields',
-          getTupleEncoder([
-            getArrayEncoder(
-              addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())
-            ),
-          ]),
+            'Excludes',
+            getStructEncoder([
+                ['fields', getTupleEncoder([getArrayEncoder(addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder()))])],
+            ]),
         ],
-      ]),
-    ],
-  ]);
+    ]);
 }
 
 export function getMetadataAdditionalFieldRestrictionDecoder(): Decoder<MetadataAdditionalFieldRestriction> {
-  return getDiscriminatedUnionDecoder([
-    [
-      'Includes',
-      getStructDecoder([
+    return getDiscriminatedUnionDecoder([
         [
-          'fields',
-          getTupleDecoder([
-            getArrayDecoder(
-              addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())
-            ),
-          ]),
+            'Includes',
+            getStructDecoder([
+                ['fields', getTupleDecoder([getArrayDecoder(addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder()))])],
+            ]),
         ],
-      ]),
-    ],
-    [
-      'Excludes',
-      getStructDecoder([
         [
-          'fields',
-          getTupleDecoder([
-            getArrayDecoder(
-              addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())
-            ),
-          ]),
+            'Excludes',
+            getStructDecoder([
+                ['fields', getTupleDecoder([getArrayDecoder(addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder()))])],
+            ]),
         ],
-      ]),
-    ],
-  ]);
+    ]);
 }
 
 export function getMetadataAdditionalFieldRestrictionCodec(): Codec<
-  MetadataAdditionalFieldRestrictionArgs,
-  MetadataAdditionalFieldRestriction
+    MetadataAdditionalFieldRestrictionArgs,
+    MetadataAdditionalFieldRestriction
 > {
-  return combineCodec(
-    getMetadataAdditionalFieldRestrictionEncoder(),
-    getMetadataAdditionalFieldRestrictionDecoder()
-  );
+    return combineCodec(getMetadataAdditionalFieldRestrictionEncoder(), getMetadataAdditionalFieldRestrictionDecoder());
 }
 
 // Data Enum Helpers.
 export function metadataAdditionalFieldRestriction(
-  kind: 'Includes',
-  data: GetDiscriminatedUnionVariantContent<
-    MetadataAdditionalFieldRestrictionArgs,
-    '__kind',
-    'Includes'
-  >['fields']
-): GetDiscriminatedUnionVariant<
-  MetadataAdditionalFieldRestrictionArgs,
-  '__kind',
-  'Includes'
->;
+    kind: 'Includes',
+    data: GetDiscriminatedUnionVariantContent<MetadataAdditionalFieldRestrictionArgs, '__kind', 'Includes'>['fields']
+): GetDiscriminatedUnionVariant<MetadataAdditionalFieldRestrictionArgs, '__kind', 'Includes'>;
 export function metadataAdditionalFieldRestriction(
-  kind: 'Excludes',
-  data: GetDiscriminatedUnionVariantContent<
-    MetadataAdditionalFieldRestrictionArgs,
-    '__kind',
-    'Excludes'
-  >['fields']
-): GetDiscriminatedUnionVariant<
-  MetadataAdditionalFieldRestrictionArgs,
-  '__kind',
-  'Excludes'
->;
-export function metadataAdditionalFieldRestriction<
-  K extends MetadataAdditionalFieldRestrictionArgs['__kind'],
-  Data,
->(kind: K, data?: Data) {
-  return Array.isArray(data)
-    ? { __kind: kind, fields: data }
-    : { __kind: kind, ...(data ?? {}) };
+    kind: 'Excludes',
+    data: GetDiscriminatedUnionVariantContent<MetadataAdditionalFieldRestrictionArgs, '__kind', 'Excludes'>['fields']
+): GetDiscriminatedUnionVariant<MetadataAdditionalFieldRestrictionArgs, '__kind', 'Excludes'>;
+export function metadataAdditionalFieldRestriction<K extends MetadataAdditionalFieldRestrictionArgs['__kind'], Data>(
+    kind: K,
+    data?: Data
+) {
+    return Array.isArray(data) ? { __kind: kind, fields: data } : { __kind: kind, ...(data ?? {}) };
 }
 
-export function isMetadataAdditionalFieldRestriction<
-  K extends MetadataAdditionalFieldRestriction['__kind'],
->(
-  kind: K,
-  value: MetadataAdditionalFieldRestriction
+export function isMetadataAdditionalFieldRestriction<K extends MetadataAdditionalFieldRestriction['__kind']>(
+    kind: K,
+    value: MetadataAdditionalFieldRestriction
 ): value is MetadataAdditionalFieldRestriction & { __kind: K } {
-  return value.__kind === kind;
+    return value.__kind === kind;
 }

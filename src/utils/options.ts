@@ -1,13 +1,11 @@
 import type { CamelCaseString } from '@codama/nodes';
 import type { LinkableDictionary } from '@codama/visitors-core';
-import type { format } from 'prettier/standalone';
 
 import type { TypeManifestVisitor } from '../visitors';
 import type { CustomDataOptions, ParsedCustomDataOptions } from './customData';
+import { PrettierOptions } from './formatCode';
 import type { GetImportFromFunction, LinkOverrides } from './linkOverrides';
 import type { NameApi, NameTransformers } from './nameTransformers';
-
-type PrettierOptions = Parameters<typeof format>[1];
 
 export type RenderOptions = GetRenderMapOptions & {
     deleteFolderBeforeRendering?: boolean;

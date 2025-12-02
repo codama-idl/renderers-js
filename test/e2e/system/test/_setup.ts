@@ -12,6 +12,7 @@ import {
   airdropFactory,
   appendTransactionMessageInstruction,
   assertIsSendableTransaction,
+  assertIsTransactionWithBlockhashLifetime,
   createSolanaRpc,
   createSolanaRpcSubscriptions,
   createTransactionMessage,
@@ -84,6 +85,7 @@ export const signAndSendTransaction = async (
     await signTransactionMessageWithSigners(transactionMessage);
   const signature = getSignatureFromTransaction(signedTransaction);
   assertIsSendableTransaction(signedTransaction);
+  assertIsTransactionWithBlockhashLifetime(signedTransaction);
   await sendAndConfirmTransactionFactory(client)(signedTransaction, {
     commitment,
   });
