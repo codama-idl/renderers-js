@@ -1,5 +1,13 @@
 # @codama/renderers-js
 
+## 1.5.3
+
+### Patch Changes
+
+- [#79](https://github.com/codama-idl/renderers-js/pull/79) [`f763016`](https://github.com/codama-idl/renderers-js/commit/f763016f4617ab256ed885e3c29546ed6a867a29) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Enable Rollup treeshaking pass
+
+- [#81](https://github.com/codama-idl/renderers-js/pull/81) [`f666488`](https://github.com/codama-idl/renderers-js/commit/f6664882d2528e576d4d4d892f66db3547778031) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Resolve Prettier options from packageFolder option
+
 ## 1.5.2
 
 ### Patch Changes
