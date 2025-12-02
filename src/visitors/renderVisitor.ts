@@ -5,7 +5,7 @@ import * as estreePlugin from 'prettier/plugins/estree';
 import * as typeScriptPlugin from 'prettier/plugins/typescript';
 import { format } from 'prettier/standalone';
 
-import { RenderOptions } from '../utils';
+import { RenderOptions, syncPackageJson } from '../utils';
 import { getRenderMapVisitor } from './getRenderMapVisitor';
 
 type PrettierOptions = Parameters<typeof format>[1];
@@ -37,6 +37,9 @@ export function renderVisitor(path: string, options: RenderOptions = {}) {
             const prettierOptions = { ...DEFAULT_PRETTIER_OPTIONS, ...options.prettierOptions };
             renderMap = await mapRenderMapContentAsync(renderMap, code => format(code, prettierOptions));
         }
+
+        // Create or update package.json dependencies, if requested.
+        syncPackageJson(renderMap, options);
 
         writeRenderMap(renderMap, path);
     });
