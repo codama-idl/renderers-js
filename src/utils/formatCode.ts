@@ -1,4 +1,4 @@
-import { mapRenderMapContentAsync, RenderMap } from '@codama/renderers-core';
+import { joinPath, mapRenderMapContentAsync, RenderMap } from '@codama/renderers-core';
 import { format, Plugin, resolveConfig } from 'prettier';
 import * as estreePlugin from 'prettier/plugins/estree';
 import * as typeScriptPlugin from 'prettier/plugins/typescript';
@@ -43,5 +43,10 @@ async function resolvePrettierOptions(packageFolder: string | undefined): Promis
     }
 
     if (!packageFolder) return null;
-    return await resolveConfig(packageFolder);
+
+    // Prettier expects a file path to resolve, not just its directory.
+    // Therefore we must append a filename (any will do) to ensure the
+    // provided directory is searched for config files.
+    const filePathToResolve = joinPath(packageFolder, 'package.json');
+    return await resolveConfig(filePathToResolve);
 }
