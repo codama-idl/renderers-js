@@ -2,6 +2,7 @@ import { CODAMA_ERROR__RENDERERS__MISSING_DEPENDENCY_VERSIONS, CodamaError, logW
 import { fileExists, joinPath, readJson, RenderMap, writeFile } from '@codama/renderers-core';
 import { lt as ltVersion, minVersion, subset } from 'semver';
 
+import type { CodeFormatter } from './formatCode';
 import { Fragment, mergeFragments } from './fragment';
 import { getExternalDependencies } from './importMap';
 import { RenderOptions } from './options';
@@ -33,13 +34,14 @@ export const DEFAULT_DEPENDENCY_VERSIONS: DependencyVersions = {
     '@solana/signers': '^5.0.0',
 };
 
-export function syncPackageJson(
+export async function syncPackageJson(
     renderMap: RenderMap<Fragment>,
+    formatCode: CodeFormatter,
     options: Pick<
         RenderOptions,
         'dependencyMap' | 'dependencyVersions' | 'packageFolder' | 'syncPackageJson' | 'useGranularImports'
     >,
-): void {
+): Promise<void> {
     const shouldSyncPackageJson = options.syncPackageJson ?? false;
     const packageFolder = options.packageFolder;
 
@@ -72,10 +74,10 @@ export function syncPackageJson(
 
     if (fileExists(packageJsonPath)) {
         const packageJson = updateExistingPackageJson(readJson(packageJsonPath), usedDependencies);
-        writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
+        await writePackageJson(packageJson, packageJsonPath, formatCode);
     } else {
         const packageJson = createNewPackageJson(usedDependencies);
-        writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
+        await writePackageJson(packageJson, packageJsonPath, formatCode);
     }
 }
 
@@ -234,4 +236,14 @@ function updateDependency(dependencyGroup: Record<string, string>, dependency: s
     const currentRange = dependencyGroup[dependency];
     if (!shouldUpdateRange(dependency, currentRange, requiredRange)) return;
     dependencyGroup[dependency] = requiredRange;
+}
+
+async function writePackageJson(
+    packageJson: PackageJson,
+    packageJsonPath: string,
+    formatCode: CodeFormatter,
+): Promise<void> {
+    const packageJsonContent = JSON.stringify(packageJson, null, 2) + '\n';
+    const formattedContent = await formatCode(packageJsonContent, packageJsonPath);
+    writeFile(packageJsonPath, formattedContent);
 }

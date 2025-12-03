@@ -1,25 +1,25 @@
-import { joinPath, mapRenderMapContentAsync, RenderMap } from '@codama/renderers-core';
+import { joinPath, Path } from '@codama/renderers-core';
 import { Plugin, resolveConfig } from 'prettier';
+import * as babelPlugin from 'prettier/plugins/babel';
 import * as estreePlugin from 'prettier/plugins/estree';
 import * as typeScriptPlugin from 'prettier/plugins/typescript';
 import { format } from 'prettier/standalone';
 
-import { Fragment } from './fragment';
 import { RenderOptions } from './options';
 
 export type PrettierOptions = Parameters<typeof format>[1];
 
 const DEFAULT_PRETTIER_OPTIONS: PrettierOptions = {
-    parser: 'typescript',
-    plugins: [estreePlugin as Plugin<unknown>, typeScriptPlugin],
+    plugins: [estreePlugin as Plugin<unknown>, typeScriptPlugin, babelPlugin],
 };
 
-export async function formatCode(
-    renderMap: RenderMap<Fragment>,
+export type CodeFormatter = (code: string, path: Path) => Promise<string>;
+
+export async function getCodeFormatter(
     options: Pick<RenderOptions, 'formatCode' | 'packageFolder' | 'prettierOptions'>,
-): Promise<RenderMap<Fragment>> {
+): Promise<CodeFormatter> {
     const shouldFormatCode = options.formatCode ?? true;
-    if (!shouldFormatCode) return renderMap;
+    if (!shouldFormatCode) return code => Promise.resolve(code);
 
     const prettierOptions: PrettierOptions = {
         ...DEFAULT_PRETTIER_OPTIONS,
@@ -27,7 +27,7 @@ export async function formatCode(
         ...options.prettierOptions,
     };
 
-    return await mapRenderMapContentAsync(renderMap, code => format(code, prettierOptions));
+    return (code, filepath) => format(code, { ...prettierOptions, filepath });
 }
 
 async function resolvePrettierOptions(packageFolder: string | undefined): Promise<PrettierOptions | null> {
