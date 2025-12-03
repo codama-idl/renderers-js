@@ -1,5 +1,11 @@
 # @codama/renderers-js
 
+## 1.5.4
+
+### Patch Changes
+
+- [#82](https://github.com/codama-idl/renderers-js/pull/82) [`2b2aa85`](https://github.com/codama-idl/renderers-js/commit/2b2aa85bf23d0c997c73f867ffa3b57afb073554) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Fix Prettier config resolution by providing file path instead of directory
+
 ## 1.5.3
 
 ### Patch Changes
