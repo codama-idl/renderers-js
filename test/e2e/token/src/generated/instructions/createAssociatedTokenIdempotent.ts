@@ -84,7 +84,7 @@ export function getCreateAssociatedTokenIdempotentInstructionDataCodec(): FixedS
 > {
     return combineCodec(
         getCreateAssociatedTokenIdempotentInstructionDataEncoder(),
-        getCreateAssociatedTokenIdempotentInstructionDataDecoder()
+        getCreateAssociatedTokenIdempotentInstructionDataDecoder(),
     );
 }
 
@@ -127,7 +127,7 @@ export async function getCreateAssociatedTokenIdempotentInstructionAsync<
         TAccountSystemProgram,
         TAccountTokenProgram
     >,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): Promise<
     CreateAssociatedTokenIdempotentInstruction<
         TProgramAddress,
@@ -232,7 +232,7 @@ export function getCreateAssociatedTokenIdempotentInstruction<
         TAccountSystemProgram,
         TAccountTokenProgram
     >,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): CreateAssociatedTokenIdempotentInstruction<
     TProgramAddress,
     TAccountPayer,
@@ -317,7 +317,7 @@ export function parseCreateAssociatedTokenIdempotentInstruction<
 >(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedCreateAssociatedTokenIdempotentInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 6) {
         // TODO: Coded error.

@@ -31,7 +31,7 @@ export enum DummyInstruction {
 }
 
 export function identifyDummyInstruction(
-    instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array
+    instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array,
 ): DummyInstruction {
     const data = 'data' in instruction ? instruction.data : instruction;
     if (containsBytes(data, getU32Encoder().encode(42), 0)) {

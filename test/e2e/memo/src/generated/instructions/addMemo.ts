@@ -54,7 +54,7 @@ export type AddMemoInput = {
 
 export function getAddMemoInstruction<TProgramAddress extends Address = typeof MEMO_PROGRAM_ADDRESS>(
     input: AddMemoInput,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): AddMemoInstruction<TProgramAddress> {
     // Program address.
     const programAddress = config?.programAddress ?? MEMO_PROGRAM_ADDRESS;
@@ -82,7 +82,7 @@ export type ParsedAddMemoInstruction<TProgram extends string = typeof MEMO_PROGR
 };
 
 export function parseAddMemoInstruction<TProgram extends string>(
-    instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>
+    instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
 ): ParsedAddMemoInstruction<TProgram> {
     return {
         programAddress: instruction.programAddress,

@@ -79,7 +79,7 @@ export function getBurnCheckedInstructionDataEncoder(): FixedSizeEncoder<BurnChe
             ['amount', getU64Encoder()],
             ['decimals', getU8Encoder()],
         ]),
-        value => ({ ...value, discriminator: BURN_CHECKED_DISCRIMINATOR })
+        value => ({ ...value, discriminator: BURN_CHECKED_DISCRIMINATOR }),
     );
 }
 
@@ -121,7 +121,7 @@ export function getBurnCheckedInstruction<
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,
 >(
     input: BurnCheckedInput<TAccountAccount, TAccountMint, TAccountAuthority>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): BurnCheckedInstruction<
     TProgramAddress,
     TAccountAccount,
@@ -190,7 +190,7 @@ export type ParsedBurnCheckedInstruction<
 export function parseBurnCheckedInstruction<TProgram extends string, TAccountMetas extends readonly AccountMeta[]>(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedBurnCheckedInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 3) {
         // TODO: Coded error.

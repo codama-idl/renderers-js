@@ -81,7 +81,7 @@ export function getTransferCheckedInstructionDataEncoder(): FixedSizeEncoder<Tra
             ['amount', getU64Encoder()],
             ['decimals', getU8Encoder()],
         ]),
-        value => ({ ...value, discriminator: TRANSFER_CHECKED_DISCRIMINATOR })
+        value => ({ ...value, discriminator: TRANSFER_CHECKED_DISCRIMINATOR }),
     );
 }
 
@@ -127,7 +127,7 @@ export function getTransferCheckedInstruction<
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,
 >(
     input: TransferCheckedInput<TAccountSource, TAccountMint, TAccountDestination, TAccountAuthority>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): TransferCheckedInstruction<
     TProgramAddress,
     TAccountSource,
@@ -202,7 +202,7 @@ export type ParsedTransferCheckedInstruction<
 export function parseTransferCheckedInstruction<TProgram extends string, TAccountMetas extends readonly AccountMeta[]>(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedTransferCheckedInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 4) {
         // TODO: Coded error.

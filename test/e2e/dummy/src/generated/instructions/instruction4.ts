@@ -54,7 +54,7 @@ export type Instruction4Input = {
 
 export function getInstruction4Instruction<TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS>(
     input: Instruction4Input,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): Instruction4Instruction<TProgramAddress> {
     // Program address.
     const programAddress = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
@@ -74,7 +74,7 @@ export type ParsedInstruction4Instruction<TProgram extends string = typeof DUMMY
 };
 
 export function parseInstruction4Instruction<TProgram extends string>(
-    instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>
+    instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
 ): ParsedInstruction4Instruction<TProgram> {
     return {
         programAddress: instruction.programAddress,

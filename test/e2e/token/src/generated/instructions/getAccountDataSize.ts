@@ -75,7 +75,7 @@ export function getGetAccountDataSizeInstruction<
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,
 >(
     input: GetAccountDataSizeInput<TAccountMint>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): GetAccountDataSizeInstruction<TProgramAddress, TAccountMint> {
     // Program address.
     const programAddress = config?.programAddress ?? TOKEN_PROGRAM_ADDRESS;
@@ -110,7 +110,7 @@ export function parseGetAccountDataSizeInstruction<
 >(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedGetAccountDataSizeInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 1) {
         // TODO: Coded error.

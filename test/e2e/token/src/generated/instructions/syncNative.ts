@@ -75,7 +75,7 @@ export function getSyncNativeInstruction<
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,
 >(
     input: SyncNativeInput<TAccountAccount>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): SyncNativeInstruction<TProgramAddress, TAccountAccount> {
     // Program address.
     const programAddress = config?.programAddress ?? TOKEN_PROGRAM_ADDRESS;
@@ -107,7 +107,7 @@ export type ParsedSyncNativeInstruction<
 export function parseSyncNativeInstruction<TProgram extends string, TAccountMetas extends readonly AccountMeta[]>(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedSyncNativeInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 1) {
         // TODO: Coded error.

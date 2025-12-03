@@ -81,7 +81,7 @@ export function getExecuteInstructionDataEncoder(): FixedSizeEncoder<ExecuteInst
             ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
             ['amount', getU64Encoder()],
         ]),
-        value => ({ ...value, discriminator: EXECUTE_DISCRIMINATOR })
+        value => ({ ...value, discriminator: EXECUTE_DISCRIMINATOR }),
     );
 }
 
@@ -134,7 +134,7 @@ export async function getExecuteInstructionAsync<
         TAccountGuard,
         TAccountInstructionSysvarAccount
     >,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): Promise<
     ExecuteInstruction<
         TProgramAddress,
@@ -173,7 +173,7 @@ export async function getExecuteInstructionAsync<
                 getBytesEncoder().encode(
                     new Uint8Array([
                         101, 120, 116, 114, 97, 45, 97, 99, 99, 111, 117, 110, 116, 45, 109, 101, 116, 97, 115,
-                    ])
+                    ]),
                 ),
                 getAddressEncoder().encode(expectAddress(accounts.mint.value)),
             ],
@@ -247,7 +247,7 @@ export function getExecuteInstruction<
         TAccountGuard,
         TAccountInstructionSysvarAccount
     >,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): ExecuteInstruction<
     TProgramAddress,
     TAccountSourceAccount,
@@ -327,7 +327,7 @@ export type ParsedExecuteInstruction<
 export function parseExecuteInstruction<TProgram extends string, TAccountMetas extends readonly AccountMeta[]>(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedExecuteInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 7) {
         // TODO: Coded error.

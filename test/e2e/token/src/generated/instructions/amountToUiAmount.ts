@@ -62,7 +62,7 @@ export function getAmountToUiAmountInstructionDataEncoder(): FixedSizeEncoder<Am
             ['discriminator', getU8Encoder()],
             ['amount', getU64Encoder()],
         ]),
-        value => ({ ...value, discriminator: AMOUNT_TO_UI_AMOUNT_DISCRIMINATOR })
+        value => ({ ...value, discriminator: AMOUNT_TO_UI_AMOUNT_DISCRIMINATOR }),
     );
 }
 
@@ -91,7 +91,7 @@ export function getAmountToUiAmountInstruction<
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,
 >(
     input: AmountToUiAmountInput<TAccountMint>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): AmountToUiAmountInstruction<TProgramAddress, TAccountMint> {
     // Program address.
     const programAddress = config?.programAddress ?? TOKEN_PROGRAM_ADDRESS;
@@ -126,7 +126,7 @@ export type ParsedAmountToUiAmountInstruction<
 export function parseAmountToUiAmountInstruction<TProgram extends string, TAccountMetas extends readonly AccountMeta[]>(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedAmountToUiAmountInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 1) {
         // TODO: Coded error.

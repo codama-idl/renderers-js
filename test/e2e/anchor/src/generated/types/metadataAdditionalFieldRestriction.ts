@@ -84,22 +84,22 @@ export function getMetadataAdditionalFieldRestrictionCodec(): Codec<
 // Data Enum Helpers.
 export function metadataAdditionalFieldRestriction(
     kind: 'Includes',
-    data: GetDiscriminatedUnionVariantContent<MetadataAdditionalFieldRestrictionArgs, '__kind', 'Includes'>['fields']
+    data: GetDiscriminatedUnionVariantContent<MetadataAdditionalFieldRestrictionArgs, '__kind', 'Includes'>['fields'],
 ): GetDiscriminatedUnionVariant<MetadataAdditionalFieldRestrictionArgs, '__kind', 'Includes'>;
 export function metadataAdditionalFieldRestriction(
     kind: 'Excludes',
-    data: GetDiscriminatedUnionVariantContent<MetadataAdditionalFieldRestrictionArgs, '__kind', 'Excludes'>['fields']
+    data: GetDiscriminatedUnionVariantContent<MetadataAdditionalFieldRestrictionArgs, '__kind', 'Excludes'>['fields'],
 ): GetDiscriminatedUnionVariant<MetadataAdditionalFieldRestrictionArgs, '__kind', 'Excludes'>;
 export function metadataAdditionalFieldRestriction<K extends MetadataAdditionalFieldRestrictionArgs['__kind'], Data>(
     kind: K,
-    data?: Data
+    data?: Data,
 ) {
     return Array.isArray(data) ? { __kind: kind, fields: data } : { __kind: kind, ...(data ?? {}) };
 }
 
 export function isMetadataAdditionalFieldRestriction<K extends MetadataAdditionalFieldRestriction['__kind']>(
     kind: K,
-    value: MetadataAdditionalFieldRestriction
+    value: MetadataAdditionalFieldRestriction,
 ): value is MetadataAdditionalFieldRestriction & { __kind: K } {
     return value.__kind === kind;
 }

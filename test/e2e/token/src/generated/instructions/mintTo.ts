@@ -74,7 +74,7 @@ export function getMintToInstructionDataEncoder(): FixedSizeEncoder<MintToInstru
             ['discriminator', getU8Encoder()],
             ['amount', getU64Encoder()],
         ]),
-        value => ({ ...value, discriminator: MINT_TO_DISCRIMINATOR })
+        value => ({ ...value, discriminator: MINT_TO_DISCRIMINATOR }),
     );
 }
 
@@ -111,7 +111,7 @@ export function getMintToInstruction<
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,
 >(
     input: MintToInput<TAccountMint, TAccountToken, TAccountMintAuthority>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): MintToInstruction<
     TProgramAddress,
     TAccountMint,
@@ -180,7 +180,7 @@ export type ParsedMintToInstruction<
 export function parseMintToInstruction<TProgram extends string, TAccountMetas extends readonly AccountMeta[]>(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedMintToInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 3) {
         // TODO: Coded error.

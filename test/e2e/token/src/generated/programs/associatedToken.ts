@@ -23,7 +23,7 @@ export enum AssociatedTokenInstruction {
 }
 
 export function identifyAssociatedTokenInstruction(
-    instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array
+    instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array,
 ): AssociatedTokenInstruction {
     const data = 'data' in instruction ? instruction.data : instruction;
     if (containsBytes(data, getU8Encoder().encode(0), 0)) {

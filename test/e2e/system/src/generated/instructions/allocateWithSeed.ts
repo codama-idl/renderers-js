@@ -85,7 +85,7 @@ export function getAllocateWithSeedInstructionDataEncoder(): Encoder<AllocateWit
             ['space', getU64Encoder()],
             ['programAddress', getAddressEncoder()],
         ]),
-        value => ({ ...value, discriminator: ALLOCATE_WITH_SEED_DISCRIMINATOR })
+        value => ({ ...value, discriminator: ALLOCATE_WITH_SEED_DISCRIMINATOR }),
     );
 }
 
@@ -124,7 +124,7 @@ export function getAllocateWithSeedInstruction<
     TProgramAddress extends Address = typeof SYSTEM_PROGRAM_ADDRESS,
 >(
     input: AllocateWithSeedInput<TAccountNewAccount, TAccountBaseAccount>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): AllocateWithSeedInstruction<TProgramAddress, TAccountNewAccount, TAccountBaseAccount> {
     // Program address.
     const programAddress = config?.programAddress ?? SYSTEM_PROGRAM_ADDRESS;
@@ -162,7 +162,7 @@ export type ParsedAllocateWithSeedInstruction<
 export function parseAllocateWithSeedInstruction<TProgram extends string, TAccountMetas extends readonly AccountMeta[]>(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedAllocateWithSeedInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 2) {
         // TODO: Coded error.

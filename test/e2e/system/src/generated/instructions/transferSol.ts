@@ -65,7 +65,7 @@ export function getTransferSolInstructionDataEncoder(): FixedSizeEncoder<Transfe
             ['discriminator', getU32Encoder()],
             ['amount', getU64Encoder()],
         ]),
-        value => ({ ...value, discriminator: TRANSFER_SOL_DISCRIMINATOR })
+        value => ({ ...value, discriminator: TRANSFER_SOL_DISCRIMINATOR }),
     );
 }
 
@@ -95,7 +95,7 @@ export function getTransferSolInstruction<
     TProgramAddress extends Address = typeof SYSTEM_PROGRAM_ADDRESS,
 >(
     input: TransferSolInput<TAccountSource, TAccountDestination>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): TransferSolInstruction<TProgramAddress, TAccountSource, TAccountDestination> {
     // Program address.
     const programAddress = config?.programAddress ?? SYSTEM_PROGRAM_ADDRESS;
@@ -133,7 +133,7 @@ export type ParsedTransferSolInstruction<
 export function parseTransferSolInstruction<TProgram extends string, TAccountMetas extends readonly AccountMeta[]>(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedTransferSolInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 2) {
         // TODO: Coded error.

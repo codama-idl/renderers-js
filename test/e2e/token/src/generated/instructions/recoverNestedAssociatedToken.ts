@@ -96,7 +96,7 @@ export function getRecoverNestedAssociatedTokenInstructionDataCodec(): FixedSize
 > {
     return combineCodec(
         getRecoverNestedAssociatedTokenInstructionDataEncoder(),
-        getRecoverNestedAssociatedTokenInstructionDataDecoder()
+        getRecoverNestedAssociatedTokenInstructionDataDecoder(),
     );
 }
 
@@ -144,7 +144,7 @@ export async function getRecoverNestedAssociatedTokenInstructionAsync<
         TAccountWalletAddress,
         TAccountTokenProgram
     >,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): Promise<
     RecoverNestedAssociatedTokenInstruction<
         TProgramAddress,
@@ -271,7 +271,7 @@ export function getRecoverNestedAssociatedTokenInstruction<
         TAccountWalletAddress,
         TAccountTokenProgram
     >,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): RecoverNestedAssociatedTokenInstruction<
     TProgramAddress,
     TAccountNestedAssociatedAccountAddress,
@@ -361,7 +361,7 @@ export function parseRecoverNestedAssociatedTokenInstruction<
 >(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedRecoverNestedAssociatedTokenInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 7) {
         // TODO: Coded error.

@@ -81,7 +81,7 @@ export function getApproveCheckedInstructionDataEncoder(): FixedSizeEncoder<Appr
             ['amount', getU64Encoder()],
             ['decimals', getU8Encoder()],
         ]),
-        value => ({ ...value, discriminator: APPROVE_CHECKED_DISCRIMINATOR })
+        value => ({ ...value, discriminator: APPROVE_CHECKED_DISCRIMINATOR }),
     );
 }
 
@@ -127,7 +127,7 @@ export function getApproveCheckedInstruction<
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,
 >(
     input: ApproveCheckedInput<TAccountSource, TAccountMint, TAccountDelegate, TAccountOwner>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): ApproveCheckedInstruction<
     TProgramAddress,
     TAccountSource,
@@ -202,7 +202,7 @@ export type ParsedApproveCheckedInstruction<
 export function parseApproveCheckedInstruction<TProgram extends string, TAccountMetas extends readonly AccountMeta[]>(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedApproveCheckedInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 4) {
         // TODO: Coded error.

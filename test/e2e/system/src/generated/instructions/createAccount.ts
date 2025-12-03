@@ -79,7 +79,7 @@ export function getCreateAccountInstructionDataEncoder(): FixedSizeEncoder<Creat
             ['space', getU64Encoder()],
             ['programAddress', getAddressEncoder()],
         ]),
-        value => ({ ...value, discriminator: CREATE_ACCOUNT_DISCRIMINATOR })
+        value => ({ ...value, discriminator: CREATE_ACCOUNT_DISCRIMINATOR }),
     );
 }
 
@@ -113,7 +113,7 @@ export function getCreateAccountInstruction<
     TProgramAddress extends Address = typeof SYSTEM_PROGRAM_ADDRESS,
 >(
     input: CreateAccountInput<TAccountPayer, TAccountNewAccount>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): CreateAccountInstruction<TProgramAddress, TAccountPayer, TAccountNewAccount> & InstructionWithByteDelta {
     // Program address.
     const programAddress = config?.programAddress ?? SYSTEM_PROGRAM_ADDRESS;
@@ -155,7 +155,7 @@ export type ParsedCreateAccountInstruction<
 export function parseCreateAccountInstruction<TProgram extends string, TAccountMetas extends readonly AccountMeta[]>(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedCreateAccountInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 2) {
         // TODO: Coded error.

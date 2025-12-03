@@ -84,7 +84,7 @@ export function getCreateAssociatedTokenInstructionDataCodec(): FixedSizeCodec<
 > {
     return combineCodec(
         getCreateAssociatedTokenInstructionDataEncoder(),
-        getCreateAssociatedTokenInstructionDataDecoder()
+        getCreateAssociatedTokenInstructionDataDecoder(),
     );
 }
 
@@ -127,7 +127,7 @@ export async function getCreateAssociatedTokenInstructionAsync<
         TAccountSystemProgram,
         TAccountTokenProgram
     >,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): Promise<
     CreateAssociatedTokenInstruction<
         TProgramAddress,
@@ -232,7 +232,7 @@ export function getCreateAssociatedTokenInstruction<
         TAccountSystemProgram,
         TAccountTokenProgram
     >,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): CreateAssociatedTokenInstruction<
     TProgramAddress,
     TAccountPayer,
@@ -317,7 +317,7 @@ export function parseCreateAssociatedTokenInstruction<
 >(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedCreateAssociatedTokenInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 6) {
         // TODO: Coded error.
