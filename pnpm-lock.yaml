@@ -15,8 +15,8 @@ importers:
         specifier: ^1.4.4
         version: 1.4.4
       '@codama/renderers-core':
-        specifier: ^1.3.3
-        version: 1.3.3
+        specifier: ^1.3.4
+        version: 1.3.4
       '@codama/visitors-core':
         specifier: ^1.4.4
         version: 1.4.4
@@ -318,8 +318,8 @@ packages:
   '@codama/nodes@1.4.4':
     resolution: {integrity: sha512-JzlY5qLk3rhsnu0nerC/Vkc9/2HjdsLtEpBtST0dxC1j9kpfHvIc2uyIj+5hlB1YIBRJIDNo+UOHGla8hidkaA==}
 
-  '@codama/renderers-core@1.3.3':
-    resolution: {integrity: sha512-L2gvsgB9ZGwA0q2F9u8AgNJf2aqAWzyRjokhLNoS9IPEQaV6ALQ4Z9FQ7/snNzEg3OvFbCg21jUynMN0brfjcw==}
+  '@codama/renderers-core@1.3.4':
+    resolution: {integrity: sha512-+qEPsvpCjUElohgJTcVNsjy6u1LjoCcwo72NbcffLF9QU5mUjNwL8EhFouEq2K60H/QKmNaiVKLQfJcQ/xCT9A==}
 
   '@codama/visitors-core@1.4.4':
     resolution: {integrity: sha512-vk/4tczViAUHa7c8PF7FxN+JWbuTcDB0pIdrDbbO6eBPKDPQGZCUCEp6rXIYBVxfO129jWrNf2+CuyYre/c/vA==}
@@ -3564,7 +3564,7 @@ snapshots:
       '@codama/errors': 1.4.4
       '@codama/node-types': 1.4.4
 
-  '@codama/renderers-core@1.3.3':
+  '@codama/renderers-core@1.3.4':
     dependencies:
       '@codama/errors': 1.4.4
       '@codama/nodes': 1.4.4
@@ -4421,8 +4421,8 @@ snapshots:
 
   '@typescript-eslint/project-service@8.43.0(typescript@5.9.3)':
     dependencies:
-      '@typescript-eslint/tsconfig-utils': 8.43.0(typescript@5.9.3)
-      '@typescript-eslint/types': 8.43.0
+      '@typescript-eslint/tsconfig-utils': 8.48.1(typescript@5.9.3)
+      '@typescript-eslint/types': 8.48.1
       debug: 4.4.3
       typescript: 5.9.3
     transitivePeerDependencies:
