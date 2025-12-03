@@ -1,5 +1,13 @@
 # @codama/renderers-js
 
+## 1.5.5
+
+### Patch Changes
+
+- [#86](https://github.com/codama-idl/renderers-js/pull/86) [`c781ee8`](https://github.com/codama-idl/renderers-js/commit/c781ee823680eb8829c08c68c73c0a351f289e0d) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Use standalone format function from Prettier and remove opinionated defaults
+
+- [#87](https://github.com/codama-idl/renderers-js/pull/87) [`e468f89`](https://github.com/codama-idl/renderers-js/commit/e468f89764427f5be175b88a62bb919c540f7817) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Use file path when formatting and format updated package.json
+
 ## 1.5.4
 
 ### Patch Changes
