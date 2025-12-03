@@ -107,7 +107,7 @@ export function getUpdateGuardInstructionDataEncoder(): Encoder<UpdateGuardInstr
             ['transferAmountRule', getOptionEncoder(getTransferAmountRuleEncoder())],
             ['additionalFieldsRule', getArrayEncoder(getMetadataAdditionalFieldRuleEncoder())],
         ]),
-        value => ({ ...value, discriminator: UPDATE_GUARD_DISCRIMINATOR })
+        value => ({ ...value, discriminator: UPDATE_GUARD_DISCRIMINATOR }),
     );
 }
 
@@ -163,7 +163,7 @@ export async function getUpdateGuardInstructionAsync<
         TAccountTokenProgram,
         TAccountSystemProgram
     >,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): Promise<
     UpdateGuardInstruction<
         TProgramAddress,
@@ -201,7 +201,7 @@ export async function getUpdateGuardInstructionAsync<
                     new Uint8Array([
                         119, 101, 110, 95, 116, 111, 107, 101, 110, 95, 116, 114, 97, 110, 115, 102, 101, 114, 95, 103,
                         117, 97, 114, 100,
-                    ])
+                    ]),
                 ),
                 getBytesEncoder().encode(new Uint8Array([103, 117, 97, 114, 100, 95, 118, 49])),
                 getAddressEncoder().encode(expectAddress(accounts.mint.value)),
@@ -287,7 +287,7 @@ export function getUpdateGuardInstruction<
         TAccountTokenProgram,
         TAccountSystemProgram
     >,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): UpdateGuardInstruction<
     TProgramAddress,
     TAccountGuard,
@@ -366,7 +366,7 @@ export type ParsedUpdateGuardInstruction<
 export function parseUpdateGuardInstruction<TProgram extends string, TAccountMetas extends readonly AccountMeta[]>(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedUpdateGuardInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 6) {
         // TODO: Coded error.

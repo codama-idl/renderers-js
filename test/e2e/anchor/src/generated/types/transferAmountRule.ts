@@ -64,19 +64,19 @@ export function getTransferAmountRuleCodec(): Codec<TransferAmountRuleArgs, Tran
 // Data Enum Helpers.
 export function transferAmountRule(
     kind: 'Above',
-    data: GetDiscriminatedUnionVariantContent<TransferAmountRuleArgs, '__kind', 'Above'>['fields']
+    data: GetDiscriminatedUnionVariantContent<TransferAmountRuleArgs, '__kind', 'Above'>['fields'],
 ): GetDiscriminatedUnionVariant<TransferAmountRuleArgs, '__kind', 'Above'>;
 export function transferAmountRule(
     kind: 'Below',
-    data: GetDiscriminatedUnionVariantContent<TransferAmountRuleArgs, '__kind', 'Below'>['fields']
+    data: GetDiscriminatedUnionVariantContent<TransferAmountRuleArgs, '__kind', 'Below'>['fields'],
 ): GetDiscriminatedUnionVariant<TransferAmountRuleArgs, '__kind', 'Below'>;
 export function transferAmountRule(
     kind: 'Equal',
-    data: GetDiscriminatedUnionVariantContent<TransferAmountRuleArgs, '__kind', 'Equal'>['fields']
+    data: GetDiscriminatedUnionVariantContent<TransferAmountRuleArgs, '__kind', 'Equal'>['fields'],
 ): GetDiscriminatedUnionVariant<TransferAmountRuleArgs, '__kind', 'Equal'>;
 export function transferAmountRule(
     kind: 'Rang',
-    data: GetDiscriminatedUnionVariantContent<TransferAmountRuleArgs, '__kind', 'Rang'>['fields']
+    data: GetDiscriminatedUnionVariantContent<TransferAmountRuleArgs, '__kind', 'Rang'>['fields'],
 ): GetDiscriminatedUnionVariant<TransferAmountRuleArgs, '__kind', 'Rang'>;
 export function transferAmountRule<K extends TransferAmountRuleArgs['__kind'], Data>(kind: K, data?: Data) {
     return Array.isArray(data) ? { __kind: kind, fields: data } : { __kind: kind, ...(data ?? {}) };
@@ -84,7 +84,7 @@ export function transferAmountRule<K extends TransferAmountRuleArgs['__kind'], D
 
 export function isTransferAmountRule<K extends TransferAmountRule['__kind']>(
     kind: K,
-    value: TransferAmountRule
+    value: TransferAmountRule,
 ): value is TransferAmountRule & { __kind: K } {
     return value.__kind === kind;
 }

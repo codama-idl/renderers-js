@@ -98,7 +98,7 @@ export function getAdvanceNonceAccountInstruction<
     TProgramAddress extends Address = typeof SYSTEM_PROGRAM_ADDRESS,
 >(
     input: AdvanceNonceAccountInput<TAccountNonceAccount, TAccountRecentBlockhashesSysvar, TAccountNonceAuthority>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): AdvanceNonceAccountInstruction<
     TProgramAddress,
     TAccountNonceAccount,
@@ -158,7 +158,7 @@ export function parseAdvanceNonceAccountInstruction<
 >(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedAdvanceNonceAccountInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 3) {
         // TODO: Coded error.

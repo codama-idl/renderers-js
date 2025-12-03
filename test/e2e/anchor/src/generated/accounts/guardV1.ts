@@ -101,7 +101,7 @@ export function getGuardV1Encoder(): Encoder<GuardV1Args> {
             ['transferAmountRule', getOptionEncoder(getTransferAmountRuleEncoder())],
             ['additionalFieldsRule', getArrayEncoder(getMetadataAdditionalFieldRuleEncoder())],
         ]),
-        value => ({ ...value, discriminator: GUARD_V1_DISCRIMINATOR })
+        value => ({ ...value, discriminator: GUARD_V1_DISCRIMINATOR }),
     );
 }
 
@@ -123,13 +123,13 @@ export function getGuardV1Codec(): Codec<GuardV1Args, GuardV1> {
 }
 
 export function decodeGuardV1<TAddress extends string = string>(
-    encodedAccount: EncodedAccount<TAddress>
+    encodedAccount: EncodedAccount<TAddress>,
 ): Account<GuardV1, TAddress>;
 export function decodeGuardV1<TAddress extends string = string>(
-    encodedAccount: MaybeEncodedAccount<TAddress>
+    encodedAccount: MaybeEncodedAccount<TAddress>,
 ): MaybeAccount<GuardV1, TAddress>;
 export function decodeGuardV1<TAddress extends string = string>(
-    encodedAccount: EncodedAccount<TAddress> | MaybeEncodedAccount<TAddress>
+    encodedAccount: EncodedAccount<TAddress> | MaybeEncodedAccount<TAddress>,
 ): Account<GuardV1, TAddress> | MaybeAccount<GuardV1, TAddress> {
     return decodeAccount(encodedAccount as MaybeEncodedAccount<TAddress>, getGuardV1Decoder());
 }
@@ -137,7 +137,7 @@ export function decodeGuardV1<TAddress extends string = string>(
 export async function fetchGuardV1<TAddress extends string = string>(
     rpc: Parameters<typeof fetchEncodedAccount>[0],
     address: Address<TAddress>,
-    config?: FetchAccountConfig
+    config?: FetchAccountConfig,
 ): Promise<Account<GuardV1, TAddress>> {
     const maybeAccount = await fetchMaybeGuardV1(rpc, address, config);
     assertAccountExists(maybeAccount);
@@ -147,7 +147,7 @@ export async function fetchGuardV1<TAddress extends string = string>(
 export async function fetchMaybeGuardV1<TAddress extends string = string>(
     rpc: Parameters<typeof fetchEncodedAccount>[0],
     address: Address<TAddress>,
-    config?: FetchAccountConfig
+    config?: FetchAccountConfig,
 ): Promise<MaybeAccount<GuardV1, TAddress>> {
     const maybeAccount = await fetchEncodedAccount(rpc, address, config);
     return decodeGuardV1(maybeAccount);
@@ -156,7 +156,7 @@ export async function fetchMaybeGuardV1<TAddress extends string = string>(
 export async function fetchAllGuardV1(
     rpc: Parameters<typeof fetchEncodedAccounts>[0],
     addresses: Array<Address>,
-    config?: FetchAccountsConfig
+    config?: FetchAccountsConfig,
 ): Promise<Account<GuardV1>[]> {
     const maybeAccounts = await fetchAllMaybeGuardV1(rpc, addresses, config);
     assertAccountsExist(maybeAccounts);
@@ -166,7 +166,7 @@ export async function fetchAllGuardV1(
 export async function fetchAllMaybeGuardV1(
     rpc: Parameters<typeof fetchEncodedAccounts>[0],
     addresses: Array<Address>,
-    config?: FetchAccountsConfig
+    config?: FetchAccountsConfig,
 ): Promise<MaybeAccount<GuardV1>[]> {
     const maybeAccounts = await fetchEncodedAccounts(rpc, addresses, config);
     return maybeAccounts.map(maybeAccount => decodeGuardV1(maybeAccount));

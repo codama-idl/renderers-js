@@ -74,7 +74,7 @@ export function getTransferInstructionDataEncoder(): FixedSizeEncoder<TransferIn
             ['discriminator', getU8Encoder()],
             ['amount', getU64Encoder()],
         ]),
-        value => ({ ...value, discriminator: TRANSFER_DISCRIMINATOR })
+        value => ({ ...value, discriminator: TRANSFER_DISCRIMINATOR }),
     );
 }
 
@@ -114,7 +114,7 @@ export function getTransferInstruction<
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,
 >(
     input: TransferInput<TAccountSource, TAccountDestination, TAccountAuthority>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): TransferInstruction<
     TProgramAddress,
     TAccountSource,
@@ -183,7 +183,7 @@ export type ParsedTransferInstruction<
 export function parseTransferInstruction<TProgram extends string, TAccountMetas extends readonly AccountMeta[]>(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedTransferInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 3) {
         // TODO: Coded error.

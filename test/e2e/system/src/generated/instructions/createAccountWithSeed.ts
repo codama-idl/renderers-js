@@ -93,7 +93,7 @@ export function getCreateAccountWithSeedInstructionDataEncoder(): Encoder<Create
             ['space', getU64Encoder()],
             ['programAddress', getAddressEncoder()],
         ]),
-        value => ({ ...value, discriminator: CREATE_ACCOUNT_WITH_SEED_DISCRIMINATOR })
+        value => ({ ...value, discriminator: CREATE_ACCOUNT_WITH_SEED_DISCRIMINATOR }),
     );
 }
 
@@ -114,7 +114,7 @@ export function getCreateAccountWithSeedInstructionDataCodec(): Codec<
 > {
     return combineCodec(
         getCreateAccountWithSeedInstructionDataEncoder(),
-        getCreateAccountWithSeedInstructionDataDecoder()
+        getCreateAccountWithSeedInstructionDataDecoder(),
     );
 }
 
@@ -140,7 +140,7 @@ export function getCreateAccountWithSeedInstruction<
     TProgramAddress extends Address = typeof SYSTEM_PROGRAM_ADDRESS,
 >(
     input: CreateAccountWithSeedInput<TAccountPayer, TAccountNewAccount, TAccountBaseAccount>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): CreateAccountWithSeedInstruction<TProgramAddress, TAccountPayer, TAccountNewAccount, TAccountBaseAccount> {
     // Program address.
     const programAddress = config?.programAddress ?? SYSTEM_PROGRAM_ADDRESS;
@@ -187,7 +187,7 @@ export function parseCreateAccountWithSeedInstruction<
 >(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedCreateAccountWithSeedInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 3) {
         // TODO: Coded error.

@@ -126,7 +126,7 @@ export async function getInitializeInstructionAsync<
         TAccountSystemProgram,
         TAccountPayer
     >,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): Promise<
     InitializeInstruction<
         TProgramAddress,
@@ -160,7 +160,7 @@ export async function getInitializeInstructionAsync<
                 getBytesEncoder().encode(
                     new Uint8Array([
                         101, 120, 116, 114, 97, 45, 97, 99, 99, 111, 117, 110, 116, 45, 109, 101, 116, 97, 115,
-                    ])
+                    ]),
                 ),
                 getAddressEncoder().encode(expectAddress(accounts.mint.value)),
             ],
@@ -227,7 +227,7 @@ export function getInitializeInstruction<
         TAccountSystemProgram,
         TAccountPayer
     >,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): InitializeInstruction<
     TProgramAddress,
     TAccountExtraMetasAccount,
@@ -299,7 +299,7 @@ export type ParsedInitializeInstruction<
 export function parseInitializeInstruction<TProgram extends string, TAccountMetas extends readonly AccountMeta[]>(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedInitializeInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 6) {
         // TODO: Coded error.

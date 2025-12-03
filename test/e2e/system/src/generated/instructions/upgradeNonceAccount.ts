@@ -77,7 +77,7 @@ export function getUpgradeNonceAccountInstruction<
     TProgramAddress extends Address = typeof SYSTEM_PROGRAM_ADDRESS,
 >(
     input: UpgradeNonceAccountInput<TAccountNonceAccount>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): UpgradeNonceAccountInstruction<TProgramAddress, TAccountNonceAccount> {
     // Program address.
     const programAddress = config?.programAddress ?? SYSTEM_PROGRAM_ADDRESS;
@@ -111,7 +111,7 @@ export function parseUpgradeNonceAccountInstruction<
 >(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedUpgradeNonceAccountInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 1) {
         // TODO: Coded error.

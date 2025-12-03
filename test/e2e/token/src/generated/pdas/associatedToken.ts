@@ -20,7 +20,7 @@ export type AssociatedTokenSeeds = {
 /** The address of the associated token account. */
 export async function findAssociatedTokenPda(
     seeds: AssociatedTokenSeeds,
-    config: { programAddress?: Address | undefined } = {}
+    config: { programAddress?: Address | undefined } = {},
 ): Promise<ProgramDerivedAddress> {
     const {
         programAddress = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>,

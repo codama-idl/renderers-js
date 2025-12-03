@@ -61,7 +61,7 @@ export function getInitializeMultisig2InstructionDataEncoder(): FixedSizeEncoder
             ['discriminator', getU8Encoder()],
             ['m', getU8Encoder()],
         ]),
-        value => ({ ...value, discriminator: INITIALIZE_MULTISIG2_DISCRIMINATOR })
+        value => ({ ...value, discriminator: INITIALIZE_MULTISIG2_DISCRIMINATOR }),
     );
 }
 
@@ -91,7 +91,7 @@ export function getInitializeMultisig2Instruction<
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,
 >(
     input: InitializeMultisig2Input<TAccountMultisig>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): InitializeMultisig2Instruction<TProgramAddress, TAccountMultisig> {
     // Program address.
     const programAddress = config?.programAddress ?? TOKEN_PROGRAM_ADDRESS;
@@ -132,7 +132,7 @@ export function parseInitializeMultisig2Instruction<
 >(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedInitializeMultisig2Instruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 1) {
         // TODO: Coded error.

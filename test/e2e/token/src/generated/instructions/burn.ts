@@ -71,7 +71,7 @@ export function getBurnInstructionDataEncoder(): FixedSizeEncoder<BurnInstructio
             ['discriminator', getU8Encoder()],
             ['amount', getU64Encoder()],
         ]),
-        value => ({ ...value, discriminator: BURN_DISCRIMINATOR })
+        value => ({ ...value, discriminator: BURN_DISCRIMINATOR }),
     );
 }
 
@@ -108,7 +108,7 @@ export function getBurnInstruction<
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,
 >(
     input: BurnInput<TAccountAccount, TAccountMint, TAccountAuthority>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): BurnInstruction<
     TProgramAddress,
     TAccountAccount,
@@ -177,7 +177,7 @@ export type ParsedBurnInstruction<
 export function parseBurnInstruction<TProgram extends string, TAccountMetas extends readonly AccountMeta[]>(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedBurnInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 3) {
         // TODO: Coded error.

@@ -65,7 +65,7 @@ export function getAuthorizeNonceAccountInstructionDataEncoder(): FixedSizeEncod
             ['discriminator', getU32Encoder()],
             ['newNonceAuthority', getAddressEncoder()],
         ]),
-        value => ({ ...value, discriminator: AUTHORIZE_NONCE_ACCOUNT_DISCRIMINATOR })
+        value => ({ ...value, discriminator: AUTHORIZE_NONCE_ACCOUNT_DISCRIMINATOR }),
     );
 }
 
@@ -82,7 +82,7 @@ export function getAuthorizeNonceAccountInstructionDataCodec(): FixedSizeCodec<
 > {
     return combineCodec(
         getAuthorizeNonceAccountInstructionDataEncoder(),
-        getAuthorizeNonceAccountInstructionDataDecoder()
+        getAuthorizeNonceAccountInstructionDataDecoder(),
     );
 }
 
@@ -101,7 +101,7 @@ export function getAuthorizeNonceAccountInstruction<
     TProgramAddress extends Address = typeof SYSTEM_PROGRAM_ADDRESS,
 >(
     input: AuthorizeNonceAccountInput<TAccountNonceAccount, TAccountNonceAuthority>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): AuthorizeNonceAccountInstruction<TProgramAddress, TAccountNonceAccount, TAccountNonceAuthority> {
     // Program address.
     const programAddress = config?.programAddress ?? SYSTEM_PROGRAM_ADDRESS;
@@ -142,7 +142,7 @@ export function parseAuthorizeNonceAccountInstruction<
 >(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedAuthorizeNonceAccountInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 2) {
         // TODO: Coded error.

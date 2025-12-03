@@ -62,7 +62,7 @@ export function getAllocateInstructionDataEncoder(): FixedSizeEncoder<AllocateIn
             ['discriminator', getU32Encoder()],
             ['space', getU64Encoder()],
         ]),
-        value => ({ ...value, discriminator: ALLOCATE_DISCRIMINATOR })
+        value => ({ ...value, discriminator: ALLOCATE_DISCRIMINATOR }),
     );
 }
 
@@ -90,7 +90,7 @@ export function getAllocateInstruction<
     TProgramAddress extends Address = typeof SYSTEM_PROGRAM_ADDRESS,
 >(
     input: AllocateInput<TAccountNewAccount>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): AllocateInstruction<TProgramAddress, TAccountNewAccount> {
     // Program address.
     const programAddress = config?.programAddress ?? SYSTEM_PROGRAM_ADDRESS;
@@ -124,7 +124,7 @@ export type ParsedAllocateInstruction<
 export function parseAllocateInstruction<TProgram extends string, TAccountMetas extends readonly AccountMeta[]>(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedAllocateInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 1) {
         // TODO: Coded error.

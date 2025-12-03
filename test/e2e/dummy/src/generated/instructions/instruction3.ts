@@ -78,7 +78,7 @@ export type ParsedInstruction3Instruction<TProgram extends string = typeof DUMMY
 };
 
 export function parseInstruction3Instruction<TProgram extends string>(
-    instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>
+    instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
 ): ParsedInstruction3Instruction<TProgram> {
     return {
         programAddress: instruction.programAddress,

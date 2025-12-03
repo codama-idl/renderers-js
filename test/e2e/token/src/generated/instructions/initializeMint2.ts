@@ -81,7 +81,7 @@ export function getInitializeMint2InstructionDataEncoder(): Encoder<InitializeMi
             ...value,
             discriminator: INITIALIZE_MINT2_DISCRIMINATOR,
             freezeAuthority: value.freezeAuthority ?? none(),
-        })
+        }),
     );
 }
 
@@ -114,7 +114,7 @@ export function getInitializeMint2Instruction<
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,
 >(
     input: InitializeMint2Input<TAccountMint>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): InitializeMint2Instruction<TProgramAddress, TAccountMint> {
     // Program address.
     const programAddress = config?.programAddress ?? TOKEN_PROGRAM_ADDRESS;
@@ -149,7 +149,7 @@ export type ParsedInitializeMint2Instruction<
 export function parseInitializeMint2Instruction<TProgram extends string, TAccountMetas extends readonly AccountMeta[]>(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedInitializeMint2Instruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 1) {
         // TODO: Coded error.

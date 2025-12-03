@@ -30,7 +30,7 @@ export type ParsedInstruction1Instruction<TProgram extends string = typeof DUMMY
 };
 
 export function parseInstruction1Instruction<TProgram extends string>(
-    instruction: Instruction<TProgram>
+    instruction: Instruction<TProgram>,
 ): ParsedInstruction1Instruction<TProgram> {
     return { programAddress: instruction.programAddress };
 }

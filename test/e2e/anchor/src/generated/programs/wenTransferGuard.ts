@@ -22,14 +22,14 @@ export enum WenTransferGuardAccount {
 }
 
 export function identifyWenTransferGuardAccount(
-    account: { data: ReadonlyUint8Array } | ReadonlyUint8Array
+    account: { data: ReadonlyUint8Array } | ReadonlyUint8Array,
 ): WenTransferGuardAccount {
     const data = 'data' in account ? account.data : account;
     if (
         containsBytes(
             data,
             fixEncoderSize(getBytesEncoder(), 8).encode(new Uint8Array([185, 149, 156, 78, 245, 108, 172, 68])),
-            0
+            0,
         )
     ) {
         return WenTransferGuardAccount.GuardV1;
@@ -45,14 +45,14 @@ export enum WenTransferGuardInstruction {
 }
 
 export function identifyWenTransferGuardInstruction(
-    instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array
+    instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array,
 ): WenTransferGuardInstruction {
     const data = 'data' in instruction ? instruction.data : instruction;
     if (
         containsBytes(
             data,
             fixEncoderSize(getBytesEncoder(), 8).encode(new Uint8Array([251, 254, 17, 198, 219, 218, 154, 99])),
-            0
+            0,
         )
     ) {
         return WenTransferGuardInstruction.CreateGuard;
@@ -61,7 +61,7 @@ export function identifyWenTransferGuardInstruction(
         containsBytes(
             data,
             fixEncoderSize(getBytesEncoder(), 8).encode(new Uint8Array([105, 37, 101, 197, 75, 251, 102, 26])),
-            0
+            0,
         )
     ) {
         return WenTransferGuardInstruction.Execute;
@@ -70,7 +70,7 @@ export function identifyWenTransferGuardInstruction(
         containsBytes(
             data,
             fixEncoderSize(getBytesEncoder(), 8).encode(new Uint8Array([43, 34, 13, 49, 167, 88, 235, 235])),
-            0
+            0,
         )
     ) {
         return WenTransferGuardInstruction.Initialize;
@@ -79,7 +79,7 @@ export function identifyWenTransferGuardInstruction(
         containsBytes(
             data,
             fixEncoderSize(getBytesEncoder(), 8).encode(new Uint8Array([51, 38, 175, 180, 25, 249, 39, 24])),
-            0
+            0,
         )
     ) {
         return WenTransferGuardInstruction.UpdateGuard;

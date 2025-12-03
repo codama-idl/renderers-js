@@ -82,7 +82,7 @@ export function getSetAuthorityInstructionDataEncoder(): Encoder<SetAuthorityIns
             ['authorityType', getAuthorityTypeEncoder()],
             ['newAuthority', getOptionEncoder(getAddressEncoder())],
         ]),
-        value => ({ ...value, discriminator: SET_AUTHORITY_DISCRIMINATOR })
+        value => ({ ...value, discriminator: SET_AUTHORITY_DISCRIMINATOR }),
     );
 }
 
@@ -117,7 +117,7 @@ export function getSetAuthorityInstruction<
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,
 >(
     input: SetAuthorityInput<TAccountOwned, TAccountOwner>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): SetAuthorityInstruction<
     TProgramAddress,
     TAccountOwned,
@@ -176,7 +176,7 @@ export type ParsedSetAuthorityInstruction<
 export function parseSetAuthorityInstruction<TProgram extends string, TAccountMetas extends readonly AccountMeta[]>(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedSetAuthorityInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 2) {
         // TODO: Coded error.

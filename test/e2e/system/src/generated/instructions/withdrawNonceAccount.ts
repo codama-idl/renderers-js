@@ -77,7 +77,7 @@ export function getWithdrawNonceAccountInstructionDataEncoder(): FixedSizeEncode
             ['discriminator', getU32Encoder()],
             ['withdrawAmount', getU64Encoder()],
         ]),
-        value => ({ ...value, discriminator: WITHDRAW_NONCE_ACCOUNT_DISCRIMINATOR })
+        value => ({ ...value, discriminator: WITHDRAW_NONCE_ACCOUNT_DISCRIMINATOR }),
     );
 }
 
@@ -94,7 +94,7 @@ export function getWithdrawNonceAccountInstructionDataCodec(): FixedSizeCodec<
 > {
     return combineCodec(
         getWithdrawNonceAccountInstructionDataEncoder(),
-        getWithdrawNonceAccountInstructionDataDecoder()
+        getWithdrawNonceAccountInstructionDataDecoder(),
     );
 }
 
@@ -128,7 +128,7 @@ export function getWithdrawNonceAccountInstruction<
         TAccountRentSysvar,
         TAccountNonceAuthority
     >,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): WithdrawNonceAccountInstruction<
     TProgramAddress,
     TAccountNonceAccount,
@@ -205,7 +205,7 @@ export function parseWithdrawNonceAccountInstruction<
 >(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedWithdrawNonceAccountInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 5) {
         // TODO: Coded error.

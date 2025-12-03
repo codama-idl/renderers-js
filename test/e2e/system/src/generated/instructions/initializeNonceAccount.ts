@@ -66,7 +66,7 @@ export function getInitializeNonceAccountInstructionDataEncoder(): FixedSizeEnco
             ['discriminator', getU32Encoder()],
             ['nonceAuthority', getAddressEncoder()],
         ]),
-        value => ({ ...value, discriminator: INITIALIZE_NONCE_ACCOUNT_DISCRIMINATOR })
+        value => ({ ...value, discriminator: INITIALIZE_NONCE_ACCOUNT_DISCRIMINATOR }),
     );
 }
 
@@ -83,7 +83,7 @@ export function getInitializeNonceAccountInstructionDataCodec(): FixedSizeCodec<
 > {
     return combineCodec(
         getInitializeNonceAccountInstructionDataEncoder(),
-        getInitializeNonceAccountInstructionDataDecoder()
+        getInitializeNonceAccountInstructionDataDecoder(),
     );
 }
 
@@ -105,7 +105,7 @@ export function getInitializeNonceAccountInstruction<
     TProgramAddress extends Address = typeof SYSTEM_PROGRAM_ADDRESS,
 >(
     input: InitializeNonceAccountInput<TAccountNonceAccount, TAccountRecentBlockhashesSysvar, TAccountRentSysvar>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): InitializeNonceAccountInstruction<
     TProgramAddress,
     TAccountNonceAccount,
@@ -144,7 +144,7 @@ export function getInitializeNonceAccountInstruction<
             getAccountMeta(accounts.rentSysvar),
         ],
         data: getInitializeNonceAccountInstructionDataEncoder().encode(
-            args as InitializeNonceAccountInstructionDataArgs
+            args as InitializeNonceAccountInstructionDataArgs,
         ),
         programAddress,
     } as InitializeNonceAccountInstruction<
@@ -174,7 +174,7 @@ export function parseInitializeNonceAccountInstruction<
 >(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedInitializeNonceAccountInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 3) {
         // TODO: Coded error.

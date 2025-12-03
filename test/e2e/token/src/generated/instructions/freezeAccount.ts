@@ -98,7 +98,7 @@ export function getFreezeAccountInstruction<
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,
 >(
     input: FreezeAccountInput<TAccountAccount, TAccountMint, TAccountOwner>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): FreezeAccountInstruction<
     TProgramAddress,
     TAccountAccount,
@@ -167,7 +167,7 @@ export type ParsedFreezeAccountInstruction<
 export function parseFreezeAccountInstruction<TProgram extends string, TAccountMetas extends readonly AccountMeta[]>(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedFreezeAccountInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 3) {
         // TODO: Coded error.

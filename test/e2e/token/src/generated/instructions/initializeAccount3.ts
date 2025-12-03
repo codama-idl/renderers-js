@@ -68,7 +68,7 @@ export function getInitializeAccount3InstructionDataEncoder(): FixedSizeEncoder<
             ['discriminator', getU8Encoder()],
             ['owner', getAddressEncoder()],
         ]),
-        value => ({ ...value, discriminator: INITIALIZE_ACCOUNT3_DISCRIMINATOR })
+        value => ({ ...value, discriminator: INITIALIZE_ACCOUNT3_DISCRIMINATOR }),
     );
 }
 
@@ -100,7 +100,7 @@ export function getInitializeAccount3Instruction<
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,
 >(
     input: InitializeAccount3Input<TAccountAccount, TAccountMint>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): InitializeAccount3Instruction<TProgramAddress, TAccountAccount, TAccountMint> {
     // Program address.
     const programAddress = config?.programAddress ?? TOKEN_PROGRAM_ADDRESS;
@@ -143,7 +143,7 @@ export function parseInitializeAccount3Instruction<
 >(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedInitializeAccount3Instruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 2) {
         // TODO: Coded error.

@@ -86,7 +86,7 @@ export function getRevokeInstruction<
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,
 >(
     input: RevokeInput<TAccountSource, TAccountOwner>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): RevokeInstruction<
     TProgramAddress,
     TAccountSource,
@@ -145,7 +145,7 @@ export type ParsedRevokeInstruction<
 export function parseRevokeInstruction<TProgram extends string, TAccountMetas extends readonly AccountMeta[]>(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedRevokeInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 2) {
         // TODO: Coded error.

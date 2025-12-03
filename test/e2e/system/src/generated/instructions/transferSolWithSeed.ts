@@ -80,7 +80,7 @@ export function getTransferSolWithSeedInstructionDataEncoder(): Encoder<Transfer
             ['fromSeed', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
             ['fromOwner', getAddressEncoder()],
         ]),
-        value => ({ ...value, discriminator: TRANSFER_SOL_WITH_SEED_DISCRIMINATOR })
+        value => ({ ...value, discriminator: TRANSFER_SOL_WITH_SEED_DISCRIMINATOR }),
     );
 }
 
@@ -120,7 +120,7 @@ export function getTransferSolWithSeedInstruction<
     TProgramAddress extends Address = typeof SYSTEM_PROGRAM_ADDRESS,
 >(
     input: TransferSolWithSeedInput<TAccountSource, TAccountBaseAccount, TAccountDestination>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): TransferSolWithSeedInstruction<TProgramAddress, TAccountSource, TAccountBaseAccount, TAccountDestination> {
     // Program address.
     const programAddress = config?.programAddress ?? SYSTEM_PROGRAM_ADDRESS;
@@ -167,7 +167,7 @@ export function parseTransferSolWithSeedInstruction<
 >(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedTransferSolWithSeedInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 3) {
         // TODO: Coded error.

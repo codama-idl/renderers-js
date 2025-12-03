@@ -127,13 +127,13 @@ export function getTokenCodec(): FixedSizeCodec<TokenArgs, Token> {
 }
 
 export function decodeToken<TAddress extends string = string>(
-    encodedAccount: EncodedAccount<TAddress>
+    encodedAccount: EncodedAccount<TAddress>,
 ): Account<Token, TAddress>;
 export function decodeToken<TAddress extends string = string>(
-    encodedAccount: MaybeEncodedAccount<TAddress>
+    encodedAccount: MaybeEncodedAccount<TAddress>,
 ): MaybeAccount<Token, TAddress>;
 export function decodeToken<TAddress extends string = string>(
-    encodedAccount: EncodedAccount<TAddress> | MaybeEncodedAccount<TAddress>
+    encodedAccount: EncodedAccount<TAddress> | MaybeEncodedAccount<TAddress>,
 ): Account<Token, TAddress> | MaybeAccount<Token, TAddress> {
     return decodeAccount(encodedAccount as MaybeEncodedAccount<TAddress>, getTokenDecoder());
 }
@@ -141,7 +141,7 @@ export function decodeToken<TAddress extends string = string>(
 export async function fetchToken<TAddress extends string = string>(
     rpc: Parameters<typeof fetchEncodedAccount>[0],
     address: Address<TAddress>,
-    config?: FetchAccountConfig
+    config?: FetchAccountConfig,
 ): Promise<Account<Token, TAddress>> {
     const maybeAccount = await fetchMaybeToken(rpc, address, config);
     assertAccountExists(maybeAccount);
@@ -151,7 +151,7 @@ export async function fetchToken<TAddress extends string = string>(
 export async function fetchMaybeToken<TAddress extends string = string>(
     rpc: Parameters<typeof fetchEncodedAccount>[0],
     address: Address<TAddress>,
-    config?: FetchAccountConfig
+    config?: FetchAccountConfig,
 ): Promise<MaybeAccount<Token, TAddress>> {
     const maybeAccount = await fetchEncodedAccount(rpc, address, config);
     return decodeToken(maybeAccount);
@@ -160,7 +160,7 @@ export async function fetchMaybeToken<TAddress extends string = string>(
 export async function fetchAllToken(
     rpc: Parameters<typeof fetchEncodedAccounts>[0],
     addresses: Array<Address>,
-    config?: FetchAccountsConfig
+    config?: FetchAccountsConfig,
 ): Promise<Account<Token>[]> {
     const maybeAccounts = await fetchAllMaybeToken(rpc, addresses, config);
     assertAccountsExist(maybeAccounts);
@@ -170,7 +170,7 @@ export async function fetchAllToken(
 export async function fetchAllMaybeToken(
     rpc: Parameters<typeof fetchEncodedAccounts>[0],
     addresses: Array<Address>,
-    config?: FetchAccountsConfig
+    config?: FetchAccountsConfig,
 ): Promise<MaybeAccount<Token>[]> {
     const maybeAccounts = await fetchEncodedAccounts(rpc, addresses, config);
     return maybeAccounts.map(maybeAccount => decodeToken(maybeAccount));

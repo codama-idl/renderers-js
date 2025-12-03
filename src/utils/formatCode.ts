@@ -1,7 +1,8 @@
 import { joinPath, mapRenderMapContentAsync, RenderMap } from '@codama/renderers-core';
-import { format, Plugin, resolveConfig } from 'prettier';
+import { Plugin, resolveConfig } from 'prettier';
 import * as estreePlugin from 'prettier/plugins/estree';
 import * as typeScriptPlugin from 'prettier/plugins/typescript';
+import { format } from 'prettier/standalone';
 
 import { Fragment } from './fragment';
 import { RenderOptions } from './options';
@@ -9,15 +10,8 @@ import { RenderOptions } from './options';
 export type PrettierOptions = Parameters<typeof format>[1];
 
 const DEFAULT_PRETTIER_OPTIONS: PrettierOptions = {
-    arrowParens: 'always',
     parser: 'typescript',
     plugins: [estreePlugin as Plugin<unknown>, typeScriptPlugin],
-    printWidth: 80,
-    semi: true,
-    singleQuote: true,
-    tabWidth: 2,
-    trailingComma: 'es5',
-    useTabs: false,
 };
 
 export async function formatCode(

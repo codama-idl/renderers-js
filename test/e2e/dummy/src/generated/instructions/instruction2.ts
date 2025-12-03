@@ -26,7 +26,7 @@ export type Instruction2Input = {
 
 export function getInstruction2Instruction<TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS>(
     input: Instruction2Input,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): Instruction2Instruction<TProgramAddress> {
     // Program address.
     const programAddress = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
@@ -48,7 +48,7 @@ export type ParsedInstruction2Instruction<TProgram extends string = typeof DUMMY
 };
 
 export function parseInstruction2Instruction<TProgram extends string>(
-    instruction: Instruction<TProgram>
+    instruction: Instruction<TProgram>,
 ): ParsedInstruction2Instruction<TProgram> {
     return { programAddress: instruction.programAddress };
 }

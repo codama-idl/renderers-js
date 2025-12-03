@@ -37,7 +37,7 @@ export function getInstruction7Instruction<
     TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS,
 >(
     input: Instruction7Input<TAccountMyAccount>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): Instruction7Instruction<TProgramAddress, TAccountMyAccount> {
     // Program address.
     const programAddress = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
@@ -64,7 +64,7 @@ export type ParsedInstruction7Instruction<
 };
 
 export function parseInstruction7Instruction<TProgram extends string, TAccountMetas extends readonly AccountMeta[]>(
-    instruction: Instruction<TProgram> & InstructionWithAccounts<TAccountMetas>
+    instruction: Instruction<TProgram> & InstructionWithAccounts<TAccountMetas>,
 ): ParsedInstruction7Instruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 1) {
         // TODO: Coded error.

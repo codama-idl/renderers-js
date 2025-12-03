@@ -2,9 +2,9 @@ import { CODAMA_ERROR__RENDERERS__MISSING_DEPENDENCY_VERSIONS, CodamaError, logW
 import { fileExists, joinPath, readJson, RenderMap, writeFile } from '@codama/renderers-core';
 import { lt as ltVersion, minVersion, subset } from 'semver';
 
-import { RenderOptions } from '.';
 import { Fragment, mergeFragments } from './fragment';
 import { getExternalDependencies } from './importMap';
+import { RenderOptions } from './options';
 
 type DependencyVersions = Record<string, string>;
 

@@ -46,7 +46,7 @@ export enum SystemInstruction {
 }
 
 export function identifySystemInstruction(
-    instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array
+    instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array,
 ): SystemInstruction {
     const data = 'data' in instruction ? instruction.data : instruction;
     if (containsBytes(data, getU32Encoder().encode(0), 0)) {

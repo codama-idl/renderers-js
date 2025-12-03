@@ -66,7 +66,7 @@ export function getWenTransferGuardErrorMessage(code: WenTransferGuardError): st
 export function isWenTransferGuardError<TProgramErrorCode extends WenTransferGuardError>(
     error: unknown,
     transactionMessage: { instructions: Record<number, { programAddress: Address }> },
-    code?: TProgramErrorCode
+    code?: TProgramErrorCode,
 ): error is SolanaError<typeof SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM> &
     Readonly<{ context: Readonly<{ code: TProgramErrorCode }> }> {
     return isProgramError<TProgramErrorCode>(error, transactionMessage, WEN_TRANSFER_GUARD_PROGRAM_ADDRESS, code);

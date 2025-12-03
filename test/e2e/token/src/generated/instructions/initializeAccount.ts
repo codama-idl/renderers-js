@@ -99,7 +99,7 @@ export function getInitializeAccountInstruction<
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,
 >(
     input: InitializeAccountInput<TAccountAccount, TAccountMint, TAccountOwner, TAccountRent>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): InitializeAccountInstruction<TProgramAddress, TAccountAccount, TAccountMint, TAccountOwner, TAccountRent> {
     // Program address.
     const programAddress = config?.programAddress ?? TOKEN_PROGRAM_ADDRESS;
@@ -156,7 +156,7 @@ export function parseInitializeAccountInstruction<
 >(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedInitializeAccountInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 4) {
         // TODO: Coded error.

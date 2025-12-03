@@ -98,7 +98,7 @@ export function getCloseAccountInstruction<
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,
 >(
     input: CloseAccountInput<TAccountAccount, TAccountDestination, TAccountOwner>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): CloseAccountInstruction<
     TProgramAddress,
     TAccountAccount,
@@ -167,7 +167,7 @@ export type ParsedCloseAccountInstruction<
 export function parseCloseAccountInstruction<TProgram extends string, TAccountMetas extends readonly AccountMeta[]>(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedCloseAccountInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 3) {
         // TODO: Coded error.

@@ -34,7 +34,7 @@ export function expectSome<T>(value: T | null | undefined): T {
  * @internal
  */
 export function expectAddress<T extends string = string>(
-    value: Address<T> | ProgramDerivedAddress<T> | TransactionSigner<T> | null | undefined
+    value: Address<T> | ProgramDerivedAddress<T> | TransactionSigner<T> | null | undefined,
 ): Address<T> {
     if (!value) {
         throw new Error('Expected a Address.');
@@ -53,7 +53,7 @@ export function expectAddress<T extends string = string>(
  * @internal
  */
 export function expectProgramDerivedAddress<T extends string = string>(
-    value: Address<T> | ProgramDerivedAddress<T> | TransactionSigner<T> | null | undefined
+    value: Address<T> | ProgramDerivedAddress<T> | TransactionSigner<T> | null | undefined,
 ): ProgramDerivedAddress<T> {
     if (!value || !Array.isArray(value) || !isProgramDerivedAddress(value)) {
         throw new Error('Expected a ProgramDerivedAddress.');
@@ -66,7 +66,7 @@ export function expectProgramDerivedAddress<T extends string = string>(
  * @internal
  */
 export function expectTransactionSigner<T extends string = string>(
-    value: Address<T> | ProgramDerivedAddress<T> | TransactionSigner<T> | null | undefined
+    value: Address<T> | ProgramDerivedAddress<T> | TransactionSigner<T> | null | undefined,
 ): TransactionSigner<T> {
     if (!value || !isTransactionSigner(value)) {
         throw new Error('Expected a TransactionSigner.');
@@ -119,7 +119,7 @@ export function getAccountMetaFactory(programAddress: Address, optionalAccountSt
 }
 
 export function isTransactionSigner<TAddress extends string = string>(
-    value: Address<TAddress> | ProgramDerivedAddress<TAddress> | TransactionSigner<TAddress>
+    value: Address<TAddress> | ProgramDerivedAddress<TAddress> | TransactionSigner<TAddress>,
 ): value is TransactionSigner<TAddress> {
     return !!value && typeof value === 'object' && 'address' in value && kitIsTransactionSigner(value);
 }

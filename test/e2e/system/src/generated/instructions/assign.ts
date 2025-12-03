@@ -62,7 +62,7 @@ export function getAssignInstructionDataEncoder(): FixedSizeEncoder<AssignInstru
             ['discriminator', getU32Encoder()],
             ['programAddress', getAddressEncoder()],
         ]),
-        value => ({ ...value, discriminator: ASSIGN_DISCRIMINATOR })
+        value => ({ ...value, discriminator: ASSIGN_DISCRIMINATOR }),
     );
 }
 
@@ -87,7 +87,7 @@ export function getAssignInstruction<
     TProgramAddress extends Address = typeof SYSTEM_PROGRAM_ADDRESS,
 >(
     input: AssignInput<TAccountAccount>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): AssignInstruction<TProgramAddress, TAccountAccount> {
     // Program address.
     const programAddress = config?.programAddress ?? SYSTEM_PROGRAM_ADDRESS;
@@ -121,7 +121,7 @@ export type ParsedAssignInstruction<
 export function parseAssignInstruction<TProgram extends string, TAccountMetas extends readonly AccountMeta[]>(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedAssignInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 1) {
         // TODO: Coded error.

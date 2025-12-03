@@ -57,11 +57,11 @@ export function getCpiRuleCodec(): Codec<CpiRuleArgs, CpiRule> {
 // Data Enum Helpers.
 export function cpiRule(
     kind: 'Allow',
-    data: GetDiscriminatedUnionVariantContent<CpiRuleArgs, '__kind', 'Allow'>['fields']
+    data: GetDiscriminatedUnionVariantContent<CpiRuleArgs, '__kind', 'Allow'>['fields'],
 ): GetDiscriminatedUnionVariant<CpiRuleArgs, '__kind', 'Allow'>;
 export function cpiRule(
     kind: 'Deny',
-    data: GetDiscriminatedUnionVariantContent<CpiRuleArgs, '__kind', 'Deny'>['fields']
+    data: GetDiscriminatedUnionVariantContent<CpiRuleArgs, '__kind', 'Deny'>['fields'],
 ): GetDiscriminatedUnionVariant<CpiRuleArgs, '__kind', 'Deny'>;
 export function cpiRule<K extends CpiRuleArgs['__kind'], Data>(kind: K, data?: Data) {
     return Array.isArray(data) ? { __kind: kind, fields: data } : { __kind: kind, ...(data ?? {}) };

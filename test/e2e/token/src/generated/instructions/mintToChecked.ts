@@ -79,7 +79,7 @@ export function getMintToCheckedInstructionDataEncoder(): FixedSizeEncoder<MintT
             ['amount', getU64Encoder()],
             ['decimals', getU8Encoder()],
         ]),
-        value => ({ ...value, discriminator: MINT_TO_CHECKED_DISCRIMINATOR })
+        value => ({ ...value, discriminator: MINT_TO_CHECKED_DISCRIMINATOR }),
     );
 }
 
@@ -121,7 +121,7 @@ export function getMintToCheckedInstruction<
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,
 >(
     input: MintToCheckedInput<TAccountMint, TAccountToken, TAccountMintAuthority>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): MintToCheckedInstruction<
     TProgramAddress,
     TAccountMint,
@@ -190,7 +190,7 @@ export type ParsedMintToCheckedInstruction<
 export function parseMintToCheckedInstruction<TProgram extends string, TAccountMetas extends readonly AccountMeta[]>(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedMintToCheckedInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 3) {
         // TODO: Coded error.

@@ -98,7 +98,7 @@ export function getThawAccountInstruction<
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,
 >(
     input: ThawAccountInput<TAccountAccount, TAccountMint, TAccountOwner>,
-    config?: { programAddress?: TProgramAddress }
+    config?: { programAddress?: TProgramAddress },
 ): ThawAccountInstruction<
     TProgramAddress,
     TAccountAccount,
@@ -167,7 +167,7 @@ export type ParsedThawAccountInstruction<
 export function parseThawAccountInstruction<TProgram extends string, TAccountMetas extends readonly AccountMeta[]>(
     instruction: Instruction<TProgram> &
         InstructionWithAccounts<TAccountMetas> &
-        InstructionWithData<ReadonlyUint8Array>
+        InstructionWithData<ReadonlyUint8Array>,
 ): ParsedThawAccountInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 3) {
         // TODO: Coded error.
