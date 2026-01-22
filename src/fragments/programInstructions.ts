@@ -27,6 +27,7 @@ export function getProgramInstructionsFragment(
             getProgramInstructionsEnumFragment(scopeWithInstructions),
             getProgramInstructionsIdentifierFunctionFragment(scopeWithInstructions),
             getProgramInstructionsParsedUnionTypeFragment(scopeWithInstructions),
+            getProgramInstructionsDebugFunctionFragment(scopeWithInstructions),
         ],
         c => c.join('\n\n'),
     );
@@ -121,5 +122,66 @@ function getProgramInstructionsParsedUnionTypeFragment(
             ...typeVariants,
         ],
         c => c.join('\n'),
+    );
+}
+
+function getProgramInstructionsDebugFunctionFragment(
+    scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
+        allInstructions: InstructionNode[];
+        programNode: ProgramNode;
+    },
+): Fragment | undefined {
+    const { programNode, nameApi, allInstructions } = scope;
+
+    // Only generate if there are instructions with discriminators (i.e., identifier function exists)
+    const instructionsWithDiscriminators = allInstructions.filter(
+        instruction => (instruction.discriminators ?? []).length > 0,
+    );
+    if (instructionsWithDiscriminators.length === 0) return;
+
+    const programInstructionsEnum = nameApi.programInstructionsEnum(programNode.name);
+    const programInstructionsIdentifierFunction = nameApi.programInstructionsIdentifierFunction(programNode.name);
+    const programInstructionsParsedUnionType = nameApi.programInstructionsParsedUnionType(programNode.name);
+    const debugFunction = nameApi.programInstructionsDebugFunction(programNode.name);
+
+    // Check if any instruction has accounts - if so, we need the assertion import
+    const anyInstructionHasAccounts = allInstructions.some(instruction => instruction.accounts.length > 0);
+
+    const switchCases = mergeFragments(
+        allInstructions.map((instruction): Fragment => {
+            const enumVariant = nameApi.programInstructionsEnumVariant(instruction.name);
+            const parseFunction = use(nameApi.instructionParseFunction(instruction.name), 'generatedInstructions');
+
+            // Only need accounts assertion since data is guaranteed by the input type
+            const hasAccounts = instruction.accounts.length > 0;
+            const assertionsCode = hasAccounts ? 'assertIsInstructionWithAccounts(instruction);\n' : '';
+
+            return fragment`case ${programInstructionsEnum}.${enumVariant}: { ${assertionsCode}return { instructionType: ${programInstructionsEnum}.${enumVariant}, ...${parseFunction}(instruction) }; }`;
+        }),
+        c => c.join('\n'),
+    );
+
+    return pipe(
+        switchCases,
+        f =>
+            mapFragmentContent(
+                f,
+                cases =>
+                    `export function ${debugFunction}<TProgram extends string>(` +
+                    `instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>` +
+                    `): ${programInstructionsParsedUnionType}<TProgram> {\n` +
+                    `const instructionType = ${programInstructionsIdentifierFunction}(instruction);\n` +
+                    `switch (instructionType) {\n` +
+                    `${cases}\n` +
+                    `default: throw new Error("Unrecognized instruction type")\n` +
+                    `}\n` +
+                    `}`,
+            ),
+        f => addFragmentImports(f, 'solanaInstructions', ['type Instruction', 'type InstructionWithData']),
+        f => addFragmentImports(f, 'solanaCodecsCore', ['type ReadonlyUint8Array']),
+        f =>
+            anyInstructionHasAccounts
+                ? addFragmentImports(f, 'solanaInstructions', ['assertIsInstructionWithAccounts'])
+                : f,
     );
 }

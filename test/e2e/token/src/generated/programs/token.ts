@@ -6,8 +6,41 @@
  * @see https://github.com/codama-idl/codama
  */
 
-import { containsBytes, getU8Encoder, type Address, type ReadonlyUint8Array } from '@solana/kit';
 import {
+    assertIsInstructionWithAccounts,
+    containsBytes,
+    getU8Encoder,
+    type Address,
+    type Instruction,
+    type InstructionWithData,
+    type ReadonlyUint8Array,
+} from '@solana/kit';
+import {
+    parseAmountToUiAmountInstruction,
+    parseApproveCheckedInstruction,
+    parseApproveInstruction,
+    parseBurnCheckedInstruction,
+    parseBurnInstruction,
+    parseCloseAccountInstruction,
+    parseFreezeAccountInstruction,
+    parseGetAccountDataSizeInstruction,
+    parseInitializeAccount2Instruction,
+    parseInitializeAccount3Instruction,
+    parseInitializeAccountInstruction,
+    parseInitializeImmutableOwnerInstruction,
+    parseInitializeMint2Instruction,
+    parseInitializeMintInstruction,
+    parseInitializeMultisig2Instruction,
+    parseInitializeMultisigInstruction,
+    parseMintToCheckedInstruction,
+    parseMintToInstruction,
+    parseRevokeInstruction,
+    parseSetAuthorityInstruction,
+    parseSyncNativeInstruction,
+    parseThawAccountInstruction,
+    parseTransferCheckedInstruction,
+    parseTransferInstruction,
+    parseUiAmountToAmountInstruction,
     type ParsedAmountToUiAmountInstruction,
     type ParsedApproveCheckedInstruction,
     type ParsedApproveInstruction,
@@ -196,3 +229,146 @@ export type ParsedTokenInstruction<TProgram extends string = 'TokenkegQfeZyiNwAJ
       } & ParsedInitializeImmutableOwnerInstruction<TProgram>)
     | ({ instructionType: TokenInstruction.AmountToUiAmount } & ParsedAmountToUiAmountInstruction<TProgram>)
     | ({ instructionType: TokenInstruction.UiAmountToAmount } & ParsedUiAmountToAmountInstruction<TProgram>);
+
+export function debugTokenInstruction<TProgram extends string>(
+    instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
+): ParsedTokenInstruction<TProgram> {
+    const instructionType = identifyTokenInstruction(instruction);
+    switch (instructionType) {
+        case TokenInstruction.InitializeMint: {
+            assertIsInstructionWithAccounts(instruction);
+            return { instructionType: TokenInstruction.InitializeMint, ...parseInitializeMintInstruction(instruction) };
+        }
+        case TokenInstruction.InitializeAccount: {
+            assertIsInstructionWithAccounts(instruction);
+            return {
+                instructionType: TokenInstruction.InitializeAccount,
+                ...parseInitializeAccountInstruction(instruction),
+            };
+        }
+        case TokenInstruction.InitializeMultisig: {
+            assertIsInstructionWithAccounts(instruction);
+            return {
+                instructionType: TokenInstruction.InitializeMultisig,
+                ...parseInitializeMultisigInstruction(instruction),
+            };
+        }
+        case TokenInstruction.Transfer: {
+            assertIsInstructionWithAccounts(instruction);
+            return { instructionType: TokenInstruction.Transfer, ...parseTransferInstruction(instruction) };
+        }
+        case TokenInstruction.Approve: {
+            assertIsInstructionWithAccounts(instruction);
+            return { instructionType: TokenInstruction.Approve, ...parseApproveInstruction(instruction) };
+        }
+        case TokenInstruction.Revoke: {
+            assertIsInstructionWithAccounts(instruction);
+            return { instructionType: TokenInstruction.Revoke, ...parseRevokeInstruction(instruction) };
+        }
+        case TokenInstruction.SetAuthority: {
+            assertIsInstructionWithAccounts(instruction);
+            return { instructionType: TokenInstruction.SetAuthority, ...parseSetAuthorityInstruction(instruction) };
+        }
+        case TokenInstruction.MintTo: {
+            assertIsInstructionWithAccounts(instruction);
+            return { instructionType: TokenInstruction.MintTo, ...parseMintToInstruction(instruction) };
+        }
+        case TokenInstruction.Burn: {
+            assertIsInstructionWithAccounts(instruction);
+            return { instructionType: TokenInstruction.Burn, ...parseBurnInstruction(instruction) };
+        }
+        case TokenInstruction.CloseAccount: {
+            assertIsInstructionWithAccounts(instruction);
+            return { instructionType: TokenInstruction.CloseAccount, ...parseCloseAccountInstruction(instruction) };
+        }
+        case TokenInstruction.FreezeAccount: {
+            assertIsInstructionWithAccounts(instruction);
+            return { instructionType: TokenInstruction.FreezeAccount, ...parseFreezeAccountInstruction(instruction) };
+        }
+        case TokenInstruction.ThawAccount: {
+            assertIsInstructionWithAccounts(instruction);
+            return { instructionType: TokenInstruction.ThawAccount, ...parseThawAccountInstruction(instruction) };
+        }
+        case TokenInstruction.TransferChecked: {
+            assertIsInstructionWithAccounts(instruction);
+            return {
+                instructionType: TokenInstruction.TransferChecked,
+                ...parseTransferCheckedInstruction(instruction),
+            };
+        }
+        case TokenInstruction.ApproveChecked: {
+            assertIsInstructionWithAccounts(instruction);
+            return { instructionType: TokenInstruction.ApproveChecked, ...parseApproveCheckedInstruction(instruction) };
+        }
+        case TokenInstruction.MintToChecked: {
+            assertIsInstructionWithAccounts(instruction);
+            return { instructionType: TokenInstruction.MintToChecked, ...parseMintToCheckedInstruction(instruction) };
+        }
+        case TokenInstruction.BurnChecked: {
+            assertIsInstructionWithAccounts(instruction);
+            return { instructionType: TokenInstruction.BurnChecked, ...parseBurnCheckedInstruction(instruction) };
+        }
+        case TokenInstruction.InitializeAccount2: {
+            assertIsInstructionWithAccounts(instruction);
+            return {
+                instructionType: TokenInstruction.InitializeAccount2,
+                ...parseInitializeAccount2Instruction(instruction),
+            };
+        }
+        case TokenInstruction.SyncNative: {
+            assertIsInstructionWithAccounts(instruction);
+            return { instructionType: TokenInstruction.SyncNative, ...parseSyncNativeInstruction(instruction) };
+        }
+        case TokenInstruction.InitializeAccount3: {
+            assertIsInstructionWithAccounts(instruction);
+            return {
+                instructionType: TokenInstruction.InitializeAccount3,
+                ...parseInitializeAccount3Instruction(instruction),
+            };
+        }
+        case TokenInstruction.InitializeMultisig2: {
+            assertIsInstructionWithAccounts(instruction);
+            return {
+                instructionType: TokenInstruction.InitializeMultisig2,
+                ...parseInitializeMultisig2Instruction(instruction),
+            };
+        }
+        case TokenInstruction.InitializeMint2: {
+            assertIsInstructionWithAccounts(instruction);
+            return {
+                instructionType: TokenInstruction.InitializeMint2,
+                ...parseInitializeMint2Instruction(instruction),
+            };
+        }
+        case TokenInstruction.GetAccountDataSize: {
+            assertIsInstructionWithAccounts(instruction);
+            return {
+                instructionType: TokenInstruction.GetAccountDataSize,
+                ...parseGetAccountDataSizeInstruction(instruction),
+            };
+        }
+        case TokenInstruction.InitializeImmutableOwner: {
+            assertIsInstructionWithAccounts(instruction);
+            return {
+                instructionType: TokenInstruction.InitializeImmutableOwner,
+                ...parseInitializeImmutableOwnerInstruction(instruction),
+            };
+        }
+        case TokenInstruction.AmountToUiAmount: {
+            assertIsInstructionWithAccounts(instruction);
+            return {
+                instructionType: TokenInstruction.AmountToUiAmount,
+                ...parseAmountToUiAmountInstruction(instruction),
+            };
+        }
+        case TokenInstruction.UiAmountToAmount: {
+            assertIsInstructionWithAccounts(instruction);
+            return {
+                instructionType: TokenInstruction.UiAmountToAmount,
+                ...parseUiAmountToAmountInstruction(instruction),
+            };
+        }
+        default:
+            throw new Error('Unrecognized instruction type');
+    }
+}

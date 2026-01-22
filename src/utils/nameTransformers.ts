@@ -52,6 +52,7 @@ export type NameTransformerKey =
     | 'programErrorMessagesMap'
     | 'programErrorUnion'
     | 'programGetErrorMessageFunction'
+    | 'programInstructionsDebugFunction'
     | 'programInstructionsEnum'
     | 'programInstructionsEnumVariant'
     | 'programInstructionsIdentifierFunction'
@@ -118,6 +119,7 @@ export const DEFAULT_NAME_TRANSFORMERS: NameTransformers = {
     programErrorMessagesMap: name => `${camelCase(name)}ErrorMessages`,
     programErrorUnion: name => `${pascalCase(name)}Error`,
     programGetErrorMessageFunction: name => `get${pascalCase(name)}ErrorMessage`,
+    programInstructionsDebugFunction: name => `debug${pascalCase(name)}Instruction`,
     programInstructionsEnum: name => `${pascalCase(name)}Instruction`,
     programInstructionsEnumVariant: name => `${pascalCase(name)}`,
     programInstructionsIdentifierFunction: name => `identify${pascalCase(name)}Instruction`,

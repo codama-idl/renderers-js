@@ -6,8 +6,21 @@
  * @see https://github.com/codama-idl/codama
  */
 
-import { containsBytes, fixEncoderSize, getBytesEncoder, type Address, type ReadonlyUint8Array } from '@solana/kit';
 import {
+    assertIsInstructionWithAccounts,
+    containsBytes,
+    fixEncoderSize,
+    getBytesEncoder,
+    type Address,
+    type Instruction,
+    type InstructionWithData,
+    type ReadonlyUint8Array,
+} from '@solana/kit';
+import {
+    parseCreateGuardInstruction,
+    parseExecuteInstruction,
+    parseInitializeInstruction,
+    parseUpdateGuardInstruction,
     type ParsedCreateGuardInstruction,
     type ParsedExecuteInstruction,
     type ParsedInitializeInstruction,
@@ -93,3 +106,38 @@ export type ParsedWenTransferGuardInstruction<TProgram extends string = 'LockdqY
         | ({ instructionType: WenTransferGuardInstruction.Execute } & ParsedExecuteInstruction<TProgram>)
         | ({ instructionType: WenTransferGuardInstruction.Initialize } & ParsedInitializeInstruction<TProgram>)
         | ({ instructionType: WenTransferGuardInstruction.UpdateGuard } & ParsedUpdateGuardInstruction<TProgram>);
+
+export function debugWenTransferGuardInstruction<TProgram extends string>(
+    instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
+): ParsedWenTransferGuardInstruction<TProgram> {
+    const instructionType = identifyWenTransferGuardInstruction(instruction);
+    switch (instructionType) {
+        case WenTransferGuardInstruction.CreateGuard: {
+            assertIsInstructionWithAccounts(instruction);
+            return {
+                instructionType: WenTransferGuardInstruction.CreateGuard,
+                ...parseCreateGuardInstruction(instruction),
+            };
+        }
+        case WenTransferGuardInstruction.Execute: {
+            assertIsInstructionWithAccounts(instruction);
+            return { instructionType: WenTransferGuardInstruction.Execute, ...parseExecuteInstruction(instruction) };
+        }
+        case WenTransferGuardInstruction.Initialize: {
+            assertIsInstructionWithAccounts(instruction);
+            return {
+                instructionType: WenTransferGuardInstruction.Initialize,
+                ...parseInitializeInstruction(instruction),
+            };
+        }
+        case WenTransferGuardInstruction.UpdateGuard: {
+            assertIsInstructionWithAccounts(instruction);
+            return {
+                instructionType: WenTransferGuardInstruction.UpdateGuard,
+                ...parseUpdateGuardInstruction(instruction),
+            };
+        }
+        default:
+            throw new Error('Unrecognized instruction type');
+    }
+}

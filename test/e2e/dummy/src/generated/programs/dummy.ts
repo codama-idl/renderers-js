@@ -6,8 +6,23 @@
  * @see https://github.com/codama-idl/codama
  */
 
-import { containsBytes, getU32Encoder, type Address, type ReadonlyUint8Array } from '@solana/kit';
 import {
+    assertIsInstructionWithAccounts,
+    containsBytes,
+    getU32Encoder,
+    type Address,
+    type Instruction,
+    type InstructionWithData,
+    type ReadonlyUint8Array,
+} from '@solana/kit';
+import {
+    parseInstruction1Instruction,
+    parseInstruction2Instruction,
+    parseInstruction3Instruction,
+    parseInstruction4Instruction,
+    parseInstruction5Instruction,
+    parseInstruction6Instruction,
+    parseInstruction7Instruction,
     type ParsedInstruction1Instruction,
     type ParsedInstruction2Instruction,
     type ParsedInstruction3Instruction,
@@ -48,3 +63,36 @@ export type ParsedDummyInstruction<TProgram extends string = 'Dummy1111111111111
     | ({ instructionType: DummyInstruction.Instruction5 } & ParsedInstruction5Instruction<TProgram>)
     | ({ instructionType: DummyInstruction.Instruction6 } & ParsedInstruction6Instruction<TProgram>)
     | ({ instructionType: DummyInstruction.Instruction7 } & ParsedInstruction7Instruction<TProgram>);
+
+export function debugDummyInstruction<TProgram extends string>(
+    instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
+): ParsedDummyInstruction<TProgram> {
+    const instructionType = identifyDummyInstruction(instruction);
+    switch (instructionType) {
+        case DummyInstruction.Instruction1: {
+            return { instructionType: DummyInstruction.Instruction1, ...parseInstruction1Instruction(instruction) };
+        }
+        case DummyInstruction.Instruction2: {
+            return { instructionType: DummyInstruction.Instruction2, ...parseInstruction2Instruction(instruction) };
+        }
+        case DummyInstruction.Instruction3: {
+            return { instructionType: DummyInstruction.Instruction3, ...parseInstruction3Instruction(instruction) };
+        }
+        case DummyInstruction.Instruction4: {
+            return { instructionType: DummyInstruction.Instruction4, ...parseInstruction4Instruction(instruction) };
+        }
+        case DummyInstruction.Instruction5: {
+            return { instructionType: DummyInstruction.Instruction5, ...parseInstruction5Instruction(instruction) };
+        }
+        case DummyInstruction.Instruction6: {
+            assertIsInstructionWithAccounts(instruction);
+            return { instructionType: DummyInstruction.Instruction6, ...parseInstruction6Instruction(instruction) };
+        }
+        case DummyInstruction.Instruction7: {
+            assertIsInstructionWithAccounts(instruction);
+            return { instructionType: DummyInstruction.Instruction7, ...parseInstruction7Instruction(instruction) };
+        }
+        default:
+            throw new Error('Unrecognized instruction type');
+    }
+}
