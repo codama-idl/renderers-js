@@ -107,7 +107,7 @@ export type ParsedWenTransferGuardInstruction<TProgram extends string = 'LockdqY
         | ({ instructionType: WenTransferGuardInstruction.Initialize } & ParsedInitializeInstruction<TProgram>)
         | ({ instructionType: WenTransferGuardInstruction.UpdateGuard } & ParsedUpdateGuardInstruction<TProgram>);
 
-export function debugWenTransferGuardInstruction<TProgram extends string>(
+export function parseWenTransferGuardInstruction<TProgram extends string>(
     instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
 ): ParsedWenTransferGuardInstruction<TProgram> {
     const instructionType = identifyWenTransferGuardInstruction(instruction);

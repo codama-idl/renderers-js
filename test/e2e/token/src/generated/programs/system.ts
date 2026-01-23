@@ -37,7 +37,7 @@ export type ParsedSystemInstruction<TProgram extends string = '11111111111111111
     instructionType: SystemInstruction.CreateAccount;
 } & ParsedCreateAccountInstruction<TProgram>;
 
-export function debugSystemInstruction<TProgram extends string>(
+export function parseSystemInstruction<TProgram extends string>(
     instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
 ): ParsedSystemInstruction<TProgram> {
     const instructionType = identifySystemInstruction(instruction);

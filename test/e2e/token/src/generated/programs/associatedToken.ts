@@ -61,7 +61,7 @@ export type ParsedAssociatedTokenInstruction<TProgram extends string = 'ATokenGP
               instructionType: AssociatedTokenInstruction.RecoverNestedAssociatedToken;
           } & ParsedRecoverNestedAssociatedTokenInstruction<TProgram>);
 
-export function debugAssociatedTokenInstruction<TProgram extends string>(
+export function parseAssociatedTokenInstruction<TProgram extends string>(
     instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
 ): ParsedAssociatedTokenInstruction<TProgram> {
     const instructionType = identifyAssociatedTokenInstruction(instruction);

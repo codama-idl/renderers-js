@@ -260,7 +260,7 @@ test('it renders a parsed union type of all available instructions for a program
     ]);
 });
 
-test('it renders a function that returns debug info for instructions in a program', async () => {
+test('it renders a function that parses instructions in a program', async () => {
     // Given the following program with instructions that have discriminators.
     const node = programNode({
         instructions: [
@@ -294,9 +294,9 @@ test('it renders a function that returns debug info for instructions in a progra
     // When we render it.
     const renderMap = visit(node, getRenderMapVisitor());
 
-    // Then we expect the following debug info function to be rendered.
+    // Then we expect the following parse function to be rendered.
     await renderMapContains(renderMap, 'programs/splToken.ts', [
-        'export function debugSplTokenInstruction',
+        'export function parseSplTokenInstruction',
         'TProgram extends string',
         'instruction: Instruction',
         'InstructionWithData',
@@ -315,7 +315,7 @@ test('it renders a function that returns debug info for instructions in a progra
     });
 });
 
-test('it does not render debug info function when no instructions have discriminators', async () => {
+test('it does not render parse function when no instructions have discriminators', async () => {
     // Given the following program with instructions without discriminators.
     const node = programNode({
         instructions: [
@@ -329,12 +329,12 @@ test('it does not render debug info function when no instructions have discrimin
     // When we render it.
     const renderMap = visit(node, getRenderMapVisitor());
 
-    // Then we expect the debug info function NOT to be rendered.
+    // Then we expect the parse function NOT to be rendered.
     await renderMapContains(renderMap, 'programs/splToken.ts', [
         'export enum SplTokenInstruction { MintTokens, TransferTokens }',
     ]);
 
-    // And we do NOT expect the debug function.
+    // And we do NOT expect the parse function.
     const programFile = renderMap.get('programs/splToken.ts');
-    expect(programFile).not.toContain('debugSplTokenInstruction');
+    expect(programFile).not.toContain('parseSplTokenInstruction');
 });

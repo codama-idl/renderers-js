@@ -230,7 +230,7 @@ export type ParsedTokenInstruction<TProgram extends string = 'TokenkegQfeZyiNwAJ
     | ({ instructionType: TokenInstruction.AmountToUiAmount } & ParsedAmountToUiAmountInstruction<TProgram>)
     | ({ instructionType: TokenInstruction.UiAmountToAmount } & ParsedUiAmountToAmountInstruction<TProgram>);
 
-export function debugTokenInstruction<TProgram extends string>(
+export function parseTokenInstruction<TProgram extends string>(
     instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
 ): ParsedTokenInstruction<TProgram> {
     const instructionType = identifyTokenInstruction(instruction);

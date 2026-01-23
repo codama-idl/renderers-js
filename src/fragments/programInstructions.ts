@@ -27,7 +27,7 @@ export function getProgramInstructionsFragment(
             getProgramInstructionsEnumFragment(scopeWithInstructions),
             getProgramInstructionsIdentifierFunctionFragment(scopeWithInstructions),
             getProgramInstructionsParsedUnionTypeFragment(scopeWithInstructions),
-            getProgramInstructionsDebugFunctionFragment(scopeWithInstructions),
+            getProgramInstructionsParseFunctionFragment(scopeWithInstructions),
         ],
         c => c.join('\n\n'),
     );
@@ -125,7 +125,7 @@ function getProgramInstructionsParsedUnionTypeFragment(
     );
 }
 
-function getProgramInstructionsDebugFunctionFragment(
+function getProgramInstructionsParseFunctionFragment(
     scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
         allInstructions: InstructionNode[];
         programNode: ProgramNode;
@@ -142,7 +142,7 @@ function getProgramInstructionsDebugFunctionFragment(
     const programInstructionsEnum = nameApi.programInstructionsEnum(programNode.name);
     const programInstructionsIdentifierFunction = nameApi.programInstructionsIdentifierFunction(programNode.name);
     const programInstructionsParsedUnionType = nameApi.programInstructionsParsedUnionType(programNode.name);
-    const debugFunction = nameApi.programInstructionsDebugFunction(programNode.name);
+    const parseFunction = nameApi.programInstructionsParseFunction(programNode.name);
 
     // Check if any instruction has accounts - if so, we need the assertion import
     const anyInstructionHasAccounts = allInstructions.some(instruction => instruction.accounts.length > 0);
@@ -167,7 +167,7 @@ function getProgramInstructionsDebugFunctionFragment(
             mapFragmentContent(
                 f,
                 cases =>
-                    `export function ${debugFunction}<TProgram extends string>(` +
+                    `export function ${parseFunction}<TProgram extends string>(` +
                     `instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>` +
                     `): ${programInstructionsParsedUnionType}<TProgram> {\n` +
                     `const instructionType = ${programInstructionsIdentifierFunction}(instruction);\n` +

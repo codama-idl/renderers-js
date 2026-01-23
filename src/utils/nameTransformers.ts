@@ -52,11 +52,11 @@ export type NameTransformerKey =
     | 'programErrorMessagesMap'
     | 'programErrorUnion'
     | 'programGetErrorMessageFunction'
-    | 'programInstructionsDebugFunction'
     | 'programInstructionsEnum'
     | 'programInstructionsEnumVariant'
     | 'programInstructionsIdentifierFunction'
     | 'programInstructionsParsedUnionType'
+    | 'programInstructionsParseFunction'
     | 'programIsErrorFunction'
     | 'resolverFunction';
 
@@ -119,10 +119,10 @@ export const DEFAULT_NAME_TRANSFORMERS: NameTransformers = {
     programErrorMessagesMap: name => `${camelCase(name)}ErrorMessages`,
     programErrorUnion: name => `${pascalCase(name)}Error`,
     programGetErrorMessageFunction: name => `get${pascalCase(name)}ErrorMessage`,
-    programInstructionsDebugFunction: name => `debug${pascalCase(name)}Instruction`,
     programInstructionsEnum: name => `${pascalCase(name)}Instruction`,
     programInstructionsEnumVariant: name => `${pascalCase(name)}`,
     programInstructionsIdentifierFunction: name => `identify${pascalCase(name)}Instruction`,
+    programInstructionsParseFunction: name => `parse${pascalCase(name)}Instruction`,
     programInstructionsParsedUnionType: name => `Parsed${pascalCase(name)}Instruction`,
     programIsErrorFunction: name => `is${pascalCase(name)}Error`,
     resolverFunction: name => `${camelCase(name)}`,

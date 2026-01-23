@@ -64,7 +64,7 @@ export type ParsedDummyInstruction<TProgram extends string = 'Dummy1111111111111
     | ({ instructionType: DummyInstruction.Instruction6 } & ParsedInstruction6Instruction<TProgram>)
     | ({ instructionType: DummyInstruction.Instruction7 } & ParsedInstruction7Instruction<TProgram>);
 
-export function debugDummyInstruction<TProgram extends string>(
+export function parseDummyInstruction<TProgram extends string>(
     instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
 ): ParsedDummyInstruction<TProgram> {
     const instructionType = identifyDummyInstruction(instruction);
