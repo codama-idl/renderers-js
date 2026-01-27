@@ -39,12 +39,13 @@ export function identifyAssociatedTokenInstruction(
 }
 
 export type ParsedAssociatedTokenInstruction<TProgram extends string = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'> =
-    | ({
-          instructionType: AssociatedTokenInstruction.CreateAssociatedToken;
-      } & ParsedCreateAssociatedTokenInstruction<TProgram>)
-    | ({
-          instructionType: AssociatedTokenInstruction.CreateAssociatedTokenIdempotent;
-      } & ParsedCreateAssociatedTokenIdempotentInstruction<TProgram>)
-    | ({
-          instructionType: AssociatedTokenInstruction.RecoverNestedAssociatedToken;
-      } & ParsedRecoverNestedAssociatedTokenInstruction<TProgram>);
+
+        | ({
+              instructionType: AssociatedTokenInstruction.CreateAssociatedToken;
+          } & ParsedCreateAssociatedTokenInstruction<TProgram>)
+        | ({
+              instructionType: AssociatedTokenInstruction.CreateAssociatedTokenIdempotent;
+          } & ParsedCreateAssociatedTokenIdempotentInstruction<TProgram>)
+        | ({
+              instructionType: AssociatedTokenInstruction.RecoverNestedAssociatedToken;
+          } & ParsedRecoverNestedAssociatedTokenInstruction<TProgram>);
