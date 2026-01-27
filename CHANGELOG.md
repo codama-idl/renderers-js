@@ -1,5 +1,11 @@
 # @codama/renderers-js
 
+## 1.6.0
+
+### Minor Changes
+
+- [#96](https://github.com/codama-idl/renderers-js/pull/96) [`d468259`](https://github.com/codama-idl/renderers-js/commit/d468259b053e9ab435eed6cb0f0f56ebe9d8aee7) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Generate a function to both identify and parse an `Instruction`
+
 ## 1.5.5
 
 ### Patch Changes
