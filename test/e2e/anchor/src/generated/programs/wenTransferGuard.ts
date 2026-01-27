@@ -138,6 +138,6 @@ export function parseWenTransferGuardInstruction<TProgram extends string>(
             };
         }
         default:
-            throw new Error('Unrecognized instruction type');
+            throw new Error('Unrecognized instruction type: ' + instructionType);
     }
 }
