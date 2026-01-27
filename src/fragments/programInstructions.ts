@@ -144,44 +144,30 @@ function getProgramInstructionsParseFunctionFragment(
     const programInstructionsParsedUnionType = nameApi.programInstructionsParsedUnionType(programNode.name);
     const parseFunction = nameApi.programInstructionsParseFunction(programNode.name);
 
-    // Check if any instruction has accounts - if so, we need the assertion import
-    const anyInstructionHasAccounts = allInstructions.some(instruction => instruction.accounts.length > 0);
-
     const switchCases = mergeFragments(
         allInstructions.map((instruction): Fragment => {
             const enumVariant = nameApi.programInstructionsEnumVariant(instruction.name);
             const parseFunction = use(nameApi.instructionParseFunction(instruction.name), 'generatedInstructions');
-
+            const assertIsInstructionWithAccounts = use('assertIsInstructionWithAccounts', 'solanaInstructions');
             // Only need accounts assertion since data is guaranteed by the input type
             const hasAccounts = instruction.accounts.length > 0;
-            const assertionsCode = hasAccounts ? 'assertIsInstructionWithAccounts(instruction);\n' : '';
-
+            const assertionsCode = hasAccounts
+                ? fragment`${assertIsInstructionWithAccounts}(instruction);\n`
+                : fragment``;
             return fragment`case ${programInstructionsEnum}.${enumVariant}: { ${assertionsCode}return { instructionType: ${programInstructionsEnum}.${enumVariant}, ...${parseFunction}(instruction) }; }`;
         }),
         c => c.join('\n'),
     );
 
-    return pipe(
-        switchCases,
-        f =>
-            mapFragmentContent(
-                f,
-                cases =>
-                    `export function ${parseFunction}<TProgram extends string>(` +
-                    `instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>` +
-                    `): ${programInstructionsParsedUnionType}<TProgram> {\n` +
-                    `const instructionType = ${programInstructionsIdentifierFunction}(instruction);\n` +
-                    `switch (instructionType) {\n` +
-                    `${cases}\n` +
-                    `default: throw new Error("Unrecognized instruction type")\n` +
-                    `}\n` +
-                    `}`,
-            ),
-        f => addFragmentImports(f, 'solanaInstructions', ['type Instruction', 'type InstructionWithData']),
-        f => addFragmentImports(f, 'solanaCodecsCore', ['type ReadonlyUint8Array']),
-        f =>
-            anyInstructionHasAccounts
-                ? addFragmentImports(f, 'solanaInstructions', ['assertIsInstructionWithAccounts'])
-                : f,
-    );
+    return fragment`
+        export function ${parseFunction}<TProgram extends string>(
+            instruction: ${use('type Instruction', 'solanaInstructions')}<TProgram> 
+                & ${use('type InstructionWithData', 'solanaInstructions')}<${use('type ReadonlyUint8Array', 'solanaCodecsCore')}>
+        ): ${programInstructionsParsedUnionType}<TProgram> {
+            const instructionType = ${programInstructionsIdentifierFunction}(instruction);
+            switch (instructionType) {
+                ${switchCases}
+                default: throw new Error("Unrecognized instruction type")
+            }
+        }`;
 }
