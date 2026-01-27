@@ -13,7 +13,7 @@ import {
     structTypeNode,
 } from '@codama/nodes';
 import { visit } from '@codama/visitors-core';
-import { test } from 'vitest';
+import { expect, test } from 'vitest';
 
 import { getRenderMapVisitor } from '../src';
 import { renderMapContains, renderMapContainsImports } from './_setup';
@@ -258,4 +258,83 @@ test('it renders a parsed union type of all available instructions for a program
         '| ({ instructionType: SplTokenInstruction.TransferTokens; } & ParsedTransferTokensInstruction<TProgram>)',
         '| ({ instructionType: SplTokenInstruction.UpdateAuthority; } & ParsedUpdateAuthorityInstruction<TProgram>)',
     ]);
+});
+
+test('it renders a function that parses instructions in a program', async () => {
+    // Given the following program with instructions that have discriminators.
+    const node = programNode({
+        instructions: [
+            instructionNode({
+                arguments: [
+                    instructionArgumentNode({
+                        defaultValue: numberValueNode(1),
+                        name: 'discriminator',
+                        type: numberTypeNode('u8'),
+                    }),
+                ],
+                discriminators: [fieldDiscriminatorNode('discriminator')],
+                name: 'mintTokens',
+            }),
+            instructionNode({
+                arguments: [
+                    instructionArgumentNode({
+                        defaultValue: numberValueNode(2),
+                        name: 'discriminator',
+                        type: numberTypeNode('u8'),
+                    }),
+                ],
+                discriminators: [fieldDiscriminatorNode('discriminator')],
+                name: 'transferTokens',
+            }),
+        ],
+        name: 'splToken',
+        publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then we expect the following parse function to be rendered.
+    await renderMapContains(renderMap, 'programs/splToken.ts', [
+        'export function parseSplTokenInstruction',
+        'TProgram extends string',
+        'instruction: Instruction',
+        'InstructionWithData',
+        'ParsedSplTokenInstruction',
+        'const instructionType = identifySplTokenInstruction(instruction)',
+        'switch (instructionType)',
+        'case SplTokenInstruction.MintTokens',
+        'parseMintTokensInstruction(instruction)',
+        'case SplTokenInstruction.TransferTokens',
+        'parseTransferTokensInstruction(instruction)',
+    ]);
+
+    // And we expect the following imports.
+    await renderMapContainsImports(renderMap, 'programs/splToken.ts', {
+        '@solana/kit': ['Instruction', 'InstructionWithData', 'ReadonlyUint8Array'],
+    });
+});
+
+test('it does not render parse function when no instructions have discriminators', async () => {
+    // Given the following program with instructions without discriminators.
+    const node = programNode({
+        instructions: [
+            instructionNode({ discriminators: [], name: 'mintTokens' }),
+            instructionNode({ discriminators: [], name: 'transferTokens' }),
+        ],
+        name: 'splToken',
+        publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then we expect the parse function NOT to be rendered.
+    await renderMapContains(renderMap, 'programs/splToken.ts', [
+        'export enum SplTokenInstruction { MintTokens, TransferTokens }',
+    ]);
+
+    // And we do NOT expect the parse function.
+    const programFile = renderMap.get('programs/splToken.ts');
+    expect(programFile).not.toContain('parseSplTokenInstruction');
 });

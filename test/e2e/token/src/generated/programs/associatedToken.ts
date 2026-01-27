@@ -6,8 +6,19 @@
  * @see https://github.com/codama-idl/codama
  */
 
-import { containsBytes, getU8Encoder, type Address, type ReadonlyUint8Array } from '@solana/kit';
 import {
+    assertIsInstructionWithAccounts,
+    containsBytes,
+    getU8Encoder,
+    type Address,
+    type Instruction,
+    type InstructionWithData,
+    type ReadonlyUint8Array,
+} from '@solana/kit';
+import {
+    parseCreateAssociatedTokenIdempotentInstruction,
+    parseCreateAssociatedTokenInstruction,
+    parseRecoverNestedAssociatedTokenInstruction,
     type ParsedCreateAssociatedTokenIdempotentInstruction,
     type ParsedCreateAssociatedTokenInstruction,
     type ParsedRecoverNestedAssociatedTokenInstruction,
@@ -49,3 +60,34 @@ export type ParsedAssociatedTokenInstruction<TProgram extends string = 'ATokenGP
         | ({
               instructionType: AssociatedTokenInstruction.RecoverNestedAssociatedToken;
           } & ParsedRecoverNestedAssociatedTokenInstruction<TProgram>);
+
+export function parseAssociatedTokenInstruction<TProgram extends string>(
+    instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
+): ParsedAssociatedTokenInstruction<TProgram> {
+    const instructionType = identifyAssociatedTokenInstruction(instruction);
+    switch (instructionType) {
+        case AssociatedTokenInstruction.CreateAssociatedToken: {
+            assertIsInstructionWithAccounts(instruction);
+            return {
+                instructionType: AssociatedTokenInstruction.CreateAssociatedToken,
+                ...parseCreateAssociatedTokenInstruction(instruction),
+            };
+        }
+        case AssociatedTokenInstruction.CreateAssociatedTokenIdempotent: {
+            assertIsInstructionWithAccounts(instruction);
+            return {
+                instructionType: AssociatedTokenInstruction.CreateAssociatedTokenIdempotent,
+                ...parseCreateAssociatedTokenIdempotentInstruction(instruction),
+            };
+        }
+        case AssociatedTokenInstruction.RecoverNestedAssociatedToken: {
+            assertIsInstructionWithAccounts(instruction);
+            return {
+                instructionType: AssociatedTokenInstruction.RecoverNestedAssociatedToken,
+                ...parseRecoverNestedAssociatedTokenInstruction(instruction),
+            };
+        }
+        default:
+            throw new Error('Unrecognized instruction type: ' + instructionType);
+    }
+}

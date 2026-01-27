@@ -27,6 +27,7 @@ export function getProgramInstructionsFragment(
             getProgramInstructionsEnumFragment(scopeWithInstructions),
             getProgramInstructionsIdentifierFunctionFragment(scopeWithInstructions),
             getProgramInstructionsParsedUnionTypeFragment(scopeWithInstructions),
+            getProgramInstructionsParseFunctionFragment(scopeWithInstructions),
         ],
         c => c.join('\n\n'),
     );
@@ -122,4 +123,51 @@ function getProgramInstructionsParsedUnionTypeFragment(
         ],
         c => c.join('\n'),
     );
+}
+
+function getProgramInstructionsParseFunctionFragment(
+    scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
+        allInstructions: InstructionNode[];
+        programNode: ProgramNode;
+    },
+): Fragment | undefined {
+    const { programNode, nameApi, allInstructions } = scope;
+
+    // Only generate if there are instructions with discriminators (i.e., identifier function exists)
+    const instructionsWithDiscriminators = allInstructions.filter(
+        instruction => (instruction.discriminators ?? []).length > 0,
+    );
+    if (instructionsWithDiscriminators.length === 0) return;
+
+    const programInstructionsEnum = nameApi.programInstructionsEnum(programNode.name);
+    const programInstructionsIdentifierFunction = nameApi.programInstructionsIdentifierFunction(programNode.name);
+    const programInstructionsParsedUnionType = nameApi.programInstructionsParsedUnionType(programNode.name);
+    const parseFunction = nameApi.programInstructionsParseFunction(programNode.name);
+
+    const switchCases = mergeFragments(
+        allInstructions.map((instruction): Fragment => {
+            const enumVariant = nameApi.programInstructionsEnumVariant(instruction.name);
+            const parseFunction = use(nameApi.instructionParseFunction(instruction.name), 'generatedInstructions');
+            const assertIsInstructionWithAccounts = use('assertIsInstructionWithAccounts', 'solanaInstructions');
+            // Only need accounts assertion since data is guaranteed by the input type
+            const hasAccounts = instruction.accounts.length > 0;
+            const assertionsCode = hasAccounts
+                ? fragment`${assertIsInstructionWithAccounts}(instruction);\n`
+                : fragment``;
+            return fragment`case ${programInstructionsEnum}.${enumVariant}: { ${assertionsCode}return { instructionType: ${programInstructionsEnum}.${enumVariant}, ...${parseFunction}(instruction) }; }`;
+        }),
+        c => c.join('\n'),
+    );
+
+    return fragment`
+        export function ${parseFunction}<TProgram extends string>(
+            instruction: ${use('type Instruction', 'solanaInstructions')}<TProgram> 
+                & ${use('type InstructionWithData', 'solanaInstructions')}<${use('type ReadonlyUint8Array', 'solanaCodecsCore')}>
+        ): ${programInstructionsParsedUnionType}<TProgram> {
+            const instructionType = ${programInstructionsIdentifierFunction}(instruction);
+            switch (instructionType) {
+                ${switchCases}
+                default: throw new Error("Unrecognized instruction type: " + instructionType);
+            }
+        }`;
 }

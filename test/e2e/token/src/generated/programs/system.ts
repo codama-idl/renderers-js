@@ -6,8 +6,16 @@
  * @see https://github.com/codama-idl/codama
  */
 
-import { containsBytes, getU32Encoder, type Address, type ReadonlyUint8Array } from '@solana/kit';
-import { type ParsedCreateAccountInstruction } from '../instructions';
+import {
+    assertIsInstructionWithAccounts,
+    containsBytes,
+    getU32Encoder,
+    type Address,
+    type Instruction,
+    type InstructionWithData,
+    type ReadonlyUint8Array,
+} from '@solana/kit';
+import { parseCreateAccountInstruction, type ParsedCreateAccountInstruction } from '../instructions';
 
 export const SYSTEM_PROGRAM_ADDRESS = '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
 
@@ -28,3 +36,17 @@ export function identifySystemInstruction(
 export type ParsedSystemInstruction<TProgram extends string = '11111111111111111111111111111111'> = {
     instructionType: SystemInstruction.CreateAccount;
 } & ParsedCreateAccountInstruction<TProgram>;
+
+export function parseSystemInstruction<TProgram extends string>(
+    instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
+): ParsedSystemInstruction<TProgram> {
+    const instructionType = identifySystemInstruction(instruction);
+    switch (instructionType) {
+        case SystemInstruction.CreateAccount: {
+            assertIsInstructionWithAccounts(instruction);
+            return { instructionType: SystemInstruction.CreateAccount, ...parseCreateAccountInstruction(instruction) };
+        }
+        default:
+            throw new Error('Unrecognized instruction type: ' + instructionType);
+    }
+}
