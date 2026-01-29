@@ -101,11 +101,10 @@ export function identifyWenTransferGuardInstruction(
 }
 
 export type ParsedWenTransferGuardInstruction<TProgram extends string = 'LockdqYQ9X2kwtWB99ioSbxubAmEi8o9jqYwbXgrrRw'> =
-
-        | ({ instructionType: WenTransferGuardInstruction.CreateGuard } & ParsedCreateGuardInstruction<TProgram>)
-        | ({ instructionType: WenTransferGuardInstruction.Execute } & ParsedExecuteInstruction<TProgram>)
-        | ({ instructionType: WenTransferGuardInstruction.Initialize } & ParsedInitializeInstruction<TProgram>)
-        | ({ instructionType: WenTransferGuardInstruction.UpdateGuard } & ParsedUpdateGuardInstruction<TProgram>);
+    | ({ instructionType: WenTransferGuardInstruction.CreateGuard } & ParsedCreateGuardInstruction<TProgram>)
+    | ({ instructionType: WenTransferGuardInstruction.Execute } & ParsedExecuteInstruction<TProgram>)
+    | ({ instructionType: WenTransferGuardInstruction.Initialize } & ParsedInitializeInstruction<TProgram>)
+    | ({ instructionType: WenTransferGuardInstruction.UpdateGuard } & ParsedUpdateGuardInstruction<TProgram>);
 
 export function parseWenTransferGuardInstruction<TProgram extends string>(
     instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
