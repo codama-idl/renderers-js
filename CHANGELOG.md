@@ -1,5 +1,15 @@
 # @codama/renderers-js
 
+## 1.6.1
+
+### Patch Changes
+
+- [#103](https://github.com/codama-idl/renderers-js/pull/103) [`9b0de78`](https://github.com/codama-idl/renderers-js/commit/9b0de78cb7e321fb496dabf0ee5d9d763b39335d) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Generate a prettierignore file when we format the code
+
+- [#100](https://github.com/codama-idl/renderers-js/pull/100) [`6d08d91`](https://github.com/codama-idl/renderers-js/commit/6d08d919dc5e0108a2fc4ec5b72c9a752d905e8d) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Bump to Pretter 3.8.1
+
+- [#101](https://github.com/codama-idl/renderers-js/pull/101) [`0834fa5`](https://github.com/codama-idl/renderers-js/commit/0834fa510c6f60d9b119b23e0355fe80a9ee6134) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Use string interpolation for the Unrecognised instruction error
+
 ## 1.6.0
 
 ### Minor Changes
