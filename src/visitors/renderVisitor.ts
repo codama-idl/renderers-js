@@ -1,7 +1,7 @@
-import { deleteDirectory, mapRenderMapContentAsync, writeRenderMap } from '@codama/renderers-core';
+import { addToRenderMap, deleteDirectory, mapRenderMapContentAsync, writeRenderMap } from '@codama/renderers-core';
 import { rootNodeVisitor, visit } from '@codama/visitors-core';
 
-import { getCodeFormatter, RenderOptions, syncPackageJson } from '../utils';
+import { fragment, getCodeFormatter, RenderOptions, syncPackageJson } from '../utils';
 import { getRenderMapVisitor } from './getRenderMapVisitor';
 
 export function renderVisitor(path: string, options: RenderOptions = {}) {
@@ -20,6 +20,13 @@ export function renderVisitor(path: string, options: RenderOptions = {}) {
 
         // Create or update package.json dependencies, if requested.
         await syncPackageJson(renderMap, formatCode, options);
+
+        if (options.formatCode ?? true) {
+            // If we formatted the generated code, prettierignore it
+            // This avoids conflicts between the prettier version used here
+            // and in the package using the generated code.
+            renderMap = addToRenderMap(renderMap, '.prettierignore', fragment`**\n`);
+        }
 
         // Write the rendered files to the output directory.
         writeRenderMap(renderMap, path);
