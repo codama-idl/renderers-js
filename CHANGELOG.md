@@ -1,5 +1,13 @@
 # @codama/renderers-js
 
+## 1.6.2
+
+### Patch Changes
+
+- [#104](https://github.com/codama-idl/renderers-js/pull/104) [`3a15fd7`](https://github.com/codama-idl/renderers-js/commit/3a15fd708971698054fd83288883249b1f04d0e8) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Don't generate .prettierignore
+
+- [#107](https://github.com/codama-idl/renderers-js/pull/107) [`b9186a9`](https://github.com/codama-idl/renderers-js/commit/b9186a9976d3bd809e50994afc1a89a951ab5d20) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Cast in template expression to not break eslint rule
+
 ## 1.6.1
 
 ### Patch Changes
