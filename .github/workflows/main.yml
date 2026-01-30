@@ -31,6 +31,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install e2e dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: test/e2e
+
       - name: Compile JS and types
         run: pnpm run build
 
