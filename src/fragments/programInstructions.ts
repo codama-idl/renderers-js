@@ -167,7 +167,7 @@ function getProgramInstructionsParseFunctionFragment(
             const instructionType = ${programInstructionsIdentifierFunction}(instruction);
             switch (instructionType) {
                 ${switchCases}
-                default: throw new Error(\`Unrecognized instruction type: \${instructionType}\`);
+                default: throw new Error(\`Unrecognized instruction type: \${instructionType as string}\`);
             }
         }`;
 }
