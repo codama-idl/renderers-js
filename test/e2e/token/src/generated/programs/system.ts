@@ -47,6 +47,6 @@ export function parseSystemInstruction<TProgram extends string>(
             return { instructionType: SystemInstruction.CreateAccount, ...parseCreateAccountInstruction(instruction) };
         }
         default:
-            throw new Error(`Unrecognized instruction type: ${instructionType}`);
+            throw new Error(`Unrecognized instruction type: ${instructionType as string}`);
     }
 }

@@ -93,6 +93,6 @@ export function parseDummyInstruction<TProgram extends string>(
             return { instructionType: DummyInstruction.Instruction7, ...parseInstruction7Instruction(instruction) };
         }
         default:
-            throw new Error(`Unrecognized instruction type: ${instructionType}`);
+            throw new Error(`Unrecognized instruction type: ${instructionType as string}`);
     }
 }
