@@ -4,7 +4,7 @@ import {
   getInstruction1Instruction,
 } from '../src/index.js';
 
-test('it can create instruction 1', async (t) => {
+test('it can create instruction 1', (t) => {
   // When we create a dummy instruction.
   const instruction = getInstruction1Instruction();
 

@@ -23,7 +23,7 @@ test('it adds custom text to the transaction logs', async (t) => {
   const signature = await pipe(
     await createDefaultTransaction(client, payer),
     (tx) => appendTransactionMessageInstruction(addMemo, tx),
-    async (tx) => signAndSendTransaction(client, tx)
+    async (tx) => await signAndSendTransaction(client, tx)
   );
 
   // Then the instruction data contains our memo.

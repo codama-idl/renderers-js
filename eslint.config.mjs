@@ -2,7 +2,7 @@ import solanaConfig from '@solana/eslint-config-solana';
 import { defineConfig } from 'eslint/config';
 
 export default defineConfig([
-    { ignores: ['**/dist/**', '**/e2e/**/env-shim.ts', '**/e2e/**/tsup.config.ts', '**/e2e/**/test/**'] },
+    { ignores: ['**/dist/**', '**/e2e/**/env-shim.ts'] },
     { files: ['**/*.ts', '**/*.(c|m)?js'], ignores: ['**/e2e/**'], extends: [solanaConfig] },
     {
         files: ['**/e2e/**/*.ts', '**/e2e/**/*.(c|m)?js'],
