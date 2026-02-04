@@ -1,5 +1,11 @@
 # @codama/renderers-js
 
+## 1.7.0
+
+### Minor Changes
+
+- [#109](https://github.com/codama-idl/renderers-js/pull/109) [`531c05f`](https://github.com/codama-idl/renderers-js/commit/531c05fba2c21ee0030d059be6a7aaa7ab66d20a) Thanks [@mcintyre94](https://github.com/mcintyre94)! - Update the Kit dependency and default Kit version for generated clients to ^6.0.0
+
 ## 1.6.2
 
 ### Patch Changes
