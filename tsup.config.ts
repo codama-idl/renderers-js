@@ -1,6 +1,6 @@
 import { env } from 'node:process';
 
-import { defineConfig, Format, Options as TsupConfig } from 'tsup';
+import { defineConfig, Format, type Options as TsupConfig } from 'tsup';
 
 type Platform = 'browser' | 'node' | 'react-native';
 

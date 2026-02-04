@@ -23,15 +23,15 @@ type PackageJson = {
 };
 
 export const DEFAULT_DEPENDENCY_VERSIONS: DependencyVersions = {
-    '@solana/accounts': '^5.0.0',
-    '@solana/addresses': '^5.0.0',
-    '@solana/codecs': '^5.0.0',
-    '@solana/errors': '^5.0.0',
-    '@solana/instructions': '^5.0.0',
-    '@solana/kit': '^5.0.0',
-    '@solana/programs': '^5.0.0',
-    '@solana/rpc-types': '^5.0.0',
-    '@solana/signers': '^5.0.0',
+    '@solana/accounts': '^6.0.0',
+    '@solana/addresses': '^6.0.0',
+    '@solana/codecs': '^6.0.0',
+    '@solana/errors': '^6.0.0',
+    '@solana/instructions': '^6.0.0',
+    '@solana/kit': '^6.0.0',
+    '@solana/programs': '^6.0.0',
+    '@solana/rpc-types': '^6.0.0',
+    '@solana/signers': '^6.0.0',
 };
 
 export async function syncPackageJson(
