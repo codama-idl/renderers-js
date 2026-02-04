@@ -1,5 +1,5 @@
 import {
-  type BaseTransactionMessage,
+  type TransactionMessage,
   type Commitment,
   type Rpc,
   type RpcSubscriptions,
@@ -52,9 +52,9 @@ export const createDefaultTransaction = async (
   client: Client,
   feePayer: TransactionSigner
 ): Promise<
-  BaseTransactionMessage &
-    TransactionMessageWithFeePayer &
-    TransactionMessageWithBlockhashLifetime
+  TransactionMessage &
+  TransactionMessageWithFeePayer &
+  TransactionMessageWithBlockhashLifetime
 > => {
   const { value: latestBlockhash } = await client.rpc
     .getLatestBlockhash()
@@ -68,7 +68,7 @@ export const createDefaultTransaction = async (
 
 export const signAndSendTransaction = async (
   client: Client,
-  transactionMessage: BaseTransactionMessage &
+  transactionMessage: TransactionMessage &
     TransactionMessageWithFeePayer &
     TransactionMessageWithBlockhashLifetime,
   commitment: Commitment = 'confirmed'
