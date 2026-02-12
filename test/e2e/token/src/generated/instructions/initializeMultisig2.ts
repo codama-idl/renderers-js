@@ -25,8 +25,8 @@ import {
     type ReadonlyUint8Array,
     type WritableAccount,
 } from '@solana/kit';
+import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { TOKEN_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const INITIALIZE_MULTISIG2_DISCRIMINATOR = 19;
 
@@ -98,7 +98,7 @@ export function getInitializeMultisig2Instruction<
 
     // Original accounts.
     const originalAccounts = { multisig: { value: input.multisig ?? null, isWritable: true } };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
     const args = { ...input };
@@ -108,7 +108,7 @@ export function getInitializeMultisig2Instruction<
 
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
-        accounts: [getAccountMeta(accounts.multisig), ...remainingAccounts],
+        accounts: [getAccountMeta('multisig', accounts.multisig), ...remainingAccounts],
         data: getInitializeMultisig2InstructionDataEncoder().encode(args as InitializeMultisig2InstructionDataArgs),
         programAddress,
     } as InitializeMultisig2Instruction<TProgramAddress, TAccountMultisig>);

@@ -28,8 +28,8 @@ import {
     type TransactionSigner,
     type WritableSignerAccount,
 } from '@solana/kit';
+import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { SYSTEM_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const ASSIGN_DISCRIMINATOR = 1;
 
@@ -94,14 +94,14 @@ export function getAssignInstruction<
 
     // Original accounts.
     const originalAccounts = { account: { value: input.account ?? null, isWritable: true } };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
     const args = { ...input };
 
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
-        accounts: [getAccountMeta(accounts.account)],
+        accounts: [getAccountMeta('account', accounts.account)],
         data: getAssignInstructionDataEncoder().encode(args as AssignInstructionDataArgs),
         programAddress,
     } as AssignInstruction<TProgramAddress, TAccountAccount>);

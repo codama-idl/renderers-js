@@ -134,7 +134,7 @@ function getAccountsInitializationFragment(instructionNode: InstructionNode): Fr
 
     return fragment` // Original accounts.
 const originalAccounts = { ${accounts} }
-const accounts = originalAccounts as Record<keyof typeof originalAccounts, ${use('type ResolvedAccount', 'shared')}>;
+const accounts = originalAccounts as Record<keyof typeof originalAccounts, ${use('type ResolvedInstructionAccount', 'solanaProgramClientCore')}>;
 `;
 }
 
@@ -187,12 +187,14 @@ function getReturnStatementFragment(
 
     // Account meta helper.
     const getAccountMeta = hasAccounts
-        ? fragment`const getAccountMeta = ${use('getAccountMetaFactory', 'shared')}(programAddress, '${optionalAccountStrategy}');`
+        ? fragment`const getAccountMeta = ${use('getAccountMetaFactory', 'solanaProgramClientCore')}(programAddress, '${optionalAccountStrategy}');`
         : '';
 
     // Accounts.
     const accountItems = [
-        ...instructionNode.accounts.map(account => `getAccountMeta(accounts.${camelCase(account.name)})`),
+        ...instructionNode.accounts.map(
+            account => `getAccountMeta("${camelCase(account.name)}", accounts.${camelCase(account.name)})`,
+        ),
         ...(hasRemainingAccounts ? ['...remainingAccounts'] : []),
     ].join(', ');
     let accounts: Fragment | undefined;
@@ -230,7 +232,7 @@ function getReturnStatementFragment(
 function getReturnTypeFragment(instructionTypeFragment: Fragment, hasByteDeltas: boolean, useAsync: boolean): Fragment {
     return pipe(
         instructionTypeFragment,
-        f => (hasByteDeltas ? fragment`${f} & ${use('type InstructionWithByteDelta', 'shared')}` : f),
+        f => (hasByteDeltas ? fragment`${f} & ${use('type InstructionWithByteDelta', 'solanaProgramClientCore')}` : f),
         f => (useAsync ? fragment`Promise<${f}>` : f),
     );
 }

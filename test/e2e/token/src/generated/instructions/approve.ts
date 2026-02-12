@@ -31,8 +31,8 @@ import {
     type TransactionSigner,
     type WritableAccount,
 } from '@solana/kit';
+import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { TOKEN_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const APPROVE_DISCRIMINATOR = 4;
 
@@ -129,7 +129,7 @@ export function getApproveInstruction<
         delegate: { value: input.delegate ?? null, isWritable: false },
         owner: { value: input.owner ?? null, isWritable: false },
     };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
     const args = { ...input };
@@ -144,9 +144,9 @@ export function getApproveInstruction<
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
-            getAccountMeta(accounts.source),
-            getAccountMeta(accounts.delegate),
-            getAccountMeta(accounts.owner),
+            getAccountMeta('source', accounts.source),
+            getAccountMeta('delegate', accounts.delegate),
+            getAccountMeta('owner', accounts.owner),
             ...remainingAccounts,
         ],
         data: getApproveInstructionDataEncoder().encode(args as ApproveInstructionDataArgs),

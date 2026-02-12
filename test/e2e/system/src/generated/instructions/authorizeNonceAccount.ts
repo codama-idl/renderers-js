@@ -29,8 +29,8 @@ import {
     type TransactionSigner,
     type WritableAccount,
 } from '@solana/kit';
+import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { SYSTEM_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const AUTHORIZE_NONCE_ACCOUNT_DISCRIMINATOR = 7;
 
@@ -111,14 +111,17 @@ export function getAuthorizeNonceAccountInstruction<
         nonceAccount: { value: input.nonceAccount ?? null, isWritable: true },
         nonceAuthority: { value: input.nonceAuthority ?? null, isWritable: false },
     };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
     const args = { ...input };
 
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
-        accounts: [getAccountMeta(accounts.nonceAccount), getAccountMeta(accounts.nonceAuthority)],
+        accounts: [
+            getAccountMeta('nonceAccount', accounts.nonceAccount),
+            getAccountMeta('nonceAuthority', accounts.nonceAuthority),
+        ],
         data: getAuthorizeNonceAccountInstructionDataEncoder().encode(args as AuthorizeNonceAccountInstructionDataArgs),
         programAddress,
     } as AuthorizeNonceAccountInstruction<TProgramAddress, TAccountNonceAccount, TAccountNonceAuthority>);

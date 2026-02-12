@@ -31,8 +31,8 @@ import {
     type TransactionSigner,
     type WritableAccount,
 } from '@solana/kit';
+import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { TOKEN_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const BURN_CHECKED_DISCRIMINATOR = 15;
 
@@ -139,7 +139,7 @@ export function getBurnCheckedInstruction<
         mint: { value: input.mint ?? null, isWritable: true },
         authority: { value: input.authority ?? null, isWritable: false },
     };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
     const args = { ...input };
@@ -154,9 +154,9 @@ export function getBurnCheckedInstruction<
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
-            getAccountMeta(accounts.account),
-            getAccountMeta(accounts.mint),
-            getAccountMeta(accounts.authority),
+            getAccountMeta('account', accounts.account),
+            getAccountMeta('mint', accounts.mint),
+            getAccountMeta('authority', accounts.authority),
             ...remainingAccounts,
         ],
         data: getBurnCheckedInstructionDataEncoder().encode(args as BurnCheckedInstructionDataArgs),

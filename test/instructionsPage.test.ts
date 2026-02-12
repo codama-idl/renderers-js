@@ -83,7 +83,7 @@ test('it renders extra arguments that default on each other', async () => {
     // Then we expect the following code to be rendered.
     await renderMapContains(renderMap, 'instructions/create.ts', [
         'const args = { ...input }',
-        'if (!args.foo) { args.foo = expectSome(args.bar); }',
+        "if (!args.foo) { args.foo = getNonNullResolvedInstructionInput ( 'bar', args.bar ); }",
     ]);
 });
 
@@ -197,7 +197,7 @@ test('it renders instruction accounts with linked PDAs as default value', async 
     // Then we expect the following default value to be rendered.
     await renderMapContains(renderMap, 'instructions/increment.ts', [
         'if (!accounts.counter.value) { ' +
-            'accounts.counter.value = await findCounterPda( { authority: expectAddress ( accounts.authority.value ) } ); ' +
+            "accounts.counter.value = await findCounterPda( { authority: getAddressFromResolvedInstructionAccount ( 'authority', accounts.authority.value ) } ); " +
             '}',
     ]);
     await renderMapContainsImports(renderMap, 'instructions/increment.ts', { '../pdas': ['findCounterPda'] });
@@ -245,7 +245,7 @@ test('it renders instruction accounts with linked PDA default values that point 
     // Then we expect the following default value to be rendered.
     await renderMapContains(renderMap, 'instructions/increment.ts', [
         'if (!accounts.counter.value) { ' +
-            'accounts.counter.value = await findCounterPda( { authority: expectAddress ( accounts.authority.value ) }, { programAddress: expectAddress ( accounts.myProgram.value ) } ); ' +
+            "accounts.counter.value = await findCounterPda( { authority: getAddressFromResolvedInstructionAccount ( 'authority', accounts.authority.value ) }, { programAddress: getAddressFromResolvedInstructionAccount ( 'myProgram', accounts.myProgram.value ) } ); " +
             '}',
     ]);
     await renderMapContainsImports(renderMap, 'instructions/increment.ts', { '../pdas': ['findCounterPda'] });
@@ -291,7 +291,7 @@ test('it renders instruction accounts with inlined PDAs as default value', async
             '  programAddress, ' +
             '  seeds: [ ' +
             "    getUtf8Encoder().encode('counter'), " +
-            '    getAddressEncoder().encode(expectAddress(accounts.authority.value)) ' +
+            "    getAddressEncoder().encode( getAddressFromResolvedInstructionAccount ( 'authority', accounts.authority.value ) ) " +
             '  ] ' +
             '} ); ' +
             '}',
@@ -341,10 +341,10 @@ test('it renders instruction accounts with inlined PDA default values that point
     await renderMapContains(renderMap, 'instructions/increment.ts', [
         'if (!accounts.counter.value) { ' +
             'accounts.counter.value = await getProgramDerivedAddress( { ' +
-            '  programAddress: expectAddress(accounts.myProgram.value), ' +
+            "  programAddress: getAddressFromResolvedInstructionAccount ( 'myProgram', accounts.myProgram.value ), " +
             '  seeds: [ ' +
             "    getUtf8Encoder().encode('counter'), " +
-            '    getAddressEncoder().encode(expectAddress(accounts.authority.value)) ' +
+            "    getAddressEncoder().encode( getAddressFromResolvedInstructionAccount ( 'authority', accounts.authority.value ) ) " +
             '  ] ' +
             '} ); ' +
             '}',
@@ -395,7 +395,7 @@ test('it renders instruction accounts with inlined PDAs from another program as 
             "  programAddress: '2222' as Address<'2222'>, " +
             '  seeds: [ ' +
             "    getUtf8Encoder().encode('counter'), " +
-            '    getAddressEncoder().encode(expectAddress(accounts.authority.value)) ' +
+            "    getAddressEncoder().encode( getAddressFromResolvedInstructionAccount ( 'authority', accounts.authority.value ) ) " +
             '  ] ' +
             '} ); ' +
             '}',

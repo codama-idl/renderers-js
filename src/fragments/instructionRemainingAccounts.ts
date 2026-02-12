@@ -84,7 +84,7 @@ function getArgumentValueNodeFragment(
 
     // The argument was added as `Array<TransactionSigner | Address>`.
     if (isSigner === 'either') {
-        return fragment`${argumentArray}.map((addressOrSigner) => (${use('isTransactionSigner', 'shared')}(addressOrSigner) ? { address: addressOrSigner.address, role: ${role}, signer: addressOrSigner } : { address: addressOrSigner, role: ${role} }))`;
+        return fragment`${argumentArray}.map((addressOrSigner) => (typeof addressOrSigner === "string" ? { address: addressOrSigner, role: ${role} } : { address: addressOrSigner.address, role: ${role}, signer: addressOrSigner }))`;
     }
 
     // The argument was added as `Array<TransactionSigner>`.

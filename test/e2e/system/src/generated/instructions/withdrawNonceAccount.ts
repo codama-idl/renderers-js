@@ -30,8 +30,8 @@ import {
     type TransactionSigner,
     type WritableAccount,
 } from '@solana/kit';
+import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { SYSTEM_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const WITHDRAW_NONCE_ACCOUNT_DISCRIMINATOR = 5;
 
@@ -148,7 +148,7 @@ export function getWithdrawNonceAccountInstruction<
         rentSysvar: { value: input.rentSysvar ?? null, isWritable: false },
         nonceAuthority: { value: input.nonceAuthority ?? null, isWritable: false },
     };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
     const args = { ...input };
@@ -166,11 +166,11 @@ export function getWithdrawNonceAccountInstruction<
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
-            getAccountMeta(accounts.nonceAccount),
-            getAccountMeta(accounts.recipientAccount),
-            getAccountMeta(accounts.recentBlockhashesSysvar),
-            getAccountMeta(accounts.rentSysvar),
-            getAccountMeta(accounts.nonceAuthority),
+            getAccountMeta('nonceAccount', accounts.nonceAccount),
+            getAccountMeta('recipientAccount', accounts.recipientAccount),
+            getAccountMeta('recentBlockhashesSysvar', accounts.recentBlockhashesSysvar),
+            getAccountMeta('rentSysvar', accounts.rentSysvar),
+            getAccountMeta('nonceAuthority', accounts.nonceAuthority),
         ],
         data: getWithdrawNonceAccountInstructionDataEncoder().encode(args as WithdrawNonceAccountInstructionDataArgs),
         programAddress,
