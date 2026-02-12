@@ -6,8 +6,12 @@ const DEFAULT_EXTERNAL_MODULE_MAP: Record<string, string> = {
     solanaCodecsNumbers: '@solana/kit',
     solanaCodecsStrings: '@solana/kit',
     solanaErrors: '@solana/kit',
+    solanaInstructionPlans: '@solana/kit',
     solanaInstructions: '@solana/kit',
     solanaOptions: '@solana/kit',
+    solanaPluginCore: '@solana/kit',
+    solanaPluginInterfaces: '@solana/kit',
+    solanaProgramClientCore: '@solana/kit/program-client-core',
     solanaPrograms: '@solana/kit',
     solanaRpcTypes: '@solana/kit',
     solanaSigners: '@solana/kit',
@@ -21,8 +25,12 @@ const DEFAULT_GRANULAR_EXTERNAL_MODULE_MAP: Record<string, string> = {
     solanaCodecsNumbers: '@solana/codecs',
     solanaCodecsStrings: '@solana/codecs',
     solanaErrors: '@solana/errors',
+    solanaInstructionPlans: '@solana/instruction-plans',
     solanaInstructions: '@solana/instructions',
     solanaOptions: '@solana/codecs',
+    solanaPluginCore: '@solana/plugin-core',
+    solanaPluginInterfaces: '@solana/plugin-interfaces',
+    solanaProgramClientCore: '@solana/program-client-core',
     solanaPrograms: '@solana/programs',
     solanaRpcTypes: '@solana/rpc-types',
     solanaSigners: '@solana/signers',
@@ -150,7 +158,15 @@ export function getExternalDependencies(
     useGranularImports: boolean,
 ): Set<string> {
     const resolvedImports = resolveImportMapModules(importMap, dependencyMap, useGranularImports);
-    return new Set([...resolvedImports.keys()].filter(module => !module.startsWith('.')));
+    return new Set(
+        [...resolvedImports.keys()]
+            .filter(module => !module.startsWith('.'))
+            .map(module => {
+                // For subpath imports, we want to get the root package name to check against dependencies.
+                const subPathExportIndex = module.startsWith('@') ? 2 : 1;
+                return module.split('/').slice(0, subPathExportIndex).join('/');
+            }),
+    );
 }
 
 function resolveImportMapModules(
