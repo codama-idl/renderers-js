@@ -30,8 +30,12 @@ import {
     type ReadonlyAccount,
     type ReadonlyUint8Array,
 } from '@solana/kit';
+import {
+    getAccountMetaFactory,
+    getAddressFromResolvedInstructionAccount,
+    type ResolvedInstructionAccount,
+} from '@solana/kit/program-client-core';
 import { WEN_TRANSFER_GUARD_PROGRAM_ADDRESS } from '../programs';
-import { expectAddress, getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const EXECUTE_DISCRIMINATOR = new Uint8Array([105, 37, 101, 197, 75, 251, 102, 26]);
 
@@ -160,7 +164,7 @@ export async function getExecuteInstructionAsync<
         guard: { value: input.guard ?? null, isWritable: false },
         instructionSysvarAccount: { value: input.instructionSysvarAccount ?? null, isWritable: false },
     };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
     const args = { ...input };
@@ -175,7 +179,7 @@ export async function getExecuteInstructionAsync<
                         101, 120, 116, 114, 97, 45, 97, 99, 99, 111, 117, 110, 116, 45, 109, 101, 116, 97, 115,
                     ]),
                 ),
-                getAddressEncoder().encode(expectAddress(accounts.mint.value)),
+                getAddressEncoder().encode(getAddressFromResolvedInstructionAccount('mint', accounts.mint.value)),
             ],
         });
     }
@@ -187,13 +191,13 @@ export async function getExecuteInstructionAsync<
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
-            getAccountMeta(accounts.sourceAccount),
-            getAccountMeta(accounts.mint),
-            getAccountMeta(accounts.destinationAccount),
-            getAccountMeta(accounts.ownerDelegate),
-            getAccountMeta(accounts.extraMetasAccount),
-            getAccountMeta(accounts.guard),
-            getAccountMeta(accounts.instructionSysvarAccount),
+            getAccountMeta('sourceAccount', accounts.sourceAccount),
+            getAccountMeta('mint', accounts.mint),
+            getAccountMeta('destinationAccount', accounts.destinationAccount),
+            getAccountMeta('ownerDelegate', accounts.ownerDelegate),
+            getAccountMeta('extraMetasAccount', accounts.extraMetasAccount),
+            getAccountMeta('guard', accounts.guard),
+            getAccountMeta('instructionSysvarAccount', accounts.instructionSysvarAccount),
         ],
         data: getExecuteInstructionDataEncoder().encode(args as ExecuteInstructionDataArgs),
         programAddress,
@@ -271,7 +275,7 @@ export function getExecuteInstruction<
         guard: { value: input.guard ?? null, isWritable: false },
         instructionSysvarAccount: { value: input.instructionSysvarAccount ?? null, isWritable: false },
     };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
     const args = { ...input };
@@ -285,13 +289,13 @@ export function getExecuteInstruction<
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
-            getAccountMeta(accounts.sourceAccount),
-            getAccountMeta(accounts.mint),
-            getAccountMeta(accounts.destinationAccount),
-            getAccountMeta(accounts.ownerDelegate),
-            getAccountMeta(accounts.extraMetasAccount),
-            getAccountMeta(accounts.guard),
-            getAccountMeta(accounts.instructionSysvarAccount),
+            getAccountMeta('sourceAccount', accounts.sourceAccount),
+            getAccountMeta('mint', accounts.mint),
+            getAccountMeta('destinationAccount', accounts.destinationAccount),
+            getAccountMeta('ownerDelegate', accounts.ownerDelegate),
+            getAccountMeta('extraMetasAccount', accounts.extraMetasAccount),
+            getAccountMeta('guard', accounts.guard),
+            getAccountMeta('instructionSysvarAccount', accounts.instructionSysvarAccount),
         ],
         data: getExecuteInstructionDataEncoder().encode(args as ExecuteInstructionDataArgs),
         programAddress,

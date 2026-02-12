@@ -133,6 +133,25 @@
           }
         ],
         "arguments": []
+      },
+      {
+        "kind": "instructionNode",
+        "name": "instruction8",
+        "optionalAccountStrategy": "programId",
+        "docs": ["Testing instructions with remaining accounts that can optionally be signers"],
+        "accounts": [],
+        "arguments": [],
+        "remainingAccounts": [
+          {
+            "kind": "instructionRemainingAccountsNode",
+            "value": {
+              "kind": "argumentValueNode",
+              "name": "remainingAccounts"
+            },
+            "isOptional": true,
+            "isSigner": "either"
+          }
+        ]
       }
     ],
     "definedTypes": [],

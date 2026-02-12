@@ -24,8 +24,8 @@ import {
     type ReadonlyUint8Array,
     type WritableAccount,
 } from '@solana/kit';
+import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { TOKEN_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const SYNC_NATIVE_DISCRIMINATOR = 17;
 
@@ -82,11 +82,11 @@ export function getSyncNativeInstruction<
 
     // Original accounts.
     const originalAccounts = { account: { value: input.account ?? null, isWritable: true } };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
-        accounts: [getAccountMeta(accounts.account)],
+        accounts: [getAccountMeta('account', accounts.account)],
         data: getSyncNativeInstructionDataEncoder().encode({}),
         programAddress,
     } as SyncNativeInstruction<TProgramAddress, TAccountAccount>);

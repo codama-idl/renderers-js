@@ -45,8 +45,12 @@ import {
     type WritableAccount,
     type WritableSignerAccount,
 } from '@solana/kit';
+import {
+    getAccountMetaFactory,
+    getAddressFromResolvedInstructionAccount,
+    type ResolvedInstructionAccount,
+} from '@solana/kit/program-client-core';
 import { WEN_TRANSFER_GUARD_PROGRAM_ADDRESS } from '../programs';
-import { expectAddress, getAccountMetaFactory, type ResolvedAccount } from '../shared';
 import {
     getCpiRuleDecoder,
     getCpiRuleEncoder,
@@ -234,7 +238,7 @@ export async function getCreateGuardInstructionAsync<
         tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
         systemProgram: { value: input.systemProgram ?? null, isWritable: false },
     };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
     const args = { ...input };
@@ -251,7 +255,7 @@ export async function getCreateGuardInstructionAsync<
                     ]),
                 ),
                 getBytesEncoder().encode(new Uint8Array([103, 117, 97, 114, 100, 95, 118, 49])),
-                getAddressEncoder().encode(expectAddress(accounts.mint.value)),
+                getAddressEncoder().encode(getAddressFromResolvedInstructionAccount('mint', accounts.mint.value)),
             ],
         });
     }
@@ -264,9 +268,13 @@ export async function getCreateGuardInstructionAsync<
             programAddress:
                 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>,
             seeds: [
-                getAddressEncoder().encode(expectAddress(accounts.guardAuthority.value)),
-                getAddressEncoder().encode(expectAddress(accounts.tokenProgram.value)),
-                getAddressEncoder().encode(expectAddress(accounts.mint.value)),
+                getAddressEncoder().encode(
+                    getAddressFromResolvedInstructionAccount('guardAuthority', accounts.guardAuthority.value),
+                ),
+                getAddressEncoder().encode(
+                    getAddressFromResolvedInstructionAccount('tokenProgram', accounts.tokenProgram.value),
+                ),
+                getAddressEncoder().encode(getAddressFromResolvedInstructionAccount('mint', accounts.mint.value)),
             ],
         });
     }
@@ -282,14 +290,14 @@ export async function getCreateGuardInstructionAsync<
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
-            getAccountMeta(accounts.guard),
-            getAccountMeta(accounts.mint),
-            getAccountMeta(accounts.mintTokenAccount),
-            getAccountMeta(accounts.guardAuthority),
-            getAccountMeta(accounts.payer),
-            getAccountMeta(accounts.associatedTokenProgram),
-            getAccountMeta(accounts.tokenProgram),
-            getAccountMeta(accounts.systemProgram),
+            getAccountMeta('guard', accounts.guard),
+            getAccountMeta('mint', accounts.mint),
+            getAccountMeta('mintTokenAccount', accounts.mintTokenAccount),
+            getAccountMeta('guardAuthority', accounts.guardAuthority),
+            getAccountMeta('payer', accounts.payer),
+            getAccountMeta('associatedTokenProgram', accounts.associatedTokenProgram),
+            getAccountMeta('tokenProgram', accounts.tokenProgram),
+            getAccountMeta('systemProgram', accounts.systemProgram),
         ],
         data: getCreateGuardInstructionDataEncoder().encode(args as CreateGuardInstructionDataArgs),
         programAddress,
@@ -379,7 +387,7 @@ export function getCreateGuardInstruction<
         tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
         systemProgram: { value: input.systemProgram ?? null, isWritable: false },
     };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
     const args = { ...input };
@@ -401,14 +409,14 @@ export function getCreateGuardInstruction<
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
-            getAccountMeta(accounts.guard),
-            getAccountMeta(accounts.mint),
-            getAccountMeta(accounts.mintTokenAccount),
-            getAccountMeta(accounts.guardAuthority),
-            getAccountMeta(accounts.payer),
-            getAccountMeta(accounts.associatedTokenProgram),
-            getAccountMeta(accounts.tokenProgram),
-            getAccountMeta(accounts.systemProgram),
+            getAccountMeta('guard', accounts.guard),
+            getAccountMeta('mint', accounts.mint),
+            getAccountMeta('mintTokenAccount', accounts.mintTokenAccount),
+            getAccountMeta('guardAuthority', accounts.guardAuthority),
+            getAccountMeta('payer', accounts.payer),
+            getAccountMeta('associatedTokenProgram', accounts.associatedTokenProgram),
+            getAccountMeta('tokenProgram', accounts.tokenProgram),
+            getAccountMeta('systemProgram', accounts.systemProgram),
         ],
         data: getCreateGuardInstructionDataEncoder().encode(args as CreateGuardInstructionDataArgs),
         programAddress,

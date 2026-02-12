@@ -29,8 +29,8 @@ import {
     type TransactionSigner,
     type WritableAccount,
 } from '@solana/kit';
+import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { TOKEN_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const REVOKE_DISCRIMINATOR = 5;
 
@@ -102,7 +102,7 @@ export function getRevokeInstruction<
         source: { value: input.source ?? null, isWritable: true },
         owner: { value: input.owner ?? null, isWritable: false },
     };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
     const args = { ...input };
@@ -116,7 +116,11 @@ export function getRevokeInstruction<
 
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
-        accounts: [getAccountMeta(accounts.source), getAccountMeta(accounts.owner), ...remainingAccounts],
+        accounts: [
+            getAccountMeta('source', accounts.source),
+            getAccountMeta('owner', accounts.owner),
+            ...remainingAccounts,
+        ],
         data: getRevokeInstructionDataEncoder().encode({}),
         programAddress,
     } as RevokeInstruction<

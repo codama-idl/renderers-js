@@ -25,8 +25,8 @@ import {
     type ReadonlyUint8Array,
     type WritableAccount,
 } from '@solana/kit';
+import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { TOKEN_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const INITIALIZE_ACCOUNT_DISCRIMINATOR = 1;
 
@@ -111,7 +111,7 @@ export function getInitializeAccountInstruction<
         owner: { value: input.owner ?? null, isWritable: false },
         rent: { value: input.rent ?? null, isWritable: false },
     };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Resolve default values.
     if (!accounts.rent.value) {
@@ -122,10 +122,10 @@ export function getInitializeAccountInstruction<
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
-            getAccountMeta(accounts.account),
-            getAccountMeta(accounts.mint),
-            getAccountMeta(accounts.owner),
-            getAccountMeta(accounts.rent),
+            getAccountMeta('account', accounts.account),
+            getAccountMeta('mint', accounts.mint),
+            getAccountMeta('owner', accounts.owner),
+            getAccountMeta('rent', accounts.rent),
         ],
         data: getInitializeAccountInstructionDataEncoder().encode({}),
         programAddress,

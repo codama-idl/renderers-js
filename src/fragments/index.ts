@@ -27,7 +27,6 @@ export * from './programConstant';
 export * from './programInstructions';
 export * from './programPage';
 export * from './rootIndexPage';
-export * from './sharedPage';
 export * from './type';
 export * from './typeCodec';
 export * from './typeDecoder';

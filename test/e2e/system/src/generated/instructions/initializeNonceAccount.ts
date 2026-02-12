@@ -27,8 +27,8 @@ import {
     type ReadonlyUint8Array,
     type WritableAccount,
 } from '@solana/kit';
+import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { SYSTEM_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const INITIALIZE_NONCE_ACCOUNT_DISCRIMINATOR = 6;
 
@@ -121,7 +121,7 @@ export function getInitializeNonceAccountInstruction<
         recentBlockhashesSysvar: { value: input.recentBlockhashesSysvar ?? null, isWritable: false },
         rentSysvar: { value: input.rentSysvar ?? null, isWritable: false },
     };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
     const args = { ...input };
@@ -139,9 +139,9 @@ export function getInitializeNonceAccountInstruction<
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
-            getAccountMeta(accounts.nonceAccount),
-            getAccountMeta(accounts.recentBlockhashesSysvar),
-            getAccountMeta(accounts.rentSysvar),
+            getAccountMeta('nonceAccount', accounts.nonceAccount),
+            getAccountMeta('recentBlockhashesSysvar', accounts.recentBlockhashesSysvar),
+            getAccountMeta('rentSysvar', accounts.rentSysvar),
         ],
         data: getInitializeNonceAccountInstructionDataEncoder().encode(
             args as InitializeNonceAccountInstructionDataArgs,

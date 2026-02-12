@@ -46,30 +46,47 @@ export function getInstructionInputDefaultFragment(
         return fragment`args.${inputName} = ${renderedValue};`;
     };
 
-    const expectTransactionSigner = use('expectTransactionSigner', 'shared');
-    const expectSome = use('expectSome', 'shared');
-    const expectAddress = use('expectAddress', 'shared');
-    const expectProgramDerivedAddress = use('expectProgramDerivedAddress', 'shared');
+    const getNonNullResolvedInstructionInput = use('getNonNullResolvedInstructionInput', 'solanaProgramClientCore');
+    const getResolvedInstructionAccountAsTransactionSigner = use(
+        'getResolvedInstructionAccountAsTransactionSigner',
+        'solanaProgramClientCore',
+    );
+    const getAddressFromResolvedInstructionAccount = use(
+        'getAddressFromResolvedInstructionAccount',
+        'solanaProgramClientCore',
+    );
+    const getResolvedInstructionAccountAsProgramDerivedAddress = use(
+        'getResolvedInstructionAccountAsProgramDerivedAddress',
+        'solanaProgramClientCore',
+    );
     const addressType = use('type Address', 'solanaAddresses');
 
     switch (defaultValue.kind) {
         case 'accountValueNode':
             const name = camelCase(defaultValue.name);
             if (input.kind === 'instructionAccountNode' && input.resolvedIsSigner && !input.isSigner) {
-                return defaultFragment(fragment`${expectTransactionSigner}(accounts.${name}.value).address`);
+                return defaultFragment(
+                    fragment`${getResolvedInstructionAccountAsTransactionSigner}("${name}", accounts.${name}.value).address`,
+                );
             }
             if (input.kind === 'instructionAccountNode') {
-                return defaultFragment(fragment`${expectSome}(accounts.${name}.value)`);
+                return defaultFragment(
+                    fragment`${getNonNullResolvedInstructionInput}("${name}", accounts.${name}.value)`,
+                );
             }
-            return defaultFragment(fragment`${expectAddress}(accounts.${name}.value)`);
+            return defaultFragment(
+                fragment`${getAddressFromResolvedInstructionAccount}("${name}", accounts.${name}.value)`,
+            );
 
         case 'pdaValueNode':
             let pdaProgramValue: Fragment | undefined;
             if (isNode(defaultValue.programId, 'accountValueNode')) {
-                pdaProgramValue = fragment`${expectAddress}(accounts.${camelCase(defaultValue.programId.name)}.value)`;
+                const name = camelCase(defaultValue.programId.name);
+                pdaProgramValue = fragment`${getAddressFromResolvedInstructionAccount}("${name}", accounts.${name}.value)`;
             }
             if (isNode(defaultValue.programId, 'argumentValueNode')) {
-                pdaProgramValue = fragment`${expectAddress}(args.${camelCase(defaultValue.programId.name)})`;
+                const name = camelCase(defaultValue.programId.name);
+                pdaProgramValue = fragment`${getAddressFromResolvedInstructionAccount}("${name}", args.${name})`;
             }
 
             // Inlined PDA value.
@@ -94,13 +111,15 @@ export function getInstructionInputDefaultFragment(
                         const valueSeed = defaultValue.seeds.find(s => s.name === seed.name)?.value;
                         if (!valueSeed) return [];
                         if (isNode(valueSeed, 'accountValueNode')) {
+                            const name = camelCase(valueSeed.name);
                             return [
-                                fragment`${typeManifest.encoder}.encode(${expectAddress}(accounts.${camelCase(valueSeed.name)}.value))`,
+                                fragment`${typeManifest.encoder}.encode(${getAddressFromResolvedInstructionAccount}("${name}", accounts.${name}.value))`,
                             ];
                         }
                         if (isNode(valueSeed, 'argumentValueNode')) {
+                            const name = camelCase(valueSeed.name);
                             return [
-                                fragment`${typeManifest.encoder}.encode(${expectSome}(args.${camelCase(valueSeed.name)}))`,
+                                fragment`${typeManifest.encoder}.encode(${getNonNullResolvedInstructionInput}("${name}", args.${name}))`,
                             ];
                         }
                         const valueManifest = visit(valueSeed, typeManifestVisitor);
@@ -122,10 +141,12 @@ export function getInstructionInputDefaultFragment(
             const pdaArgs: Fragment[] = [];
             const pdaSeeds = defaultValue.seeds.map((seed): Fragment => {
                 if (isNode(seed.value, 'accountValueNode')) {
-                    return fragment`${seed.name}: ${expectAddress}(accounts.${camelCase(seed.value.name)}.value)`;
+                    const name = camelCase(seed.value.name);
+                    return fragment`${seed.name}: ${getAddressFromResolvedInstructionAccount}("${name}", accounts.${name}.value)`;
                 }
                 if (isNode(seed.value, 'argumentValueNode')) {
-                    return fragment`${seed.name}: ${expectSome}(args.${camelCase(seed.value.name)})`;
+                    const name = camelCase(seed.value.name);
+                    return fragment`${seed.name}: ${getNonNullResolvedInstructionInput}("${name}", args.${name})`;
                 }
                 return pipe(visit(seed.value, typeManifestVisitor).value, f =>
                     mapFragmentContent(f, c => `${seed.name}: ${c}`),
@@ -168,11 +189,13 @@ export function getInstructionInputDefaultFragment(
 
         case 'accountBumpValueNode':
             return defaultFragment(
-                fragment`${expectProgramDerivedAddress}(accounts.${camelCase(defaultValue.name)}.value)[1]`,
+                fragment`${getResolvedInstructionAccountAsProgramDerivedAddress}("${camelCase(defaultValue.name)}", accounts.${camelCase(defaultValue.name)}.value)[1]`,
             );
 
         case 'argumentValueNode':
-            return defaultFragment(fragment`${expectSome}(args.${camelCase(defaultValue.name)})`);
+            return defaultFragment(
+                fragment`${getNonNullResolvedInstructionInput}("${camelCase(defaultValue.name)}", args.${camelCase(defaultValue.name)})`,
+            );
 
         case 'resolverValueNode':
             const resolverFunction = use(nameApi.resolverFunction(defaultValue.name), getImportFrom(defaultValue));

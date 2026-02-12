@@ -24,8 +24,8 @@ import {
     type ReadonlyAccount,
     type ReadonlyUint8Array,
 } from '@solana/kit';
+import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { TOKEN_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const GET_ACCOUNT_DATA_SIZE_DISCRIMINATOR = 21;
 
@@ -82,11 +82,11 @@ export function getGetAccountDataSizeInstruction<
 
     // Original accounts.
     const originalAccounts = { mint: { value: input.mint ?? null, isWritable: false } };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
-        accounts: [getAccountMeta(accounts.mint)],
+        accounts: [getAccountMeta('mint', accounts.mint)],
         data: getGetAccountDataSizeInstructionDataEncoder().encode({}),
         programAddress,
     } as GetAccountDataSizeInstruction<TProgramAddress, TAccountMint>);

@@ -23,6 +23,7 @@ import {
     parseInstruction5Instruction,
     parseInstruction6Instruction,
     parseInstruction7Instruction,
+    parseInstruction8Instruction,
     type ParsedInstruction1Instruction,
     type ParsedInstruction2Instruction,
     type ParsedInstruction3Instruction,
@@ -30,6 +31,7 @@ import {
     type ParsedInstruction5Instruction,
     type ParsedInstruction6Instruction,
     type ParsedInstruction7Instruction,
+    type ParsedInstruction8Instruction,
 } from '../instructions';
 
 export const DUMMY_PROGRAM_ADDRESS =
@@ -43,6 +45,7 @@ export enum DummyInstruction {
     Instruction5,
     Instruction6,
     Instruction7,
+    Instruction8,
 }
 
 export function identifyDummyInstruction(
@@ -62,7 +65,8 @@ export type ParsedDummyInstruction<TProgram extends string = 'Dummy1111111111111
     | ({ instructionType: DummyInstruction.Instruction4 } & ParsedInstruction4Instruction<TProgram>)
     | ({ instructionType: DummyInstruction.Instruction5 } & ParsedInstruction5Instruction<TProgram>)
     | ({ instructionType: DummyInstruction.Instruction6 } & ParsedInstruction6Instruction<TProgram>)
-    | ({ instructionType: DummyInstruction.Instruction7 } & ParsedInstruction7Instruction<TProgram>);
+    | ({ instructionType: DummyInstruction.Instruction7 } & ParsedInstruction7Instruction<TProgram>)
+    | ({ instructionType: DummyInstruction.Instruction8 } & ParsedInstruction8Instruction<TProgram>);
 
 export function parseDummyInstruction<TProgram extends string>(
     instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
@@ -91,6 +95,9 @@ export function parseDummyInstruction<TProgram extends string>(
         case DummyInstruction.Instruction7: {
             assertIsInstructionWithAccounts(instruction);
             return { instructionType: DummyInstruction.Instruction7, ...parseInstruction7Instruction(instruction) };
+        }
+        case DummyInstruction.Instruction8: {
+            return { instructionType: DummyInstruction.Instruction8, ...parseInstruction8Instruction(instruction) };
         }
         default:
             throw new Error(`Unrecognized instruction type: ${instructionType as string}`);
