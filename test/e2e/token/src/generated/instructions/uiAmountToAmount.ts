@@ -14,6 +14,8 @@ import {
     getU8Encoder,
     getUtf8Decoder,
     getUtf8Encoder,
+    SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
+    SolanaError,
     transformEncoder,
     type AccountMeta,
     type Address,
@@ -129,8 +131,10 @@ export function parseUiAmountToAmountInstruction<TProgram extends string, TAccou
         InstructionWithData<ReadonlyUint8Array>,
 ): ParsedUiAmountToAmountInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 1) {
-        // TODO: Coded error.
-        throw new Error('Not enough accounts');
+        throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS, {
+            actualAccountMetas: instruction.accounts.length,
+            expectedAccountMetas: 1,
+        });
     }
     let accountIndex = 0;
     const getNextAccount = () => {

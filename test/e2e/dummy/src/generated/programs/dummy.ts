@@ -10,6 +10,9 @@ import {
     assertIsInstructionWithAccounts,
     containsBytes,
     getU32Encoder,
+    SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION,
+    SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE,
+    SolanaError,
     type Address,
     type Instruction,
     type InstructionWithData,
@@ -55,7 +58,10 @@ export function identifyDummyInstruction(
     if (containsBytes(data, getU32Encoder().encode(42), 0)) {
         return DummyInstruction.Instruction3;
     }
-    throw new Error('The provided instruction could not be identified as a dummy instruction.');
+    throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION, {
+        instructionData: data,
+        programName: 'dummy',
+    });
 }
 
 export type ParsedDummyInstruction<TProgram extends string = 'Dummy1111111111111111111111111111111111'> =
@@ -100,6 +106,9 @@ export function parseDummyInstruction<TProgram extends string>(
             return { instructionType: DummyInstruction.Instruction8, ...parseInstruction8Instruction(instruction) };
         }
         default:
-            throw new Error(`Unrecognized instruction type: ${instructionType as string}`);
+            throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE, {
+                instructionType: instructionType as string,
+                programName: 'dummy',
+            });
     }
 }

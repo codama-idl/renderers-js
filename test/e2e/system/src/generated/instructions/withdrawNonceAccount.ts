@@ -14,6 +14,8 @@ import {
     getU32Encoder,
     getU64Decoder,
     getU64Encoder,
+    SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
+    SolanaError,
     transformEncoder,
     type AccountMeta,
     type AccountSignerMeta,
@@ -208,8 +210,10 @@ export function parseWithdrawNonceAccountInstruction<
         InstructionWithData<ReadonlyUint8Array>,
 ): ParsedWithdrawNonceAccountInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 5) {
-        // TODO: Coded error.
-        throw new Error('Not enough accounts');
+        throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS, {
+            actualAccountMetas: instruction.accounts.length,
+            expectedAccountMetas: 5,
+        });
     }
     let accountIndex = 0;
     const getNextAccount = () => {

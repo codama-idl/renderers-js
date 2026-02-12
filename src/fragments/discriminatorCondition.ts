@@ -91,7 +91,6 @@ function getFieldConditionFragment(
 ): Fragment {
     const field = scope.struct.fields.find(f => f.name === discriminator.name);
     if (!field || !field.defaultValue) {
-        // TODO: Coded error.
         throw new Error(
             `Field discriminator "${discriminator.name}" does not have a matching argument with default value.`,
         );
