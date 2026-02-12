@@ -11,7 +11,7 @@
         "lint:fix": "eslint --fix --ext js,ts,tsx src && prettier --write src test"
     },
     "dependencies": {
-        "@solana/kit": "^6.0.0"
+        "@solana/kit": "^6.1.0"
     },
     "license": "MIT",
     "ava": {
