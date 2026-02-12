@@ -10,6 +10,10 @@ import {
     assertIsInstructionWithAccounts,
     containsBytes,
     getU8Encoder,
+    SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_ACCOUNT,
+    SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION,
+    SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE,
+    SolanaError,
     type Address,
     type Instruction,
     type InstructionWithData,
@@ -88,7 +92,10 @@ export function identifyTokenAccount(account: { data: ReadonlyUint8Array } | Rea
     if (data.length === 355) {
         return TokenAccount.Multisig;
     }
-    throw new Error('The provided account could not be identified as a token account.');
+    throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_ACCOUNT, {
+        accountData: data,
+        programName: 'token',
+    });
 }
 
 export enum TokenInstruction {
@@ -198,7 +205,10 @@ export function identifyTokenInstruction(
     if (containsBytes(data, getU8Encoder().encode(24), 0)) {
         return TokenInstruction.UiAmountToAmount;
     }
-    throw new Error('The provided instruction could not be identified as a token instruction.');
+    throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION, {
+        instructionData: data,
+        programName: 'token',
+    });
 }
 
 export type ParsedTokenInstruction<TProgram extends string = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'> =
@@ -369,6 +379,9 @@ export function parseTokenInstruction<TProgram extends string>(
             };
         }
         default:
-            throw new Error(`Unrecognized instruction type: ${instructionType as string}`);
+            throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE, {
+                instructionType: instructionType as string,
+                programName: 'token',
+            });
     }
 }
