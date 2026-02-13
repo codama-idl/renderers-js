@@ -32,6 +32,7 @@ import {
     getTypePageFragment,
 } from '../fragments';
 import {
+    DEFAULT_KIT_IMPORT_STRATEGY,
     DEFAULT_NAME_TRANSFORMERS,
     Fragment,
     getDefinedTypeNodesToExtract,
@@ -57,11 +58,11 @@ export function getRenderMapVisitor(options: GetRenderMapOptions = {}) {
         dependencyMap: options.dependencyMap ?? {},
         dependencyVersions: options.dependencyVersions ?? {},
         getImportFrom: getImportFromFactory(options.linkOverrides ?? {}, customAccountData, customInstructionData),
+        kitImportStrategy: options.kitImportStrategy ?? DEFAULT_KIT_IMPORT_STRATEGY,
         linkables,
         nameApi: getNameApi({ ...DEFAULT_NAME_TRANSFORMERS, ...options.nameTransformers }),
         nonScalarEnums: (options.nonScalarEnums ?? []).map(camelCase),
         renderParentInstructions: options.renderParentInstructions ?? false,
-        useGranularImports: options.useGranularImports ?? false,
     };
 
     const typeManifestVisitor = getTypeManifestVisitor({ ...renderScopeWithTypeManifestVisitor, stack });

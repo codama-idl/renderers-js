@@ -23,7 +23,7 @@ describe('getUsedDependencyVersions', () => {
             'unused-package': '^3.0.0',
         };
 
-        expect(getUsedDependencyVersions(renderMap, {}, dependencyVersions, false)).toEqual({
+        expect(getUsedDependencyVersions(renderMap, {}, dependencyVersions, 'rootOnly')).toEqual({
             'bar-package': '^1.0.0',
             'foo-package': '^2.0.0',
         });
@@ -35,7 +35,7 @@ describe('getUsedDependencyVersions', () => {
             'token.ts': use('getUtf8Codec', 'solanaCodecsStrings'),
         });
 
-        expect(getUsedDependencyVersions(renderMap, {}, {}, false)).toEqual({
+        expect(getUsedDependencyVersions(renderMap, {}, {}, 'rootOnly')).toEqual({
             '@solana/kit': DEFAULT_DEPENDENCY_VERSIONS['@solana/kit'],
         });
     });
@@ -46,7 +46,7 @@ describe('getUsedDependencyVersions', () => {
             'token.ts': use('getUtf8Codec', 'solanaCodecsStrings'),
         });
 
-        expect(getUsedDependencyVersions(renderMap, {}, {}, true)).toEqual({
+        expect(getUsedDependencyVersions(renderMap, {}, {}, 'granular')).toEqual({
             '@solana/addresses': DEFAULT_DEPENDENCY_VERSIONS['@solana/addresses'],
             '@solana/codecs': DEFAULT_DEPENDENCY_VERSIONS['@solana/codecs'],
         });
@@ -55,7 +55,7 @@ describe('getUsedDependencyVersions', () => {
     test('it throws if used dependency versions are not provided', () => {
         const renderMap = createRenderMap({ 'mint.ts': use('Foo', 'foo-package') });
 
-        expect(() => getUsedDependencyVersions(renderMap, {}, {}, false)).toThrow(
+        expect(() => getUsedDependencyVersions(renderMap, {}, {}, 'rootOnly')).toThrow(
             new CodamaError(CODAMA_ERROR__RENDERERS__MISSING_DEPENDENCY_VERSIONS, {
                 dependencies: ['foo-package'],
                 message: 'Please add these dependencies to the `dependencyVersions` option.',
