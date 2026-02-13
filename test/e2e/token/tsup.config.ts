@@ -1,6 +1,6 @@
 import { env } from 'node:process';
 import path from 'node:path';
-import { defineConfig, Options } from 'tsup';
+import { defineConfig, type Options } from 'tsup';
 
 const SHARED_OPTIONS: Options = {
   define: { __VERSION__: `"${env.npm_package_version}"` },
