@@ -37,23 +37,10 @@ export const DEFAULT_DEPENDENCY_VERSIONS: DependencyVersions = {
 export async function syncPackageJson(
     renderMap: RenderMap<Fragment>,
     formatCode: CodeFormatter,
-    options: Pick<
-        RenderOptions,
-        'dependencyMap' | 'dependencyVersions' | 'kitImportStrategy' | 'packageFolder' | 'syncPackageJson'
-    >,
+    packageFolder: string,
+    options: Pick<RenderOptions, 'dependencyMap' | 'dependencyVersions' | 'kitImportStrategy' | 'syncPackageJson'>,
 ): Promise<void> {
-    const shouldSyncPackageJson = options.syncPackageJson ?? false;
-    const packageFolder = options.packageFolder;
-
-    // Without a `packageFolder`, we cannot sync the package.json.
-    if (!packageFolder) {
-        // If we should sync but have no folder, warn the user.
-        if (shouldSyncPackageJson) {
-            logWarn("Cannot sync package.json. Please provide the 'packageFolder' option.");
-        }
-        return;
-    }
-
+    const shouldSyncPackageJson = options.syncPackageJson ?? true;
     const packageJsonPath = joinPath(packageFolder, 'package.json');
     const usedDependencies = getUsedDependencyVersions(
         renderMap,
