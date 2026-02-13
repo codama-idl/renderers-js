@@ -346,7 +346,7 @@ describe('importMapToString', () => {
 
     test('it can use granular packages when replacing placeholder kit packages', () => {
         const importMap = addToImportMap(createImportMap(), 'solanaAddresses', ['type Address']);
-        expect(importMapToString(importMap, {}, true)).toBe("import { type Address } from '@solana/addresses';");
+        expect(importMapToString(importMap, {}, 'granular')).toBe("import { type Address } from '@solana/addresses';");
     });
 
     test('it can override the module of placeholder kit packages', () => {
