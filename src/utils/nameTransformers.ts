@@ -58,6 +58,14 @@ export type NameTransformerKey =
     | 'programInstructionsParsedUnionType'
     | 'programInstructionsParseFunction'
     | 'programIsErrorFunction'
+    | 'programPluginAccountKey'
+    | 'programPluginAccountsType'
+    | 'programPluginFunction'
+    | 'programPluginInstructionKey'
+    | 'programPluginInstructionsType'
+    | 'programPluginKey'
+    | 'programPluginRequirementsType'
+    | 'programPluginType'
     | 'resolverFunction';
 
 export type NameTransformers = Record<NameTransformerKey, NameTransformer>;
@@ -125,5 +133,13 @@ export const DEFAULT_NAME_TRANSFORMERS: NameTransformers = {
     programInstructionsParseFunction: name => `parse${pascalCase(name)}Instruction`,
     programInstructionsParsedUnionType: name => `Parsed${pascalCase(name)}Instruction`,
     programIsErrorFunction: name => `is${pascalCase(name)}Error`,
+    programPluginAccountKey: name => `${camelCase(name)}`,
+    programPluginAccountsType: name => `${pascalCase(name)}PluginAccounts`,
+    programPluginFunction: name => `${camelCase(name)}Program`,
+    programPluginInstructionKey: name => `${camelCase(name)}`,
+    programPluginInstructionsType: name => `${pascalCase(name)}PluginInstructions`,
+    programPluginKey: name => `${camelCase(name)}`,
+    programPluginRequirementsType: name => `${pascalCase(name)}PluginRequirements`,
+    programPluginType: name => `${pascalCase(name)}Plugin`,
     resolverFunction: name => `${camelCase(name)}`,
 };

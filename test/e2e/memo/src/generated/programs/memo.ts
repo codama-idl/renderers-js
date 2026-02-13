@@ -6,8 +6,14 @@
  * @see https://github.com/codama-idl/codama
  */
 
-import { type Address } from '@solana/kit';
-import { type ParsedAddMemoInstruction } from '../instructions';
+import { type Address, type ClientWithTransactionPlanning, type ClientWithTransactionSending } from '@solana/kit';
+import { addSelfPlanAndSendFunctions, type SelfPlanAndSendFunctions } from '@solana/kit/program-client-core';
+import {
+    getAddMemoInstruction,
+    type AddMemoInput,
+    type AddMemoInstruction,
+    type ParsedAddMemoInstruction,
+} from '../instructions';
 
 export const MEMO_PROGRAM_ADDRESS =
     'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr' as Address<'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'>;
@@ -19,3 +25,24 @@ export enum MemoInstruction {
 export type ParsedMemoInstruction<TProgram extends string = 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'> = {
     instructionType: MemoInstruction.AddMemo;
 } & ParsedAddMemoInstruction<TProgram>;
+
+export type MemoPlugin = { instructions: MemoPluginInstructions };
+
+export type MemoPluginInstructions = {
+    addMemo: (input: AddMemoInput) => AddMemoInstruction & SelfPlanAndSendFunctions;
+};
+
+export type MemoPluginRequirements = ClientWithTransactionPlanning & ClientWithTransactionSending;
+
+export function memoProgram() {
+    return <T extends MemoPluginRequirements>(client: T) => {
+        return {
+            ...client,
+            memo: {
+                instructions: {
+                    addMemo: (input: AddMemoInput) => addSelfPlanAndSendFunctions(client, getAddMemoInstruction(input)),
+                },
+            } as MemoPlugin,
+        };
+    };
+}
