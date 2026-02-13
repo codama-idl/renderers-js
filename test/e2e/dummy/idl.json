@@ -152,6 +152,31 @@
             "isSigner": "either"
           }
         ]
+      },
+      {
+        "kind": "instructionNode",
+        "name": "instruction9",
+        "optionalAccountStrategy": "programId",
+        "docs": ["Testing instructions with conflicting account and argument names both set as the payer"],
+        "accounts": [
+          {
+            "kind": "instructionAccountNode",
+            "name": "authority",
+            "isWritable": false,
+            "isSigner": false,
+            "isOptional": false,
+            "defaultValue": { "kind": "payerValueNode" }
+          }
+        ],
+        "arguments": [
+          {
+            "kind": "instructionArgumentNode",
+            "name": "authority",
+            "defaultValue": { "kind": "payerValueNode" },
+            "type": { "kind": "publicKeyTypeNode" }
+          }
+        ],
+        "remainingAccounts": []
       }
     ],
     "definedTypes": [],

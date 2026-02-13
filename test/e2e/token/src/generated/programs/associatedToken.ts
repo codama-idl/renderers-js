@@ -14,17 +14,30 @@ import {
     SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE,
     SolanaError,
     type Address,
+    type ClientWithPayer,
+    type ClientWithTransactionPlanning,
+    type ClientWithTransactionSending,
     type Instruction,
     type InstructionWithData,
     type ReadonlyUint8Array,
 } from '@solana/kit';
+import { addSelfPlanAndSendFunctions, type SelfPlanAndSendFunctions } from '@solana/kit/program-client-core';
 import {
+    getCreateAssociatedTokenIdempotentInstructionAsync,
+    getCreateAssociatedTokenInstructionAsync,
+    getRecoverNestedAssociatedTokenInstructionAsync,
     parseCreateAssociatedTokenIdempotentInstruction,
     parseCreateAssociatedTokenInstruction,
     parseRecoverNestedAssociatedTokenInstruction,
+    type CreateAssociatedTokenAsyncInput,
+    type CreateAssociatedTokenIdempotentAsyncInput,
+    type CreateAssociatedTokenIdempotentInstruction,
+    type CreateAssociatedTokenInstruction,
     type ParsedCreateAssociatedTokenIdempotentInstruction,
     type ParsedCreateAssociatedTokenInstruction,
     type ParsedRecoverNestedAssociatedTokenInstruction,
+    type RecoverNestedAssociatedTokenAsyncInput,
+    type RecoverNestedAssociatedTokenInstruction,
 } from '../instructions';
 
 export const ASSOCIATED_TOKEN_PROGRAM_ADDRESS =
@@ -99,3 +112,52 @@ export function parseAssociatedTokenInstruction<TProgram extends string>(
             });
     }
 }
+
+export type AssociatedTokenPlugin = { instructions: AssociatedTokenPluginInstructions };
+
+export type AssociatedTokenPluginInstructions = {
+    createAssociatedToken: (
+        input: CreateAssociatedTokenAsyncInput,
+    ) => Promise<CreateAssociatedTokenInstruction> & SelfPlanAndSendFunctions;
+    createAssociatedTokenIdempotent: (
+        input: CreateAssociatedTokenIdempotentAsyncInput,
+    ) => Promise<CreateAssociatedTokenIdempotentInstruction> & SelfPlanAndSendFunctions;
+    recoverNestedAssociatedToken: (
+        input: RecoverNestedAssociatedTokenAsyncInput,
+    ) => Promise<RecoverNestedAssociatedTokenInstruction> & SelfPlanAndSendFunctions;
+};
+
+export type AssociatedTokenPluginRequirements = ClientWithPayer &
+    ClientWithTransactionPlanning &
+    ClientWithTransactionSending;
+
+export function associatedTokenProgram() {
+    return <T extends AssociatedTokenPluginRequirements>(client: T) => {
+        return {
+            ...client,
+            associatedToken: {
+                instructions: {
+                    createAssociatedToken: (input: MakeOptional<CreateAssociatedTokenAsyncInput, 'payer'>) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getCreateAssociatedTokenInstructionAsync({ ...input, payer: input.payer ?? client.payer }),
+                        ),
+                    createAssociatedTokenIdempotent: (
+                        input: MakeOptional<CreateAssociatedTokenIdempotentAsyncInput, 'payer'>,
+                    ) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getCreateAssociatedTokenIdempotentInstructionAsync({
+                                ...input,
+                                payer: input.payer ?? client.payer,
+                            }),
+                        ),
+                    recoverNestedAssociatedToken: (input: RecoverNestedAssociatedTokenAsyncInput) =>
+                        addSelfPlanAndSendFunctions(client, getRecoverNestedAssociatedTokenInstructionAsync(input)),
+                },
+            } as AssociatedTokenPlugin,
+        };
+    };
+}
+
+type MakeOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;

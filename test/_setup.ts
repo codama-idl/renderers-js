@@ -1,11 +1,22 @@
+import { CamelCaseString } from '@codama/nodes';
 import { getFromRenderMap, RenderMap } from '@codama/renderers-core';
+import { LinkableDictionary } from '@codama/visitors-core';
 import { Plugin } from 'prettier';
 import * as estreePlugin from 'prettier/plugins/estree';
 import * as typeScriptPlugin from 'prettier/plugins/typescript';
 import { format } from 'prettier/standalone';
 import { expect } from 'vitest';
 
-import type { Fragment } from '../src/utils';
+import { getTypeManifestVisitor } from '../src';
+import {
+    DEFAULT_NAME_TRANSFORMERS,
+    type Fragment,
+    getImportFromFactory,
+    getNameApi,
+    importMapToString,
+    ParsedCustomDataOptions,
+    type RenderScope,
+} from '../src/utils';
 
 const PRETTIER_OPTIONS: Parameters<typeof format>[1] = {
     arrowParens: 'always',
@@ -18,6 +29,36 @@ const PRETTIER_OPTIONS: Parameters<typeof format>[1] = {
     trailingComma: 'none',
     useTabs: false,
 };
+
+export function getDefaultScope(): RenderScope {
+    const customAccountData: ParsedCustomDataOptions = new Map();
+    const customInstructionData: ParsedCustomDataOptions = new Map();
+    const getImportFrom = getImportFromFactory({}, customAccountData, customInstructionData);
+    const linkables = new LinkableDictionary();
+    const nameApi = getNameApi(DEFAULT_NAME_TRANSFORMERS);
+    const nonScalarEnums: CamelCaseString[] = [];
+    return {
+        asyncResolvers: [],
+        customAccountData,
+        customInstructionData,
+        dependencyMap: {},
+        dependencyVersions: {},
+        getImportFrom,
+        linkables,
+        nameApi,
+        nonScalarEnums,
+        renderParentInstructions: false,
+        typeManifestVisitor: getTypeManifestVisitor({
+            customAccountData,
+            customInstructionData,
+            getImportFrom,
+            linkables,
+            nameApi,
+            nonScalarEnums,
+        }),
+        useGranularImports: false,
+    };
+}
 
 export function renderMapContains(
     renderMap: RenderMap<Fragment>,
@@ -35,6 +76,19 @@ export function renderMapDoesNotContain(
 ) {
     expect(renderMap.has(key), `RenderMap is missing key "${key}".`).toBe(true);
     return codeDoesNotContain(getFromRenderMap(renderMap, key).content, expected);
+}
+
+export async function fragmentContains(actual: Fragment | undefined, expected: (RegExp | string)[] | RegExp | string) {
+    expect(actual).toBeDefined();
+    await codeContains(actual!.content, expected);
+}
+
+export async function fragmentDoesNotContain(
+    actual: Fragment | undefined,
+    expected: (RegExp | string)[] | RegExp | string,
+) {
+    expect(actual).toBeDefined();
+    await codeDoesNotContain(actual!.content, expected);
 }
 
 export async function codeContains(actual: string, expected: (RegExp | string)[] | RegExp | string) {
@@ -77,6 +131,26 @@ export function renderMapDoesNotContainImports(
 ) {
     expect(renderMap.has(key), `RenderMap is missing key "${key}".`).toBe(true);
     return codeDoesNotContainImports(getFromRenderMap(renderMap, key).content, expectedImports);
+}
+
+export function fragmentContainsImports(
+    actual: Fragment | undefined,
+    expectedImports: Record<string, string[]>,
+    options?: { dependencyMap?: Record<string, string>; useGranularImports?: boolean },
+) {
+    expect(actual).toBeDefined();
+    const imports = importMapToString(actual!.imports, options?.dependencyMap, options?.useGranularImports);
+    return codeContainsImports(imports, expectedImports);
+}
+
+export function fragmentDoesNotContainImports(
+    actual: Fragment | undefined,
+    expectedImports: Record<string, string[]>,
+    options?: { dependencyMap?: Record<string, string>; useGranularImports?: boolean },
+) {
+    expect(actual).toBeDefined();
+    const imports = importMapToString(actual!.imports, options?.dependencyMap, options?.useGranularImports);
+    return codeDoesNotContainImports(imports, expectedImports);
 }
 
 export async function codeContainsImports(actual: string, expectedImports: Record<string, string[]>) {

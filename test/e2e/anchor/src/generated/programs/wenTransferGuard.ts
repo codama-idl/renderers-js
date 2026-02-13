@@ -16,19 +16,44 @@ import {
     SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE,
     SolanaError,
     type Address,
+    type ClientWithPayer,
+    type ClientWithRpc,
+    type ClientWithTransactionPlanning,
+    type ClientWithTransactionSending,
+    type GetAccountInfoApi,
+    type GetMultipleAccountsApi,
     type Instruction,
     type InstructionWithData,
     type ReadonlyUint8Array,
 } from '@solana/kit';
 import {
+    addSelfFetchFunctions,
+    addSelfPlanAndSendFunctions,
+    type SelfFetchFunctions,
+    type SelfPlanAndSendFunctions,
+} from '@solana/kit/program-client-core';
+import { getGuardV1Codec, type GuardV1, type GuardV1Args } from '../accounts';
+import {
+    getCreateGuardInstructionAsync,
+    getExecuteInstructionAsync,
+    getInitializeInstructionAsync,
+    getUpdateGuardInstructionAsync,
     parseCreateGuardInstruction,
     parseExecuteInstruction,
     parseInitializeInstruction,
     parseUpdateGuardInstruction,
+    type CreateGuardAsyncInput,
+    type CreateGuardInstruction,
+    type ExecuteAsyncInput,
+    type ExecuteInstruction,
+    type InitializeAsyncInput,
+    type InitializeInstruction,
     type ParsedCreateGuardInstruction,
     type ParsedExecuteInstruction,
     type ParsedInitializeInstruction,
     type ParsedUpdateGuardInstruction,
+    type UpdateGuardAsyncInput,
+    type UpdateGuardInstruction,
 } from '../instructions';
 
 export const WEN_TRANSFER_GUARD_PROGRAM_ADDRESS =
@@ -153,3 +178,53 @@ export function parseWenTransferGuardInstruction<TProgram extends string>(
             });
     }
 }
+
+export type WenTransferGuardPlugin = {
+    accounts: WenTransferGuardPluginAccounts;
+    instructions: WenTransferGuardPluginInstructions;
+};
+
+export type WenTransferGuardPluginAccounts = {
+    guardV1: ReturnType<typeof getGuardV1Codec> & SelfFetchFunctions<GuardV1Args, GuardV1>;
+};
+
+export type WenTransferGuardPluginInstructions = {
+    createGuard: (input: CreateGuardAsyncInput) => Promise<CreateGuardInstruction> & SelfPlanAndSendFunctions;
+    execute: (input: ExecuteAsyncInput) => Promise<ExecuteInstruction> & SelfPlanAndSendFunctions;
+    initialize: (input: InitializeAsyncInput) => Promise<InitializeInstruction> & SelfPlanAndSendFunctions;
+    updateGuard: (input: UpdateGuardAsyncInput) => Promise<UpdateGuardInstruction> & SelfPlanAndSendFunctions;
+};
+
+export type WenTransferGuardPluginRequirements = ClientWithRpc<GetAccountInfoApi & GetMultipleAccountsApi> &
+    ClientWithPayer &
+    ClientWithTransactionPlanning &
+    ClientWithTransactionSending;
+
+export function wenTransferGuardProgram() {
+    return <T extends WenTransferGuardPluginRequirements>(client: T) => {
+        return {
+            ...client,
+            wenTransferGuard: {
+                accounts: { guardV1: addSelfFetchFunctions(client, getGuardV1Codec()) },
+                instructions: {
+                    createGuard: (input: MakeOptional<CreateGuardAsyncInput, 'payer'>) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getCreateGuardInstructionAsync({ ...input, payer: input.payer ?? client.payer }),
+                        ),
+                    execute: (input: ExecuteAsyncInput) =>
+                        addSelfPlanAndSendFunctions(client, getExecuteInstructionAsync(input)),
+                    initialize: (input: MakeOptional<InitializeAsyncInput, 'payer'>) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getInitializeInstructionAsync({ ...input, payer: input.payer ?? client.payer }),
+                        ),
+                    updateGuard: (input: UpdateGuardAsyncInput) =>
+                        addSelfPlanAndSendFunctions(client, getUpdateGuardInstructionAsync(input)),
+                },
+            } as WenTransferGuardPlugin,
+        };
+    };
+}
+
+type MakeOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
