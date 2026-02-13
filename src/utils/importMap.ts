@@ -1,3 +1,5 @@
+import { DEFAULT_KIT_IMPORT_STRATEGY, KitImportStrategy } from '.';
+
 const DEFAULT_EXTERNAL_MODULE_MAP: Record<string, string> = {
     solanaAccounts: '@solana/kit',
     solanaAddresses: '@solana/kit',
@@ -132,9 +134,9 @@ export function mergeImportMaps(importMaps: ImportMap[]): ImportMap {
 export function importMapToString(
     importMap: ImportMap,
     dependencyMap: Record<string, string> = {},
-    useGranularImports = false,
+    kitImportStrategy: KitImportStrategy = DEFAULT_KIT_IMPORT_STRATEGY,
 ): string {
-    const resolvedMap = resolveImportMapModules(importMap, dependencyMap, useGranularImports);
+    const resolvedMap = resolveImportMapModules(importMap, dependencyMap, kitImportStrategy);
 
     return [...resolvedMap.entries()]
         .sort(([a], [b]) => {
@@ -157,9 +159,9 @@ export function importMapToString(
 export function getExternalDependencies(
     importMap: ImportMap,
     dependencyMap: Record<string, string>,
-    useGranularImports: boolean,
+    kitImportStrategy: KitImportStrategy,
 ): Set<string> {
-    const resolvedImports = resolveImportMapModules(importMap, dependencyMap, useGranularImports);
+    const resolvedImports = resolveImportMapModules(importMap, dependencyMap, kitImportStrategy);
     return new Set(
         [...resolvedImports.keys()]
             .filter(module => !module.startsWith('.'))
@@ -174,10 +176,16 @@ export function getExternalDependencies(
 function resolveImportMapModules(
     importMap: ImportMap,
     dependencyMap: Record<string, string>,
-    useGranularImports: boolean,
+    kitImportStrategy: KitImportStrategy,
 ): ImportMap {
+    const defaultExternalModuleMap =
+        kitImportStrategy === 'granular' ? DEFAULT_GRANULAR_EXTERNAL_MODULE_MAP : DEFAULT_EXTERNAL_MODULE_MAP;
+    if (kitImportStrategy === 'preferRoot') {
+        defaultExternalModuleMap['solanaProgramClientCore'] = '@solana/program-client-core';
+    }
+
     const dependencyMapWithDefaults = {
-        ...(useGranularImports ? DEFAULT_GRANULAR_EXTERNAL_MODULE_MAP : DEFAULT_EXTERNAL_MODULE_MAP),
+        ...defaultExternalModuleMap,
         ...DEFAULT_INTERNAL_MODULE_MAP,
         ...dependencyMap,
     };

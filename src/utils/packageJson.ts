@@ -5,7 +5,7 @@ import { lt as ltVersion, minVersion, subset } from 'semver';
 import type { CodeFormatter } from './formatCode';
 import { Fragment, mergeFragments } from './fragment';
 import { getExternalDependencies } from './importMap';
-import { RenderOptions } from './options';
+import { DEFAULT_KIT_IMPORT_STRATEGY, KitImportStrategy, RenderOptions } from './options';
 
 type DependencyVersions = Record<string, string>;
 
@@ -39,7 +39,7 @@ export async function syncPackageJson(
     formatCode: CodeFormatter,
     options: Pick<
         RenderOptions,
-        'dependencyMap' | 'dependencyVersions' | 'packageFolder' | 'syncPackageJson' | 'useGranularImports'
+        'dependencyMap' | 'dependencyVersions' | 'kitImportStrategy' | 'packageFolder' | 'syncPackageJson'
     >,
 ): Promise<void> {
     const shouldSyncPackageJson = options.syncPackageJson ?? false;
@@ -59,7 +59,7 @@ export async function syncPackageJson(
         renderMap,
         options.dependencyMap ?? {},
         options.dependencyVersions ?? {},
-        options.useGranularImports ?? false,
+        options.kitImportStrategy ?? DEFAULT_KIT_IMPORT_STRATEGY,
     );
 
     // If we should not sync the package.json, exit early.
@@ -167,7 +167,7 @@ export function getUsedDependencyVersions(
     renderMap: RenderMap<Fragment>,
     dependencyMap: Record<string, string>,
     dependencyVersions: Record<string, string>,
-    useGranularImports: boolean,
+    kitImportStrategy: KitImportStrategy,
 ): DependencyVersions {
     const dependencyVersionsWithDefaults = {
         ...DEFAULT_DEPENDENCY_VERSIONS,
@@ -175,7 +175,7 @@ export function getUsedDependencyVersions(
     };
 
     const fragment = mergeFragments([...renderMap.values()], () => '');
-    const usedDependencies = getExternalDependencies(fragment.imports, dependencyMap, useGranularImports);
+    const usedDependencies = getExternalDependencies(fragment.imports, dependencyMap, kitImportStrategy);
 
     const [usedDependencyVersion, missingDependencies] = [...usedDependencies].reduce(
         ([acc, missingDependencies], dependency) => {
