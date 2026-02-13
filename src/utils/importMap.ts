@@ -13,6 +13,7 @@ const DEFAULT_EXTERNAL_MODULE_MAP: Record<string, string> = {
     solanaPluginInterfaces: '@solana/kit',
     solanaProgramClientCore: '@solana/kit/program-client-core',
     solanaPrograms: '@solana/kit',
+    solanaRpcApi: '@solana/kit',
     solanaRpcTypes: '@solana/kit',
     solanaSigners: '@solana/kit',
 };
@@ -32,6 +33,7 @@ const DEFAULT_GRANULAR_EXTERNAL_MODULE_MAP: Record<string, string> = {
     solanaPluginInterfaces: '@solana/plugin-interfaces',
     solanaProgramClientCore: '@solana/program-client-core',
     solanaPrograms: '@solana/programs',
+    solanaRpcApi: '@solana/rpc-api',
     solanaRpcTypes: '@solana/rpc-types',
     solanaSigners: '@solana/signers',
 };

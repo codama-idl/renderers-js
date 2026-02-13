@@ -26,6 +26,7 @@ export * from './programAccounts';
 export * from './programConstant';
 export * from './programInstructions';
 export * from './programPage';
+export * from './programPlugin';
 export * from './rootIndexPage';
 export * from './type';
 export * from './typeCodec';
