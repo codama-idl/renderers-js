@@ -21,10 +21,7 @@ async function generateProject(project) {
     const packageFolder = path.join(__dirname, project);
     const idl = readJson(path.join(packageFolder, 'idl.json'));
     const node = idl?.metadata?.spec ? rootNodeFromAnchor(idl) : idl;
-    const visitor = renderVisitor(
-        path.join(packageFolder, 'src', 'generated'),
-        { kitImportStrategy: 'rootOnly', packageFolder, syncPackageJson: true },
-    );
+    const visitor = renderVisitor(packageFolder, { kitImportStrategy: 'rootOnly' });
 
     await visit(node, visitor);
 }

@@ -16,14 +16,15 @@ const DEFAULT_PRETTIER_OPTIONS: PrettierOptions = {
 export type CodeFormatter = (code: string, path: Path) => Promise<string>;
 
 export async function getCodeFormatter(
-    options: Pick<RenderOptions, 'formatCode' | 'packageFolder' | 'prettierOptions'>,
+    packageFolder: string,
+    options: Pick<RenderOptions, 'formatCode' | 'prettierOptions'>,
 ): Promise<CodeFormatter> {
     const shouldFormatCode = options.formatCode ?? true;
     if (!shouldFormatCode) return code => Promise.resolve(code);
 
     const prettierOptions: PrettierOptions = {
         ...DEFAULT_PRETTIER_OPTIONS,
-        ...(await resolvePrettierOptions(options.packageFolder)),
+        ...(await resolvePrettierOptions(packageFolder)),
         ...options.prettierOptions,
     };
 
