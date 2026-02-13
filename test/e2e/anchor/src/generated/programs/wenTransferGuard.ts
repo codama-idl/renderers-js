@@ -11,6 +11,9 @@ import {
     containsBytes,
     fixEncoderSize,
     getBytesEncoder,
+    SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION,
+    SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE,
+    SolanaError,
     type Address,
     type Instruction,
     type InstructionWithData,
@@ -97,7 +100,10 @@ export function identifyWenTransferGuardInstruction(
     ) {
         return WenTransferGuardInstruction.UpdateGuard;
     }
-    throw new Error('The provided instruction could not be identified as a wenTransferGuard instruction.');
+    throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION, {
+        instructionData: data,
+        programName: 'wenTransferGuard',
+    });
 }
 
 export type ParsedWenTransferGuardInstruction<TProgram extends string = 'LockdqYQ9X2kwtWB99ioSbxubAmEi8o9jqYwbXgrrRw'> =
@@ -137,6 +143,9 @@ export function parseWenTransferGuardInstruction<TProgram extends string>(
             };
         }
         default:
-            throw new Error(`Unrecognized instruction type: ${instructionType as string}`);
+            throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE, {
+                instructionType: instructionType as string,
+                programName: 'wenTransferGuard',
+            });
     }
 }

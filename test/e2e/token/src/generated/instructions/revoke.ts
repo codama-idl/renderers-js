@@ -13,6 +13,8 @@ import {
     getStructEncoder,
     getU8Decoder,
     getU8Encoder,
+    SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
+    SolanaError,
     transformEncoder,
     type AccountMeta,
     type AccountSignerMeta,
@@ -152,8 +154,10 @@ export function parseRevokeInstruction<TProgram extends string, TAccountMetas ex
         InstructionWithData<ReadonlyUint8Array>,
 ): ParsedRevokeInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 2) {
-        // TODO: Coded error.
-        throw new Error('Not enough accounts');
+        throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS, {
+            actualAccountMetas: instruction.accounts.length,
+            expectedAccountMetas: 2,
+        });
     }
     let accountIndex = 0;
     const getNextAccount = () => {

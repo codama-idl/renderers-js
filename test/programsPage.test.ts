@@ -167,7 +167,7 @@ test('it renders an function that identifies instructions in a program', async (
             `const data = 'data' in instruction ? instruction.data : instruction; ` +
             `if ( containsBytes(data, getU8Encoder().encode(1), 0) ) { return SplTokenInstruction.MintTokens; } ` +
             `if ( data.length === 72 && containsBytes(data, new Uint8Array([1, 2, 3]), 4) ) { return SplTokenInstruction.TransferTokens; } ` +
-            `throw new Error( 'The provided instruction could not be identified as a splToken instruction.' ); ` +
+            `throw new SolanaError( SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION, { instructionData: data, programName: 'splToken' } ); ` +
             `}`,
     ]);
 

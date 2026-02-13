@@ -15,6 +15,8 @@ import {
     getU64Encoder,
     getU8Decoder,
     getU8Encoder,
+    SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
+    SolanaError,
     transformEncoder,
     type AccountMeta,
     type AccountSignerMeta,
@@ -193,8 +195,10 @@ export function parseBurnCheckedInstruction<TProgram extends string, TAccountMet
         InstructionWithData<ReadonlyUint8Array>,
 ): ParsedBurnCheckedInstruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 3) {
-        // TODO: Coded error.
-        throw new Error('Not enough accounts');
+        throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS, {
+            actualAccountMetas: instruction.accounts.length,
+            expectedAccountMetas: 3,
+        });
     }
     let accountIndex = 0;
     const getNextAccount = () => {

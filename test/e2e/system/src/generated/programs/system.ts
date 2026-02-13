@@ -10,6 +10,9 @@ import {
     assertIsInstructionWithAccounts,
     containsBytes,
     getU32Encoder,
+    SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION,
+    SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE,
+    SolanaError,
     type Address,
     type Instruction,
     type InstructionWithData,
@@ -109,7 +112,10 @@ export function identifySystemInstruction(
     if (containsBytes(data, getU32Encoder().encode(12), 0)) {
         return SystemInstruction.UpgradeNonceAccount;
     }
-    throw new Error('The provided instruction could not be identified as a system instruction.');
+    throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION, {
+        instructionData: data,
+        programName: 'system',
+    });
 }
 
 export type ParsedSystemInstruction<TProgram extends string = '11111111111111111111111111111111'> =
@@ -214,6 +220,9 @@ export function parseSystemInstruction<TProgram extends string>(
             };
         }
         default:
-            throw new Error(`Unrecognized instruction type: ${instructionType as string}`);
+            throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE, {
+                instructionType: instructionType as string,
+                programName: 'system',
+            });
     }
 }

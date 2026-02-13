@@ -120,9 +120,10 @@ function getFunctionFragment(
 
     let accountHelpers: Fragment | undefined;
     if (hasAccounts) {
+        const solanaError = use('SolanaError', 'solanaErrors');
+        const solanaErrorCode = use('SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS', 'solanaErrors');
         accountHelpers = fragment`if (instruction.accounts.length < ${minimumNumberOfAccounts}) {
-  // TODO: Coded error.
-  throw new Error('Not enough accounts');
+  throw new ${solanaError}(${solanaErrorCode}, { actualAccountMetas: instruction.accounts.length, expectedAccountMetas: ${minimumNumberOfAccounts} });
 }
 let accountIndex = 0;
 const getNextAccount = () => {
