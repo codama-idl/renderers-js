@@ -29,8 +29,8 @@ import {
     type WritableAccount,
     type WritableSignerAccount,
 } from '@solana/kit';
+import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { SYSTEM_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const TRANSFER_SOL_DISCRIMINATOR = 2;
 
@@ -105,14 +105,14 @@ export function getTransferSolInstruction<
         source: { value: input.source ?? null, isWritable: true },
         destination: { value: input.destination ?? null, isWritable: true },
     };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
     const args = { ...input };
 
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
-        accounts: [getAccountMeta(accounts.source), getAccountMeta(accounts.destination)],
+        accounts: [getAccountMeta('source', accounts.source), getAccountMeta('destination', accounts.destination)],
         data: getTransferSolInstructionDataEncoder().encode(args as TransferSolInstructionDataArgs),
         programAddress,
     } as TransferSolInstruction<TProgramAddress, TAccountSource, TAccountDestination>);

@@ -31,8 +31,8 @@ import {
     type TransactionSigner,
     type WritableAccount,
 } from '@solana/kit';
+import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { TOKEN_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const MINT_TO_DISCRIMINATOR = 7;
 
@@ -129,7 +129,7 @@ export function getMintToInstruction<
         token: { value: input.token ?? null, isWritable: true },
         mintAuthority: { value: input.mintAuthority ?? null, isWritable: false },
     };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
     const args = { ...input };
@@ -144,9 +144,9 @@ export function getMintToInstruction<
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
-            getAccountMeta(accounts.mint),
-            getAccountMeta(accounts.token),
-            getAccountMeta(accounts.mintAuthority),
+            getAccountMeta('mint', accounts.mint),
+            getAccountMeta('token', accounts.token),
+            getAccountMeta('mintAuthority', accounts.mintAuthority),
             ...remainingAccounts,
         ],
         data: getMintToInstructionDataEncoder().encode(args as MintToInstructionDataArgs),

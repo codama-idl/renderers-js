@@ -35,8 +35,8 @@ import {
     type TransactionSigner,
     type WritableAccount,
 } from '@solana/kit';
+import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { SYSTEM_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const ALLOCATE_WITH_SEED_DISCRIMINATOR = 9;
 
@@ -134,14 +134,17 @@ export function getAllocateWithSeedInstruction<
         newAccount: { value: input.newAccount ?? null, isWritable: true },
         baseAccount: { value: input.baseAccount ?? null, isWritable: false },
     };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
     const args = { ...input };
 
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
-        accounts: [getAccountMeta(accounts.newAccount), getAccountMeta(accounts.baseAccount)],
+        accounts: [
+            getAccountMeta('newAccount', accounts.newAccount),
+            getAccountMeta('baseAccount', accounts.baseAccount),
+        ],
         data: getAllocateWithSeedInstructionDataEncoder().encode(args as AllocateWithSeedInstructionDataArgs),
         programAddress,
     } as AllocateWithSeedInstruction<TProgramAddress, TAccountNewAccount, TAccountBaseAccount>);

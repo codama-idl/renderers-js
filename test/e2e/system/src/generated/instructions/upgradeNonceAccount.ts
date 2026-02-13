@@ -24,8 +24,8 @@ import {
     type ReadonlyUint8Array,
     type WritableAccount,
 } from '@solana/kit';
+import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { SYSTEM_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const UPGRADE_NONCE_ACCOUNT_DISCRIMINATOR = 12;
 
@@ -84,11 +84,11 @@ export function getUpgradeNonceAccountInstruction<
 
     // Original accounts.
     const originalAccounts = { nonceAccount: { value: input.nonceAccount ?? null, isWritable: true } };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
-        accounts: [getAccountMeta(accounts.nonceAccount)],
+        accounts: [getAccountMeta('nonceAccount', accounts.nonceAccount)],
         data: getUpgradeNonceAccountInstructionDataEncoder().encode({}),
         programAddress,
     } as UpgradeNonceAccountInstruction<TProgramAddress, TAccountNonceAccount>);

@@ -28,8 +28,8 @@ import {
     type TransactionSigner,
     type WritableSignerAccount,
 } from '@solana/kit';
+import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { SYSTEM_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const ALLOCATE_DISCRIMINATOR = 8;
 
@@ -97,14 +97,14 @@ export function getAllocateInstruction<
 
     // Original accounts.
     const originalAccounts = { newAccount: { value: input.newAccount ?? null, isWritable: true } };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
     const args = { ...input };
 
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
-        accounts: [getAccountMeta(accounts.newAccount)],
+        accounts: [getAccountMeta('newAccount', accounts.newAccount)],
         data: getAllocateInstructionDataEncoder().encode(args as AllocateInstructionDataArgs),
         programAddress,
     } as AllocateInstruction<TProgramAddress, TAccountNewAccount>);

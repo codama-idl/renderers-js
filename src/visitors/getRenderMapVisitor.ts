@@ -29,7 +29,6 @@ import {
     getPdaPageFragment,
     getProgramPageFragment,
     getRootIndexPageFragment,
-    getSharedPageFragment,
     getTypePageFragment,
 } from '../fragments';
 import {
@@ -164,11 +163,6 @@ export function getRenderMapVisitor(options: GetRenderMapOptions = {}) {
                         leavesOnly: !renderScope.renderParentInstructions,
                     }).filter(isNotInternal);
                     const definedTypesToExport = getAllDefinedTypes(node).filter(isNotInternal);
-                    const hasAnythingToExport =
-                        programsToExport.length > 0 ||
-                        accountsToExport.length > 0 ||
-                        instructionsToExport.length > 0 ||
-                        definedTypesToExport.length > 0;
 
                     const scope = {
                         ...renderScope,
@@ -187,7 +181,6 @@ export function getRenderMapVisitor(options: GetRenderMapOptions = {}) {
                             ['instructions/index.ts']: asPage(getIndexPageFragment(instructionsToExport)),
                             ['pdas/index.ts']: asPage(getIndexPageFragment(pdasToExport)),
                             ['programs/index.ts']: asPage(getIndexPageFragment(programsToExport)),
-                            ['shared/index.ts']: hasAnythingToExport ? asPage(getSharedPageFragment()) : undefined,
                             ['types/index.ts']: asPage(getIndexPageFragment(definedTypesToExport)),
                         }),
                         ...getAllPrograms(node).map(p => visit(p, self)),

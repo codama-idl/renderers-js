@@ -28,8 +28,8 @@ import {
     type TransactionSigner,
     type WritableAccount,
 } from '@solana/kit';
+import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { SYSTEM_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const ADVANCE_NONCE_ACCOUNT_DISCRIMINATOR = 4;
 
@@ -114,7 +114,7 @@ export function getAdvanceNonceAccountInstruction<
         recentBlockhashesSysvar: { value: input.recentBlockhashesSysvar ?? null, isWritable: false },
         nonceAuthority: { value: input.nonceAuthority ?? null, isWritable: false },
     };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Resolve default values.
     if (!accounts.recentBlockhashesSysvar.value) {
@@ -125,9 +125,9 @@ export function getAdvanceNonceAccountInstruction<
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
-            getAccountMeta(accounts.nonceAccount),
-            getAccountMeta(accounts.recentBlockhashesSysvar),
-            getAccountMeta(accounts.nonceAuthority),
+            getAccountMeta('nonceAccount', accounts.nonceAccount),
+            getAccountMeta('recentBlockhashesSysvar', accounts.recentBlockhashesSysvar),
+            getAccountMeta('nonceAuthority', accounts.nonceAuthority),
         ],
         data: getAdvanceNonceAccountInstructionDataEncoder().encode({}),
         programAddress,

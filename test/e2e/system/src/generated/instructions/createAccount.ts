@@ -34,8 +34,12 @@ import {
     type TransactionSigner,
     type WritableSignerAccount,
 } from '@solana/kit';
+import {
+    getAccountMetaFactory,
+    type InstructionWithByteDelta,
+    type ResolvedInstructionAccount,
+} from '@solana/kit/program-client-core';
 import { SYSTEM_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type InstructionWithByteDelta, type ResolvedAccount } from '../shared';
 
 export const CREATE_ACCOUNT_DISCRIMINATOR = 0;
 
@@ -123,7 +127,7 @@ export function getCreateAccountInstruction<
         payer: { value: input.payer ?? null, isWritable: true },
         newAccount: { value: input.newAccount ?? null, isWritable: true },
     };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
     const args = { ...input };
@@ -133,7 +137,7 @@ export function getCreateAccountInstruction<
 
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
-        accounts: [getAccountMeta(accounts.payer), getAccountMeta(accounts.newAccount)],
+        accounts: [getAccountMeta('payer', accounts.payer), getAccountMeta('newAccount', accounts.newAccount)],
         byteDelta,
         data: getCreateAccountInstructionDataEncoder().encode(args as CreateAccountInstructionDataArgs),
         programAddress,

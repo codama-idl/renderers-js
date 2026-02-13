@@ -29,8 +29,8 @@ import {
     type TransactionSigner,
     type WritableAccount,
 } from '@solana/kit';
+import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { TOKEN_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const CLOSE_ACCOUNT_DISCRIMINATOR = 9;
 
@@ -116,7 +116,7 @@ export function getCloseAccountInstruction<
         destination: { value: input.destination ?? null, isWritable: true },
         owner: { value: input.owner ?? null, isWritable: false },
     };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
     const args = { ...input };
@@ -131,9 +131,9 @@ export function getCloseAccountInstruction<
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
-            getAccountMeta(accounts.account),
-            getAccountMeta(accounts.destination),
-            getAccountMeta(accounts.owner),
+            getAccountMeta('account', accounts.account),
+            getAccountMeta('destination', accounts.destination),
+            getAccountMeta('owner', accounts.owner),
             ...remainingAccounts,
         ],
         data: getCloseAccountInstructionDataEncoder().encode({}),

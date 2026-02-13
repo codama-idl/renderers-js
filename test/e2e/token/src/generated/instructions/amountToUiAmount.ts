@@ -26,8 +26,8 @@ import {
     type ReadonlyAccount,
     type ReadonlyUint8Array,
 } from '@solana/kit';
+import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { TOKEN_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const AMOUNT_TO_UI_AMOUNT_DISCRIMINATOR = 23;
 
@@ -98,14 +98,14 @@ export function getAmountToUiAmountInstruction<
 
     // Original accounts.
     const originalAccounts = { mint: { value: input.mint ?? null, isWritable: false } };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
     const args = { ...input };
 
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
-        accounts: [getAccountMeta(accounts.mint)],
+        accounts: [getAccountMeta('mint', accounts.mint)],
         data: getAmountToUiAmountInstructionDataEncoder().encode(args as AmountToUiAmountInstructionDataArgs),
         programAddress,
     } as AmountToUiAmountInstruction<TProgramAddress, TAccountMint>);

@@ -29,8 +29,8 @@ import {
     type TransactionSigner,
     type WritableAccount,
 } from '@solana/kit';
+import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { TOKEN_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const THAW_ACCOUNT_DISCRIMINATOR = 11;
 
@@ -116,7 +116,7 @@ export function getThawAccountInstruction<
         mint: { value: input.mint ?? null, isWritable: false },
         owner: { value: input.owner ?? null, isWritable: false },
     };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
     const args = { ...input };
@@ -131,9 +131,9 @@ export function getThawAccountInstruction<
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
-            getAccountMeta(accounts.account),
-            getAccountMeta(accounts.mint),
-            getAccountMeta(accounts.owner),
+            getAccountMeta('account', accounts.account),
+            getAccountMeta('mint', accounts.mint),
+            getAccountMeta('owner', accounts.owner),
             ...remainingAccounts,
         ],
         data: getThawAccountInstructionDataEncoder().encode({}),

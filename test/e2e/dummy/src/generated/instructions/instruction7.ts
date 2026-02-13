@@ -13,8 +13,8 @@ import {
     type InstructionWithAccounts,
     type WritableAccount,
 } from '@solana/kit';
+import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { DUMMY_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export type Instruction7Instruction<
     TProgram extends string = typeof DUMMY_PROGRAM_ADDRESS,
@@ -44,13 +44,13 @@ export function getInstruction7Instruction<
 
     // Original accounts.
     const originalAccounts = { myAccount: { value: input.myAccount ?? null, isWritable: true } };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
-    return Object.freeze({ accounts: [getAccountMeta(accounts.myAccount)], programAddress } as Instruction7Instruction<
-        TProgramAddress,
-        TAccountMyAccount
-    >);
+    return Object.freeze({
+        accounts: [getAccountMeta('myAccount', accounts.myAccount)],
+        programAddress,
+    } as Instruction7Instruction<TProgramAddress, TAccountMyAccount>);
 }
 
 export type ParsedInstruction7Instruction<
