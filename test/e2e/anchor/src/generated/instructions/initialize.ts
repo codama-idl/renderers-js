@@ -32,8 +32,12 @@ import {
     type WritableAccount,
     type WritableSignerAccount,
 } from '@solana/kit';
+import {
+    getAccountMetaFactory,
+    getAddressFromResolvedInstructionAccount,
+    type ResolvedInstructionAccount,
+} from '@solana/kit/program-client-core';
 import { WEN_TRANSFER_GUARD_PROGRAM_ADDRESS } from '../programs';
-import { expectAddress, getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const INITIALIZE_DISCRIMINATOR = new Uint8Array([43, 34, 13, 49, 167, 88, 235, 235]);
 
@@ -150,7 +154,7 @@ export async function getInitializeInstructionAsync<
         systemProgram: { value: input.systemProgram ?? null, isWritable: false },
         payer: { value: input.payer ?? null, isWritable: true },
     };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Resolve default values.
     if (!accounts.extraMetasAccount.value) {
@@ -162,7 +166,7 @@ export async function getInitializeInstructionAsync<
                         101, 120, 116, 114, 97, 45, 97, 99, 99, 111, 117, 110, 116, 45, 109, 101, 116, 97, 115,
                     ]),
                 ),
-                getAddressEncoder().encode(expectAddress(accounts.mint.value)),
+                getAddressEncoder().encode(getAddressFromResolvedInstructionAccount('mint', accounts.mint.value)),
             ],
         });
     }
@@ -174,12 +178,12 @@ export async function getInitializeInstructionAsync<
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
-            getAccountMeta(accounts.extraMetasAccount),
-            getAccountMeta(accounts.guard),
-            getAccountMeta(accounts.mint),
-            getAccountMeta(accounts.transferHookAuthority),
-            getAccountMeta(accounts.systemProgram),
-            getAccountMeta(accounts.payer),
+            getAccountMeta('extraMetasAccount', accounts.extraMetasAccount),
+            getAccountMeta('guard', accounts.guard),
+            getAccountMeta('mint', accounts.mint),
+            getAccountMeta('transferHookAuthority', accounts.transferHookAuthority),
+            getAccountMeta('systemProgram', accounts.systemProgram),
+            getAccountMeta('payer', accounts.payer),
         ],
         data: getInitializeInstructionDataEncoder().encode({}),
         programAddress,
@@ -249,7 +253,7 @@ export function getInitializeInstruction<
         systemProgram: { value: input.systemProgram ?? null, isWritable: false },
         payer: { value: input.payer ?? null, isWritable: true },
     };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Resolve default values.
     if (!accounts.systemProgram.value) {
@@ -260,12 +264,12 @@ export function getInitializeInstruction<
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
-            getAccountMeta(accounts.extraMetasAccount),
-            getAccountMeta(accounts.guard),
-            getAccountMeta(accounts.mint),
-            getAccountMeta(accounts.transferHookAuthority),
-            getAccountMeta(accounts.systemProgram),
-            getAccountMeta(accounts.payer),
+            getAccountMeta('extraMetasAccount', accounts.extraMetasAccount),
+            getAccountMeta('guard', accounts.guard),
+            getAccountMeta('mint', accounts.mint),
+            getAccountMeta('transferHookAuthority', accounts.transferHookAuthority),
+            getAccountMeta('systemProgram', accounts.systemProgram),
+            getAccountMeta('payer', accounts.payer),
         ],
         data: getInitializeInstructionDataEncoder().encode({}),
         programAddress,

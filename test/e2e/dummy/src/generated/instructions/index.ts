@@ -13,3 +13,4 @@ export * from './instruction4';
 export * from './instruction5';
 export * from './instruction6';
 export * from './instruction7';
+export * from './instruction8';

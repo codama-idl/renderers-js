@@ -31,8 +31,8 @@ import {
     type ReadonlyUint8Array,
     type WritableAccount,
 } from '@solana/kit';
+import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { TOKEN_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const INITIALIZE_MINT2_DISCRIMINATOR = 20;
 
@@ -121,14 +121,14 @@ export function getInitializeMint2Instruction<
 
     // Original accounts.
     const originalAccounts = { mint: { value: input.mint ?? null, isWritable: true } };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
     const args = { ...input };
 
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
-        accounts: [getAccountMeta(accounts.mint)],
+        accounts: [getAccountMeta('mint', accounts.mint)],
         data: getInitializeMint2InstructionDataEncoder().encode(args as InitializeMint2InstructionDataArgs),
         programAddress,
     } as InitializeMint2Instruction<TProgramAddress, TAccountMint>);

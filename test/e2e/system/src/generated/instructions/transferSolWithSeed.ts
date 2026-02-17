@@ -35,8 +35,8 @@ import {
     type TransactionSigner,
     type WritableAccount,
 } from '@solana/kit';
+import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { SYSTEM_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const TRANSFER_SOL_WITH_SEED_DISCRIMINATOR = 11;
 
@@ -131,7 +131,7 @@ export function getTransferSolWithSeedInstruction<
         baseAccount: { value: input.baseAccount ?? null, isWritable: false },
         destination: { value: input.destination ?? null, isWritable: true },
     };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
     const args = { ...input };
@@ -139,9 +139,9 @@ export function getTransferSolWithSeedInstruction<
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
-            getAccountMeta(accounts.source),
-            getAccountMeta(accounts.baseAccount),
-            getAccountMeta(accounts.destination),
+            getAccountMeta('source', accounts.source),
+            getAccountMeta('baseAccount', accounts.baseAccount),
+            getAccountMeta('destination', accounts.destination),
         ],
         data: getTransferSolWithSeedInstructionDataEncoder().encode(args as TransferSolWithSeedInstructionDataArgs),
         programAddress,

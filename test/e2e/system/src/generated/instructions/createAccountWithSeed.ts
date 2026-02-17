@@ -36,8 +36,8 @@ import {
     type WritableAccount,
     type WritableSignerAccount,
 } from '@solana/kit';
+import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { SYSTEM_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const CREATE_ACCOUNT_WITH_SEED_DISCRIMINATOR = 3;
 
@@ -151,7 +151,7 @@ export function getCreateAccountWithSeedInstruction<
         newAccount: { value: input.newAccount ?? null, isWritable: true },
         baseAccount: { value: input.baseAccount ?? null, isWritable: false },
     };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
     const args = { ...input };
@@ -159,9 +159,9 @@ export function getCreateAccountWithSeedInstruction<
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
-            getAccountMeta(accounts.payer),
-            getAccountMeta(accounts.newAccount),
-            getAccountMeta(accounts.baseAccount),
+            getAccountMeta('payer', accounts.payer),
+            getAccountMeta('newAccount', accounts.newAccount),
+            getAccountMeta('baseAccount', accounts.baseAccount),
         ],
         data: getCreateAccountWithSeedInstructionDataEncoder().encode(args as CreateAccountWithSeedInstructionDataArgs),
         programAddress,

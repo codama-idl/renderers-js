@@ -31,8 +31,8 @@ import {
     type TransactionSigner,
     type WritableAccount,
 } from '@solana/kit';
+import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { TOKEN_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const TRANSFER_DISCRIMINATOR = 3;
 
@@ -132,7 +132,7 @@ export function getTransferInstruction<
         destination: { value: input.destination ?? null, isWritable: true },
         authority: { value: input.authority ?? null, isWritable: false },
     };
-    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
+    const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
     const args = { ...input };
@@ -147,9 +147,9 @@ export function getTransferInstruction<
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
-            getAccountMeta(accounts.source),
-            getAccountMeta(accounts.destination),
-            getAccountMeta(accounts.authority),
+            getAccountMeta('source', accounts.source),
+            getAccountMeta('destination', accounts.destination),
+            getAccountMeta('authority', accounts.authority),
             ...remainingAccounts,
         ],
         data: getTransferInstructionDataEncoder().encode(args as TransferInstructionDataArgs),
