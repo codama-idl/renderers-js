@@ -142,6 +142,36 @@ test('it renders program plugin instruction types with async builders', async ()
     ]);
 });
 
+test('it renders program plugin instruction types with default payer values', async () => {
+    // Given a program with an instruction that has a payer value node as default value.
+    const node = programNode({
+        instructions: [
+            instructionNode({
+                accounts: [
+                    instructionAccountNode({
+                        defaultValue: payerValueNode(),
+                        isSigner: false,
+                        isWritable: false,
+                        name: 'rentPayer',
+                    }),
+                ],
+                name: 'initializeMint',
+            }),
+        ],
+        name: 'splToken',
+        publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    });
+
+    // When we get the program plugin fragment.
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+
+    // Then we expect the plugin instruction type to have a default payer in its input type.
+    await fragmentContains(fragment, [
+        'export type SplTokenPluginInstructions = {',
+        "initializeMint: ( input: MakeOptional< InitializeMintInput , 'rentPayer' > ) => ReturnType<typeof getInitializeMintInstruction> & SelfPlanAndSendFunctions;",
+    ]);
+});
+
 test('it renders the program plugin requirements', async () => {
     // Given a program with accounts and instructions such that one of them as a payer value node.
     const node = programNode({
@@ -201,9 +231,9 @@ test('it renders the program plugin function', async () => {
 
     // Then we expect the following plugin function.
     await fragmentContains(fragment, [
-        'export function splTokenProgram() { return <T extends SplTokenPluginRequirements>(client: T) => { return { ...client, splToken: {',
+        'export function splTokenProgram() { return <T extends SplTokenPluginRequirements>(client: T) => { return { ...client, splToken: <SplTokenPlugin>{',
         'accounts: { mint: addSelfFetchFunctions( client, getMintCodec() ) },',
-        'instructions: { initializeMint: ( input: InitializeMintInput ) => addSelfPlanAndSendFunctions( client, getInitializeMintInstruction( input ) ) }',
+        'instructions: { initializeMint: ( input ) => addSelfPlanAndSendFunctions( client, getInitializeMintInstruction( input ) ) }',
     ]);
 
     // And we expect the necessary imports to be included.
@@ -239,7 +269,7 @@ test('it fills payer value nodes with the payer (signer) set on the client by de
     // Then we expect the following instruction function with a default payer to be rendered.
     await fragmentContains(fragment, [
         'type MakeOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>',
-        "instructions: { initializeMint: ( input: MakeOptional<InitializeMintInput, 'rentPayer'> ) => addSelfPlanAndSendFunctions( client, getInitializeMintInstruction( { ...input, rentPayer: input.rentPayer ?? client.payer } ) ) }",
+        'instructions: { initializeMint: ( input ) => addSelfPlanAndSendFunctions( client, getInitializeMintInstruction( { ...input, rentPayer: input.rentPayer ?? client.payer } ) ) }',
     ]);
 });
 
@@ -269,7 +299,7 @@ test('it fills payer value nodes with the payer (address) set on the client by d
     // Then we expect the following instruction function with a default payer to be rendered.
     await fragmentContains(fragment, [
         'type MakeOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>',
-        "instructions: { initializeMint: ( input: MakeOptional<InitializeMintInput, 'rentPayer'> ) => addSelfPlanAndSendFunctions( client, getInitializeMintInstruction( { ...input, rentPayer: input.rentPayer ?? client.payer.address } ) ) }",
+        'instructions: { initializeMint: ( input ) => addSelfPlanAndSendFunctions( client, getInitializeMintInstruction( { ...input, rentPayer: input.rentPayer ?? client.payer.address } ) ) }',
     ]);
 });
 

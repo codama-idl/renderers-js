@@ -33,11 +33,9 @@ export function memoProgram() {
     return <T extends MemoPluginRequirements>(client: T) => {
         return {
             ...client,
-            memo: {
-                instructions: {
-                    addMemo: (input: AddMemoInput) => addSelfPlanAndSendFunctions(client, getAddMemoInstruction(input)),
-                },
-            } as MemoPlugin,
+            memo: <MemoPlugin>{
+                instructions: { addMemo: input => addSelfPlanAndSendFunctions(client, getAddMemoInstruction(input)) },
+            },
         };
     };
 }

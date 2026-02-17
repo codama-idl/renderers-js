@@ -132,16 +132,14 @@ export function associatedTokenProgram() {
     return <T extends AssociatedTokenPluginRequirements>(client: T) => {
         return {
             ...client,
-            associatedToken: {
+            associatedToken: <AssociatedTokenPlugin>{
                 instructions: {
-                    createAssociatedToken: (input: MakeOptional<CreateAssociatedTokenAsyncInput, 'payer'>) =>
+                    createAssociatedToken: input =>
                         addSelfPlanAndSendFunctions(
                             client,
                             getCreateAssociatedTokenInstructionAsync({ ...input, payer: input.payer ?? client.payer }),
                         ),
-                    createAssociatedTokenIdempotent: (
-                        input: MakeOptional<CreateAssociatedTokenIdempotentAsyncInput, 'payer'>,
-                    ) =>
+                    createAssociatedTokenIdempotent: input =>
                         addSelfPlanAndSendFunctions(
                             client,
                             getCreateAssociatedTokenIdempotentInstructionAsync({
@@ -149,10 +147,10 @@ export function associatedTokenProgram() {
                                 payer: input.payer ?? client.payer,
                             }),
                         ),
-                    recoverNestedAssociatedToken: (input: RecoverNestedAssociatedTokenAsyncInput) =>
+                    recoverNestedAssociatedToken: input =>
                         addSelfPlanAndSendFunctions(client, getRecoverNestedAssociatedTokenInstructionAsync(input)),
                 },
-            } as AssociatedTokenPlugin,
+            },
         };
     };
 }

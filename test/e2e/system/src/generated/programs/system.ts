@@ -315,42 +315,39 @@ export function systemProgram() {
     return <T extends SystemPluginRequirements>(client: T) => {
         return {
             ...client,
-            system: {
+            system: <SystemPlugin>{
                 accounts: { nonce: addSelfFetchFunctions(client, getNonceCodec()) },
                 instructions: {
-                    createAccount: (input: MakeOptional<CreateAccountInput, 'payer'>) =>
+                    createAccount: input =>
                         addSelfPlanAndSendFunctions(
                             client,
                             getCreateAccountInstruction({ ...input, payer: input.payer ?? client.payer }),
                         ),
-                    assign: (input: AssignInput) => addSelfPlanAndSendFunctions(client, getAssignInstruction(input)),
-                    transferSol: (input: TransferSolInput) =>
-                        addSelfPlanAndSendFunctions(client, getTransferSolInstruction(input)),
-                    createAccountWithSeed: (input: MakeOptional<CreateAccountWithSeedInput, 'payer'>) =>
+                    assign: input => addSelfPlanAndSendFunctions(client, getAssignInstruction(input)),
+                    transferSol: input => addSelfPlanAndSendFunctions(client, getTransferSolInstruction(input)),
+                    createAccountWithSeed: input =>
                         addSelfPlanAndSendFunctions(
                             client,
                             getCreateAccountWithSeedInstruction({ ...input, payer: input.payer ?? client.payer }),
                         ),
-                    advanceNonceAccount: (input: AdvanceNonceAccountInput) =>
+                    advanceNonceAccount: input =>
                         addSelfPlanAndSendFunctions(client, getAdvanceNonceAccountInstruction(input)),
-                    withdrawNonceAccount: (input: WithdrawNonceAccountInput) =>
+                    withdrawNonceAccount: input =>
                         addSelfPlanAndSendFunctions(client, getWithdrawNonceAccountInstruction(input)),
-                    initializeNonceAccount: (input: InitializeNonceAccountInput) =>
+                    initializeNonceAccount: input =>
                         addSelfPlanAndSendFunctions(client, getInitializeNonceAccountInstruction(input)),
-                    authorizeNonceAccount: (input: AuthorizeNonceAccountInput) =>
+                    authorizeNonceAccount: input =>
                         addSelfPlanAndSendFunctions(client, getAuthorizeNonceAccountInstruction(input)),
-                    allocate: (input: AllocateInput) =>
-                        addSelfPlanAndSendFunctions(client, getAllocateInstruction(input)),
-                    allocateWithSeed: (input: AllocateWithSeedInput) =>
+                    allocate: input => addSelfPlanAndSendFunctions(client, getAllocateInstruction(input)),
+                    allocateWithSeed: input =>
                         addSelfPlanAndSendFunctions(client, getAllocateWithSeedInstruction(input)),
-                    assignWithSeed: (input: AssignWithSeedInput) =>
-                        addSelfPlanAndSendFunctions(client, getAssignWithSeedInstruction(input)),
-                    transferSolWithSeed: (input: TransferSolWithSeedInput) =>
+                    assignWithSeed: input => addSelfPlanAndSendFunctions(client, getAssignWithSeedInstruction(input)),
+                    transferSolWithSeed: input =>
                         addSelfPlanAndSendFunctions(client, getTransferSolWithSeedInstruction(input)),
-                    upgradeNonceAccount: (input: UpgradeNonceAccountInput) =>
+                    upgradeNonceAccount: input =>
                         addSelfPlanAndSendFunctions(client, getUpgradeNonceAccountInstruction(input)),
                 },
-            } as SystemPlugin,
+            },
         };
     };
 }

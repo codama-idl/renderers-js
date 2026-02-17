@@ -149,7 +149,7 @@ function getProgramPluginFunctionFragment(
 
     return fragment`export function ${programPluginFunction}() {
     return <T extends ${programPluginRequirementsType}>(client: T) => {
-        return { ...client, ${programPluginKey}: { ${fields}} as ${programPluginType} };
+        return { ...client, ${programPluginKey}: <${programPluginType}>{ ${fields} } };
     };
 }`;
 }
@@ -183,31 +183,25 @@ function getProgramPluginInstructionsObjectFragment(
         programNode.instructions.map(instruction => {
             const name = nameApi.programPluginInstructionKey(instruction.name);
             const isAsync = asyncInstructions.includes(instruction.name);
-            const instructionInputType = isAsync
-                ? use('type ' + nameApi.instructionAsyncInputType(instruction.name), 'generatedInstructions')
-                : use('type ' + nameApi.instructionSyncInputType(instruction.name), 'generatedInstructions');
             const instructionFunction = isAsync
                 ? use(nameApi.instructionAsyncFunction(instruction.name), 'generatedInstructions')
                 : use(nameApi.instructionSyncFunction(instruction.name), 'generatedInstructions');
             const addSelfPlanAndSendFunctions = use('addSelfPlanAndSendFunctions', 'solanaProgramClientCore');
             const payerDefaultValues = getPayerDefaultValues(instruction);
 
-            if (payerDefaultValues.length === 0) {
-                return fragment`${name}: (input: ${instructionInputType}) => ${addSelfPlanAndSendFunctions}(client, ${instructionFunction}(input))`;
+            let input = fragment`input`;
+            if (payerDefaultValues.length > 0) {
+                const fieldOverrides = mergeFragments(
+                    payerDefaultValues.map(({ name, signer }) => {
+                        const signerDefault = signer ? 'client.payer' : 'client.payer.address';
+                        return fragment`${name}: input.${name} ?? ${signerDefault}`;
+                    }),
+                    c => c.join(', '),
+                );
+                input = fragment`{ ...input, ${fieldOverrides} }`;
             }
 
-            const fieldStringUnion = payerDefaultValues.map(({ name }) => `"${name}"`).join(' | ');
-            const instructionInputTypeWithPayer = fragment`MakeOptional<${instructionInputType}, ${fieldStringUnion}>`;
-            const fieldOverrides = mergeFragments(
-                payerDefaultValues.map(
-                    ({ name, signer }) =>
-                        fragment`${name}: input.${name} ?? ${signer ? 'client.payer' : 'client.payer.address'}`,
-                ),
-                c => c.join(', '),
-            );
-            const inputWithPayer = fragment`{ ...input, ${fieldOverrides} }`;
-
-            return fragment`${name}: (input: ${instructionInputTypeWithPayer}) => ${addSelfPlanAndSendFunctions}(client, ${instructionFunction}(${inputWithPayer}))`;
+            return fragment`${name}: input => ${addSelfPlanAndSendFunctions}(client, ${instructionFunction}(${input}))`;
         }),
         c => c.join(', '),
     );
