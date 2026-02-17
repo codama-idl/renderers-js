@@ -1,5 +1,11 @@
 # @codama/renderers-js
 
+## 2.0.1
+
+### Patch Changes
+
+- [#121](https://github.com/codama-idl/renderers-js/pull/121) [`1944b95`](https://github.com/codama-idl/renderers-js/commit/1944b955ad3117f6a30399c6a3700a8ce70712b8) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Fix the generated plugin instruction type to use `ReturnType<typeof instructionFunction>` instead of manually constructing the return type, and make payer default values optional in the plugin's instruction input type.
+
 ## 2.0.0
 
 ### Major Changes
