@@ -93,41 +93,23 @@ import {
     parseTransferInstruction,
     parseUiAmountToAmountInstruction,
     type AmountToUiAmountInput,
-    type AmountToUiAmountInstruction,
     type ApproveCheckedInput,
-    type ApproveCheckedInstruction,
     type ApproveInput,
-    type ApproveInstruction,
     type BurnCheckedInput,
-    type BurnCheckedInstruction,
     type BurnInput,
-    type BurnInstruction,
     type CloseAccountInput,
-    type CloseAccountInstruction,
     type FreezeAccountInput,
-    type FreezeAccountInstruction,
     type GetAccountDataSizeInput,
-    type GetAccountDataSizeInstruction,
     type InitializeAccount2Input,
-    type InitializeAccount2Instruction,
     type InitializeAccount3Input,
-    type InitializeAccount3Instruction,
     type InitializeAccountInput,
-    type InitializeAccountInstruction,
     type InitializeImmutableOwnerInput,
-    type InitializeImmutableOwnerInstruction,
     type InitializeMint2Input,
-    type InitializeMint2Instruction,
     type InitializeMintInput,
-    type InitializeMintInstruction,
     type InitializeMultisig2Input,
-    type InitializeMultisig2Instruction,
     type InitializeMultisigInput,
-    type InitializeMultisigInstruction,
     type MintToCheckedInput,
-    type MintToCheckedInstruction,
     type MintToInput,
-    type MintToInstruction,
     type ParsedAmountToUiAmountInstruction,
     type ParsedApproveCheckedInstruction,
     type ParsedApproveInstruction,
@@ -154,19 +136,12 @@ import {
     type ParsedTransferInstruction,
     type ParsedUiAmountToAmountInstruction,
     type RevokeInput,
-    type RevokeInstruction,
     type SetAuthorityInput,
-    type SetAuthorityInstruction,
     type SyncNativeInput,
-    type SyncNativeInstruction,
     type ThawAccountInput,
-    type ThawAccountInstruction,
     type TransferCheckedInput,
-    type TransferCheckedInstruction,
     type TransferInput,
-    type TransferInstruction,
     type UiAmountToAmountInput,
-    type UiAmountToAmountInstruction,
 } from '../instructions';
 
 export const TOKEN_PROGRAM_ADDRESS =
@@ -492,33 +467,65 @@ export type TokenPluginAccounts = {
 };
 
 export type TokenPluginInstructions = {
-    initializeMint: (input: InitializeMintInput) => InitializeMintInstruction & SelfPlanAndSendFunctions;
-    initializeAccount: (input: InitializeAccountInput) => InitializeAccountInstruction & SelfPlanAndSendFunctions;
-    initializeMultisig: (input: InitializeMultisigInput) => InitializeMultisigInstruction & SelfPlanAndSendFunctions;
-    transfer: (input: TransferInput) => TransferInstruction & SelfPlanAndSendFunctions;
-    approve: (input: ApproveInput) => ApproveInstruction & SelfPlanAndSendFunctions;
-    revoke: (input: RevokeInput) => RevokeInstruction & SelfPlanAndSendFunctions;
-    setAuthority: (input: SetAuthorityInput) => SetAuthorityInstruction & SelfPlanAndSendFunctions;
-    mintTo: (input: MintToInput) => MintToInstruction & SelfPlanAndSendFunctions;
-    burn: (input: BurnInput) => BurnInstruction & SelfPlanAndSendFunctions;
-    closeAccount: (input: CloseAccountInput) => CloseAccountInstruction & SelfPlanAndSendFunctions;
-    freezeAccount: (input: FreezeAccountInput) => FreezeAccountInstruction & SelfPlanAndSendFunctions;
-    thawAccount: (input: ThawAccountInput) => ThawAccountInstruction & SelfPlanAndSendFunctions;
-    transferChecked: (input: TransferCheckedInput) => TransferCheckedInstruction & SelfPlanAndSendFunctions;
-    approveChecked: (input: ApproveCheckedInput) => ApproveCheckedInstruction & SelfPlanAndSendFunctions;
-    mintToChecked: (input: MintToCheckedInput) => MintToCheckedInstruction & SelfPlanAndSendFunctions;
-    burnChecked: (input: BurnCheckedInput) => BurnCheckedInstruction & SelfPlanAndSendFunctions;
-    initializeAccount2: (input: InitializeAccount2Input) => InitializeAccount2Instruction & SelfPlanAndSendFunctions;
-    syncNative: (input: SyncNativeInput) => SyncNativeInstruction & SelfPlanAndSendFunctions;
-    initializeAccount3: (input: InitializeAccount3Input) => InitializeAccount3Instruction & SelfPlanAndSendFunctions;
-    initializeMultisig2: (input: InitializeMultisig2Input) => InitializeMultisig2Instruction & SelfPlanAndSendFunctions;
-    initializeMint2: (input: InitializeMint2Input) => InitializeMint2Instruction & SelfPlanAndSendFunctions;
-    getAccountDataSize: (input: GetAccountDataSizeInput) => GetAccountDataSizeInstruction & SelfPlanAndSendFunctions;
+    initializeMint: (
+        input: InitializeMintInput,
+    ) => ReturnType<typeof getInitializeMintInstruction> & SelfPlanAndSendFunctions;
+    initializeAccount: (
+        input: InitializeAccountInput,
+    ) => ReturnType<typeof getInitializeAccountInstruction> & SelfPlanAndSendFunctions;
+    initializeMultisig: (
+        input: InitializeMultisigInput,
+    ) => ReturnType<typeof getInitializeMultisigInstruction> & SelfPlanAndSendFunctions;
+    transfer: (input: TransferInput) => ReturnType<typeof getTransferInstruction> & SelfPlanAndSendFunctions;
+    approve: (input: ApproveInput) => ReturnType<typeof getApproveInstruction> & SelfPlanAndSendFunctions;
+    revoke: (input: RevokeInput) => ReturnType<typeof getRevokeInstruction> & SelfPlanAndSendFunctions;
+    setAuthority: (
+        input: SetAuthorityInput,
+    ) => ReturnType<typeof getSetAuthorityInstruction> & SelfPlanAndSendFunctions;
+    mintTo: (input: MintToInput) => ReturnType<typeof getMintToInstruction> & SelfPlanAndSendFunctions;
+    burn: (input: BurnInput) => ReturnType<typeof getBurnInstruction> & SelfPlanAndSendFunctions;
+    closeAccount: (
+        input: CloseAccountInput,
+    ) => ReturnType<typeof getCloseAccountInstruction> & SelfPlanAndSendFunctions;
+    freezeAccount: (
+        input: FreezeAccountInput,
+    ) => ReturnType<typeof getFreezeAccountInstruction> & SelfPlanAndSendFunctions;
+    thawAccount: (input: ThawAccountInput) => ReturnType<typeof getThawAccountInstruction> & SelfPlanAndSendFunctions;
+    transferChecked: (
+        input: TransferCheckedInput,
+    ) => ReturnType<typeof getTransferCheckedInstruction> & SelfPlanAndSendFunctions;
+    approveChecked: (
+        input: ApproveCheckedInput,
+    ) => ReturnType<typeof getApproveCheckedInstruction> & SelfPlanAndSendFunctions;
+    mintToChecked: (
+        input: MintToCheckedInput,
+    ) => ReturnType<typeof getMintToCheckedInstruction> & SelfPlanAndSendFunctions;
+    burnChecked: (input: BurnCheckedInput) => ReturnType<typeof getBurnCheckedInstruction> & SelfPlanAndSendFunctions;
+    initializeAccount2: (
+        input: InitializeAccount2Input,
+    ) => ReturnType<typeof getInitializeAccount2Instruction> & SelfPlanAndSendFunctions;
+    syncNative: (input: SyncNativeInput) => ReturnType<typeof getSyncNativeInstruction> & SelfPlanAndSendFunctions;
+    initializeAccount3: (
+        input: InitializeAccount3Input,
+    ) => ReturnType<typeof getInitializeAccount3Instruction> & SelfPlanAndSendFunctions;
+    initializeMultisig2: (
+        input: InitializeMultisig2Input,
+    ) => ReturnType<typeof getInitializeMultisig2Instruction> & SelfPlanAndSendFunctions;
+    initializeMint2: (
+        input: InitializeMint2Input,
+    ) => ReturnType<typeof getInitializeMint2Instruction> & SelfPlanAndSendFunctions;
+    getAccountDataSize: (
+        input: GetAccountDataSizeInput,
+    ) => ReturnType<typeof getGetAccountDataSizeInstruction> & SelfPlanAndSendFunctions;
     initializeImmutableOwner: (
         input: InitializeImmutableOwnerInput,
-    ) => InitializeImmutableOwnerInstruction & SelfPlanAndSendFunctions;
-    amountToUiAmount: (input: AmountToUiAmountInput) => AmountToUiAmountInstruction & SelfPlanAndSendFunctions;
-    uiAmountToAmount: (input: UiAmountToAmountInput) => UiAmountToAmountInstruction & SelfPlanAndSendFunctions;
+    ) => ReturnType<typeof getInitializeImmutableOwnerInstruction> & SelfPlanAndSendFunctions;
+    amountToUiAmount: (
+        input: AmountToUiAmountInput,
+    ) => ReturnType<typeof getAmountToUiAmountInstruction> & SelfPlanAndSendFunctions;
+    uiAmountToAmount: (
+        input: UiAmountToAmountInput,
+    ) => ReturnType<typeof getUiAmountToAmountInstruction> & SelfPlanAndSendFunctions;
 };
 
 export type TokenPluginRequirements = ClientWithRpc<GetAccountInfoApi & GetMultipleAccountsApi> &

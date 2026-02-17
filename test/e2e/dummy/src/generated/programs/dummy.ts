@@ -42,23 +42,14 @@ import {
     parseInstruction8Instruction,
     parseInstruction9Instruction,
     type Instruction1Input,
-    type Instruction1Instruction,
     type Instruction2Input,
-    type Instruction2Instruction,
     type Instruction3Input,
-    type Instruction3Instruction,
     type Instruction4Input,
-    type Instruction4Instruction,
     type Instruction5Input,
-    type Instruction5Instruction,
     type Instruction6Input,
-    type Instruction6Instruction,
     type Instruction7Input,
-    type Instruction7Instruction,
     type Instruction8Input,
-    type Instruction8Instruction,
     type Instruction9Input,
-    type Instruction9Instruction,
     type ParsedInstruction1Instruction,
     type ParsedInstruction2Instruction,
     type ParsedInstruction3Instruction,
@@ -155,15 +146,33 @@ export function parseDummyInstruction<TProgram extends string>(
 export type DummyPlugin = { instructions: DummyPluginInstructions };
 
 export type DummyPluginInstructions = {
-    instruction1: (input: Instruction1Input) => Instruction1Instruction & SelfPlanAndSendFunctions;
-    instruction2: (input: Instruction2Input) => Instruction2Instruction & SelfPlanAndSendFunctions;
-    instruction3: (input: Instruction3Input) => Instruction3Instruction & SelfPlanAndSendFunctions;
-    instruction4: (input: Instruction4Input) => Instruction4Instruction & SelfPlanAndSendFunctions;
-    instruction5: (input: Instruction5Input) => Instruction5Instruction & SelfPlanAndSendFunctions;
-    instruction6: (input: Instruction6Input) => Instruction6Instruction & SelfPlanAndSendFunctions;
-    instruction7: (input: Instruction7Input) => Instruction7Instruction & SelfPlanAndSendFunctions;
-    instruction8: (input: Instruction8Input) => Instruction8Instruction & SelfPlanAndSendFunctions;
-    instruction9: (input: Instruction9Input) => Instruction9Instruction & SelfPlanAndSendFunctions;
+    instruction1: (
+        input: Instruction1Input,
+    ) => ReturnType<typeof getInstruction1Instruction> & SelfPlanAndSendFunctions;
+    instruction2: (
+        input: Instruction2Input,
+    ) => ReturnType<typeof getInstruction2Instruction> & SelfPlanAndSendFunctions;
+    instruction3: (
+        input: Instruction3Input,
+    ) => ReturnType<typeof getInstruction3Instruction> & SelfPlanAndSendFunctions;
+    instruction4: (
+        input: Instruction4Input,
+    ) => ReturnType<typeof getInstruction4Instruction> & SelfPlanAndSendFunctions;
+    instruction5: (
+        input: Instruction5Input,
+    ) => ReturnType<typeof getInstruction5Instruction> & SelfPlanAndSendFunctions;
+    instruction6: (
+        input: Instruction6Input,
+    ) => ReturnType<typeof getInstruction6Instruction> & SelfPlanAndSendFunctions;
+    instruction7: (
+        input: Instruction7Input,
+    ) => ReturnType<typeof getInstruction7Instruction> & SelfPlanAndSendFunctions;
+    instruction8: (
+        input: Instruction8Input,
+    ) => ReturnType<typeof getInstruction8Instruction> & SelfPlanAndSendFunctions;
+    instruction9: (
+        input: MakeOptional<Instruction9Input, 'authority' | 'authorityArg'>,
+    ) => ReturnType<typeof getInstruction9Instruction> & SelfPlanAndSendFunctions;
 };
 
 export type DummyPluginRequirements = ClientWithPayer & ClientWithTransactionPlanning & ClientWithTransactionSending;

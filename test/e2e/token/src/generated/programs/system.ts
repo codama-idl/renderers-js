@@ -26,7 +26,6 @@ import {
     getCreateAccountInstruction,
     parseCreateAccountInstruction,
     type CreateAccountInput,
-    type CreateAccountInstruction,
     type ParsedCreateAccountInstruction,
 } from '../instructions';
 
@@ -73,7 +72,9 @@ export function parseSystemInstruction<TProgram extends string>(
 export type SystemPlugin = { instructions: SystemPluginInstructions };
 
 export type SystemPluginInstructions = {
-    createAccount: (input: CreateAccountInput) => CreateAccountInstruction & SelfPlanAndSendFunctions;
+    createAccount: (
+        input: MakeOptional<CreateAccountInput, 'payer'>,
+    ) => ReturnType<typeof getCreateAccountInstruction> & SelfPlanAndSendFunctions;
 };
 
 export type SystemPluginRequirements = ClientWithPayer & ClientWithTransactionPlanning & ClientWithTransactionSending;

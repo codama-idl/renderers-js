@@ -31,13 +31,10 @@ import {
     parseRecoverNestedAssociatedTokenInstruction,
     type CreateAssociatedTokenAsyncInput,
     type CreateAssociatedTokenIdempotentAsyncInput,
-    type CreateAssociatedTokenIdempotentInstruction,
-    type CreateAssociatedTokenInstruction,
     type ParsedCreateAssociatedTokenIdempotentInstruction,
     type ParsedCreateAssociatedTokenInstruction,
     type ParsedRecoverNestedAssociatedTokenInstruction,
     type RecoverNestedAssociatedTokenAsyncInput,
-    type RecoverNestedAssociatedTokenInstruction,
 } from '../instructions';
 
 export const ASSOCIATED_TOKEN_PROGRAM_ADDRESS =
@@ -117,14 +114,14 @@ export type AssociatedTokenPlugin = { instructions: AssociatedTokenPluginInstruc
 
 export type AssociatedTokenPluginInstructions = {
     createAssociatedToken: (
-        input: CreateAssociatedTokenAsyncInput,
-    ) => Promise<CreateAssociatedTokenInstruction> & SelfPlanAndSendFunctions;
+        input: MakeOptional<CreateAssociatedTokenAsyncInput, 'payer'>,
+    ) => ReturnType<typeof getCreateAssociatedTokenInstructionAsync> & SelfPlanAndSendFunctions;
     createAssociatedTokenIdempotent: (
-        input: CreateAssociatedTokenIdempotentAsyncInput,
-    ) => Promise<CreateAssociatedTokenIdempotentInstruction> & SelfPlanAndSendFunctions;
+        input: MakeOptional<CreateAssociatedTokenIdempotentAsyncInput, 'payer'>,
+    ) => ReturnType<typeof getCreateAssociatedTokenIdempotentInstructionAsync> & SelfPlanAndSendFunctions;
     recoverNestedAssociatedToken: (
         input: RecoverNestedAssociatedTokenAsyncInput,
-    ) => Promise<RecoverNestedAssociatedTokenInstruction> & SelfPlanAndSendFunctions;
+    ) => ReturnType<typeof getRecoverNestedAssociatedTokenInstructionAsync> & SelfPlanAndSendFunctions;
 };
 
 export type AssociatedTokenPluginRequirements = ClientWithPayer &

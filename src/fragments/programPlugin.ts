@@ -87,12 +87,20 @@ function getProgramPluginInstructionsTypeFragment(
         programNode.instructions.map(instruction => {
             const name = nameApi.programPluginInstructionKey(instruction.name);
             const isAsync = asyncInstructions.includes(instruction.name);
-            const instructionType = use('type ' + nameApi.instructionType(instruction.name), 'generatedInstructions');
-            const instructionInputType = isAsync
+            let instructionInputType = isAsync
                 ? use('type ' + nameApi.instructionAsyncInputType(instruction.name), 'generatedInstructions')
                 : use('type ' + nameApi.instructionSyncInputType(instruction.name), 'generatedInstructions');
-            const instructionTypeWithPromise = isAsync ? fragment`Promise<${instructionType}>` : instructionType;
-            return fragment`${name}: (input: ${instructionInputType}) => ${instructionTypeWithPromise} & ${selfPlanAndSendFunctions};`;
+            const instructionFunction = isAsync
+                ? use('type ' + nameApi.instructionAsyncFunction(instruction.name), 'generatedInstructions')
+                : use('type ' + nameApi.instructionSyncFunction(instruction.name), 'generatedInstructions');
+
+            const payerDefaultValues = getPayerDefaultValues(instruction);
+            if (payerDefaultValues.length > 0) {
+                const fieldStringUnion = payerDefaultValues.map(({ name }) => `"${name}"`).join(' | ');
+                instructionInputType = fragment`MakeOptional<${instructionInputType}, ${fieldStringUnion}>`;
+            }
+
+            return fragment`${name}: (input: ${instructionInputType}) => ReturnType<typeof ${instructionFunction}> & ${selfPlanAndSendFunctions};`;
         }),
         c => c.join(' '),
     );
@@ -115,7 +123,7 @@ function getProgramPluginRequirementsTypeFragment(
     const requirements = mergeFragments(
         [
             hasAccounts ? clientWithRpc : undefined,
-            hasNonOptionalPayerDefaultValueInputs(programNode) ? clientWithPayer : undefined,
+            hasPayerDefaultValues(programNode) ? clientWithPayer : undefined,
             hasInstructions ? clientWithTransactionPlanning : undefined,
             hasInstructions ? clientWithTransactionSending : undefined,
         ],
@@ -182,23 +190,16 @@ function getProgramPluginInstructionsObjectFragment(
                 ? use(nameApi.instructionAsyncFunction(instruction.name), 'generatedInstructions')
                 : use(nameApi.instructionSyncFunction(instruction.name), 'generatedInstructions');
             const addSelfPlanAndSendFunctions = use('addSelfPlanAndSendFunctions', 'solanaProgramClientCore');
-            const inputWithDefaultPayerValues = getNonOptionalPayerDefaultValueInputs(instruction);
+            const payerDefaultValues = getPayerDefaultValues(instruction);
 
-            if (inputWithDefaultPayerValues.length === 0) {
+            if (payerDefaultValues.length === 0) {
                 return fragment`${name}: (input: ${instructionInputType}) => ${addSelfPlanAndSendFunctions}(client, ${instructionFunction}(input))`;
             }
 
-            const renamedArgs = getRenamedArgsMap(instruction);
-            const processedInputWithDefaultPayerValues = inputWithDefaultPayerValues.map(inputNode => {
-                return isNode(inputNode, 'instructionAccountNode')
-                    ? { name: inputNode.name, signer: inputNode.isSigner !== false }
-                    : { name: renamedArgs.get(inputNode.name) ?? inputNode.name, signer: false };
-            });
-
-            const fieldStringUnion = processedInputWithDefaultPayerValues.map(({ name }) => `"${name}"`).join(' | ');
+            const fieldStringUnion = payerDefaultValues.map(({ name }) => `"${name}"`).join(' | ');
             const instructionInputTypeWithPayer = fragment`MakeOptional<${instructionInputType}, ${fieldStringUnion}>`;
             const fieldOverrides = mergeFragments(
-                processedInputWithDefaultPayerValues.map(
+                payerDefaultValues.map(
                     ({ name, signer }) =>
                         fragment`${name}: input.${name} ?? ${signer ? 'client.payer' : 'client.payer.address'}`,
                 ),
@@ -215,15 +216,24 @@ function getProgramPluginInstructionsObjectFragment(
 }
 
 function getMakeOptionalHelperTypeFragment(scope: { programNode: ProgramNode }): Fragment | undefined {
-    if (!hasNonOptionalPayerDefaultValueInputs(scope.programNode)) return;
+    if (!hasPayerDefaultValues(scope.programNode)) return;
     return fragment`type MakeOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;`;
 }
 
-function hasNonOptionalPayerDefaultValueInputs(programNode: ProgramNode): boolean {
-    return programNode.instructions.some(instruction => getNonOptionalPayerDefaultValueInputs(instruction).length > 0);
+function hasPayerDefaultValues(programNode: ProgramNode): boolean {
+    return programNode.instructions.some(instruction => getPayerDefaultValueNodes(instruction).length > 0);
 }
 
-function getNonOptionalPayerDefaultValueInputs(
+function getPayerDefaultValues(instructionNode: InstructionNode): { name: string; signer: boolean }[] {
+    const renamedArgs = getRenamedArgsMap(instructionNode);
+    return getPayerDefaultValueNodes(instructionNode).map(inputNode => {
+        return isNode(inputNode, 'instructionAccountNode')
+            ? { name: inputNode.name, signer: inputNode.isSigner !== false }
+            : { name: renamedArgs.get(inputNode.name) ?? inputNode.name, signer: false };
+    });
+}
+
+function getPayerDefaultValueNodes(
     instructionNode: InstructionNode,
 ): (InstructionAccountNode | InstructionArgumentNode)[] {
     return [

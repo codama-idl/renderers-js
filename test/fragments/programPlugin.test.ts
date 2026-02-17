@@ -85,8 +85,8 @@ test('it renders program plugin instruction types', async () => {
     // Then we expect the following type to be rendered.
     await fragmentContains(fragment, [
         'export type SplTokenPluginInstructions = {',
-        'initializeToken: ( input: InitializeTokenInput ) => InitializeTokenInstruction & SelfPlanAndSendFunctions;',
-        'initializeMint: ( input: InitializeMintInput ) => InitializeMintInstruction & SelfPlanAndSendFunctions;',
+        'initializeToken: ( input: InitializeTokenInput ) => ReturnType<typeof getInitializeTokenInstruction> & SelfPlanAndSendFunctions;',
+        'initializeMint: ( input: InitializeMintInput ) => ReturnType<typeof getInitializeMintInstruction> & SelfPlanAndSendFunctions;',
     ]);
 
     // And we expect the necessary imports to be included.
@@ -137,8 +137,8 @@ test('it renders program plugin instruction types with async builders', async ()
     // Then we expect the `initializeAssociatedToken` instruction to be using the async input type.
     await fragmentContains(fragment, [
         'export type SplTokenPluginInstructions = {',
-        'initializeAssociatedToken: ( input: InitializeAssociatedTokenAsyncInput ) => Promise<InitializeAssociatedTokenInstruction> & SelfPlanAndSendFunctions;',
-        'initializeMint: ( input: InitializeMintInput ) => InitializeMintInstruction & SelfPlanAndSendFunctions;',
+        'initializeAssociatedToken: ( input: InitializeAssociatedTokenAsyncInput ) => ReturnType<typeof getInitializeAssociatedTokenInstructionAsync> & SelfPlanAndSendFunctions;',
+        'initializeMint: ( input: InitializeMintInput ) => ReturnType<typeof getInitializeMintInstruction> & SelfPlanAndSendFunctions;',
     ]);
 });
 
