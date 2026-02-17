@@ -9,11 +9,13 @@ import { expect } from 'vitest';
 
 import { getTypeManifestVisitor } from '../src';
 import {
+    DEFAULT_KIT_IMPORT_STRATEGY,
     DEFAULT_NAME_TRANSFORMERS,
     type Fragment,
     getImportFromFactory,
     getNameApi,
     importMapToString,
+    KitImportStrategy,
     ParsedCustomDataOptions,
     type RenderScope,
 } from '../src/utils';
@@ -44,6 +46,7 @@ export function getDefaultScope(): RenderScope {
         dependencyMap: {},
         dependencyVersions: {},
         getImportFrom,
+        kitImportStrategy: DEFAULT_KIT_IMPORT_STRATEGY,
         linkables,
         nameApi,
         nonScalarEnums,
@@ -56,7 +59,6 @@ export function getDefaultScope(): RenderScope {
             nameApi,
             nonScalarEnums,
         }),
-        useGranularImports: false,
     };
 }
 
@@ -136,20 +138,20 @@ export function renderMapDoesNotContainImports(
 export function fragmentContainsImports(
     actual: Fragment | undefined,
     expectedImports: Record<string, string[]>,
-    options?: { dependencyMap?: Record<string, string>; useGranularImports?: boolean },
+    options?: { dependencyMap?: Record<string, string>; kitImportStrategy?: KitImportStrategy },
 ) {
     expect(actual).toBeDefined();
-    const imports = importMapToString(actual!.imports, options?.dependencyMap, options?.useGranularImports);
+    const imports = importMapToString(actual!.imports, options?.dependencyMap, options?.kitImportStrategy);
     return codeContainsImports(imports, expectedImports);
 }
 
 export function fragmentDoesNotContainImports(
     actual: Fragment | undefined,
     expectedImports: Record<string, string[]>,
-    options?: { dependencyMap?: Record<string, string>; useGranularImports?: boolean },
+    options?: { dependencyMap?: Record<string, string>; kitImportStrategy?: KitImportStrategy },
 ) {
     expect(actual).toBeDefined();
-    const imports = importMapToString(actual!.imports, options?.dependencyMap, options?.useGranularImports);
+    const imports = importMapToString(actual!.imports, options?.dependencyMap, options?.kitImportStrategy);
     return codeDoesNotContainImports(imports, expectedImports);
 }
 
