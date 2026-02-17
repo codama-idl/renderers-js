@@ -1,5 +1,11 @@
 # @codama/renderers-js
 
+## 2.0.2
+
+### Patch Changes
+
+- [#124](https://github.com/codama-idl/renderers-js/pull/124) [`d01eb3f`](https://github.com/codama-idl/renderers-js/commit/d01eb3f7a1fe2018a570c09941e89772ee1b8ef7) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add missing packages in `DEFAULT_DEPENDENCY_VERSIONS` and bump to 6.1.0
+
 ## 2.0.1
 
 ### Patch Changes
