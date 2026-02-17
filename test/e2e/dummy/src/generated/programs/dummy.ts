@@ -181,25 +181,17 @@ export function dummyProgram() {
     return <T extends DummyPluginRequirements>(client: T) => {
         return {
             ...client,
-            dummy: {
+            dummy: <DummyPlugin>{
                 instructions: {
-                    instruction1: (input: Instruction1Input) =>
-                        addSelfPlanAndSendFunctions(client, getInstruction1Instruction(input)),
-                    instruction2: (input: Instruction2Input) =>
-                        addSelfPlanAndSendFunctions(client, getInstruction2Instruction(input)),
-                    instruction3: (input: Instruction3Input) =>
-                        addSelfPlanAndSendFunctions(client, getInstruction3Instruction(input)),
-                    instruction4: (input: Instruction4Input) =>
-                        addSelfPlanAndSendFunctions(client, getInstruction4Instruction(input)),
-                    instruction5: (input: Instruction5Input) =>
-                        addSelfPlanAndSendFunctions(client, getInstruction5Instruction(input)),
-                    instruction6: (input: Instruction6Input) =>
-                        addSelfPlanAndSendFunctions(client, getInstruction6Instruction(input)),
-                    instruction7: (input: Instruction7Input) =>
-                        addSelfPlanAndSendFunctions(client, getInstruction7Instruction(input)),
-                    instruction8: (input: Instruction8Input) =>
-                        addSelfPlanAndSendFunctions(client, getInstruction8Instruction(input)),
-                    instruction9: (input: MakeOptional<Instruction9Input, 'authority' | 'authorityArg'>) =>
+                    instruction1: input => addSelfPlanAndSendFunctions(client, getInstruction1Instruction(input)),
+                    instruction2: input => addSelfPlanAndSendFunctions(client, getInstruction2Instruction(input)),
+                    instruction3: input => addSelfPlanAndSendFunctions(client, getInstruction3Instruction(input)),
+                    instruction4: input => addSelfPlanAndSendFunctions(client, getInstruction4Instruction(input)),
+                    instruction5: input => addSelfPlanAndSendFunctions(client, getInstruction5Instruction(input)),
+                    instruction6: input => addSelfPlanAndSendFunctions(client, getInstruction6Instruction(input)),
+                    instruction7: input => addSelfPlanAndSendFunctions(client, getInstruction7Instruction(input)),
+                    instruction8: input => addSelfPlanAndSendFunctions(client, getInstruction8Instruction(input)),
+                    instruction9: input =>
                         addSelfPlanAndSendFunctions(
                             client,
                             getInstruction9Instruction({
@@ -209,7 +201,7 @@ export function dummyProgram() {
                             }),
                         ),
                 },
-            } as DummyPlugin,
+            },
         };
     };
 }

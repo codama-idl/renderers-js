@@ -83,15 +83,15 @@ export function systemProgram() {
     return <T extends SystemPluginRequirements>(client: T) => {
         return {
             ...client,
-            system: {
+            system: <SystemPlugin>{
                 instructions: {
-                    createAccount: (input: MakeOptional<CreateAccountInput, 'payer'>) =>
+                    createAccount: input =>
                         addSelfPlanAndSendFunctions(
                             client,
                             getCreateAccountInstruction({ ...input, payer: input.payer ?? client.payer }),
                         ),
                 },
-            } as SystemPlugin,
+            },
         };
     };
 }

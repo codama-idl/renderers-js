@@ -536,61 +536,49 @@ export function tokenProgram() {
     return <T extends TokenPluginRequirements>(client: T) => {
         return {
             ...client,
-            token: {
+            token: <TokenPlugin>{
                 accounts: {
                     mint: addSelfFetchFunctions(client, getMintCodec()),
                     token: addSelfFetchFunctions(client, getTokenCodec()),
                     multisig: addSelfFetchFunctions(client, getMultisigCodec()),
                 },
                 instructions: {
-                    initializeMint: (input: InitializeMintInput) =>
-                        addSelfPlanAndSendFunctions(client, getInitializeMintInstruction(input)),
-                    initializeAccount: (input: InitializeAccountInput) =>
+                    initializeMint: input => addSelfPlanAndSendFunctions(client, getInitializeMintInstruction(input)),
+                    initializeAccount: input =>
                         addSelfPlanAndSendFunctions(client, getInitializeAccountInstruction(input)),
-                    initializeMultisig: (input: InitializeMultisigInput) =>
+                    initializeMultisig: input =>
                         addSelfPlanAndSendFunctions(client, getInitializeMultisigInstruction(input)),
-                    transfer: (input: TransferInput) =>
-                        addSelfPlanAndSendFunctions(client, getTransferInstruction(input)),
-                    approve: (input: ApproveInput) => addSelfPlanAndSendFunctions(client, getApproveInstruction(input)),
-                    revoke: (input: RevokeInput) => addSelfPlanAndSendFunctions(client, getRevokeInstruction(input)),
-                    setAuthority: (input: SetAuthorityInput) =>
-                        addSelfPlanAndSendFunctions(client, getSetAuthorityInstruction(input)),
-                    mintTo: (input: MintToInput) => addSelfPlanAndSendFunctions(client, getMintToInstruction(input)),
-                    burn: (input: BurnInput) => addSelfPlanAndSendFunctions(client, getBurnInstruction(input)),
-                    closeAccount: (input: CloseAccountInput) =>
-                        addSelfPlanAndSendFunctions(client, getCloseAccountInstruction(input)),
-                    freezeAccount: (input: FreezeAccountInput) =>
-                        addSelfPlanAndSendFunctions(client, getFreezeAccountInstruction(input)),
-                    thawAccount: (input: ThawAccountInput) =>
-                        addSelfPlanAndSendFunctions(client, getThawAccountInstruction(input)),
-                    transferChecked: (input: TransferCheckedInput) =>
-                        addSelfPlanAndSendFunctions(client, getTransferCheckedInstruction(input)),
-                    approveChecked: (input: ApproveCheckedInput) =>
-                        addSelfPlanAndSendFunctions(client, getApproveCheckedInstruction(input)),
-                    mintToChecked: (input: MintToCheckedInput) =>
-                        addSelfPlanAndSendFunctions(client, getMintToCheckedInstruction(input)),
-                    burnChecked: (input: BurnCheckedInput) =>
-                        addSelfPlanAndSendFunctions(client, getBurnCheckedInstruction(input)),
-                    initializeAccount2: (input: InitializeAccount2Input) =>
+                    transfer: input => addSelfPlanAndSendFunctions(client, getTransferInstruction(input)),
+                    approve: input => addSelfPlanAndSendFunctions(client, getApproveInstruction(input)),
+                    revoke: input => addSelfPlanAndSendFunctions(client, getRevokeInstruction(input)),
+                    setAuthority: input => addSelfPlanAndSendFunctions(client, getSetAuthorityInstruction(input)),
+                    mintTo: input => addSelfPlanAndSendFunctions(client, getMintToInstruction(input)),
+                    burn: input => addSelfPlanAndSendFunctions(client, getBurnInstruction(input)),
+                    closeAccount: input => addSelfPlanAndSendFunctions(client, getCloseAccountInstruction(input)),
+                    freezeAccount: input => addSelfPlanAndSendFunctions(client, getFreezeAccountInstruction(input)),
+                    thawAccount: input => addSelfPlanAndSendFunctions(client, getThawAccountInstruction(input)),
+                    transferChecked: input => addSelfPlanAndSendFunctions(client, getTransferCheckedInstruction(input)),
+                    approveChecked: input => addSelfPlanAndSendFunctions(client, getApproveCheckedInstruction(input)),
+                    mintToChecked: input => addSelfPlanAndSendFunctions(client, getMintToCheckedInstruction(input)),
+                    burnChecked: input => addSelfPlanAndSendFunctions(client, getBurnCheckedInstruction(input)),
+                    initializeAccount2: input =>
                         addSelfPlanAndSendFunctions(client, getInitializeAccount2Instruction(input)),
-                    syncNative: (input: SyncNativeInput) =>
-                        addSelfPlanAndSendFunctions(client, getSyncNativeInstruction(input)),
-                    initializeAccount3: (input: InitializeAccount3Input) =>
+                    syncNative: input => addSelfPlanAndSendFunctions(client, getSyncNativeInstruction(input)),
+                    initializeAccount3: input =>
                         addSelfPlanAndSendFunctions(client, getInitializeAccount3Instruction(input)),
-                    initializeMultisig2: (input: InitializeMultisig2Input) =>
+                    initializeMultisig2: input =>
                         addSelfPlanAndSendFunctions(client, getInitializeMultisig2Instruction(input)),
-                    initializeMint2: (input: InitializeMint2Input) =>
-                        addSelfPlanAndSendFunctions(client, getInitializeMint2Instruction(input)),
-                    getAccountDataSize: (input: GetAccountDataSizeInput) =>
+                    initializeMint2: input => addSelfPlanAndSendFunctions(client, getInitializeMint2Instruction(input)),
+                    getAccountDataSize: input =>
                         addSelfPlanAndSendFunctions(client, getGetAccountDataSizeInstruction(input)),
-                    initializeImmutableOwner: (input: InitializeImmutableOwnerInput) =>
+                    initializeImmutableOwner: input =>
                         addSelfPlanAndSendFunctions(client, getInitializeImmutableOwnerInstruction(input)),
-                    amountToUiAmount: (input: AmountToUiAmountInput) =>
+                    amountToUiAmount: input =>
                         addSelfPlanAndSendFunctions(client, getAmountToUiAmountInstruction(input)),
-                    uiAmountToAmount: (input: UiAmountToAmountInput) =>
+                    uiAmountToAmount: input =>
                         addSelfPlanAndSendFunctions(client, getUiAmountToAmountInstruction(input)),
                 },
-            } as TokenPlugin,
+            },
         };
     };
 }

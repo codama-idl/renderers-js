@@ -206,25 +206,23 @@ export function wenTransferGuardProgram() {
     return <T extends WenTransferGuardPluginRequirements>(client: T) => {
         return {
             ...client,
-            wenTransferGuard: {
+            wenTransferGuard: <WenTransferGuardPlugin>{
                 accounts: { guardV1: addSelfFetchFunctions(client, getGuardV1Codec()) },
                 instructions: {
-                    createGuard: (input: MakeOptional<CreateGuardAsyncInput, 'payer'>) =>
+                    createGuard: input =>
                         addSelfPlanAndSendFunctions(
                             client,
                             getCreateGuardInstructionAsync({ ...input, payer: input.payer ?? client.payer }),
                         ),
-                    execute: (input: ExecuteAsyncInput) =>
-                        addSelfPlanAndSendFunctions(client, getExecuteInstructionAsync(input)),
-                    initialize: (input: MakeOptional<InitializeAsyncInput, 'payer'>) =>
+                    execute: input => addSelfPlanAndSendFunctions(client, getExecuteInstructionAsync(input)),
+                    initialize: input =>
                         addSelfPlanAndSendFunctions(
                             client,
                             getInitializeInstructionAsync({ ...input, payer: input.payer ?? client.payer }),
                         ),
-                    updateGuard: (input: UpdateGuardAsyncInput) =>
-                        addSelfPlanAndSendFunctions(client, getUpdateGuardInstructionAsync(input)),
+                    updateGuard: input => addSelfPlanAndSendFunctions(client, getUpdateGuardInstructionAsync(input)),
                 },
-            } as WenTransferGuardPlugin,
+            },
         };
     };
 }
