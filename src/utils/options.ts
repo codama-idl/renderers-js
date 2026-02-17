@@ -10,7 +10,7 @@ import type { NameApi, NameTransformers } from './nameTransformers';
 export type RenderOptions = GetRenderMapOptions & {
     deleteFolderBeforeRendering?: boolean;
     formatCode?: boolean;
-    packageFolder?: string;
+    generatedFolder?: string;
     prettierOptions?: PrettierOptions;
     syncPackageJson?: boolean;
 };
