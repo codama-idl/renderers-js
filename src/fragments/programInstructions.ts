@@ -4,10 +4,8 @@ import {
     ProgramNode,
     structTypeNodeFromInstructionArgumentNodes,
 } from '@codama/nodes';
-import { mapFragmentContent } from '@codama/renderers-core';
-import { pipe } from '@codama/visitors-core';
 
-import { addFragmentImports, Fragment, fragment, mergeFragments, RenderScope, use } from '../utils';
+import { Fragment, fragment, mergeFragments, RenderScope, use } from '../utils';
 import { getDiscriminatorConditionFragment } from './discriminatorCondition';
 
 export function getProgramInstructionsFragment(
@@ -76,22 +74,15 @@ function getProgramInstructionsIdentifierFunctionFragment(
         c => c.join('\n'),
     );
 
-    return pipe(
-        discriminatorsFragment,
-        f =>
-            mapFragmentContent(
-                f,
-                discriminators =>
-                    `export function ${programInstructionsIdentifierFunction}(` +
-                    `instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array` +
-                    `): ${programInstructionsEnum} {\n` +
-                    `const data = 'data' in instruction ? instruction.data : instruction;\n` +
-                    `${discriminators}\n` +
-                    `throw new Error("The provided instruction could not be identified as a ${programNode.name} instruction.")\n` +
-                    `}`,
-            ),
-        f => addFragmentImports(f, 'solanaCodecsCore', ['type ReadonlyUint8Array']),
-    );
+    const readonlyUint8Array = use('type ReadonlyUint8Array', 'solanaCodecsCore');
+    const solanaError = use('SolanaError', 'solanaErrors');
+    const solanaErrorCode = use('SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION', 'solanaErrors');
+
+    return fragment`export function ${programInstructionsIdentifierFunction}(instruction: { data: ${readonlyUint8Array} } | ${readonlyUint8Array}): ${programInstructionsEnum} {
+    const data = 'data' in instruction ? instruction.data : instruction;
+    ${discriminatorsFragment}
+    throw new ${solanaError}(${solanaErrorCode}, { instructionData: data, programName: "${programNode.name}" });
+}`;
 }
 
 function getProgramInstructionsParsedUnionTypeFragment(
@@ -159,6 +150,9 @@ function getProgramInstructionsParseFunctionFragment(
         c => c.join('\n'),
     );
 
+    const solanaError = use('SolanaError', 'solanaErrors');
+    const solanaErrorCode = use('SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE', 'solanaErrors');
+
     return fragment`
         export function ${parseFunction}<TProgram extends string>(
             instruction: ${use('type Instruction', 'solanaInstructions')}<TProgram> 
@@ -167,7 +161,7 @@ function getProgramInstructionsParseFunctionFragment(
             const instructionType = ${programInstructionsIdentifierFunction}(instruction);
             switch (instructionType) {
                 ${switchCases}
-                default: throw new Error(\`Unrecognized instruction type: \${instructionType as string}\`);
+                default: throw new ${solanaError}(${solanaErrorCode}, { instructionType: instructionType as string, programName: "${programNode.name}" });
             }
         }`;
 }

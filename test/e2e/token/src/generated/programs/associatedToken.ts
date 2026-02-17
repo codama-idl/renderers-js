@@ -10,6 +10,9 @@ import {
     assertIsInstructionWithAccounts,
     containsBytes,
     getU8Encoder,
+    SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION,
+    SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE,
+    SolanaError,
     type Address,
     type Instruction,
     type InstructionWithData,
@@ -46,7 +49,10 @@ export function identifyAssociatedTokenInstruction(
     if (containsBytes(data, getU8Encoder().encode(2), 0)) {
         return AssociatedTokenInstruction.RecoverNestedAssociatedToken;
     }
-    throw new Error('The provided instruction could not be identified as a associatedToken instruction.');
+    throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION, {
+        instructionData: data,
+        programName: 'associatedToken',
+    });
 }
 
 export type ParsedAssociatedTokenInstruction<TProgram extends string = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'> =
@@ -87,6 +93,9 @@ export function parseAssociatedTokenInstruction<TProgram extends string>(
             };
         }
         default:
-            throw new Error(`Unrecognized instruction type: ${instructionType as string}`);
+            throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE, {
+                instructionType: instructionType as string,
+                programName: 'associatedToken',
+            });
     }
 }

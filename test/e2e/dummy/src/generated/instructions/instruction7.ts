@@ -7,6 +7,8 @@
  */
 
 import {
+    SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
+    SolanaError,
     type AccountMeta,
     type Address,
     type Instruction,
@@ -67,8 +69,10 @@ export function parseInstruction7Instruction<TProgram extends string, TAccountMe
     instruction: Instruction<TProgram> & InstructionWithAccounts<TAccountMetas>,
 ): ParsedInstruction7Instruction<TProgram, TAccountMetas> {
     if (instruction.accounts.length < 1) {
-        // TODO: Coded error.
-        throw new Error('Not enough accounts');
+        throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS, {
+            actualAccountMetas: instruction.accounts.length,
+            expectedAccountMetas: 1,
+        });
     }
     let accountIndex = 0;
     const getNextAccount = () => {
