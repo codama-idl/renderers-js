@@ -1,5 +1,63 @@
 # @codama/renderers-js
 
+## 2.0.0
+
+### Major Changes
+
+- [#114](https://github.com/codama-idl/renderers-js/pull/114) [`9ac7e22`](https://github.com/codama-idl/renderers-js/commit/9ac7e2286d5e74f86ad862442ace467419db0e0c) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Remove the generated `shared.ts` file from the output. Helper types and functions such as `ResolvedAccount`, `InstructionWithByteDelta`, and `getAccountMetaFactory` are now imported from `@solana/kit/program-client-core`.
+
+    **BREAKING CHANGES**
+    - The `shared` folder is no longer generated. Any imports from `generated/shared` should be updated to import from `@solana/kit/program-client-core`.
+    - The `getAccountMetaFactory` function now requires the account name as the first argument.
+    - The `ResolvedAccount` type has been replaced with `ResolvedInstructionAccount`.
+    - The `expectSome` function has been replaced with `getNonNullResolvedInstructionInput`.
+    - The `expectAddress` function has been replaced with `getAddressFromResolvedInstructionAccount`.
+    - The `expectTransactionSigner` function has been replaced with `getResolvedInstructionAccountAsTransactionSigner`.
+    - The `expectProgramDerivedAddress` function has been replaced with `getResolvedInstructionAccountAsProgramDerivedAddress`.
+
+- [#117](https://github.com/codama-idl/renderers-js/pull/117) [`b9d76cd`](https://github.com/codama-idl/renderers-js/commit/b9d76cdf4b118ab0522a454459e3dc74e1cb3ea7) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Replace the `useGranularImports` boolean option with a new `kitImportStrategy` option that accepts `'granular'`, `'preferRoot'` (default), or `'rootOnly'`. This provides finer control over how generated code imports from `@solana/kit` versus granular packages like `@solana/addresses` or `@solana/codecs-strings`. The new `'preferRoot'` default imports from `@solana/kit` when possible but falls back to granular packages for symbols not exported from the root entrypoint. The `'rootOnly'` strategy exclusively uses `@solana/kit` (including subpath exports like `@solana/kit/program-client-core`).
+
+    **BREAKING CHANGES**
+    - The `useGranularImports` option has been removed. Use `kitImportStrategy: 'granular'` instead of `useGranularImports: true`, and `kitImportStrategy: 'rootOnly'` instead of `useGranularImports: false`.
+    - The default import behavior has changed from resolving everything to `@solana/kit` to `'preferRoot'`, which falls back to granular packages for symbols not available on the root `@solana/kit` entrypoint (e.g. `@solana/program-client-core`).
+
+- [#118](https://github.com/codama-idl/renderers-js/pull/118) [`4902cfe`](https://github.com/codama-idl/renderers-js/commit/4902cfe204f33747947c3732fd10087768fc24ec) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Refactor `renderVisitor` to accept `packageFolder` as its primary argument instead of the generated output path. The generated folder is now derived from the package folder using the new `generatedFolder` option (defaults to `'src/generated'`). The `syncPackageJson` option now defaults to `true` and no longer requires a separate `packageFolder` option.
+
+    **BREAKING CHANGES**
+
+    **`renderVisitor` first argument changed.** The first argument is now the package folder (where `package.json` lives) instead of the direct path to the generated output directory.
+
+    ```diff
+    - const visitor = renderVisitor('clients/js/src/generated', { packageFolder: 'clients/js' });
+    + const visitor = renderVisitor('clients/js');
+    ```
+
+    **`packageFolder` option removed.** It is no longer needed since the package folder is now the primary argument.
+
+    **`syncPackageJson` now defaults to `true`.** Previously it defaulted to `false` and required `packageFolder` to be set.
+
+    ```diff
+    - renderVisitor('clients/js/src/generated', { packageFolder: 'clients/js', syncPackageJson: true });
+    + renderVisitor('clients/js');
+    ```
+
+    **New `generatedFolder` option.** If your generated folder is not at `src/generated` relative to the package folder, use the new `generatedFolder` option.
+
+    ```diff
+    - renderVisitor('clients/js/custom/output');
+    + renderVisitor('clients/js', { generatedFolder: 'custom/output' });
+    ```
+
+### Minor Changes
+
+- [#116](https://github.com/codama-idl/renderers-js/pull/116) [`a25e18c`](https://github.com/codama-idl/renderers-js/commit/a25e18cdbfa08551a0a8d52c98c79ae7c8412735) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Generate Kit plugins for each program. The generated plugin function composes with a client object, adding typed `accounts` and `instructions` namespaces. Account entries include codec and self-fetch functions, while instruction entries include self-plan and self-send functions.
+
+- [#115](https://github.com/codama-idl/renderers-js/pull/115) [`4b8bf27`](https://github.com/codama-idl/renderers-js/commit/4b8bf27871bd67fa670181850fb6f9bd76f3bd51) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Use `SolanaError` for generated errors. Generated program clients now throw `SolanaError` with specific error codes instead of generic `Error` objects. This provides better error handling with structured context including the program name and relevant data.
+
+### Patch Changes
+
+- [#113](https://github.com/codama-idl/renderers-js/pull/113) [`0b83e13`](https://github.com/codama-idl/renderers-js/commit/0b83e1310d4aa2f9cf60d4f9a73dacfe1a0694a6) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add support for subpath exports in `ImportMap`. The `getExternalDependencies` function now correctly handles subpath exports (e.g. `@solana/kit/program-client-core`) by extracting the root package name when checking dependencies.
+
 ## 1.7.0
 
 ### Minor Changes
