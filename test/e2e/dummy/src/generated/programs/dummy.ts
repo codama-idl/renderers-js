@@ -14,11 +14,24 @@ import {
     SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE,
     SolanaError,
     type Address,
+    type ClientWithPayer,
+    type ClientWithTransactionPlanning,
+    type ClientWithTransactionSending,
     type Instruction,
     type InstructionWithData,
     type ReadonlyUint8Array,
 } from '@solana/kit';
+import { addSelfPlanAndSendFunctions, type SelfPlanAndSendFunctions } from '@solana/kit/program-client-core';
 import {
+    getInstruction1Instruction,
+    getInstruction2Instruction,
+    getInstruction3Instruction,
+    getInstruction4Instruction,
+    getInstruction5Instruction,
+    getInstruction6Instruction,
+    getInstruction7Instruction,
+    getInstruction8Instruction,
+    getInstruction9Instruction,
     parseInstruction1Instruction,
     parseInstruction2Instruction,
     parseInstruction3Instruction,
@@ -27,6 +40,25 @@ import {
     parseInstruction6Instruction,
     parseInstruction7Instruction,
     parseInstruction8Instruction,
+    parseInstruction9Instruction,
+    type Instruction1Input,
+    type Instruction1Instruction,
+    type Instruction2Input,
+    type Instruction2Instruction,
+    type Instruction3Input,
+    type Instruction3Instruction,
+    type Instruction4Input,
+    type Instruction4Instruction,
+    type Instruction5Input,
+    type Instruction5Instruction,
+    type Instruction6Input,
+    type Instruction6Instruction,
+    type Instruction7Input,
+    type Instruction7Instruction,
+    type Instruction8Input,
+    type Instruction8Instruction,
+    type Instruction9Input,
+    type Instruction9Instruction,
     type ParsedInstruction1Instruction,
     type ParsedInstruction2Instruction,
     type ParsedInstruction3Instruction,
@@ -35,6 +67,7 @@ import {
     type ParsedInstruction6Instruction,
     type ParsedInstruction7Instruction,
     type ParsedInstruction8Instruction,
+    type ParsedInstruction9Instruction,
 } from '../instructions';
 
 export const DUMMY_PROGRAM_ADDRESS =
@@ -49,6 +82,7 @@ export enum DummyInstruction {
     Instruction6,
     Instruction7,
     Instruction8,
+    Instruction9,
 }
 
 export function identifyDummyInstruction(
@@ -72,7 +106,8 @@ export type ParsedDummyInstruction<TProgram extends string = 'Dummy1111111111111
     | ({ instructionType: DummyInstruction.Instruction5 } & ParsedInstruction5Instruction<TProgram>)
     | ({ instructionType: DummyInstruction.Instruction6 } & ParsedInstruction6Instruction<TProgram>)
     | ({ instructionType: DummyInstruction.Instruction7 } & ParsedInstruction7Instruction<TProgram>)
-    | ({ instructionType: DummyInstruction.Instruction8 } & ParsedInstruction8Instruction<TProgram>);
+    | ({ instructionType: DummyInstruction.Instruction8 } & ParsedInstruction8Instruction<TProgram>)
+    | ({ instructionType: DummyInstruction.Instruction9 } & ParsedInstruction9Instruction<TProgram>);
 
 export function parseDummyInstruction<TProgram extends string>(
     instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
@@ -105,6 +140,10 @@ export function parseDummyInstruction<TProgram extends string>(
         case DummyInstruction.Instruction8: {
             return { instructionType: DummyInstruction.Instruction8, ...parseInstruction8Instruction(instruction) };
         }
+        case DummyInstruction.Instruction9: {
+            assertIsInstructionWithAccounts(instruction);
+            return { instructionType: DummyInstruction.Instruction9, ...parseInstruction9Instruction(instruction) };
+        }
         default:
             throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE, {
                 instructionType: instructionType as string,
@@ -112,3 +151,58 @@ export function parseDummyInstruction<TProgram extends string>(
             });
     }
 }
+
+export type DummyPlugin = { instructions: DummyPluginInstructions };
+
+export type DummyPluginInstructions = {
+    instruction1: (input: Instruction1Input) => Instruction1Instruction & SelfPlanAndSendFunctions;
+    instruction2: (input: Instruction2Input) => Instruction2Instruction & SelfPlanAndSendFunctions;
+    instruction3: (input: Instruction3Input) => Instruction3Instruction & SelfPlanAndSendFunctions;
+    instruction4: (input: Instruction4Input) => Instruction4Instruction & SelfPlanAndSendFunctions;
+    instruction5: (input: Instruction5Input) => Instruction5Instruction & SelfPlanAndSendFunctions;
+    instruction6: (input: Instruction6Input) => Instruction6Instruction & SelfPlanAndSendFunctions;
+    instruction7: (input: Instruction7Input) => Instruction7Instruction & SelfPlanAndSendFunctions;
+    instruction8: (input: Instruction8Input) => Instruction8Instruction & SelfPlanAndSendFunctions;
+    instruction9: (input: Instruction9Input) => Instruction9Instruction & SelfPlanAndSendFunctions;
+};
+
+export type DummyPluginRequirements = ClientWithPayer & ClientWithTransactionPlanning & ClientWithTransactionSending;
+
+export function dummyProgram() {
+    return <T extends DummyPluginRequirements>(client: T) => {
+        return {
+            ...client,
+            dummy: {
+                instructions: {
+                    instruction1: (input: Instruction1Input) =>
+                        addSelfPlanAndSendFunctions(client, getInstruction1Instruction(input)),
+                    instruction2: (input: Instruction2Input) =>
+                        addSelfPlanAndSendFunctions(client, getInstruction2Instruction(input)),
+                    instruction3: (input: Instruction3Input) =>
+                        addSelfPlanAndSendFunctions(client, getInstruction3Instruction(input)),
+                    instruction4: (input: Instruction4Input) =>
+                        addSelfPlanAndSendFunctions(client, getInstruction4Instruction(input)),
+                    instruction5: (input: Instruction5Input) =>
+                        addSelfPlanAndSendFunctions(client, getInstruction5Instruction(input)),
+                    instruction6: (input: Instruction6Input) =>
+                        addSelfPlanAndSendFunctions(client, getInstruction6Instruction(input)),
+                    instruction7: (input: Instruction7Input) =>
+                        addSelfPlanAndSendFunctions(client, getInstruction7Instruction(input)),
+                    instruction8: (input: Instruction8Input) =>
+                        addSelfPlanAndSendFunctions(client, getInstruction8Instruction(input)),
+                    instruction9: (input: MakeOptional<Instruction9Input, 'authority' | 'authorityArg'>) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getInstruction9Instruction({
+                                ...input,
+                                authority: input.authority ?? client.payer.address,
+                                authorityArg: input.authorityArg ?? client.payer.address,
+                            }),
+                        ),
+                },
+            } as DummyPlugin,
+        };
+    };
+}
+
+type MakeOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;

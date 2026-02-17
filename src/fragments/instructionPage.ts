@@ -63,7 +63,7 @@ export function getInstructionPageFragment(
     );
 }
 
-function getRenamedArgsMap(instruction: InstructionNode): Map<string, string> {
+export function getRenamedArgsMap(instruction: InstructionNode): Map<string, string> {
     const argNames = [
         ...instruction.arguments.map(a => a.name),
         ...(instruction.extraArguments ?? []).map(a => a.name),

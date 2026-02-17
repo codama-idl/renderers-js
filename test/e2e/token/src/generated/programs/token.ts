@@ -15,11 +15,58 @@ import {
     SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE,
     SolanaError,
     type Address,
+    type ClientWithRpc,
+    type ClientWithTransactionPlanning,
+    type ClientWithTransactionSending,
+    type GetAccountInfoApi,
+    type GetMultipleAccountsApi,
     type Instruction,
     type InstructionWithData,
     type ReadonlyUint8Array,
 } from '@solana/kit';
 import {
+    addSelfFetchFunctions,
+    addSelfPlanAndSendFunctions,
+    type SelfFetchFunctions,
+    type SelfPlanAndSendFunctions,
+} from '@solana/kit/program-client-core';
+import {
+    getMintCodec,
+    getMultisigCodec,
+    getTokenCodec,
+    type Mint,
+    type MintArgs,
+    type Multisig,
+    type MultisigArgs,
+    type Token,
+    type TokenArgs,
+} from '../accounts';
+import {
+    getAmountToUiAmountInstruction,
+    getApproveCheckedInstruction,
+    getApproveInstruction,
+    getBurnCheckedInstruction,
+    getBurnInstruction,
+    getCloseAccountInstruction,
+    getFreezeAccountInstruction,
+    getGetAccountDataSizeInstruction,
+    getInitializeAccount2Instruction,
+    getInitializeAccount3Instruction,
+    getInitializeAccountInstruction,
+    getInitializeImmutableOwnerInstruction,
+    getInitializeMint2Instruction,
+    getInitializeMintInstruction,
+    getInitializeMultisig2Instruction,
+    getInitializeMultisigInstruction,
+    getMintToCheckedInstruction,
+    getMintToInstruction,
+    getRevokeInstruction,
+    getSetAuthorityInstruction,
+    getSyncNativeInstruction,
+    getThawAccountInstruction,
+    getTransferCheckedInstruction,
+    getTransferInstruction,
+    getUiAmountToAmountInstruction,
     parseAmountToUiAmountInstruction,
     parseApproveCheckedInstruction,
     parseApproveInstruction,
@@ -45,6 +92,42 @@ import {
     parseTransferCheckedInstruction,
     parseTransferInstruction,
     parseUiAmountToAmountInstruction,
+    type AmountToUiAmountInput,
+    type AmountToUiAmountInstruction,
+    type ApproveCheckedInput,
+    type ApproveCheckedInstruction,
+    type ApproveInput,
+    type ApproveInstruction,
+    type BurnCheckedInput,
+    type BurnCheckedInstruction,
+    type BurnInput,
+    type BurnInstruction,
+    type CloseAccountInput,
+    type CloseAccountInstruction,
+    type FreezeAccountInput,
+    type FreezeAccountInstruction,
+    type GetAccountDataSizeInput,
+    type GetAccountDataSizeInstruction,
+    type InitializeAccount2Input,
+    type InitializeAccount2Instruction,
+    type InitializeAccount3Input,
+    type InitializeAccount3Instruction,
+    type InitializeAccountInput,
+    type InitializeAccountInstruction,
+    type InitializeImmutableOwnerInput,
+    type InitializeImmutableOwnerInstruction,
+    type InitializeMint2Input,
+    type InitializeMint2Instruction,
+    type InitializeMintInput,
+    type InitializeMintInstruction,
+    type InitializeMultisig2Input,
+    type InitializeMultisig2Instruction,
+    type InitializeMultisigInput,
+    type InitializeMultisigInstruction,
+    type MintToCheckedInput,
+    type MintToCheckedInstruction,
+    type MintToInput,
+    type MintToInstruction,
     type ParsedAmountToUiAmountInstruction,
     type ParsedApproveCheckedInstruction,
     type ParsedApproveInstruction,
@@ -70,6 +153,20 @@ import {
     type ParsedTransferCheckedInstruction,
     type ParsedTransferInstruction,
     type ParsedUiAmountToAmountInstruction,
+    type RevokeInput,
+    type RevokeInstruction,
+    type SetAuthorityInput,
+    type SetAuthorityInstruction,
+    type SyncNativeInput,
+    type SyncNativeInstruction,
+    type ThawAccountInput,
+    type ThawAccountInstruction,
+    type TransferCheckedInput,
+    type TransferCheckedInstruction,
+    type TransferInput,
+    type TransferInstruction,
+    type UiAmountToAmountInput,
+    type UiAmountToAmountInstruction,
 } from '../instructions';
 
 export const TOKEN_PROGRAM_ADDRESS =
@@ -384,4 +481,109 @@ export function parseTokenInstruction<TProgram extends string>(
                 programName: 'token',
             });
     }
+}
+
+export type TokenPlugin = { accounts: TokenPluginAccounts; instructions: TokenPluginInstructions };
+
+export type TokenPluginAccounts = {
+    mint: ReturnType<typeof getMintCodec> & SelfFetchFunctions<MintArgs, Mint>;
+    token: ReturnType<typeof getTokenCodec> & SelfFetchFunctions<TokenArgs, Token>;
+    multisig: ReturnType<typeof getMultisigCodec> & SelfFetchFunctions<MultisigArgs, Multisig>;
+};
+
+export type TokenPluginInstructions = {
+    initializeMint: (input: InitializeMintInput) => InitializeMintInstruction & SelfPlanAndSendFunctions;
+    initializeAccount: (input: InitializeAccountInput) => InitializeAccountInstruction & SelfPlanAndSendFunctions;
+    initializeMultisig: (input: InitializeMultisigInput) => InitializeMultisigInstruction & SelfPlanAndSendFunctions;
+    transfer: (input: TransferInput) => TransferInstruction & SelfPlanAndSendFunctions;
+    approve: (input: ApproveInput) => ApproveInstruction & SelfPlanAndSendFunctions;
+    revoke: (input: RevokeInput) => RevokeInstruction & SelfPlanAndSendFunctions;
+    setAuthority: (input: SetAuthorityInput) => SetAuthorityInstruction & SelfPlanAndSendFunctions;
+    mintTo: (input: MintToInput) => MintToInstruction & SelfPlanAndSendFunctions;
+    burn: (input: BurnInput) => BurnInstruction & SelfPlanAndSendFunctions;
+    closeAccount: (input: CloseAccountInput) => CloseAccountInstruction & SelfPlanAndSendFunctions;
+    freezeAccount: (input: FreezeAccountInput) => FreezeAccountInstruction & SelfPlanAndSendFunctions;
+    thawAccount: (input: ThawAccountInput) => ThawAccountInstruction & SelfPlanAndSendFunctions;
+    transferChecked: (input: TransferCheckedInput) => TransferCheckedInstruction & SelfPlanAndSendFunctions;
+    approveChecked: (input: ApproveCheckedInput) => ApproveCheckedInstruction & SelfPlanAndSendFunctions;
+    mintToChecked: (input: MintToCheckedInput) => MintToCheckedInstruction & SelfPlanAndSendFunctions;
+    burnChecked: (input: BurnCheckedInput) => BurnCheckedInstruction & SelfPlanAndSendFunctions;
+    initializeAccount2: (input: InitializeAccount2Input) => InitializeAccount2Instruction & SelfPlanAndSendFunctions;
+    syncNative: (input: SyncNativeInput) => SyncNativeInstruction & SelfPlanAndSendFunctions;
+    initializeAccount3: (input: InitializeAccount3Input) => InitializeAccount3Instruction & SelfPlanAndSendFunctions;
+    initializeMultisig2: (input: InitializeMultisig2Input) => InitializeMultisig2Instruction & SelfPlanAndSendFunctions;
+    initializeMint2: (input: InitializeMint2Input) => InitializeMint2Instruction & SelfPlanAndSendFunctions;
+    getAccountDataSize: (input: GetAccountDataSizeInput) => GetAccountDataSizeInstruction & SelfPlanAndSendFunctions;
+    initializeImmutableOwner: (
+        input: InitializeImmutableOwnerInput,
+    ) => InitializeImmutableOwnerInstruction & SelfPlanAndSendFunctions;
+    amountToUiAmount: (input: AmountToUiAmountInput) => AmountToUiAmountInstruction & SelfPlanAndSendFunctions;
+    uiAmountToAmount: (input: UiAmountToAmountInput) => UiAmountToAmountInstruction & SelfPlanAndSendFunctions;
+};
+
+export type TokenPluginRequirements = ClientWithRpc<GetAccountInfoApi & GetMultipleAccountsApi> &
+    ClientWithTransactionPlanning &
+    ClientWithTransactionSending;
+
+export function tokenProgram() {
+    return <T extends TokenPluginRequirements>(client: T) => {
+        return {
+            ...client,
+            token: {
+                accounts: {
+                    mint: addSelfFetchFunctions(client, getMintCodec()),
+                    token: addSelfFetchFunctions(client, getTokenCodec()),
+                    multisig: addSelfFetchFunctions(client, getMultisigCodec()),
+                },
+                instructions: {
+                    initializeMint: (input: InitializeMintInput) =>
+                        addSelfPlanAndSendFunctions(client, getInitializeMintInstruction(input)),
+                    initializeAccount: (input: InitializeAccountInput) =>
+                        addSelfPlanAndSendFunctions(client, getInitializeAccountInstruction(input)),
+                    initializeMultisig: (input: InitializeMultisigInput) =>
+                        addSelfPlanAndSendFunctions(client, getInitializeMultisigInstruction(input)),
+                    transfer: (input: TransferInput) =>
+                        addSelfPlanAndSendFunctions(client, getTransferInstruction(input)),
+                    approve: (input: ApproveInput) => addSelfPlanAndSendFunctions(client, getApproveInstruction(input)),
+                    revoke: (input: RevokeInput) => addSelfPlanAndSendFunctions(client, getRevokeInstruction(input)),
+                    setAuthority: (input: SetAuthorityInput) =>
+                        addSelfPlanAndSendFunctions(client, getSetAuthorityInstruction(input)),
+                    mintTo: (input: MintToInput) => addSelfPlanAndSendFunctions(client, getMintToInstruction(input)),
+                    burn: (input: BurnInput) => addSelfPlanAndSendFunctions(client, getBurnInstruction(input)),
+                    closeAccount: (input: CloseAccountInput) =>
+                        addSelfPlanAndSendFunctions(client, getCloseAccountInstruction(input)),
+                    freezeAccount: (input: FreezeAccountInput) =>
+                        addSelfPlanAndSendFunctions(client, getFreezeAccountInstruction(input)),
+                    thawAccount: (input: ThawAccountInput) =>
+                        addSelfPlanAndSendFunctions(client, getThawAccountInstruction(input)),
+                    transferChecked: (input: TransferCheckedInput) =>
+                        addSelfPlanAndSendFunctions(client, getTransferCheckedInstruction(input)),
+                    approveChecked: (input: ApproveCheckedInput) =>
+                        addSelfPlanAndSendFunctions(client, getApproveCheckedInstruction(input)),
+                    mintToChecked: (input: MintToCheckedInput) =>
+                        addSelfPlanAndSendFunctions(client, getMintToCheckedInstruction(input)),
+                    burnChecked: (input: BurnCheckedInput) =>
+                        addSelfPlanAndSendFunctions(client, getBurnCheckedInstruction(input)),
+                    initializeAccount2: (input: InitializeAccount2Input) =>
+                        addSelfPlanAndSendFunctions(client, getInitializeAccount2Instruction(input)),
+                    syncNative: (input: SyncNativeInput) =>
+                        addSelfPlanAndSendFunctions(client, getSyncNativeInstruction(input)),
+                    initializeAccount3: (input: InitializeAccount3Input) =>
+                        addSelfPlanAndSendFunctions(client, getInitializeAccount3Instruction(input)),
+                    initializeMultisig2: (input: InitializeMultisig2Input) =>
+                        addSelfPlanAndSendFunctions(client, getInitializeMultisig2Instruction(input)),
+                    initializeMint2: (input: InitializeMint2Input) =>
+                        addSelfPlanAndSendFunctions(client, getInitializeMint2Instruction(input)),
+                    getAccountDataSize: (input: GetAccountDataSizeInput) =>
+                        addSelfPlanAndSendFunctions(client, getGetAccountDataSizeInstruction(input)),
+                    initializeImmutableOwner: (input: InitializeImmutableOwnerInput) =>
+                        addSelfPlanAndSendFunctions(client, getInitializeImmutableOwnerInstruction(input)),
+                    amountToUiAmount: (input: AmountToUiAmountInput) =>
+                        addSelfPlanAndSendFunctions(client, getAmountToUiAmountInstruction(input)),
+                    uiAmountToAmount: (input: UiAmountToAmountInput) =>
+                        addSelfPlanAndSendFunctions(client, getUiAmountToAmountInstruction(input)),
+                },
+            } as TokenPlugin,
+        };
+    };
 }

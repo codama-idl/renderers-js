@@ -14,11 +14,21 @@ import {
     SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE,
     SolanaError,
     type Address,
+    type ClientWithPayer,
+    type ClientWithTransactionPlanning,
+    type ClientWithTransactionSending,
     type Instruction,
     type InstructionWithData,
     type ReadonlyUint8Array,
 } from '@solana/kit';
-import { parseCreateAccountInstruction, type ParsedCreateAccountInstruction } from '../instructions';
+import { addSelfPlanAndSendFunctions, type SelfPlanAndSendFunctions } from '@solana/kit/program-client-core';
+import {
+    getCreateAccountInstruction,
+    parseCreateAccountInstruction,
+    type CreateAccountInput,
+    type CreateAccountInstruction,
+    type ParsedCreateAccountInstruction,
+} from '../instructions';
 
 export const SYSTEM_PROGRAM_ADDRESS = '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
 
@@ -59,3 +69,30 @@ export function parseSystemInstruction<TProgram extends string>(
             });
     }
 }
+
+export type SystemPlugin = { instructions: SystemPluginInstructions };
+
+export type SystemPluginInstructions = {
+    createAccount: (input: CreateAccountInput) => CreateAccountInstruction & SelfPlanAndSendFunctions;
+};
+
+export type SystemPluginRequirements = ClientWithPayer & ClientWithTransactionPlanning & ClientWithTransactionSending;
+
+export function systemProgram() {
+    return <T extends SystemPluginRequirements>(client: T) => {
+        return {
+            ...client,
+            system: {
+                instructions: {
+                    createAccount: (input: MakeOptional<CreateAccountInput, 'payer'>) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getCreateAccountInstruction({ ...input, payer: input.payer ?? client.payer }),
+                        ),
+                },
+            } as SystemPlugin,
+        };
+    };
+}
+
+type MakeOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
