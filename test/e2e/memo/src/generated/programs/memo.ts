@@ -8,12 +8,7 @@
 
 import { type Address, type ClientWithTransactionPlanning, type ClientWithTransactionSending } from '@solana/kit';
 import { addSelfPlanAndSendFunctions, type SelfPlanAndSendFunctions } from '@solana/kit/program-client-core';
-import {
-    getAddMemoInstruction,
-    type AddMemoInput,
-    type AddMemoInstruction,
-    type ParsedAddMemoInstruction,
-} from '../instructions';
+import { getAddMemoInstruction, type AddMemoInput, type ParsedAddMemoInstruction } from '../instructions';
 
 export const MEMO_PROGRAM_ADDRESS =
     'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr' as Address<'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'>;
@@ -29,7 +24,7 @@ export type ParsedMemoInstruction<TProgram extends string = 'MemoSq4gqABAXKb96qn
 export type MemoPlugin = { instructions: MemoPluginInstructions };
 
 export type MemoPluginInstructions = {
-    addMemo: (input: AddMemoInput) => AddMemoInstruction & SelfPlanAndSendFunctions;
+    addMemo: (input: AddMemoInput) => ReturnType<typeof getAddMemoInstruction> & SelfPlanAndSendFunctions;
 };
 
 export type MemoPluginRequirements = ClientWithTransactionPlanning & ClientWithTransactionSending;

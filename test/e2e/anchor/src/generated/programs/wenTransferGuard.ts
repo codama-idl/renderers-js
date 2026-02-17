@@ -43,17 +43,13 @@ import {
     parseInitializeInstruction,
     parseUpdateGuardInstruction,
     type CreateGuardAsyncInput,
-    type CreateGuardInstruction,
     type ExecuteAsyncInput,
-    type ExecuteInstruction,
     type InitializeAsyncInput,
-    type InitializeInstruction,
     type ParsedCreateGuardInstruction,
     type ParsedExecuteInstruction,
     type ParsedInitializeInstruction,
     type ParsedUpdateGuardInstruction,
     type UpdateGuardAsyncInput,
-    type UpdateGuardInstruction,
 } from '../instructions';
 
 export const WEN_TRANSFER_GUARD_PROGRAM_ADDRESS =
@@ -189,10 +185,16 @@ export type WenTransferGuardPluginAccounts = {
 };
 
 export type WenTransferGuardPluginInstructions = {
-    createGuard: (input: CreateGuardAsyncInput) => Promise<CreateGuardInstruction> & SelfPlanAndSendFunctions;
-    execute: (input: ExecuteAsyncInput) => Promise<ExecuteInstruction> & SelfPlanAndSendFunctions;
-    initialize: (input: InitializeAsyncInput) => Promise<InitializeInstruction> & SelfPlanAndSendFunctions;
-    updateGuard: (input: UpdateGuardAsyncInput) => Promise<UpdateGuardInstruction> & SelfPlanAndSendFunctions;
+    createGuard: (
+        input: MakeOptional<CreateGuardAsyncInput, 'payer'>,
+    ) => ReturnType<typeof getCreateGuardInstructionAsync> & SelfPlanAndSendFunctions;
+    execute: (input: ExecuteAsyncInput) => ReturnType<typeof getExecuteInstructionAsync> & SelfPlanAndSendFunctions;
+    initialize: (
+        input: MakeOptional<InitializeAsyncInput, 'payer'>,
+    ) => ReturnType<typeof getInitializeInstructionAsync> & SelfPlanAndSendFunctions;
+    updateGuard: (
+        input: UpdateGuardAsyncInput,
+    ) => ReturnType<typeof getUpdateGuardInstructionAsync> & SelfPlanAndSendFunctions;
 };
 
 export type WenTransferGuardPluginRequirements = ClientWithRpc<GetAccountInfoApi & GetMultipleAccountsApi> &
