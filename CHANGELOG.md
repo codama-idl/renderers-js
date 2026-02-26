@@ -1,5 +1,11 @@
 # @codama/renderers-js
 
+## 2.0.3
+
+### Patch Changes
+
+- [#126](https://github.com/codama-idl/renderers-js/pull/126) [`f139af5`](https://github.com/codama-idl/renderers-js/commit/f139af5aa8c875ac8b22c15c8e7246d6a8da7e29) Thanks [@piliugin-anton](https://github.com/piliugin-anton)! - Add options export
+
 ## 2.0.2
 
 ### Patch Changes
