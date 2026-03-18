@@ -1,5 +1,11 @@
 # @codama/renderers-js
 
+## 2.1.0
+
+### Minor Changes
+
+- [#129](https://github.com/codama-idl/renderers-js/pull/129) [`ce46ed2`](https://github.com/codama-idl/renderers-js/commit/ce46ed2e7a59e2747ed80c2282ef081a48e0d4ba) Thanks [@amilz](https://github.com/amilz)! - Add PDA derivation to generated program plugin
+
 ## 2.0.3
 
 ### Patch Changes
