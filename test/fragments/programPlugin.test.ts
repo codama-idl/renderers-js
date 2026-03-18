@@ -15,7 +15,7 @@ import {
 import { expect, test } from 'vitest';
 
 import { getProgramPluginFragment } from '../../src/fragments';
-import { fragmentContains, fragmentContainsImports, getDefaultScope } from '../_setup';
+import { fragmentContains, fragmentContainsImports, fragmentDoesNotContain, getDefaultScope } from '../_setup';
 
 test('it renders nothing is a program has no accounts or instructions', () => {
     // Given an empty program.
@@ -340,4 +340,179 @@ test('it tackles arguments and accounts with conflicting names', async () => {
         "input: MakeOptional< InitializeMintInput, 'authority' | 'authorityArg' >",
         '{ ...input, authority: input.authority ?? client.payer.address, authorityArg: input.authorityArg ?? client.payer.address }',
     ]);
+});
+
+test('it renders the plugin type with pdas field when program has PDAs', async () => {
+    // Given a program with accounts, instructions and PDAs.
+    const node = programNode({
+        accounts: [accountNode({ name: 'mint' })],
+        instructions: [instructionNode({ name: 'initializeMint' })],
+        name: 'splToken',
+        pdas: [
+            pdaNode({
+                name: 'associatedTokenAccount',
+                seeds: [variablePdaSeedNode('owner', publicKeyTypeNode())],
+            }),
+        ],
+        publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    });
+
+    // When we get the program plugin fragment.
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+
+    // Then we expect the plugin type to include a pdas field.
+    await fragmentContains(fragment, [
+        'export type SplTokenPlugin = { accounts: SplTokenPluginAccounts; instructions: SplTokenPluginInstructions; pdas: SplTokenPluginPdas; };',
+    ]);
+});
+
+test('it renders program plugin PDA types', async () => {
+    // Given a program with PDAs.
+    const node = programNode({
+        name: 'splToken',
+        pdas: [
+            pdaNode({
+                name: 'associatedTokenAccount',
+                seeds: [variablePdaSeedNode('owner', publicKeyTypeNode())],
+            }),
+            pdaNode({
+                name: 'mintAuthority',
+                seeds: [variablePdaSeedNode('mint', publicKeyTypeNode())],
+            }),
+        ],
+        publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    });
+
+    // When we get the program plugin fragment.
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+
+    // Then we expect the following PDA type to be rendered.
+    await fragmentContains(fragment, [
+        'export type SplTokenPluginPdas = {',
+        'associatedTokenAccount: typeof findAssociatedTokenAccountPda;',
+        'mintAuthority: typeof findMintAuthorityPda;',
+    ]);
+
+    // And we expect the necessary imports to be included.
+    await fragmentContainsImports(fragment, {
+        '../pdas': ['findAssociatedTokenAccountPda', 'findMintAuthorityPda'],
+    });
+});
+
+test('it renders program plugin function with pdas object', async () => {
+    // Given a program with a PDA and an account.
+    const node = programNode({
+        accounts: [accountNode({ name: 'mint' })],
+        name: 'splToken',
+        pdas: [
+            pdaNode({
+                name: 'associatedTokenAccount',
+                seeds: [variablePdaSeedNode('owner', publicKeyTypeNode())],
+            }),
+        ],
+        publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    });
+
+    // When we get the program plugin fragment.
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+
+    // Then we expect the plugin function to include pdas.
+    await fragmentContains(fragment, ['pdas: { associatedTokenAccount: findAssociatedTokenAccountPda }']);
+
+    // And we expect the necessary imports to be included.
+    await fragmentContainsImports(fragment, {
+        '../pdas': ['findAssociatedTokenAccountPda'],
+    });
+});
+
+test('it renders a plugin with only PDAs', async () => {
+    // Given a program with only PDAs (no accounts or instructions).
+    const node = programNode({
+        name: 'splToken',
+        pdas: [
+            pdaNode({
+                name: 'associatedTokenAccount',
+                seeds: [variablePdaSeedNode('owner', publicKeyTypeNode())],
+            }),
+        ],
+        publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    });
+
+    // When we get the program plugin fragment.
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+
+    // Then we expect the fragment to be defined.
+    expect(fragment).toBeDefined();
+
+    // And we expect the plugin type to have only the pdas field.
+    await fragmentContains(fragment, ['export type SplTokenPlugin = { pdas: SplTokenPluginPdas }']);
+    await fragmentContains(fragment, [
+        'export type SplTokenPluginPdas = { associatedTokenAccount: typeof findAssociatedTokenAccountPda; }',
+    ]);
+    await fragmentContains(fragment, ['pdas: { associatedTokenAccount: findAssociatedTokenAccountPda }']);
+});
+
+test('it renders the requirements as object for a PDA-only program', async () => {
+    // Given a program with only PDAs (no accounts or instructions).
+    const node = programNode({
+        name: 'splToken',
+        pdas: [
+            pdaNode({
+                name: 'associatedTokenAccount',
+                seeds: [variablePdaSeedNode('owner', publicKeyTypeNode())],
+            }),
+        ],
+        publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    });
+
+    // When we get the program plugin fragment.
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+
+    // Then we expect the requirements to be `object` since PDAs need no client capabilities.
+    await fragmentContains(fragment, ['export type SplTokenPluginRequirements = object']);
+});
+
+test('it renders the plugin function with instructions and PDAs but no accounts', async () => {
+    // Given a program with instructions and PDAs but no accounts.
+    const node = programNode({
+        instructions: [instructionNode({ name: 'initializeMint' })],
+        name: 'splToken',
+        pdas: [
+            pdaNode({
+                name: 'associatedTokenAccount',
+                seeds: [variablePdaSeedNode('owner', publicKeyTypeNode())],
+            }),
+        ],
+        publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    });
+
+    // When we get the program plugin fragment.
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+
+    // Then we expect the plugin type to include both instructions and pdas.
+    await fragmentContains(fragment, [
+        'export type SplTokenPlugin = { instructions: SplTokenPluginInstructions; pdas: SplTokenPluginPdas; }',
+    ]);
+
+    // And we expect the plugin function to include both.
+    await fragmentContains(fragment, [
+        'instructions: { initializeMint: ( input ) => addSelfPlanAndSendFunctions( client, getInitializeMintInstruction( input ) ) }',
+        'pdas: { associatedTokenAccount: findAssociatedTokenAccountPda }',
+    ]);
+});
+
+test('it omits the pdas field when program has no PDAs', async () => {
+    // Given a program with accounts but no PDAs.
+    const node = programNode({
+        accounts: [accountNode({ name: 'mint' })],
+        name: 'splToken',
+        publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    });
+
+    // When we get the program plugin fragment.
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+
+    // Then we expect the plugin type to NOT include a pdas field.
+    await fragmentContains(fragment, ['export type SplTokenPlugin = { accounts: SplTokenPluginAccounts }']);
+    await fragmentDoesNotContain(fragment, ['SplTokenPluginPdas']);
 });
