@@ -417,9 +417,7 @@ test('it renders program plugin function with pdas object', async () => {
     const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
 
     // Then we expect the plugin function to include pdas.
-    await fragmentContains(fragment, [
-        'pdas: { associatedTokenAccount: findAssociatedTokenAccountPda }',
-    ]);
+    await fragmentContains(fragment, ['pdas: { associatedTokenAccount: findAssociatedTokenAccountPda }']);
 
     // And we expect the necessary imports to be included.
     await fragmentContainsImports(fragment, {
@@ -447,15 +445,11 @@ test('it renders a plugin with only PDAs', async () => {
     expect(fragment).toBeDefined();
 
     // And we expect the plugin type to have only the pdas field.
-    await fragmentContains(fragment, [
-        'export type SplTokenPlugin = { pdas: SplTokenPluginPdas }',
-    ]);
+    await fragmentContains(fragment, ['export type SplTokenPlugin = { pdas: SplTokenPluginPdas }']);
     await fragmentContains(fragment, [
         'export type SplTokenPluginPdas = { associatedTokenAccount: typeof findAssociatedTokenAccountPda; }',
     ]);
-    await fragmentContains(fragment, [
-        'pdas: { associatedTokenAccount: findAssociatedTokenAccountPda }',
-    ]);
+    await fragmentContains(fragment, ['pdas: { associatedTokenAccount: findAssociatedTokenAccountPda }']);
 });
 
 test('it renders the requirements as object for a PDA-only program', async () => {
@@ -519,8 +513,6 @@ test('it omits the pdas field when program has no PDAs', async () => {
     const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
 
     // Then we expect the plugin type to NOT include a pdas field.
-    await fragmentContains(fragment, [
-        'export type SplTokenPlugin = { accounts: SplTokenPluginAccounts }',
-    ]);
+    await fragmentContains(fragment, ['export type SplTokenPlugin = { accounts: SplTokenPluginAccounts }']);
     await fragmentDoesNotContain(fragment, ['SplTokenPluginPdas']);
 });
