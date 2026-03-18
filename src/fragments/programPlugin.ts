@@ -14,7 +14,12 @@ import { getRenamedArgsMap } from './instructionPage';
 export function getProgramPluginFragment(
     scope: Pick<RenderScope, 'asyncResolvers' | 'nameApi'> & { programNode: ProgramNode },
 ): Fragment | undefined {
-    if (scope.programNode.accounts.length === 0 && scope.programNode.instructions.length === 0) return;
+    if (
+        scope.programNode.accounts.length === 0 &&
+        scope.programNode.instructions.length === 0 &&
+        scope.programNode.pdas.length === 0
+    )
+        return;
 
     const resolvedInstructionInputVisitor = getResolvedInstructionInputsVisitor();
     const asyncInstructions: CamelCaseString[] = scope.programNode.instructions
@@ -28,6 +33,7 @@ export function getProgramPluginFragment(
             getProgramPluginTypeFragment(scope),
             getProgramPluginAccountsTypeFragment(scope),
             getProgramPluginInstructionsTypeFragment({ ...scope, asyncInstructions }),
+            getProgramPluginPdasTypeFragment(scope),
             getProgramPluginRequirementsTypeFragment(scope),
             getProgramPluginFunctionFragment({ ...scope, asyncInstructions }),
             getMakeOptionalHelperTypeFragment(scope),
@@ -41,11 +47,13 @@ function getProgramPluginTypeFragment(scope: Pick<RenderScope, 'nameApi'> & { pr
     const programPluginType = nameApi.programPluginType(programNode.name);
     const programPluginAccountsType = nameApi.programPluginAccountsType(programNode.name);
     const programPluginInstructionsType = nameApi.programPluginInstructionsType(programNode.name);
+    const programPluginPdasType = nameApi.programPluginPdasType(programNode.name);
 
     const fields = mergeFragments(
         [
             programNode.accounts.length > 0 ? fragment`accounts: ${programPluginAccountsType};` : undefined,
             programNode.instructions.length > 0 ? fragment`instructions: ${programPluginInstructionsType};` : undefined,
+            programNode.pdas.length > 0 ? fragment`pdas: ${programPluginPdasType};` : undefined,
         ],
         c => c.join(' '),
     );
@@ -108,6 +116,43 @@ function getProgramPluginInstructionsTypeFragment(
     return fragment`export type ${programPluginInstructionsType} = { ${fields} }`;
 }
 
+function getProgramPluginPdasTypeFragment(
+    scope: Pick<RenderScope, 'nameApi'> & { programNode: ProgramNode },
+): Fragment | undefined {
+    const { programNode, nameApi } = scope;
+    if (programNode.pdas.length === 0) return;
+    const programPluginPdasType = nameApi.programPluginPdasType(programNode.name);
+
+    const fields = mergeFragments(
+        programNode.pdas.map(pda => {
+            const name = nameApi.programPluginPdaKey(pda.name);
+            const pdaFindFunction = use('type ' + nameApi.pdaFindFunction(pda.name), 'generatedPdas');
+            return fragment`${name}: typeof ${pdaFindFunction};`;
+        }),
+        c => c.join(' '),
+    );
+
+    return fragment`export type ${programPluginPdasType} = { ${fields} }`;
+}
+
+function getProgramPluginPdasObjectFragment(
+    scope: Pick<RenderScope, 'nameApi'> & { programNode: ProgramNode },
+): Fragment | undefined {
+    const { programNode, nameApi } = scope;
+    if (programNode.pdas.length === 0) return;
+
+    const fields = mergeFragments(
+        programNode.pdas.map(pda => {
+            const name = nameApi.programPluginPdaKey(pda.name);
+            const pdaFindFunction = use(nameApi.pdaFindFunction(pda.name), 'generatedPdas');
+            return fragment`${name}: ${pdaFindFunction}`;
+        }),
+        c => c.join(', '),
+    );
+
+    return fragment`pdas: { ${fields} }`;
+}
+
 function getProgramPluginRequirementsTypeFragment(
     scope: Pick<RenderScope, 'nameApi'> & { programNode: ProgramNode },
 ): Fragment {
@@ -120,15 +165,18 @@ function getProgramPluginRequirementsTypeFragment(
     const hasAccounts = programNode.accounts.length > 0;
     const hasInstructions = programNode.instructions.length > 0;
 
-    const requirements = mergeFragments(
-        [
-            hasAccounts ? clientWithRpc : undefined,
-            hasPayerDefaultValues(programNode) ? clientWithPayer : undefined,
-            hasInstructions ? clientWithTransactionPlanning : undefined,
-            hasInstructions ? clientWithTransactionSending : undefined,
-        ],
-        c => c.join(' & '),
-    );
+    const requirementList = [
+        hasAccounts ? clientWithRpc : undefined,
+        hasPayerDefaultValues(programNode) ? clientWithPayer : undefined,
+        hasInstructions ? clientWithTransactionPlanning : undefined,
+        hasInstructions ? clientWithTransactionSending : undefined,
+    ].filter((r): r is Fragment => r !== undefined);
+
+    if (requirementList.length === 0) {
+        return fragment`export type ${programRequirementsType} = object`;
+    }
+
+    const requirements = mergeFragments(requirementList, c => c.join(' & '));
 
     return fragment`export type ${programRequirementsType} = ${requirements}`;
 }
@@ -143,7 +191,11 @@ function getProgramPluginFunctionFragment(
     const programPluginKey = nameApi.programPluginKey(programNode.name);
 
     const fields = mergeFragments(
-        [getProgramPluginAccountsObjectFragment(scope), getProgramPluginInstructionsObjectFragment(scope)],
+        [
+            getProgramPluginAccountsObjectFragment(scope),
+            getProgramPluginInstructionsObjectFragment(scope),
+            getProgramPluginPdasObjectFragment(scope),
+        ],
         c => c.join(', '),
     );
 

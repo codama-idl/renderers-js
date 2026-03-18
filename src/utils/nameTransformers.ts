@@ -64,6 +64,8 @@ export type NameTransformerKey =
     | 'programPluginInstructionKey'
     | 'programPluginInstructionsType'
     | 'programPluginKey'
+    | 'programPluginPdaKey'
+    | 'programPluginPdasType'
     | 'programPluginRequirementsType'
     | 'programPluginType'
     | 'resolverFunction';
@@ -139,6 +141,8 @@ export const DEFAULT_NAME_TRANSFORMERS: NameTransformers = {
     programPluginInstructionKey: name => `${camelCase(name)}`,
     programPluginInstructionsType: name => `${pascalCase(name)}PluginInstructions`,
     programPluginKey: name => `${camelCase(name)}`,
+    programPluginPdaKey: name => `${camelCase(name)}`,
+    programPluginPdasType: name => `${pascalCase(name)}PluginPdas`,
     programPluginRequirementsType: name => `${pascalCase(name)}PluginRequirements`,
     programPluginType: name => `${pascalCase(name)}Plugin`,
     resolverFunction: name => `${camelCase(name)}`,

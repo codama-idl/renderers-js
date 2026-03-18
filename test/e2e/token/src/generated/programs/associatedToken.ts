@@ -36,6 +36,7 @@ import {
     type ParsedRecoverNestedAssociatedTokenInstruction,
     type RecoverNestedAssociatedTokenAsyncInput,
 } from '../instructions';
+import { findAssociatedTokenPda } from '../pdas';
 
 export const ASSOCIATED_TOKEN_PROGRAM_ADDRESS =
     'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
@@ -110,7 +111,10 @@ export function parseAssociatedTokenInstruction<TProgram extends string>(
     }
 }
 
-export type AssociatedTokenPlugin = { instructions: AssociatedTokenPluginInstructions };
+export type AssociatedTokenPlugin = {
+    instructions: AssociatedTokenPluginInstructions;
+    pdas: AssociatedTokenPluginPdas;
+};
 
 export type AssociatedTokenPluginInstructions = {
     createAssociatedToken: (
@@ -123,6 +127,8 @@ export type AssociatedTokenPluginInstructions = {
         input: RecoverNestedAssociatedTokenAsyncInput,
     ) => ReturnType<typeof getRecoverNestedAssociatedTokenInstructionAsync> & SelfPlanAndSendFunctions;
 };
+
+export type AssociatedTokenPluginPdas = { associatedToken: typeof findAssociatedTokenPda };
 
 export type AssociatedTokenPluginRequirements = ClientWithPayer &
     ClientWithTransactionPlanning &
@@ -150,6 +156,7 @@ export function associatedTokenProgram() {
                     recoverNestedAssociatedToken: input =>
                         addSelfPlanAndSendFunctions(client, getRecoverNestedAssociatedTokenInstructionAsync(input)),
                 },
+                pdas: { associatedToken: findAssociatedTokenPda },
             },
         };
     };
