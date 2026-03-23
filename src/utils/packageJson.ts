@@ -14,6 +14,7 @@ type PackageJson = {
     dependencies?: DependencyVersions;
     description?: string;
     devDependencies?: DependencyVersions;
+    files?: string[];
     keywords?: string[];
     main?: string;
     name?: string;
@@ -81,6 +82,8 @@ export function createNewPackageJson(dependencyVersions: DependencyVersions): Pa
             // eslint-disable-next-line sort-keys-fix/sort-keys-fix
             description: '',
             main: 'src/index.ts',
+            // eslint-disable-next-line sort-keys-fix/sort-keys-fix
+            files: ['./dist/src', './dist/types', './src/'],
             scripts: { test: 'echo "Error: no test specified" && exit 1' },
             // eslint-disable-next-line sort-keys-fix/sort-keys-fix
             keywords: [],

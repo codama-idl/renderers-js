@@ -76,6 +76,13 @@ describe('createNewPackageJson', () => {
         });
     });
 
+    test('it includes source and dist files for IDE navigation', () => {
+        const packageJson = createNewPackageJson({
+            'foo-package': '^1.0.0',
+        });
+        expect(packageJson.files).toEqual(['./dist/src', './dist/types', './src/']);
+    });
+
     test('it saves @solana/kit as a peer dependency by default', () => {
         const packageJson = createNewPackageJson({
             '@solana/kit': '^5.0.0',
