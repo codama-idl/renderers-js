@@ -41,17 +41,17 @@ const DEFAULT_GRANULAR_EXTERNAL_MODULE_MAP: Record<string, string> = {
 };
 
 const DEFAULT_INTERNAL_MODULE_MAP: Record<string, string> = {
-    errors: '../errors',
-    generated: '..',
-    generatedAccounts: '../accounts',
-    generatedErrors: '../errors',
-    generatedInstructions: '../instructions',
-    generatedPdas: '../pdas',
-    generatedPrograms: '../programs',
-    generatedTypes: '../types',
+    errors: '../errors/index',
+    generated: '../index',
+    generatedAccounts: '../accounts/index',
+    generatedErrors: '../errors/index',
+    generatedInstructions: '../instructions/index',
+    generatedPdas: '../pdas/index',
+    generatedPrograms: '../programs/index',
+    generatedTypes: '../types/index',
     hooked: '../../hooked',
     shared: '../shared',
-    types: '../types',
+    types: '../types/index',
 };
 
 type ImportInput = string;
@@ -151,7 +151,8 @@ export function importMapToString(
                 .map(importInfoToString)
                 .sort((a, b) => a.localeCompare(b))
                 .join(', ');
-            return `import { ${innerImports} } from '${module}';`;
+            const resolvedModule = module.startsWith('.') ? `${module}.js` : module;
+            return `import { ${innerImports} } from '${resolvedModule}';`;
         })
         .join('\n');
 }

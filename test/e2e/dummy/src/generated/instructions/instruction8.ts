@@ -14,7 +14,7 @@ import {
     type InstructionWithAccounts,
     type TransactionSigner,
 } from '@solana/kit';
-import { DUMMY_PROGRAM_ADDRESS } from '../programs';
+import { DUMMY_PROGRAM_ADDRESS } from '../programs/index.js';
 
 export type Instruction8Instruction<
     TProgram extends string = typeof DUMMY_PROGRAM_ADDRESS,

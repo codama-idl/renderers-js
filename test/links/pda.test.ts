@@ -41,7 +41,7 @@ test('it imports functions from the linked pda', async () => {
 
     // And we expect the following imports.
     await renderMapContainsImports(renderMap, 'instructions/createCounter.ts', {
-        '../pdas': ['findCounterPda'],
+        '../pdas/index.js': ['findCounterPda'],
     });
 });
 
@@ -81,6 +81,6 @@ test('it can override the import of a linked account', async () => {
 
     // And we expect the imports to be overridden.
     await renderMapContainsImports(renderMap, 'instructions/createCounter.ts', {
-        '../../hooked': ['findCounterPda'],
+        '../../hooked.js': ['findCounterPda'],
     });
 });

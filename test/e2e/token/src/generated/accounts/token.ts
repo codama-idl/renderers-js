@@ -36,7 +36,12 @@ import {
     type Option,
     type OptionOrNullable,
 } from '@solana/kit';
-import { getAccountStateDecoder, getAccountStateEncoder, type AccountState, type AccountStateArgs } from '../types';
+import {
+    getAccountStateDecoder,
+    getAccountStateEncoder,
+    type AccountState,
+    type AccountStateArgs,
+} from '../types/index.js';
 
 /** Stores information about an individual's ownership of a specific token (mint). Each token account is associated with a single mint and tracks details like the token balance and owner. */
 export type Token = {

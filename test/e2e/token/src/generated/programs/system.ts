@@ -27,7 +27,7 @@ import {
     parseCreateAccountInstruction,
     type CreateAccountInput,
     type ParsedCreateAccountInstruction,
-} from '../instructions';
+} from '../instructions/index.js';
 
 export const SYSTEM_PROGRAM_ADDRESS = '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
 

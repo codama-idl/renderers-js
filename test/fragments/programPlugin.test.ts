@@ -238,7 +238,7 @@ test('it renders the program plugin function', async () => {
 
     // And we expect the necessary imports to be included.
     await fragmentContainsImports(fragment, {
-        '../accounts': ['getMintCodec'],
+        '../accounts/index.js': ['getMintCodec'],
         '@solana/program-client-core': ['addSelfFetchFunctions', 'addSelfPlanAndSendFunctions'],
     });
 });
@@ -395,7 +395,7 @@ test('it renders program plugin PDA types', async () => {
 
     // And we expect the necessary imports to be included.
     await fragmentContainsImports(fragment, {
-        '../pdas': ['findAssociatedTokenAccountPda', 'findMintAuthorityPda'],
+        '../pdas/index.js': ['findAssociatedTokenAccountPda', 'findMintAuthorityPda'],
     });
 });
 
@@ -421,7 +421,7 @@ test('it renders program plugin function with pdas object', async () => {
 
     // And we expect the necessary imports to be included.
     await fragmentContainsImports(fragment, {
-        '../pdas': ['findAssociatedTokenAccountPda'],
+        '../pdas/index.js': ['findAssociatedTokenAccountPda'],
     });
 });
 

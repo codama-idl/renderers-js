@@ -35,8 +35,8 @@ import {
     getAddressFromResolvedInstructionAccount,
     type ResolvedInstructionAccount,
 } from '@solana/kit/program-client-core';
-import { findAssociatedTokenPda } from '../pdas';
-import { ASSOCIATED_TOKEN_PROGRAM_ADDRESS } from '../programs';
+import { findAssociatedTokenPda } from '../pdas/index.js';
+import { ASSOCIATED_TOKEN_PROGRAM_ADDRESS } from '../programs/index.js';
 
 export const RECOVER_NESTED_ASSOCIATED_TOKEN_DISCRIMINATOR = 2;
 

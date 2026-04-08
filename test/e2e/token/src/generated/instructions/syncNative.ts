@@ -27,7 +27,7 @@ import {
     type WritableAccount,
 } from '@solana/kit';
 import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
-import { TOKEN_PROGRAM_ADDRESS } from '../programs';
+import { TOKEN_PROGRAM_ADDRESS } from '../programs/index.js';
 
 export const SYNC_NATIVE_DISCRIMINATOR = 17;
 

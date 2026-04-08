@@ -39,7 +39,7 @@ import {
     getAddressFromResolvedInstructionAccount,
     type ResolvedInstructionAccount,
 } from '@solana/kit/program-client-core';
-import { WEN_TRANSFER_GUARD_PROGRAM_ADDRESS } from '../programs';
+import { WEN_TRANSFER_GUARD_PROGRAM_ADDRESS } from '../programs/index.js';
 
 export const INITIALIZE_DISCRIMINATOR = new Uint8Array([43, 34, 13, 49, 167, 88, 235, 235]);
 

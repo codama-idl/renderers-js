@@ -32,7 +32,7 @@ import {
     type SelfFetchFunctions,
     type SelfPlanAndSendFunctions,
 } from '@solana/kit/program-client-core';
-import { getGuardV1Codec, type GuardV1, type GuardV1Args } from '../accounts';
+import { getGuardV1Codec, type GuardV1, type GuardV1Args } from '../accounts/index.js';
 import {
     getCreateGuardInstructionAsync,
     getExecuteInstructionAsync,
@@ -50,7 +50,7 @@ import {
     type ParsedInitializeInstruction,
     type ParsedUpdateGuardInstruction,
     type UpdateGuardAsyncInput,
-} from '../instructions';
+} from '../instructions/index.js';
 
 export const WEN_TRANSFER_GUARD_PROGRAM_ADDRESS =
     'LockdqYQ9X2kwtWB99ioSbxubAmEi8o9jqYwbXgrrRw' as Address<'LockdqYQ9X2kwtWB99ioSbxubAmEi8o9jqYwbXgrrRw'>;

@@ -24,7 +24,7 @@ import {
     type ReadonlyUint8Array,
     type TransactionSigner,
 } from '@solana/kit';
-import { MEMO_PROGRAM_ADDRESS } from '../programs';
+import { MEMO_PROGRAM_ADDRESS } from '../programs/index.js';
 
 export type AddMemoInstruction<
     TProgram extends string = typeof MEMO_PROGRAM_ADDRESS,

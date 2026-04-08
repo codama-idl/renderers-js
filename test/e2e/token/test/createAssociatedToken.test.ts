@@ -13,14 +13,14 @@ import {
   fetchToken,
   findAssociatedTokenPda,
   getCreateAssociatedTokenInstructionAsync,
-} from '../src';
+} from '../src/index.js';
 import {
   createDefaultSolanaClient,
   createDefaultTransaction,
   createMint,
   generateKeyPairSignerWithSol,
   signAndSendTransaction,
-} from './_setup';
+} from './_setup.js';
 
 test('it creates a new associated token account', async (t) => {
   // Given a mint account, its mint authority and a token owner.

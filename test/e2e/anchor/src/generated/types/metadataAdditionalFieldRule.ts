@@ -29,7 +29,7 @@ import {
     getMetadataAdditionalFieldRestrictionEncoder,
     type MetadataAdditionalFieldRestriction,
     type MetadataAdditionalFieldRestrictionArgs,
-} from '.';
+} from './index.js';
 
 /**
  * Enforces rules on a single additional field in the mint metadata.

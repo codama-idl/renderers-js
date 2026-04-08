@@ -31,7 +31,7 @@ import {
     type WritableSignerAccount,
 } from '@solana/kit';
 import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
-import { SYSTEM_PROGRAM_ADDRESS } from '../programs';
+import { SYSTEM_PROGRAM_ADDRESS } from '../programs/index.js';
 
 export const ASSIGN_DISCRIMINATOR = 1;
 

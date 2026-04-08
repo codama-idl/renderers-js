@@ -7,7 +7,7 @@
  */
 
 import { type AccountMeta, type Address, type Instruction, type InstructionWithAccounts } from '@solana/kit';
-import { DUMMY_PROGRAM_ADDRESS } from '../programs';
+import { DUMMY_PROGRAM_ADDRESS } from '../programs/index.js';
 
 export type Instruction1Instruction<
     TProgram extends string = typeof DUMMY_PROGRAM_ADDRESS,
