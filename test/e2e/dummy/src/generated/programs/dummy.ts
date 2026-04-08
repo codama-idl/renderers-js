@@ -178,7 +178,7 @@ export type DummyPluginInstructions = {
 export type DummyPluginRequirements = ClientWithPayer & ClientWithTransactionPlanning & ClientWithTransactionSending;
 
 export function dummyProgram() {
-    return <T extends DummyPluginRequirements>(client: T) => {
+    return <T extends DummyPluginRequirements>(client: T): T & { dummy: DummyPlugin } => {
         return {
             ...client,
             dummy: <DummyPlugin>{

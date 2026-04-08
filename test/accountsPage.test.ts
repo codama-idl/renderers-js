@@ -113,7 +113,7 @@ test('it renders constants for account field discriminators', async () => {
     // And we expect the field default value to use that constant.
     await renderMapContains(renderMap, 'accounts/myAccount.ts', [
         'export const MY_ACCOUNT_MY_DISCRIMINATOR = 42;',
-        'export function getMyAccountMyDiscriminatorBytes() { return getU64Encoder().encode(MY_ACCOUNT_MY_DISCRIMINATOR); }',
+        'export function getMyAccountMyDiscriminatorBytes(): ReadonlyUint8Array { return getU64Encoder().encode(MY_ACCOUNT_MY_DISCRIMINATOR); }',
         '(value) => ({ ...value, myDiscriminator: MY_ACCOUNT_MY_DISCRIMINATOR })',
     ]);
 });
@@ -139,10 +139,10 @@ test('it renders constants for account constant discriminators', async () => {
 
     // Then we expect the following constants and functions to be rendered.
     await renderMapContains(renderMap, 'accounts/myAccount.ts', [
-        'export const MY_ACCOUNT_DISCRIMINATOR = new Uint8Array([ 17, 17 ]);',
-        'export function getMyAccountDiscriminatorBytes() { return getBytesEncoder().encode(MY_ACCOUNT_DISCRIMINATOR); }',
-        'export const MY_ACCOUNT_DISCRIMINATOR2 = new Uint8Array([ 34, 34 ]);',
-        'export function getMyAccountDiscriminator2Bytes() { return getBytesEncoder().encode(MY_ACCOUNT_DISCRIMINATOR2); }',
+        'export const MY_ACCOUNT_DISCRIMINATOR: ReadonlyUint8Array = new Uint8Array([ 17, 17 ]);',
+        'export function getMyAccountDiscriminatorBytes(): ReadonlyUint8Array { return getBytesEncoder().encode(MY_ACCOUNT_DISCRIMINATOR); }',
+        'export const MY_ACCOUNT_DISCRIMINATOR2: ReadonlyUint8Array = new Uint8Array([ 34, 34 ]);',
+        'export function getMyAccountDiscriminator2Bytes(): ReadonlyUint8Array { return getBytesEncoder().encode(MY_ACCOUNT_DISCRIMINATOR2); }',
     ]);
 });
 

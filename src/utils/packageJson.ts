@@ -195,7 +195,7 @@ export function getUsedDependencyVersions(
     return usedDependencyVersion;
 }
 
-export function shouldUpdateRange(dependency: string, currentRange: string, requiredRange: string) {
+export function shouldUpdateRange(dependency: string, currentRange: string, requiredRange: string): boolean {
     try {
         // Check if currentRange is a subset of requiredRange
         // If yes, required is looser or equal, no update needed

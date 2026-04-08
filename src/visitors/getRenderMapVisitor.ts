@@ -7,7 +7,7 @@ import {
     getAllPdas,
     getAllPrograms,
 } from '@codama/nodes';
-import { createRenderMap, mergeRenderMaps } from '@codama/renderers-core';
+import { createRenderMap, mergeRenderMaps, RenderMap } from '@codama/renderers-core';
 import {
     extendVisitor,
     getByteSizeVisitor,
@@ -19,6 +19,7 @@ import {
     recordNodeStackVisitor,
     staticVisitor,
     visit,
+    Visitor,
 } from '@codama/visitors-core';
 
 import {
@@ -45,7 +46,12 @@ import {
 } from '../utils';
 import { getTypeManifestVisitor } from './getTypeManifestVisitor';
 
-export function getRenderMapVisitor(options: GetRenderMapOptions = {}) {
+export function getRenderMapVisitor(
+    options: GetRenderMapOptions = {},
+): Visitor<
+    RenderMap<Fragment>,
+    'accountNode' | 'definedTypeNode' | 'instructionNode' | 'pdaNode' | 'programNode' | 'rootNode'
+> {
     const linkables = new LinkableDictionary();
     const stack = new NodeStack();
 

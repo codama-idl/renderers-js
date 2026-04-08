@@ -11,7 +11,7 @@ import {
 } from '@codama/nodes';
 import { visit } from '@codama/visitors-core';
 
-import { Fragment, fragment, mergeFragments, RenderScope } from '../utils';
+import { Fragment, fragment, mergeFragments, RenderScope, use } from '../utils';
 
 export function getDiscriminatorConstantsFragment(
     scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
@@ -58,9 +58,10 @@ export function getConstantDiscriminatorConstantFragment(
     const suffix = index <= 0 ? '' : `_${index + 1}`;
 
     const name = camelCase(`${prefix}_discriminator${suffix}`);
-    const encoder = visit(discriminatorNode.constant.type, typeManifestVisitor).encoder;
+    const typeManifest = visit(discriminatorNode.constant.type, typeManifestVisitor);
+    const encoder = typeManifest.encoder;
     const value = visit(discriminatorNode.constant.value, typeManifestVisitor).value;
-    return getConstantFragment({ ...scope, encoder, name, value });
+    return getConstantFragment({ ...scope, encoder, name, value, valueType: typeManifest.strictType });
 }
 
 export function getFieldDiscriminatorConstantFragment(
@@ -78,9 +79,19 @@ export function getFieldDiscriminatorConstantFragment(
     }
 
     const name = camelCase(`${prefix}_${discriminatorNode.name}`);
-    const encoder = visit(field.type, typeManifestVisitor).encoder;
+    const typeManifest = visit(field.type, typeManifestVisitor);
+    const encoder = typeManifest.encoder;
     const value = visit(field.defaultValue, typeManifestVisitor).value;
-    return getConstantFragment({ ...scope, encoder, name, value });
+    const needsTypeAnnotation =
+        isNode(field.defaultValue, 'bytesValueNode') ||
+        (isNode(field.defaultValue, 'constantValueNode') && isNode(field.defaultValue.value, 'bytesValueNode'));
+    return getConstantFragment({
+        ...scope,
+        encoder,
+        name,
+        value,
+        ...(needsTypeAnnotation && { valueType: typeManifest.strictType }),
+    });
 }
 
 function getConstantFragment(
@@ -88,11 +99,14 @@ function getConstantFragment(
         encoder: Fragment;
         name: string;
         value: Fragment;
+        valueType?: Fragment;
     },
 ): Fragment {
-    const { encoder, name, nameApi, value } = scope;
+    const { encoder, name, nameApi, value, valueType } = scope;
     const constantName = nameApi.constant(name);
     const constantFunction = nameApi.constantFunction(name);
+    const readonlyUint8Array = use('type ReadonlyUint8Array', 'solanaCodecsCore');
+    const typeAnnotation = valueType ? fragment`: ${valueType}` : fragment``;
 
-    return fragment`export const ${constantName} = ${value};\n\nexport function ${constantFunction}() { return ${encoder}.encode(${constantName}); }`;
+    return fragment`export const ${constantName}${typeAnnotation} = ${value};\n\nexport function ${constantFunction}(): ${readonlyUint8Array} { return ${encoder}.encode(${constantName}); }`;
 }

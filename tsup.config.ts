@@ -9,13 +9,14 @@ type BuildOptions = {
     platform: Platform;
 };
 
-export default defineConfig([
+const config: ReturnType<typeof defineConfig> = defineConfig([
     getBuildConfig({ format: 'cjs', platform: 'node' }),
     getBuildConfig({ format: 'esm', platform: 'node' }),
     getBuildConfig({ format: 'cjs', platform: 'browser' }),
     getBuildConfig({ format: 'esm', platform: 'browser' }),
     getBuildConfig({ format: 'esm', platform: 'react-native' }),
 ]);
+export default config;
 
 function getBuildConfig(options: BuildOptions): TsupConfig {
     const { format, platform } = options;

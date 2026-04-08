@@ -27,7 +27,7 @@ import { DUMMY_PROGRAM_ADDRESS } from '../programs';
 
 export const INSTRUCTION3_DISCRIMINATOR = 42;
 
-export function getInstruction3DiscriminatorBytes() {
+export function getInstruction3DiscriminatorBytes(): ReadonlyUint8Array {
     return getU32Encoder().encode(INSTRUCTION3_DISCRIMINATOR);
 }
 

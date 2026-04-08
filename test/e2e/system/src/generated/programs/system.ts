@@ -312,7 +312,7 @@ export type SystemPluginRequirements = ClientWithRpc<GetAccountInfoApi & GetMult
     ClientWithTransactionSending;
 
 export function systemProgram() {
-    return <T extends SystemPluginRequirements>(client: T) => {
+    return <T extends SystemPluginRequirements>(client: T): T & { system: SystemPlugin } => {
         return {
             ...client,
             system: <SystemPlugin>{

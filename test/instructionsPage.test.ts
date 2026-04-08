@@ -433,7 +433,7 @@ test('it renders constants for instruction field discriminators', async () => {
     // And we expect the field default value to use that constant.
     await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
         'export const MY_INSTRUCTION_MY_DISCRIMINATOR = 42;',
-        'export function getMyInstructionMyDiscriminatorBytes() { return getU64Encoder().encode(MY_INSTRUCTION_MY_DISCRIMINATOR); }',
+        'export function getMyInstructionMyDiscriminatorBytes(): ReadonlyUint8Array { return getU64Encoder().encode(MY_INSTRUCTION_MY_DISCRIMINATOR); }',
         '(value) => ({ ...value, myDiscriminator: MY_INSTRUCTION_MY_DISCRIMINATOR })',
     ]);
 });
@@ -459,10 +459,10 @@ test('it renders constants for instruction constant discriminators', async () =>
 
     // Then we expect the following constants and functions to be rendered.
     await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
-        'export const MY_INSTRUCTION_DISCRIMINATOR = new Uint8Array([ 17, 17 ]);',
-        'export function getMyInstructionDiscriminatorBytes() { return getBytesEncoder().encode(MY_INSTRUCTION_DISCRIMINATOR); }',
-        'export const MY_INSTRUCTION_DISCRIMINATOR2 = new Uint8Array([ 34, 34 ]);',
-        'export function getMyInstructionDiscriminator2Bytes() { return getBytesEncoder().encode(MY_INSTRUCTION_DISCRIMINATOR2); }',
+        'export const MY_INSTRUCTION_DISCRIMINATOR: ReadonlyUint8Array = new Uint8Array([ 17, 17 ]);',
+        'export function getMyInstructionDiscriminatorBytes(): ReadonlyUint8Array { return getBytesEncoder().encode(MY_INSTRUCTION_DISCRIMINATOR); }',
+        'export const MY_INSTRUCTION_DISCRIMINATOR2: ReadonlyUint8Array = new Uint8Array( [34, 34] );',
+        'export function getMyInstructionDiscriminator2Bytes(): ReadonlyUint8Array { return getBytesEncoder().encode(MY_INSTRUCTION_DISCRIMINATOR2); }',
     ]);
 });
 

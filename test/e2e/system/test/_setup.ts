@@ -2,12 +2,14 @@ import {
   type Address,
   type TransactionMessage,
   type Commitment,
+  type Signature,
   type Rpc,
   type RpcSubscriptions,
   type SolanaRpcApi,
   type SolanaRpcSubscriptionsApi,
   type TransactionMessageWithBlockhashLifetime,
   type TransactionMessageWithFeePayer,
+  type KeyPairSigner,
   type TransactionSigner,
   airdropFactory,
   appendTransactionMessageInstruction,
@@ -46,7 +48,7 @@ export const createDefaultSolanaClient = (): Client => {
 export const generateKeyPairSignerWithSol = async (
   client: Client,
   putativeLamports: bigint = 1_000_000_000n
-) => {
+): Promise<KeyPairSigner> => {
   const signer = await generateKeyPairSigner();
   await airdropFactory(client)({
     recipientAddress: signer.address,
@@ -80,7 +82,7 @@ export const signAndSendTransaction = async (
     TransactionMessageWithFeePayer &
     TransactionMessageWithBlockhashLifetime,
   commitment: Commitment = 'confirmed'
-) => {
+): Promise<Signature> => {
   const signedTransaction =
     await signTransactionMessageWithSigners(transactionMessage);
   const signature = getSignatureFromTransaction(signedTransaction);
@@ -92,7 +94,7 @@ export const signAndSendTransaction = async (
   return signature;
 };
 
-export const getBalance = async (client: Client, address: Address) =>
+export const getBalance = async (client: Client, address: Address): Promise<bigint> =>
   (await client.rpc.getBalance(address, { commitment: 'confirmed' }).send())
     .value;
 
@@ -101,7 +103,7 @@ export const createNonceAccount = async (
   payer: TransactionSigner,
   nonce: TransactionSigner,
   nonceAuthority: TransactionSigner
-) => {
+): Promise<void> => {
   const space = BigInt(getNonceSize());
   const rent = await client.rpc.getMinimumBalanceForRentExemption(space).send();
   const createAccount = getCreateAccountInstruction({

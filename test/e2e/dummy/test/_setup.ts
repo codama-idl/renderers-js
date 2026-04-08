@@ -1,12 +1,14 @@
 import {
   type TransactionMessage,
   type Commitment,
+  type Signature,
   type Rpc,
   type RpcSubscriptions,
   type SolanaRpcApi,
   type SolanaRpcSubscriptionsApi,
   type TransactionMessageWithBlockhashLifetime,
   type TransactionMessageWithFeePayer,
+  type KeyPairSigner,
   type TransactionSigner,
   airdropFactory,
   assertIsSendableTransaction,
@@ -38,7 +40,7 @@ export const createDefaultSolanaClient = (): Client => {
 export const generateKeyPairSignerWithSol = async (
   client: Client,
   putativeLamports: bigint = 1_000_000_000n
-) => {
+): Promise<KeyPairSigner> => {
   const signer = await generateKeyPairSigner();
   await airdropFactory(client)({
     recipientAddress: signer.address,
@@ -72,7 +74,7 @@ export const signAndSendTransaction = async (
     TransactionMessageWithFeePayer &
     TransactionMessageWithBlockhashLifetime,
   commitment: Commitment = 'confirmed'
-) => {
+): Promise<Signature> => {
   const signedTransaction =
     await signTransactionMessageWithSigners(transactionMessage);
   const signature = getSignatureFromTransaction(signedTransaction);

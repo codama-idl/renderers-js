@@ -23,7 +23,7 @@ import {
     recordNodeStackVisitor,
     staticVisitor,
     visit,
-    Visitor,
+    type Visitor,
 } from '@codama/visitors-core';
 
 import {
@@ -32,12 +32,12 @@ import {
     fragment,
     getBytesFromBytesValueNode,
     getDocblockFragment,
-    GetImportFromFunction,
+    type GetImportFromFunction,
     mergeFragments,
     mergeTypeManifests,
-    NameApi,
-    ParsedCustomDataOptions,
-    TypeManifest,
+    type NameApi,
+    type ParsedCustomDataOptions,
+    type TypeManifest,
     typeManifest,
     use,
 } from '../utils';
@@ -52,7 +52,57 @@ export function getTypeManifestVisitor(input: {
     nameApi: NameApi;
     nonScalarEnums: CamelCaseString[];
     stack?: NodeStack;
-}) {
+}): Visitor<
+    TypeManifest,
+    | 'accountNode'
+    | 'amountTypeNode'
+    | 'arrayTypeNode'
+    | 'arrayValueNode'
+    | 'booleanTypeNode'
+    | 'booleanValueNode'
+    | 'bytesTypeNode'
+    | 'bytesValueNode'
+    | 'constantValueNode'
+    | 'dateTimeTypeNode'
+    | 'definedTypeLinkNode'
+    | 'definedTypeNode'
+    | 'enumEmptyVariantTypeNode'
+    | 'enumStructVariantTypeNode'
+    | 'enumTupleVariantTypeNode'
+    | 'enumTypeNode'
+    | 'enumValueNode'
+    | 'fixedSizeTypeNode'
+    | 'hiddenPrefixTypeNode'
+    | 'hiddenSuffixTypeNode'
+    | 'instructionNode'
+    | 'mapEntryValueNode'
+    | 'mapTypeNode'
+    | 'mapValueNode'
+    | 'noneValueNode'
+    | 'numberTypeNode'
+    | 'numberValueNode'
+    | 'optionTypeNode'
+    | 'postOffsetTypeNode'
+    | 'preOffsetTypeNode'
+    | 'publicKeyTypeNode'
+    | 'publicKeyValueNode'
+    | 'remainderOptionTypeNode'
+    | 'sentinelTypeNode'
+    | 'setTypeNode'
+    | 'setValueNode'
+    | 'sizePrefixTypeNode'
+    | 'solAmountTypeNode'
+    | 'someValueNode'
+    | 'stringTypeNode'
+    | 'stringValueNode'
+    | 'structFieldTypeNode'
+    | 'structFieldValueNode'
+    | 'structTypeNode'
+    | 'structValueNode'
+    | 'tupleTypeNode'
+    | 'tupleValueNode'
+    | 'zeroableOptionTypeNode'
+> {
     const { nameApi, linkables, nonScalarEnums, customAccountData, customInstructionData, getImportFrom } = input;
     const stack = input.stack ?? new NodeStack();
     let parentName: { loose: string; strict: string } | null = null;

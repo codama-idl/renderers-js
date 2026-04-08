@@ -12,7 +12,7 @@ const SHARED_OPTIONS: Options = {
   treeshake: true,
 };
 
-export default defineConfig(() => [
+const config: ReturnType<typeof defineConfig> = defineConfig(() => [
   // Source.
   { ...SHARED_OPTIONS, format: 'cjs' },
   { ...SHARED_OPTIONS, format: 'esm' },
@@ -26,3 +26,4 @@ export default defineConfig(() => [
     outDir: './dist/test',
   },
 ]);
+export default config;

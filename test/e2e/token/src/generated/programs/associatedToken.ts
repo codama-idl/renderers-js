@@ -135,7 +135,7 @@ export type AssociatedTokenPluginRequirements = ClientWithPayer &
     ClientWithTransactionSending;
 
 export function associatedTokenProgram() {
-    return <T extends AssociatedTokenPluginRequirements>(client: T) => {
+    return <T extends AssociatedTokenPluginRequirements>(client: T): T & { associatedToken: AssociatedTokenPlugin } => {
         return {
             ...client,
             associatedToken: <AssociatedTokenPlugin>{
