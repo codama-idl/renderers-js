@@ -26,7 +26,7 @@ function getBuildConfig(options: BuildOptions): TsupConfig {
             __NODEJS__: `${platform === 'node'}`,
             __REACTNATIVE__: `${platform === 'react-native'}`,
             __TEST__: 'false',
-            __VERSION__: `"${env.npm_package_version}"`,
+            __VERSION__: `"${env['npm_package_version']}"`,
         },
         entry: [`./src/index.ts`],
         esbuildOptions(options) {
