@@ -208,7 +208,7 @@ export function wenTransferGuardProgram() {
     ): T & { wenTransferGuard: WenTransferGuardPlugin } => {
         return {
             ...client,
-            wenTransferGuard: <WenTransferGuardPlugin>{
+            wenTransferGuard: {
                 accounts: { guardV1: addSelfFetchFunctions(client, getGuardV1Codec()) },
                 instructions: {
                     createGuard: input =>

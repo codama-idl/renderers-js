@@ -181,7 +181,7 @@ export function dummyProgram() {
     return <T extends DummyPluginRequirements>(client: T): T & { dummy: DummyPlugin } => {
         return {
             ...client,
-            dummy: <DummyPlugin>{
+            dummy: {
                 instructions: {
                     instruction1: input => addSelfPlanAndSendFunctions(client, getInstruction1Instruction(input)),
                     instruction2: input => addSelfPlanAndSendFunctions(client, getInstruction2Instruction(input)),
