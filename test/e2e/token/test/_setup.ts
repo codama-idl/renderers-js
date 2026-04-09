@@ -20,6 +20,7 @@ import {
   createTransactionMessage,
   generateKeyPairSigner,
   getSignatureFromTransaction,
+  type Lamports,
   lamports,
   pipe,
   sendAndConfirmTransactionFactory,
@@ -97,7 +98,7 @@ export const signAndSendTransaction = async (
   return signature;
 };
 
-export const getBalance = async (client: Client, address: Address): Promise<bigint> =>
+export const getBalance = async (client: Client, address: Address): Promise<Lamports> =>
   (await client.rpc.getBalance(address, { commitment: 'confirmed' }).send())
     .value;
 
