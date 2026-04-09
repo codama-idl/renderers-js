@@ -3,7 +3,7 @@ import path from 'node:path';
 import { defineConfig, type Options } from 'tsup';
 
 const SHARED_OPTIONS: Options = {
-  define: { __VERSION__: `"${env.npm_package_version}"` },
+  define: { __VERSION__: `"${env['npm_package_version']}"` },
   entry: ['./src/index.ts'],
   inject: [path.resolve(__dirname, 'env-shim.ts')],
   outDir: './dist/src',

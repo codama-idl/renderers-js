@@ -58,7 +58,7 @@ function getErrorMessagesFragment(scope: Pick<RenderScope, 'nameApi'> & { progra
     );
 
     return fragment`let ${mapName}: Record<${errorUnionType}, string> | undefined;
-if (process.env.NODE_ENV !== 'production') {
+if (process.env['NODE_ENV'] !== 'production') {
   ${mapName} = { ${messageEntries} };
 }`;
 }
@@ -69,7 +69,7 @@ function getErrorMessageFunctionFragment(scope: Pick<RenderScope, 'nameApi'> & {
     const messageMapName = scope.nameApi.programErrorMessagesMap(scope.programNode.name);
 
     return fragment`export function ${functionName}(code: ${errorUnionType}): string {
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env['NODE_ENV'] !== 'production') {
     return (${messageMapName} as Record<${errorUnionType}, string>)[code];
   }
 

@@ -42,7 +42,7 @@ export type WenTransferGuardError =
     | typeof WEN_TRANSFER_GUARD_ERROR__TRANSFER_AMOUNT_RULE_ENFORCE_FAILED;
 
 let wenTransferGuardErrorMessages: Record<WenTransferGuardError, string> | undefined;
-if (process.env.NODE_ENV !== 'production') {
+if (process.env['NODE_ENV'] !== 'production') {
     wenTransferGuardErrorMessages = {
         [WEN_TRANSFER_GUARD_ERROR__CPI_RULE_ENFORCEMENT_FAILED]: `Cpi Rule Enforcement Failed`,
         [WEN_TRANSFER_GUARD_ERROR__GUARD_TOKEN_AMOUNT_SHOULD_BE_AT_LEAST_ONE]: `Guard token amount should be at least 1`,
@@ -56,7 +56,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 export function getWenTransferGuardErrorMessage(code: WenTransferGuardError): string {
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env['NODE_ENV'] !== 'production') {
         return (wenTransferGuardErrorMessages as Record<WenTransferGuardError, string>)[code];
     }
 

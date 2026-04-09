@@ -11,6 +11,7 @@
         "lib": [],
         "moduleResolution": "node",
         "noFallthroughCasesInSwitch": true,
+        "noPropertyAccessFromIndexSignature": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "preserveWatchOutput": true,
