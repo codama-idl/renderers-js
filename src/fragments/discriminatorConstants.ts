@@ -94,10 +94,7 @@ export function getFieldDiscriminatorConstantFragment(
 }
 
 function resolveDiscriminatorValue(rawValue: Fragment, isNumberValue: boolean, strictType: Fragment) {
-    let value = rawValue;
-    if (strictType.content === 'bigint' && isNumberValue) {
-        value = Object.freeze({ ...value, content: `${value.content}n` });
-    }
+    const value = strictType.content === 'bigint' && isNumberValue ? fragment`${rawValue}n` : rawValue;
     const needsTypeAnnotation = !['string', 'number', 'boolean', 'bigint'].includes(strictType.content);
     return { value, valueType: needsTypeAnnotation ? strictType : undefined };
 }
