@@ -95,7 +95,7 @@ test('it renders constants for account field discriminators', async () => {
                         defaultValue: numberValueNode(42),
                         defaultValueStrategy: 'omitted',
                         name: 'myDiscriminator',
-                        type: numberTypeNode('u64'),
+                        type: numberTypeNode('u8'),
                     }),
                 ]),
                 discriminators: [fieldDiscriminatorNode('myDiscriminator')],
@@ -113,8 +113,34 @@ test('it renders constants for account field discriminators', async () => {
     // And we expect the field default value to use that constant.
     await renderMapContains(renderMap, 'accounts/myAccount.ts', [
         'export const MY_ACCOUNT_MY_DISCRIMINATOR = 42;',
-        'export function getMyAccountMyDiscriminatorBytes(): ReadonlyUint8Array { return getU64Encoder().encode(MY_ACCOUNT_MY_DISCRIMINATOR); }',
+        'export function getMyAccountMyDiscriminatorBytes(): ReadonlyUint8Array { return getU8Encoder().encode(MY_ACCOUNT_MY_DISCRIMINATOR); }',
         '(value) => ({ ...value, myDiscriminator: MY_ACCOUNT_MY_DISCRIMINATOR })',
+    ]);
+});
+
+test('it renders constants for bigint account field discriminators', async () => {
+    const node = programNode({
+        accounts: [
+            accountNode({
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: numberValueNode(7),
+                        defaultValueStrategy: 'omitted',
+                        name: 'myDiscriminator',
+                        type: numberTypeNode('u64'),
+                    }),
+                ]),
+                discriminators: [fieldDiscriminatorNode('myDiscriminator')],
+                name: 'myAccount',
+            }),
+        ],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+    const renderMap = visit(node, getRenderMapVisitor());
+    await renderMapContains(renderMap, 'accounts/myAccount.ts', [
+        'export const MY_ACCOUNT_MY_DISCRIMINATOR = 7n;',
+        'export function getMyAccountMyDiscriminatorBytes(): ReadonlyUint8Array { return getU64Encoder().encode(MY_ACCOUNT_MY_DISCRIMINATOR); }',
     ]);
 });
 

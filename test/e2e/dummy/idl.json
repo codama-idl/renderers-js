@@ -177,9 +177,54 @@
           }
         ],
         "remainingAccounts": []
+      },
+      {
+        "kind": "instructionNode",
+        "name": "instruction10",
+        "optionalAccountStrategy": "programId",
+        "docs": ["Testing instructions with enum field discriminator"],
+        "accounts": [],
+        "arguments": [
+          {
+            "kind": "instructionArgumentNode",
+            "name": "discriminator",
+            "type": {
+              "kind": "definedTypeLinkNode",
+              "name": "key"
+            },
+            "docs": [],
+            "defaultValue": {
+              "kind": "enumValueNode",
+              "enum": { "kind": "definedTypeLinkNode", "name": "key" },
+              "variant": "asset"
+            },
+            "defaultValueStrategy": "omitted"
+          }
+        ],
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "name": "discriminator",
+            "offset": 0
+          }
+        ]
       }
     ],
-    "definedTypes": [],
+    "definedTypes": [
+      {
+        "kind": "definedTypeNode",
+        "name": "key",
+        "type": {
+          "kind": "enumTypeNode",
+          "variants": [
+            { "kind": "enumEmptyVariantTypeNode", "name": "uninitialized" },
+            { "kind": "enumEmptyVariantTypeNode", "name": "asset" }
+          ],
+          "size": { "kind": "numberTypeNode", "format": "u8", "endian": "le" }
+        },
+        "docs": []
+      }
+    ],
     "errors": [],
     "name": "dummy",
     "prefix": "",

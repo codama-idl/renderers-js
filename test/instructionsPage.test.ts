@@ -1,10 +1,19 @@
 import {
     accountValueNode,
     argumentValueNode,
+    booleanTypeNode,
+    booleanValueNode,
     constantDiscriminatorNode,
     constantPdaSeedNodeFromString,
+    constantValueNode,
     constantValueNodeFromBytes,
+    definedTypeLinkNode,
+    definedTypeNode,
+    enumEmptyVariantTypeNode,
+    enumTypeNode,
+    enumValueNode,
     fieldDiscriminatorNode,
+    fixedSizeTypeNode,
     instructionAccountNode,
     instructionArgumentNode,
     instructionNode,
@@ -16,6 +25,8 @@ import {
     programNode,
     publicKeyTypeNode,
     resolverValueNode,
+    stringTypeNode,
+    stringValueNode,
     variablePdaSeedNode,
 } from '@codama/nodes';
 import { getFromRenderMap } from '@codama/renderers-core';
@@ -415,7 +426,7 @@ test('it renders constants for instruction field discriminators', async () => {
                         defaultValue: numberValueNode(42),
                         defaultValueStrategy: 'omitted',
                         name: 'myDiscriminator',
-                        type: numberTypeNode('u64'),
+                        type: numberTypeNode('u8'),
                     }),
                 ],
                 discriminators: [fieldDiscriminatorNode('myDiscriminator')],
@@ -433,8 +444,133 @@ test('it renders constants for instruction field discriminators', async () => {
     // And we expect the field default value to use that constant.
     await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
         'export const MY_INSTRUCTION_MY_DISCRIMINATOR = 42;',
-        'export function getMyInstructionMyDiscriminatorBytes(): ReadonlyUint8Array { return getU64Encoder().encode(MY_INSTRUCTION_MY_DISCRIMINATOR); }',
+        'export function getMyInstructionMyDiscriminatorBytes(): ReadonlyUint8Array { return getU8Encoder().encode(MY_INSTRUCTION_MY_DISCRIMINATOR); }',
         '(value) => ({ ...value, myDiscriminator: MY_INSTRUCTION_MY_DISCRIMINATOR })',
+    ]);
+});
+
+test('it renders constants for boolean field discriminators', async () => {
+    const node = programNode({
+        instructions: [
+            instructionNode({
+                arguments: [
+                    instructionArgumentNode({
+                        defaultValue: booleanValueNode(true),
+                        defaultValueStrategy: 'omitted',
+                        name: 'myDiscriminator',
+                        type: booleanTypeNode(),
+                    }),
+                ],
+                discriminators: [fieldDiscriminatorNode('myDiscriminator')],
+                name: 'myInstruction',
+            }),
+        ],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+    const renderMap = visit(node, getRenderMapVisitor());
+    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+        'export const MY_INSTRUCTION_MY_DISCRIMINATOR = true;',
+    ]);
+});
+
+test('it renders constants for string field discriminators', async () => {
+    const node = programNode({
+        instructions: [
+            instructionNode({
+                arguments: [
+                    instructionArgumentNode({
+                        defaultValue: stringValueNode('hello'),
+                        defaultValueStrategy: 'omitted',
+                        name: 'myDiscriminator',
+                        type: fixedSizeTypeNode(stringTypeNode('utf8'), 5),
+                    }),
+                ],
+                discriminators: [fieldDiscriminatorNode('myDiscriminator')],
+                name: 'myInstruction',
+            }),
+        ],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+    const renderMap = visit(node, getRenderMapVisitor());
+    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+        "export const MY_INSTRUCTION_MY_DISCRIMINATOR = 'hello';",
+    ]);
+});
+
+test('it renders constants for enum field discriminators', async () => {
+    const node = programNode({
+        definedTypes: [
+            definedTypeNode({
+                name: 'key',
+                type: enumTypeNode([enumEmptyVariantTypeNode('Uninitialized'), enumEmptyVariantTypeNode('Asset')]),
+            }),
+        ],
+        instructions: [
+            instructionNode({
+                arguments: [
+                    instructionArgumentNode({
+                        defaultValue: enumValueNode('key', 'Asset'),
+                        defaultValueStrategy: 'omitted',
+                        name: 'myDiscriminator',
+                        type: definedTypeLinkNode('Key'),
+                    }),
+                ],
+                discriminators: [fieldDiscriminatorNode('myDiscriminator')],
+                name: 'myInstruction',
+            }),
+        ],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+    const renderMap = visit(node, getRenderMapVisitor());
+    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+        'export const MY_INSTRUCTION_MY_DISCRIMINATOR: Key = Key.Asset;',
+    ]);
+});
+
+test('it renders constants for bigint field discriminators', async () => {
+    const node = programNode({
+        instructions: [
+            instructionNode({
+                arguments: [
+                    instructionArgumentNode({
+                        defaultValue: numberValueNode(7),
+                        defaultValueStrategy: 'omitted',
+                        name: 'myDiscriminator',
+                        type: numberTypeNode('u64'),
+                    }),
+                ],
+                discriminators: [fieldDiscriminatorNode('myDiscriminator')],
+                name: 'myInstruction',
+            }),
+        ],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+    const renderMap = visit(node, getRenderMapVisitor());
+    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+        'export const MY_INSTRUCTION_MY_DISCRIMINATOR = 7n;',
+    ]);
+});
+
+test('it renders constants for bigint constant discriminators', async () => {
+    const node = programNode({
+        instructions: [
+            instructionNode({
+                discriminators: [
+                    constantDiscriminatorNode(constantValueNode(numberTypeNode('u64'), numberValueNode(7))),
+                ],
+                name: 'myInstruction',
+            }),
+        ],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+    const renderMap = visit(node, getRenderMapVisitor());
+    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+        'export const MY_INSTRUCTION_DISCRIMINATOR = 7n;',
     ]);
 });
 

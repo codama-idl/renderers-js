@@ -60,8 +60,12 @@ export function getConstantDiscriminatorConstantFragment(
     const name = camelCase(`${prefix}_discriminator${suffix}`);
     const typeManifest = visit(discriminatorNode.constant.type, typeManifestVisitor);
     const encoder = typeManifest.encoder;
-    const value = visit(discriminatorNode.constant.value, typeManifestVisitor).value;
-    return getConstantFragment({ ...scope, encoder, name, value, valueType: typeManifest.strictType });
+    const { value, valueType } = resolveDiscriminatorValue(
+        visit(discriminatorNode.constant.value, typeManifestVisitor).value,
+        isNode(discriminatorNode.constant.value, 'numberValueNode'),
+        typeManifest.strictType,
+    );
+    return getConstantFragment({ ...scope, encoder, name, value, valueType });
 }
 
 export function getFieldDiscriminatorConstantFragment(
@@ -81,17 +85,21 @@ export function getFieldDiscriminatorConstantFragment(
     const name = camelCase(`${prefix}_${discriminatorNode.name}`);
     const typeManifest = visit(field.type, typeManifestVisitor);
     const encoder = typeManifest.encoder;
-    const value = visit(field.defaultValue, typeManifestVisitor).value;
-    const needsTypeAnnotation =
-        isNode(field.defaultValue, 'bytesValueNode') ||
-        (isNode(field.defaultValue, 'constantValueNode') && isNode(field.defaultValue.value, 'bytesValueNode'));
-    return getConstantFragment({
-        ...scope,
-        encoder,
-        name,
-        value,
-        ...(needsTypeAnnotation && { valueType: typeManifest.strictType }),
-    });
+    const { value, valueType } = resolveDiscriminatorValue(
+        visit(field.defaultValue, typeManifestVisitor).value,
+        isNode(field.defaultValue, 'numberValueNode'),
+        typeManifest.strictType,
+    );
+    return getConstantFragment({ ...scope, encoder, name, value, valueType });
+}
+
+function resolveDiscriminatorValue(rawValue: Fragment, isNumberValue: boolean, strictType: Fragment) {
+    let value = rawValue;
+    if (strictType.content === 'bigint' && isNumberValue) {
+        value = Object.freeze({ ...value, content: `${value.content}n` });
+    }
+    const needsTypeAnnotation = !['string', 'number', 'boolean', 'bigint'].includes(strictType.content);
+    return { value, valueType: needsTypeAnnotation ? strictType : undefined };
 }
 
 function getConstantFragment(

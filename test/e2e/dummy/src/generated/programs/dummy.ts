@@ -23,6 +23,7 @@ import {
 } from '@solana/kit';
 import { addSelfPlanAndSendFunctions, type SelfPlanAndSendFunctions } from '@solana/kit/program-client-core';
 import {
+    getInstruction10Instruction,
     getInstruction1Instruction,
     getInstruction2Instruction,
     getInstruction3Instruction,
@@ -32,6 +33,7 @@ import {
     getInstruction7Instruction,
     getInstruction8Instruction,
     getInstruction9Instruction,
+    parseInstruction10Instruction,
     parseInstruction1Instruction,
     parseInstruction2Instruction,
     parseInstruction3Instruction,
@@ -41,6 +43,7 @@ import {
     parseInstruction7Instruction,
     parseInstruction8Instruction,
     parseInstruction9Instruction,
+    type Instruction10Input,
     type Instruction1Input,
     type Instruction2Input,
     type Instruction3Input,
@@ -50,6 +53,7 @@ import {
     type Instruction7Input,
     type Instruction8Input,
     type Instruction9Input,
+    type ParsedInstruction10Instruction,
     type ParsedInstruction1Instruction,
     type ParsedInstruction2Instruction,
     type ParsedInstruction3Instruction,
@@ -60,6 +64,7 @@ import {
     type ParsedInstruction8Instruction,
     type ParsedInstruction9Instruction,
 } from '../instructions';
+import { getKeyEncoder, Key } from '../types';
 
 export const DUMMY_PROGRAM_ADDRESS =
     'Dummy1111111111111111111111111111111111' as Address<'Dummy1111111111111111111111111111111111'>;
@@ -74,6 +79,7 @@ export enum DummyInstruction {
     Instruction7,
     Instruction8,
     Instruction9,
+    Instruction10,
 }
 
 export function identifyDummyInstruction(
@@ -82,6 +88,9 @@ export function identifyDummyInstruction(
     const data = 'data' in instruction ? instruction.data : instruction;
     if (containsBytes(data, getU32Encoder().encode(42), 0)) {
         return DummyInstruction.Instruction3;
+    }
+    if (containsBytes(data, getKeyEncoder().encode(Key.Asset), 0)) {
+        return DummyInstruction.Instruction10;
     }
     throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION, {
         instructionData: data,
@@ -98,7 +107,8 @@ export type ParsedDummyInstruction<TProgram extends string = 'Dummy1111111111111
     | ({ instructionType: DummyInstruction.Instruction6 } & ParsedInstruction6Instruction<TProgram>)
     | ({ instructionType: DummyInstruction.Instruction7 } & ParsedInstruction7Instruction<TProgram>)
     | ({ instructionType: DummyInstruction.Instruction8 } & ParsedInstruction8Instruction<TProgram>)
-    | ({ instructionType: DummyInstruction.Instruction9 } & ParsedInstruction9Instruction<TProgram>);
+    | ({ instructionType: DummyInstruction.Instruction9 } & ParsedInstruction9Instruction<TProgram>)
+    | ({ instructionType: DummyInstruction.Instruction10 } & ParsedInstruction10Instruction<TProgram>);
 
 export function parseDummyInstruction<TProgram extends string>(
     instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
@@ -134,6 +144,9 @@ export function parseDummyInstruction<TProgram extends string>(
         case DummyInstruction.Instruction9: {
             assertIsInstructionWithAccounts(instruction);
             return { instructionType: DummyInstruction.Instruction9, ...parseInstruction9Instruction(instruction) };
+        }
+        case DummyInstruction.Instruction10: {
+            return { instructionType: DummyInstruction.Instruction10, ...parseInstruction10Instruction(instruction) };
         }
         default:
             throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE, {
@@ -173,6 +186,9 @@ export type DummyPluginInstructions = {
     instruction9: (
         input: MakeOptional<Instruction9Input, 'authority' | 'authorityArg'>,
     ) => ReturnType<typeof getInstruction9Instruction> & SelfPlanAndSendFunctions;
+    instruction10: (
+        input: Instruction10Input,
+    ) => ReturnType<typeof getInstruction10Instruction> & SelfPlanAndSendFunctions;
 };
 
 export type DummyPluginRequirements = ClientWithPayer & ClientWithTransactionPlanning & ClientWithTransactionSending;
@@ -200,6 +216,7 @@ export function dummyProgram() {
                                 authorityArg: input.authorityArg ?? client.payer.address,
                             }),
                         ),
+                    instruction10: input => addSelfPlanAndSendFunctions(client, getInstruction10Instruction(input)),
                 },
             },
         };
