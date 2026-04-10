@@ -200,7 +200,7 @@ test('it renders instruction accounts with linked PDAs as default value', async 
             "accounts.counter.value = await findCounterPda( { authority: getAddressFromResolvedInstructionAccount ( 'authority', accounts.authority.value ) } ); " +
             '}',
     ]);
-    await renderMapContainsImports(renderMap, 'instructions/increment.ts', { '../pdas': ['findCounterPda'] });
+    await renderMapContainsImports(renderMap, 'instructions/increment.ts', { '../pdas/index.js': ['findCounterPda'] });
 });
 
 test('it renders instruction accounts with linked PDA default values that point to another account as the program', async () => {
@@ -248,7 +248,7 @@ test('it renders instruction accounts with linked PDA default values that point 
             "accounts.counter.value = await findCounterPda( { authority: getAddressFromResolvedInstructionAccount ( 'authority', accounts.authority.value ) }, { programAddress: getAddressFromResolvedInstructionAccount ( 'myProgram', accounts.myProgram.value ) } ); " +
             '}',
     ]);
-    await renderMapContainsImports(renderMap, 'instructions/increment.ts', { '../pdas': ['findCounterPda'] });
+    await renderMapContainsImports(renderMap, 'instructions/increment.ts', { '../pdas/index.js': ['findCounterPda'] });
 });
 
 test('it renders instruction accounts with inlined PDAs as default value', async () => {

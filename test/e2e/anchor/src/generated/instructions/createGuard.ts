@@ -52,7 +52,7 @@ import {
     getAddressFromResolvedInstructionAccount,
     type ResolvedInstructionAccount,
 } from '@solana/kit/program-client-core';
-import { WEN_TRANSFER_GUARD_PROGRAM_ADDRESS } from '../programs';
+import { WEN_TRANSFER_GUARD_PROGRAM_ADDRESS } from '../programs/index.js';
 import {
     getCpiRuleDecoder,
     getCpiRuleEncoder,
@@ -66,7 +66,7 @@ import {
     type MetadataAdditionalFieldRuleArgs,
     type TransferAmountRule,
     type TransferAmountRuleArgs,
-} from '../types';
+} from '../types/index.js';
 
 export const CREATE_GUARD_DISCRIMINATOR = new Uint8Array([251, 254, 17, 198, 219, 218, 154, 99]);
 

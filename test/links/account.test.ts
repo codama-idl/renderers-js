@@ -27,7 +27,7 @@ test('it imports functions from the linked account', async () => {
 
     // And we expect the following imports.
     await renderMapContainsImports(renderMap, 'instructions/createCounter.ts', {
-        '../accounts': ['getCounterSize'],
+        '../accounts/index.js': ['getCounterSize'],
     });
 });
 
@@ -60,6 +60,6 @@ test('it can override the import of a linked account', async () => {
 
     // And we expect the imports to be overridden.
     await renderMapContainsImports(renderMap, 'instructions/createCounter.ts', {
-        '../../hooked': ['getCounterSize'],
+        '../../hooked.js': ['getCounterSize'],
     });
 });

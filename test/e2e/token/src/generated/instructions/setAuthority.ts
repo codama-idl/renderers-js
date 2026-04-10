@@ -38,8 +38,13 @@ import {
     type WritableAccount,
 } from '@solana/kit';
 import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
-import { TOKEN_PROGRAM_ADDRESS } from '../programs';
-import { getAuthorityTypeDecoder, getAuthorityTypeEncoder, type AuthorityType, type AuthorityTypeArgs } from '../types';
+import { TOKEN_PROGRAM_ADDRESS } from '../programs/index.js';
+import {
+    getAuthorityTypeDecoder,
+    getAuthorityTypeEncoder,
+    type AuthorityType,
+    type AuthorityTypeArgs,
+} from '../types/index.js';
 
 export const SET_AUTHORITY_DISCRIMINATOR = 6;
 

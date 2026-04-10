@@ -38,7 +38,7 @@ import {
     type WritableAccount,
 } from '@solana/kit';
 import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
-import { SYSTEM_PROGRAM_ADDRESS } from '../programs';
+import { SYSTEM_PROGRAM_ADDRESS } from '../programs/index.js';
 
 export const ALLOCATE_WITH_SEED_DISCRIMINATOR = 9;
 

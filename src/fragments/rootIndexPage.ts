@@ -23,12 +23,12 @@ export function getRootIndexPageFragment(scope: {
 
     return mergeFragments(
         [
-            scope.accountsToExport.length > 0 ? getExportAllFragment('./accounts') : undefined,
-            programsWithErrorsToExport.length > 0 ? getExportAllFragment('./errors') : undefined,
-            scope.instructionsToExport.length > 0 ? getExportAllFragment('./instructions') : undefined,
-            scope.pdasToExport.length > 0 ? getExportAllFragment('./pdas') : undefined,
-            scope.programsToExport.length > 0 ? getExportAllFragment('./programs') : undefined,
-            scope.definedTypesToExport.length > 0 ? getExportAllFragment('./types') : undefined,
+            scope.accountsToExport.length > 0 ? getExportAllFragment('./accounts/index') : undefined,
+            programsWithErrorsToExport.length > 0 ? getExportAllFragment('./errors/index') : undefined,
+            scope.instructionsToExport.length > 0 ? getExportAllFragment('./instructions/index') : undefined,
+            scope.pdasToExport.length > 0 ? getExportAllFragment('./pdas/index') : undefined,
+            scope.programsToExport.length > 0 ? getExportAllFragment('./programs/index') : undefined,
+            scope.definedTypesToExport.length > 0 ? getExportAllFragment('./types/index') : undefined,
         ],
         cs => cs.join('\n'),
     );

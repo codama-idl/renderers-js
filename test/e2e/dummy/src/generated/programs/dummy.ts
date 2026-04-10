@@ -59,7 +59,7 @@ import {
     type ParsedInstruction7Instruction,
     type ParsedInstruction8Instruction,
     type ParsedInstruction9Instruction,
-} from '../instructions';
+} from '../instructions/index.js';
 
 export const DUMMY_PROGRAM_ADDRESS =
     'Dummy1111111111111111111111111111111111' as Address<'Dummy1111111111111111111111111111111111'>;

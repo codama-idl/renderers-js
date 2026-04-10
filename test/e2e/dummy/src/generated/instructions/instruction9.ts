@@ -26,7 +26,7 @@ import {
     type ReadonlyUint8Array,
 } from '@solana/kit';
 import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
-import { DUMMY_PROGRAM_ADDRESS } from '../programs';
+import { DUMMY_PROGRAM_ADDRESS } from '../programs/index.js';
 
 export type Instruction9Instruction<
     TProgram extends string = typeof DUMMY_PROGRAM_ADDRESS,

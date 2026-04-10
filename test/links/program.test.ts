@@ -44,7 +44,7 @@ test('it imports constants from the linked program', async () => {
 
     // And we expect the following imports.
     await renderMapContainsImports(renderMap, 'instructions/myInstruction.ts', {
-        '../programs': ['SOME_OTHER_PROGRAM_PROGRAM_ADDRESS'],
+        '../programs/index.js': ['SOME_OTHER_PROGRAM_PROGRAM_ADDRESS'],
     });
 });
 
@@ -87,6 +87,6 @@ test('it can override the import of a linked account', async () => {
 
     // And we expect the imports to be overridden.
     await renderMapContainsImports(renderMap, 'instructions/myInstruction.ts', {
-        '../../hooked': ['SOME_OTHER_PROGRAM_PROGRAM_ADDRESS'],
+        '../../hooked.js': ['SOME_OTHER_PROGRAM_PROGRAM_ADDRESS'],
     });
 });

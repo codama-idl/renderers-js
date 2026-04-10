@@ -41,7 +41,7 @@ import {
     type InstructionWithByteDelta,
     type ResolvedInstructionAccount,
 } from '@solana/kit/program-client-core';
-import { SYSTEM_PROGRAM_ADDRESS } from '../programs';
+import { SYSTEM_PROGRAM_ADDRESS } from '../programs/index.js';
 
 export const CREATE_ACCOUNT_DISCRIMINATOR = 0;
 

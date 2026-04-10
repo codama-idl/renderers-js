@@ -51,7 +51,7 @@ test('it imports types and functions from the linked type', async () => {
 
     // And we expect the following imports.
     await renderMapContainsImports(renderMap, 'types/metadata.ts', {
-        '.': ['Symbol', 'SymbolArgs', 'getSymbolEncoder', 'getSymbolDecoder'],
+        './index.js': ['Symbol', 'SymbolArgs', 'getSymbolEncoder', 'getSymbolDecoder'],
     });
 });
 
@@ -94,7 +94,7 @@ test('it can override the import of a linked type', async () => {
 
     // And we expect the imports to be overridden.
     await renderMapContainsImports(renderMap, 'types/metadata.ts', {
-        '../../hooked': ['Symbol', 'SymbolArgs', 'getSymbolEncoder', 'getSymbolDecoder'],
+        '../../hooked.js': ['Symbol', 'SymbolArgs', 'getSymbolEncoder', 'getSymbolDecoder'],
     });
 });
 
@@ -140,7 +140,7 @@ test('it knows if an enum value is a scalar enum using link nodes', async () => 
 
     // And we expect the following imports.
     await renderMapContainsImports(renderMap, 'types/person.ts', {
-        '.': ['Direction', 'DirectionArgs', 'getDirectionEncoder', 'getDirectionDecoder'],
+        './index.js': ['Direction', 'DirectionArgs', 'getDirectionEncoder', 'getDirectionDecoder'],
     });
 });
 
@@ -186,6 +186,6 @@ test('it knows if an enum value is a data enum using link nodes', async () => {
 
     // And we expect the following imports.
     await renderMapContainsImports(renderMap, 'types/person.ts', {
-        '.': ['Action', 'ActionArgs', 'getActionEncoder', 'getActionDecoder'],
+        './index.js': ['Action', 'ActionArgs', 'getActionEncoder', 'getActionDecoder'],
     });
 });

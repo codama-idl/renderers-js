@@ -30,7 +30,7 @@ import {
     type SelfFetchFunctions,
     type SelfPlanAndSendFunctions,
 } from '@solana/kit/program-client-core';
-import { getNonceCodec, type Nonce, type NonceArgs } from '../accounts';
+import { getNonceCodec, type Nonce, type NonceArgs } from '../accounts/index.js';
 import {
     getAdvanceNonceAccountInstruction,
     getAllocateInstruction,
@@ -84,7 +84,7 @@ import {
     type TransferSolWithSeedInput,
     type UpgradeNonceAccountInput,
     type WithdrawNonceAccountInput,
-} from '../instructions';
+} from '../instructions/index.js';
 
 export const SYSTEM_PROGRAM_ADDRESS = '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
 

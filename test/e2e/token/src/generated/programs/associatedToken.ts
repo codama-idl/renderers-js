@@ -35,8 +35,8 @@ import {
     type ParsedCreateAssociatedTokenInstruction,
     type ParsedRecoverNestedAssociatedTokenInstruction,
     type RecoverNestedAssociatedTokenAsyncInput,
-} from '../instructions';
-import { findAssociatedTokenPda } from '../pdas';
+} from '../instructions/index.js';
+import { findAssociatedTokenPda } from '../pdas/index.js';
 
 export const ASSOCIATED_TOKEN_PROGRAM_ADDRESS =
     'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;

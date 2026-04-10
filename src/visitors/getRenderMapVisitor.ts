@@ -105,7 +105,7 @@ export function getRenderMapVisitor(options: GetRenderMapOptions = {}) {
                     return createRenderMap(
                         `types/${camelCase(node.name)}.ts`,
                         asPage(getTypePageFragment({ ...renderScope, node, size: visit(node, byteSizeVisitor) }), {
-                            generatedTypes: '.',
+                            generatedTypes: './index',
                         }),
                     );
                 },

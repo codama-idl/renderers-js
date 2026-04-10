@@ -325,18 +325,20 @@ describe('importMapToString', () => {
             m => addToImportMap(m, 'absolute-module', ['import2']),
         );
         expect(importMapToString(importMap)).toBe(
-            "import { import2 } from 'absolute-module';\nimport { import1 } from './relative-module';",
+            "import { import2 } from 'absolute-module';\nimport { import1 } from './relative-module.js';",
         );
     });
 
     test('it replaces internal modules with their actual paths', () => {
         const importMap = addToImportMap(createImportMap(), 'generatedAccounts', ['myAccount']);
-        expect(importMapToString(importMap)).toBe("import { myAccount } from '../accounts';");
+        expect(importMapToString(importMap)).toBe("import { myAccount } from '../accounts/index.js';");
     });
 
     test('it can override the paths of internal modules', () => {
         const importMap = addToImportMap(createImportMap(), 'generatedAccounts', ['myAccount']);
-        expect(importMapToString(importMap, { generatedAccounts: '.' })).toBe("import { myAccount } from '.';");
+        expect(importMapToString(importMap, { generatedAccounts: './index' })).toBe(
+            "import { myAccount } from './index.js';",
+        );
     });
 
     test('it replaces placeholder kit packages with their @solana/kit', () => {

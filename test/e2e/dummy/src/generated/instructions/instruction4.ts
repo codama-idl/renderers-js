@@ -22,7 +22,7 @@ import {
     type InstructionWithData,
     type ReadonlyUint8Array,
 } from '@solana/kit';
-import { DUMMY_PROGRAM_ADDRESS } from '../programs';
+import { DUMMY_PROGRAM_ADDRESS } from '../programs/index.js';
 
 export type Instruction4Instruction<
     TProgram extends string = typeof DUMMY_PROGRAM_ADDRESS,
