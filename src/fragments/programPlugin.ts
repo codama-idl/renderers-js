@@ -16,6 +16,7 @@ export function getProgramPluginFragment(
 ): Fragment | undefined {
     if (
         scope.programNode.accounts.length === 0 &&
+        (scope.programNode.events ?? []).length === 0 &&
         scope.programNode.instructions.length === 0 &&
         scope.programNode.pdas.length === 0
     )
@@ -32,6 +33,7 @@ export function getProgramPluginFragment(
         [
             getProgramPluginTypeFragment(scope),
             getProgramPluginAccountsTypeFragment(scope),
+            getProgramPluginEventsTypeFragment(scope),
             getProgramPluginInstructionsTypeFragment({ ...scope, asyncInstructions }),
             getProgramPluginPdasTypeFragment(scope),
             getProgramPluginRequirementsTypeFragment(scope),
@@ -49,9 +51,13 @@ function getProgramPluginTypeFragment(scope: Pick<RenderScope, 'nameApi'> & { pr
     const programPluginInstructionsType = nameApi.programPluginInstructionsType(programNode.name);
     const programPluginPdasType = nameApi.programPluginPdasType(programNode.name);
 
+    const programPluginEventsType = nameApi.programPluginEventsType(programNode.name);
+    const events = programNode.events ?? [];
+
     const fields = mergeFragments(
         [
             programNode.accounts.length > 0 ? fragment`accounts: ${programPluginAccountsType};` : undefined,
+            events.length > 0 ? fragment`events: ${programPluginEventsType};` : undefined,
             programNode.instructions.length > 0 ? fragment`instructions: ${programPluginInstructionsType};` : undefined,
             programNode.pdas.length > 0 ? fragment`pdas: ${programPluginPdasType};` : undefined,
         ],
@@ -81,6 +87,26 @@ function getProgramPluginAccountsTypeFragment(
     );
 
     return fragment`export type ${programPluginAccountsType} = { ${fields} }`;
+}
+
+function getProgramPluginEventsTypeFragment(
+    scope: Pick<RenderScope, 'nameApi'> & { programNode: ProgramNode },
+): Fragment | undefined {
+    const { programNode, nameApi } = scope;
+    const events = programNode.events ?? [];
+    if (events.length === 0) return;
+    const programPluginEventsType = nameApi.programPluginEventsType(programNode.name);
+
+    const fields = mergeFragments(
+        events.map(event => {
+            const name = nameApi.programPluginEventKey(event.name);
+            const decoderFunction = use('type ' + nameApi.decoderFunction(event.name), 'generatedEvents');
+            return fragment`${name}: ReturnType<typeof ${decoderFunction}>;`;
+        }),
+        c => c.join(' '),
+    );
+
+    return fragment`export type ${programPluginEventsType} = { ${fields} }`;
 }
 
 function getProgramPluginInstructionsTypeFragment(
@@ -193,6 +219,7 @@ function getProgramPluginFunctionFragment(
     const fields = mergeFragments(
         [
             getProgramPluginAccountsObjectFragment(scope),
+            getProgramPluginEventsObjectFragment(scope),
             getProgramPluginInstructionsObjectFragment(scope),
             getProgramPluginPdasObjectFragment(scope),
         ],
@@ -223,6 +250,25 @@ function getProgramPluginAccountsObjectFragment(
     );
 
     return fragment`accounts: { ${fields} }`;
+}
+
+function getProgramPluginEventsObjectFragment(
+    scope: Pick<RenderScope, 'nameApi'> & { programNode: ProgramNode },
+): Fragment | undefined {
+    const { programNode, nameApi } = scope;
+    const events = programNode.events ?? [];
+    if (events.length === 0) return;
+
+    const fields = mergeFragments(
+        events.map(event => {
+            const name = nameApi.programPluginEventKey(event.name);
+            const decoderFunction = use(nameApi.decoderFunction(event.name), 'generatedEvents');
+            return fragment`${name}: ${decoderFunction}()`;
+        }),
+        c => c.join(', '),
+    );
+
+    return fragment`events: { ${fields} }`;
 }
 
 function getProgramPluginInstructionsObjectFragment(

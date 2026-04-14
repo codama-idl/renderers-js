@@ -45,6 +45,7 @@ const DEFAULT_INTERNAL_MODULE_MAP: Record<string, string> = {
     generated: '..',
     generatedAccounts: '../accounts',
     generatedErrors: '../errors',
+    generatedEvents: '../events',
     generatedInstructions: '../instructions',
     generatedPdas: '../pdas',
     generatedPrograms: '../programs',

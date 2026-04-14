@@ -44,6 +44,14 @@ import {
     type PoolStateArgs,
 } from '../accounts';
 import {
+    getLpChangeEventDecoder,
+    getSwapEventDecoder,
+    LP_CHANGE_EVENT_DISCRIMINATOR,
+    SWAP_EVENT_DISCRIMINATOR,
+    type LpChangeEvent,
+    type SwapEvent,
+} from '../events';
+import {
     getCollectFundFeeInstructionAsync,
     getCollectProtocolFeeInstructionAsync,
     getCreateAmmConfigInstructionAsync,
@@ -138,6 +146,50 @@ export function identifyRaydiumCpSwapAccount(
         accountData: data,
         programName: 'raydiumCpSwap',
     });
+}
+
+export enum RaydiumCpSwapEvent {
+    LpChangeEvent,
+    SwapEvent,
+}
+
+export function identifyRaydiumCpSwapEvent(
+    event: { data: ReadonlyUint8Array } | ReadonlyUint8Array,
+): RaydiumCpSwapEvent | null {
+    const data = 'data' in event ? event.data : event;
+    if (containsBytes(data, LP_CHANGE_EVENT_DISCRIMINATOR, 0)) {
+        return RaydiumCpSwapEvent.LpChangeEvent;
+    }
+    if (containsBytes(data, SWAP_EVENT_DISCRIMINATOR, 0)) {
+        return RaydiumCpSwapEvent.SwapEvent;
+    }
+    return null;
+}
+
+export type ParsedRaydiumCpSwapEvent =
+    | ({ eventType: RaydiumCpSwapEvent.LpChangeEvent } & LpChangeEvent)
+    | ({ eventType: RaydiumCpSwapEvent.SwapEvent } & SwapEvent);
+
+export function parseRaydiumCpSwapEvent(
+    event: { data: ReadonlyUint8Array } | ReadonlyUint8Array,
+): ParsedRaydiumCpSwapEvent | null {
+    const data = 'data' in event ? event.data : event;
+    const eventType = identifyRaydiumCpSwapEvent(event);
+    if (eventType === null) return null;
+    switch (eventType) {
+        case RaydiumCpSwapEvent.LpChangeEvent: {
+            return {
+                eventType: RaydiumCpSwapEvent.LpChangeEvent,
+                ...getLpChangeEventDecoder().decode(data, LP_CHANGE_EVENT_DISCRIMINATOR.length),
+            };
+        }
+        case RaydiumCpSwapEvent.SwapEvent: {
+            return {
+                eventType: RaydiumCpSwapEvent.SwapEvent,
+                ...getSwapEventDecoder().decode(data, SWAP_EVENT_DISCRIMINATOR.length),
+            };
+        }
+    }
 }
 
 export enum RaydiumCpSwapInstruction {
@@ -341,6 +393,7 @@ export function parseRaydiumCpSwapInstruction<TProgram extends string>(
 
 export type RaydiumCpSwapPlugin = {
     accounts: RaydiumCpSwapPluginAccounts;
+    events: RaydiumCpSwapPluginEvents;
     instructions: RaydiumCpSwapPluginInstructions;
     pdas: RaydiumCpSwapPluginPdas;
 };
@@ -350,6 +403,11 @@ export type RaydiumCpSwapPluginAccounts = {
     observationState: ReturnType<typeof getObservationStateCodec> &
         SelfFetchFunctions<ObservationStateArgs, ObservationState>;
     poolState: ReturnType<typeof getPoolStateCodec> & SelfFetchFunctions<PoolStateArgs, PoolState>;
+};
+
+export type RaydiumCpSwapPluginEvents = {
+    lpChangeEvent: ReturnType<typeof getLpChangeEventDecoder>;
+    swapEvent: ReturnType<typeof getSwapEventDecoder>;
 };
 
 export type RaydiumCpSwapPluginInstructions = {
@@ -405,6 +463,7 @@ export function raydiumCpSwapProgram() {
                     observationState: addSelfFetchFunctions(client, getObservationStateCodec()),
                     poolState: addSelfFetchFunctions(client, getPoolStateCodec()),
                 },
+                events: { lpChangeEvent: getLpChangeEventDecoder(), swapEvent: getSwapEventDecoder() },
                 instructions: {
                     collectFundFee: input =>
                         addSelfPlanAndSendFunctions(client, getCollectFundFeeInstructionAsync(input)),

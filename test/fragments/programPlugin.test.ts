@@ -1,15 +1,19 @@
 import {
     accountNode,
     accountValueNode,
+    eventNode,
     instructionAccountNode,
     instructionArgumentNode,
     instructionNode,
+    numberTypeNode,
     payerValueNode,
     pdaNode,
     pdaSeedValueNode,
     pdaValueNode,
     programNode,
     publicKeyTypeNode,
+    structFieldTypeNode,
+    structTypeNode,
     variablePdaSeedNode,
 } from '@codama/nodes';
 import { expect, test } from 'vitest';
@@ -515,4 +519,125 @@ test('it omits the pdas field when program has no PDAs', async () => {
     // Then we expect the plugin type to NOT include a pdas field.
     await fragmentContains(fragment, ['export type SplTokenPlugin = { accounts: SplTokenPluginAccounts }']);
     await fragmentDoesNotContain(fragment, ['SplTokenPluginPdas']);
+});
+
+test('it renders program plugin event types', async () => {
+    const node = programNode({
+        events: [
+            eventNode({
+                data: structTypeNode([structFieldTypeNode({ name: 'guard', type: publicKeyTypeNode() })]),
+                name: 'guardCreatedEvent',
+            }),
+            eventNode({
+                data: structTypeNode([structFieldTypeNode({ name: 'version', type: numberTypeNode('u8') })]),
+                name: 'guardUpdatedEvent',
+            }),
+        ],
+        name: 'splToken',
+        publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    });
+
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+
+    await fragmentContains(fragment, [
+        'export type SplTokenPluginEvents = {',
+        'guardCreatedEvent: ReturnType<typeof getGuardCreatedEventDecoder>;',
+        'guardUpdatedEvent: ReturnType<typeof getGuardUpdatedEventDecoder>;',
+    ]);
+    await fragmentContainsImports(fragment, {
+        '../events': ['getGuardCreatedEventDecoder', 'getGuardUpdatedEventDecoder'],
+    });
+});
+
+test('it renders the plugin type with events field when program has events', async () => {
+    const node = programNode({
+        accounts: [accountNode({ name: 'mint' })],
+        events: [
+            eventNode({
+                data: structTypeNode([structFieldTypeNode({ name: 'value', type: numberTypeNode('u64') })]),
+                name: 'tradeEvent',
+            }),
+        ],
+        name: 'splToken',
+        publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    });
+
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+
+    await fragmentContains(fragment, [
+        'export type SplTokenPlugin = { accounts: SplTokenPluginAccounts; events: SplTokenPluginEvents; };',
+    ]);
+});
+
+test('it renders program plugin function with events object', async () => {
+    const node = programNode({
+        accounts: [accountNode({ name: 'mint' })],
+        events: [
+            eventNode({
+                data: structTypeNode([structFieldTypeNode({ name: 'guard', type: publicKeyTypeNode() })]),
+                name: 'guardCreatedEvent',
+            }),
+        ],
+        name: 'splToken',
+        publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    });
+
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+
+    await fragmentContains(fragment, ['events: { guardCreatedEvent: getGuardCreatedEventDecoder() }']);
+    await fragmentContainsImports(fragment, {
+        '../events': ['getGuardCreatedEventDecoder'],
+    });
+});
+
+test('it renders a plugin with only events', async () => {
+    const node = programNode({
+        events: [
+            eventNode({
+                data: structTypeNode([structFieldTypeNode({ name: 'value', type: numberTypeNode('u64') })]),
+                name: 'tradeEvent',
+            }),
+        ],
+        name: 'splToken',
+        publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    });
+
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+
+    expect(fragment).toBeDefined();
+    await fragmentContains(fragment, ['export type SplTokenPlugin = { events: SplTokenPluginEvents }']);
+    await fragmentContains(fragment, [
+        'export type SplTokenPluginEvents = { tradeEvent: ReturnType<typeof getTradeEventDecoder>; }',
+    ]);
+    await fragmentContains(fragment, ['events: { tradeEvent: getTradeEventDecoder() }']);
+});
+
+test('it renders the requirements as object for an events-only program', async () => {
+    const node = programNode({
+        events: [
+            eventNode({
+                data: structTypeNode([structFieldTypeNode({ name: 'value', type: numberTypeNode('u64') })]),
+                name: 'tradeEvent',
+            }),
+        ],
+        name: 'splToken',
+        publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    });
+
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+
+    await fragmentContains(fragment, ['export type SplTokenPluginRequirements = object']);
+});
+
+test('it omits the events field when program has no events', async () => {
+    const node = programNode({
+        accounts: [accountNode({ name: 'mint' })],
+        name: 'splToken',
+        publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    });
+
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+
+    await fragmentContains(fragment, ['export type SplTokenPlugin = { accounts: SplTokenPluginAccounts }']);
+    await fragmentDoesNotContain(fragment, ['SplTokenPluginEvents']);
 });

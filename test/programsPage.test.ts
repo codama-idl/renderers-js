@@ -1,13 +1,20 @@
 import {
     accountNode,
+    bytesTypeNode,
+    bytesValueNode,
     constantDiscriminatorNode,
+    constantValueNode,
     constantValueNodeFromBytes,
+    eventNode,
     fieldDiscriminatorNode,
+    fixedSizeTypeNode,
+    hiddenPrefixTypeNode,
     instructionArgumentNode,
     instructionNode,
     numberTypeNode,
     numberValueNode,
     programNode,
+    publicKeyTypeNode,
     sizeDiscriminatorNode,
     structFieldTypeNode,
     structTypeNode,
@@ -16,7 +23,7 @@ import { visit } from '@codama/visitors-core';
 import { expect, test } from 'vitest';
 
 import { getRenderMapVisitor } from '../src';
-import { renderMapContains, renderMapContainsImports } from './_setup';
+import { renderMapContains, renderMapContainsImports, renderMapDoesNotContain } from './_setup';
 
 test('it renders the program address constant', async () => {
     // Given the following program.
@@ -342,4 +349,273 @@ test('it does not render parse function when no instructions have discriminators
     // And we do NOT expect the parse function.
     const programFile = renderMap.get('programs/splToken.ts');
     expect(programFile).not.toContain('parseSplTokenInstruction');
+});
+
+test('it renders an enum of all available events for a program', async () => {
+    const node = programNode({
+        events: [
+            eventNode({
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: numberValueNode(1),
+                        name: 'eventType',
+                        type: numberTypeNode('u8'),
+                    }),
+                    structFieldTypeNode({ name: 'guard', type: publicKeyTypeNode() }),
+                ]),
+                discriminators: [fieldDiscriminatorNode('eventType')],
+                name: 'guardCreatedEvent',
+            }),
+            eventNode({
+                data: structTypeNode([structFieldTypeNode({ name: 'version', type: numberTypeNode('u8') })]),
+                discriminators: [sizeDiscriminatorNode(1)],
+                name: 'guardUpdatedEvent',
+            }),
+        ],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    await renderMapContains(renderMap, 'programs/myProgram.ts', [
+        'export enum MyProgramEvent { GuardCreatedEvent, GuardUpdatedEvent }',
+    ]);
+});
+
+test('it does not render program events when no events have discriminators', async () => {
+    const node = programNode({
+        events: [
+            eventNode({
+                data: structTypeNode([structFieldTypeNode({ name: 'guard', type: publicKeyTypeNode() })]),
+                name: 'guardCreatedEvent',
+            }),
+        ],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    await renderMapDoesNotContain(renderMap, 'programs/myProgram.ts', ['MyProgramEvent']);
+});
+
+test('it renders a function that identifies events in a program', async () => {
+    const node = programNode({
+        events: [
+            eventNode({
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: numberValueNode(1),
+                        name: 'eventType',
+                        type: numberTypeNode('u8'),
+                    }),
+                    structFieldTypeNode({ name: 'guard', type: publicKeyTypeNode() }),
+                ]),
+                discriminators: [fieldDiscriminatorNode('eventType')],
+                name: 'guardCreatedEvent',
+            }),
+            eventNode({
+                data: structTypeNode([structFieldTypeNode({ name: 'version', type: numberTypeNode('u8') })]),
+                discriminators: [
+                    sizeDiscriminatorNode(40),
+                    constantDiscriminatorNode(constantValueNodeFromBytes('base16', 'aabb'), 0),
+                ],
+                name: 'guardUpdatedEvent',
+            }),
+            eventNode({
+                data: structTypeNode([structFieldTypeNode({ name: 'value', type: numberTypeNode('u64') })]),
+                discriminators: [],
+                name: 'simpleEvent',
+            }),
+        ],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    await renderMapContains(renderMap, 'programs/myProgram.ts', [
+        'export function identifyMyProgramEvent',
+        'event: { data: ReadonlyUint8Array } | ReadonlyUint8Array',
+        'MyProgramEvent | null',
+        'return MyProgramEvent.GuardCreatedEvent',
+        'return MyProgramEvent.GuardUpdatedEvent',
+        'return null;',
+        'GUARD_CREATED_EVENT_EVENT_TYPE',
+        'GUARD_UPDATED_EVENT_DISCRIMINATOR',
+    ]);
+
+    await renderMapDoesNotContain(renderMap, 'programs/myProgram.ts', [
+        'return MyProgramEvent.SimpleEvent',
+        'fixEncoderSize',
+        'getBytesEncoder',
+        'throw new Error',
+    ]);
+});
+
+test('it does not render event enum when there are no events', async () => {
+    const node = programNode({
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    await renderMapDoesNotContain(renderMap, 'programs/myProgram.ts', ['MyProgramEvent']);
+});
+
+test('it does not render event identifier function when no events have discriminators', async () => {
+    const node = programNode({
+        events: [
+            eventNode({
+                data: structTypeNode([structFieldTypeNode({ name: 'value', type: numberTypeNode('u64') })]),
+                name: 'simpleEvent',
+            }),
+        ],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    await renderMapDoesNotContain(renderMap, 'programs/myProgram.ts', ['MyProgramEvent', 'identifyMyProgramEvent']);
+});
+
+test('it renders a parsed union type of all available events for a program', async () => {
+    const node = programNode({
+        events: [
+            eventNode({
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: numberValueNode(1),
+                        name: 'eventType',
+                        type: numberTypeNode('u8'),
+                    }),
+                    structFieldTypeNode({ name: 'guard', type: publicKeyTypeNode() }),
+                ]),
+                discriminators: [fieldDiscriminatorNode('eventType')],
+                name: 'guardCreatedEvent',
+            }),
+            eventNode({
+                data: structTypeNode([structFieldTypeNode({ name: 'version', type: numberTypeNode('u8') })]),
+                discriminators: [sizeDiscriminatorNode(1)],
+                name: 'guardUpdatedEvent',
+            }),
+        ],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    await renderMapContains(renderMap, 'programs/myProgram.ts', [
+        'export type ParsedMyProgramEvent =',
+        '| ({ eventType: MyProgramEvent.GuardCreatedEvent } & GuardCreatedEvent)',
+        '| ({ eventType: MyProgramEvent.GuardUpdatedEvent } & GuardUpdatedEvent)',
+    ]);
+});
+
+test('it renders a function that parses events in a program', async () => {
+    const discriminator1 = constantValueNode(
+        fixedSizeTypeNode(bytesTypeNode(), 8),
+        bytesValueNode('base16', 'aabbccdd11223344'),
+    );
+    const discriminator2 = constantValueNode(
+        fixedSizeTypeNode(bytesTypeNode(), 8),
+        bytesValueNode('base16', '1122334455667788'),
+    );
+    const node = programNode({
+        events: [
+            eventNode({
+                data: hiddenPrefixTypeNode(
+                    structTypeNode([structFieldTypeNode({ name: 'guard', type: publicKeyTypeNode() })]),
+                    [discriminator1],
+                ),
+                discriminators: [constantDiscriminatorNode(discriminator1)],
+                name: 'guardCreatedEvent',
+            }),
+            eventNode({
+                data: hiddenPrefixTypeNode(
+                    structTypeNode([structFieldTypeNode({ name: 'version', type: numberTypeNode('u8') })]),
+                    [discriminator2],
+                ),
+                discriminators: [constantDiscriminatorNode(discriminator2)],
+                name: 'guardUpdatedEvent',
+            }),
+        ],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    await renderMapContains(renderMap, 'programs/myProgram.ts', [
+        'export function parseMyProgramEvent',
+        'event: { data: ReadonlyUint8Array } | ReadonlyUint8Array',
+        'ParsedMyProgramEvent | null',
+        'const eventType = identifyMyProgramEvent(event)',
+        'if (eventType === null) return null',
+        'switch (eventType)',
+        'case MyProgramEvent.GuardCreatedEvent',
+        /getGuardCreatedEventDecoder\(\)\.decode\(\s*data,\s*GUARD_CREATED_EVENT_DISCRIMINATOR\.length\s*\)/s,
+        'case MyProgramEvent.GuardUpdatedEvent',
+        /getGuardUpdatedEventDecoder\(\)\.decode\(\s*data,\s*GUARD_UPDATED_EVENT_DISCRIMINATOR\.length\s*\)/s,
+    ]);
+
+    await renderMapDoesNotContain(renderMap, 'programs/myProgram.ts', ['throw new Error', 'default:']);
+
+    await renderMapContainsImports(renderMap, 'programs/myProgram.ts', {
+        '../events': ['GUARD_CREATED_EVENT_DISCRIMINATOR', 'GUARD_UPDATED_EVENT_DISCRIMINATOR'],
+    });
+});
+
+test('it renders parse function using decoder for events without decode function', async () => {
+    const node = programNode({
+        events: [
+            eventNode({
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: numberValueNode(1),
+                        name: 'eventType',
+                        type: numberTypeNode('u8'),
+                    }),
+                    structFieldTypeNode({ name: 'guard', type: publicKeyTypeNode() }),
+                ]),
+                discriminators: [fieldDiscriminatorNode('eventType')],
+                name: 'guardCreatedEvent',
+            }),
+        ],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    await renderMapContains(renderMap, 'programs/myProgram.ts', [
+        'parseMyProgramEvent',
+        'getGuardCreatedEventDecoder().decode(data)',
+    ]);
+    await renderMapDoesNotContain(renderMap, 'programs/myProgram.ts', ['decodeGuardCreatedEvent']);
+});
+
+test('it does not render event parse function when no events have discriminators', async () => {
+    const node = programNode({
+        events: [
+            eventNode({
+                data: structTypeNode([structFieldTypeNode({ name: 'value', type: numberTypeNode('u64') })]),
+                name: 'simpleEvent',
+            }),
+        ],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    await renderMapDoesNotContain(renderMap, 'programs/myProgram.ts', [
+        'MyProgramEvent',
+        'ParsedMyProgramEvent',
+        'parseMyProgramEvent',
+    ]);
 });
