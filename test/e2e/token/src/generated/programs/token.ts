@@ -9,6 +9,7 @@
 import {
     assertIsInstructionWithAccounts,
     containsBytes,
+    extendClient,
     getU8Encoder,
     SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_ACCOUNT,
     SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION,
@@ -533,10 +534,9 @@ export type TokenPluginRequirements = ClientWithRpc<GetAccountInfoApi & GetMulti
     ClientWithTransactionSending;
 
 export function tokenProgram() {
-    return <T extends TokenPluginRequirements>(client: T): T & { token: TokenPlugin } => {
-        return {
-            ...client,
-            token: {
+    return <T extends TokenPluginRequirements>(client: T): Omit<T, 'token'> & { token: TokenPlugin } => {
+        return extendClient(client, {
+            token: <TokenPlugin>{
                 accounts: {
                     mint: addSelfFetchFunctions(client, getMintCodec()),
                     token: addSelfFetchFunctions(client, getTokenCodec()),
@@ -579,6 +579,6 @@ export function tokenProgram() {
                         addSelfPlanAndSendFunctions(client, getUiAmountToAmountInstruction(input)),
                 },
             },
-        };
+        });
     };
 }

@@ -189,6 +189,7 @@ function getProgramPluginFunctionFragment(
     const programPluginType = nameApi.programPluginType(programNode.name);
     const programPluginRequirementsType = nameApi.programPluginRequirementsType(programNode.name);
     const programPluginKey = nameApi.programPluginKey(programNode.name);
+    const extendClient = use('extendClient', 'solanaPluginCore');
 
     const fields = mergeFragments(
         [
@@ -200,8 +201,8 @@ function getProgramPluginFunctionFragment(
     );
 
     return fragment`export function ${programPluginFunction}() {
-    return <T extends ${programPluginRequirementsType}>(client: T): T & { ${programPluginKey}: ${programPluginType} } => {
-        return { ...client, ${programPluginKey}: { ${fields} } };
+    return <T extends ${programPluginRequirementsType}>(client: T): Omit<T, "${programPluginKey}"> & { ${programPluginKey}: ${programPluginType} } => {
+        return ${extendClient}(client, { ${programPluginKey}: <${programPluginType}>{ ${fields} } });
     };
 }`;
 }

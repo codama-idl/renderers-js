@@ -9,6 +9,7 @@
 import {
     assertIsInstructionWithAccounts,
     containsBytes,
+    extendClient,
     getU32Encoder,
     SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION,
     SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE,
@@ -312,10 +313,9 @@ export type SystemPluginRequirements = ClientWithRpc<GetAccountInfoApi & GetMult
     ClientWithTransactionSending;
 
 export function systemProgram() {
-    return <T extends SystemPluginRequirements>(client: T): T & { system: SystemPlugin } => {
-        return {
-            ...client,
-            system: {
+    return <T extends SystemPluginRequirements>(client: T): Omit<T, 'system'> & { system: SystemPlugin } => {
+        return extendClient(client, {
+            system: <SystemPlugin>{
                 accounts: { nonce: addSelfFetchFunctions(client, getNonceCodec()) },
                 instructions: {
                     createAccount: input =>
@@ -348,7 +348,7 @@ export function systemProgram() {
                         addSelfPlanAndSendFunctions(client, getUpgradeNonceAccountInstruction(input)),
                 },
             },
-        };
+        });
     };
 }
 

@@ -9,6 +9,7 @@
 import {
     assertIsInstructionWithAccounts,
     containsBytes,
+    extendClient,
     fixEncoderSize,
     getBytesEncoder,
     SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_ACCOUNT,
@@ -205,10 +206,9 @@ export type WenTransferGuardPluginRequirements = ClientWithRpc<GetAccountInfoApi
 export function wenTransferGuardProgram() {
     return <T extends WenTransferGuardPluginRequirements>(
         client: T,
-    ): T & { wenTransferGuard: WenTransferGuardPlugin } => {
-        return {
-            ...client,
-            wenTransferGuard: {
+    ): Omit<T, 'wenTransferGuard'> & { wenTransferGuard: WenTransferGuardPlugin } => {
+        return extendClient(client, {
+            wenTransferGuard: <WenTransferGuardPlugin>{
                 accounts: { guardV1: addSelfFetchFunctions(client, getGuardV1Codec()) },
                 instructions: {
                     createGuard: input =>
@@ -225,7 +225,7 @@ export function wenTransferGuardProgram() {
                     updateGuard: input => addSelfPlanAndSendFunctions(client, getUpdateGuardInstructionAsync(input)),
                 },
             },
-        };
+        });
     };
 }
 
