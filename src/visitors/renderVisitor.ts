@@ -1,10 +1,10 @@
 import { deleteDirectory, joinPath, mapRenderMapContentAsync, writeRenderMap } from '@codama/renderers-core';
-import { rootNodeVisitor, visit } from '@codama/visitors-core';
+import { rootNodeVisitor, visit, Visitor } from '@codama/visitors-core';
 
 import { getCodeFormatter, RenderOptions, syncPackageJson } from '../utils';
 import { getRenderMapVisitor } from './getRenderMapVisitor';
 
-export function renderVisitor(packageFolder: string, options: RenderOptions = {}) {
+export function renderVisitor(packageFolder: string, options: RenderOptions = {}): Visitor<Promise<void>, 'rootNode'> {
     return rootNodeVisitor(async root => {
         const generatedFolder = joinPath(packageFolder, options.generatedFolder ?? 'src/generated');
 

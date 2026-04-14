@@ -533,10 +533,10 @@ export type TokenPluginRequirements = ClientWithRpc<GetAccountInfoApi & GetMulti
     ClientWithTransactionSending;
 
 export function tokenProgram() {
-    return <T extends TokenPluginRequirements>(client: T) => {
+    return <T extends TokenPluginRequirements>(client: T): T & { token: TokenPlugin } => {
         return {
             ...client,
-            token: <TokenPlugin>{
+            token: {
                 accounts: {
                     mint: addSelfFetchFunctions(client, getMintCodec()),
                     token: addSelfFetchFunctions(client, getTokenCodec()),

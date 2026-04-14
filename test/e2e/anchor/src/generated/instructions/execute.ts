@@ -39,9 +39,9 @@ import {
 } from '@solana/kit/program-client-core';
 import { WEN_TRANSFER_GUARD_PROGRAM_ADDRESS } from '../programs';
 
-export const EXECUTE_DISCRIMINATOR = new Uint8Array([105, 37, 101, 197, 75, 251, 102, 26]);
+export const EXECUTE_DISCRIMINATOR: ReadonlyUint8Array = new Uint8Array([105, 37, 101, 197, 75, 251, 102, 26]);
 
-export function getExecuteDiscriminatorBytes() {
+export function getExecuteDiscriminatorBytes(): ReadonlyUint8Array {
     return fixEncoderSize(getBytesEncoder(), 8).encode(EXECUTE_DISCRIMINATOR);
 }
 

@@ -66,7 +66,7 @@ export function renderMapContains(
     renderMap: RenderMap<Fragment>,
     key: string,
     expected: (RegExp | string)[] | RegExp | string,
-) {
+): Promise<void> {
     expect(renderMap.has(key), `RenderMap is missing key "${key}".`).toBe(true);
     return codeContains(getFromRenderMap(renderMap, key).content, expected);
 }
@@ -75,12 +75,15 @@ export function renderMapDoesNotContain(
     renderMap: RenderMap<Fragment>,
     key: string,
     expected: (RegExp | string)[] | RegExp | string,
-) {
+): Promise<void> {
     expect(renderMap.has(key), `RenderMap is missing key "${key}".`).toBe(true);
     return codeDoesNotContain(getFromRenderMap(renderMap, key).content, expected);
 }
 
-export async function fragmentContains(actual: Fragment | undefined, expected: (RegExp | string)[] | RegExp | string) {
+export async function fragmentContains(
+    actual: Fragment | undefined,
+    expected: (RegExp | string)[] | RegExp | string,
+): Promise<void> {
     expect(actual).toBeDefined();
     await codeContains(actual!.content, expected);
 }
@@ -88,12 +91,12 @@ export async function fragmentContains(actual: Fragment | undefined, expected: (
 export async function fragmentDoesNotContain(
     actual: Fragment | undefined,
     expected: (RegExp | string)[] | RegExp | string,
-) {
+): Promise<void> {
     expect(actual).toBeDefined();
     await codeDoesNotContain(actual!.content, expected);
 }
 
-export async function codeContains(actual: string, expected: (RegExp | string)[] | RegExp | string) {
+export async function codeContains(actual: string, expected: (RegExp | string)[] | RegExp | string): Promise<void> {
     const expectedArray = Array.isArray(expected) ? expected : [expected];
     const normalizedActual = await normalizeCode(actual);
     expectedArray.forEach(expectedResult => {
@@ -105,7 +108,10 @@ export async function codeContains(actual: string, expected: (RegExp | string)[]
     });
 }
 
-export async function codeDoesNotContain(actual: string, expected: (RegExp | string)[] | RegExp | string) {
+export async function codeDoesNotContain(
+    actual: string,
+    expected: (RegExp | string)[] | RegExp | string,
+): Promise<void> {
     const expectedArray = Array.isArray(expected) ? expected : [expected];
     const normalizedActual = await normalizeCode(actual);
     expectedArray.forEach(expectedResult => {
@@ -121,7 +127,7 @@ export function renderMapContainsImports(
     renderMap: RenderMap<Fragment>,
     key: string,
     expectedImports: Record<string, string[]>,
-) {
+): Promise<void> {
     expect(renderMap.has(key), `RenderMap is missing key "${key}".`).toBe(true);
     return codeContainsImports(getFromRenderMap(renderMap, key).content, expectedImports);
 }
@@ -130,7 +136,7 @@ export function renderMapDoesNotContainImports(
     renderMap: RenderMap<Fragment>,
     key: string,
     expectedImports: Record<string, string[]>,
-) {
+): Promise<void> {
     expect(renderMap.has(key), `RenderMap is missing key "${key}".`).toBe(true);
     return codeDoesNotContainImports(getFromRenderMap(renderMap, key).content, expectedImports);
 }
@@ -139,7 +145,7 @@ export function fragmentContainsImports(
     actual: Fragment | undefined,
     expectedImports: Record<string, string[]>,
     options?: { dependencyMap?: Record<string, string>; kitImportStrategy?: KitImportStrategy },
-) {
+): Promise<void> {
     expect(actual).toBeDefined();
     const imports = importMapToString(actual!.imports, options?.dependencyMap, options?.kitImportStrategy);
     return codeContainsImports(imports, expectedImports);
@@ -149,13 +155,13 @@ export function fragmentDoesNotContainImports(
     actual: Fragment | undefined,
     expectedImports: Record<string, string[]>,
     options?: { dependencyMap?: Record<string, string>; kitImportStrategy?: KitImportStrategy },
-) {
+): Promise<void> {
     expect(actual).toBeDefined();
     const imports = importMapToString(actual!.imports, options?.dependencyMap, options?.kitImportStrategy);
     return codeDoesNotContainImports(imports, expectedImports);
 }
 
-export async function codeContainsImports(actual: string, expectedImports: Record<string, string[]>) {
+export async function codeContainsImports(actual: string, expectedImports: Record<string, string[]>): Promise<void> {
     const normalizedActual = await inlineCode(actual);
     const importPairs = Object.entries(expectedImports).flatMap(([key, value]) => {
         return value.map(v => [key, v] as const);
@@ -166,7 +172,10 @@ export async function codeContainsImports(actual: string, expectedImports: Recor
     });
 }
 
-export async function codeDoesNotContainImports(actual: string, expectedImports: Record<string, string[]>) {
+export async function codeDoesNotContainImports(
+    actual: string,
+    expectedImports: Record<string, string[]>,
+): Promise<void> {
     const normalizedActual = await inlineCode(actual);
     const importPairs = Object.entries(expectedImports).flatMap(([key, value]) => {
         return value.map(v => [key, v] as const);
@@ -177,7 +186,7 @@ export async function codeDoesNotContainImports(actual: string, expectedImports:
     });
 }
 
-export function codeStringAsRegex(code: string) {
+export function codeStringAsRegex(code: string): RegExp {
     const stringAsRegex = escapeRegex(code)
         // Transform spaces between words into required whitespace.
         .replace(/(\w)\s+(\w)/g, '$1\\s+$2')

@@ -203,10 +203,12 @@ export type WenTransferGuardPluginRequirements = ClientWithRpc<GetAccountInfoApi
     ClientWithTransactionSending;
 
 export function wenTransferGuardProgram() {
-    return <T extends WenTransferGuardPluginRequirements>(client: T) => {
+    return <T extends WenTransferGuardPluginRequirements>(
+        client: T,
+    ): T & { wenTransferGuard: WenTransferGuardPlugin } => {
         return {
             ...client,
-            wenTransferGuard: <WenTransferGuardPlugin>{
+            wenTransferGuard: {
                 accounts: { guardV1: addSelfFetchFunctions(client, getGuardV1Codec()) },
                 instructions: {
                     createGuard: input =>

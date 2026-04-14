@@ -8,6 +8,7 @@
     "forceConsistentCasingInFileNames": true,
     "inlineSources": false,
     "isolatedModules": true,
+    "isolatedDeclarations": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
     "noFallthroughCasesInSwitch": true,

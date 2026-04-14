@@ -7,6 +7,8 @@ import {
     isScalarEnum,
     REGISTERED_TYPE_NODE_KINDS,
     REGISTERED_VALUE_NODE_KINDS,
+    RegisteredTypeNode,
+    RegisteredValueNode,
     resolveNestedTypeNode,
     structFieldTypeNode,
     structTypeNode,
@@ -23,7 +25,7 @@ import {
     recordNodeStackVisitor,
     staticVisitor,
     visit,
-    Visitor,
+    type Visitor,
 } from '@codama/visitors-core';
 
 import {
@@ -32,12 +34,12 @@ import {
     fragment,
     getBytesFromBytesValueNode,
     getDocblockFragment,
-    GetImportFromFunction,
+    type GetImportFromFunction,
     mergeFragments,
     mergeTypeManifests,
-    NameApi,
-    ParsedCustomDataOptions,
-    TypeManifest,
+    type NameApi,
+    type ParsedCustomDataOptions,
+    type TypeManifest,
     typeManifest,
     use,
 } from '../utils';
@@ -52,7 +54,15 @@ export function getTypeManifestVisitor(input: {
     nameApi: NameApi;
     nonScalarEnums: CamelCaseString[];
     stack?: NodeStack;
-}) {
+}): Visitor<
+    TypeManifest,
+    | RegisteredTypeNode['kind']
+    | RegisteredValueNode['kind']
+    | 'accountNode'
+    | 'definedTypeLinkNode'
+    | 'definedTypeNode'
+    | 'instructionNode'
+> {
     const { nameApi, linkables, nonScalarEnums, customAccountData, customInstructionData, getImportFrom } = input;
     const stack = input.stack ?? new NodeStack();
     let parentName: { loose: string; strict: string } | null = null;

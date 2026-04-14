@@ -80,10 +80,10 @@ export type SystemPluginInstructions = {
 export type SystemPluginRequirements = ClientWithPayer & ClientWithTransactionPlanning & ClientWithTransactionSending;
 
 export function systemProgram() {
-    return <T extends SystemPluginRequirements>(client: T) => {
+    return <T extends SystemPluginRequirements>(client: T): T & { system: SystemPlugin } => {
         return {
             ...client,
-            system: <SystemPlugin>{
+            system: {
                 instructions: {
                     createAccount: input =>
                         addSelfPlanAndSendFunctions(

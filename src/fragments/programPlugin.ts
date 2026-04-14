@@ -200,8 +200,8 @@ function getProgramPluginFunctionFragment(
     );
 
     return fragment`export function ${programPluginFunction}() {
-    return <T extends ${programPluginRequirementsType}>(client: T) => {
-        return { ...client, ${programPluginKey}: <${programPluginType}>{ ${fields} } };
+    return <T extends ${programPluginRequirementsType}>(client: T): T & { ${programPluginKey}: ${programPluginType} } => {
+        return { ...client, ${programPluginKey}: { ${fields} } };
     };
 }`;
 }

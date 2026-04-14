@@ -30,10 +30,10 @@ export type MemoPluginInstructions = {
 export type MemoPluginRequirements = ClientWithTransactionPlanning & ClientWithTransactionSending;
 
 export function memoProgram() {
-    return <T extends MemoPluginRequirements>(client: T) => {
+    return <T extends MemoPluginRequirements>(client: T): T & { memo: MemoPlugin } => {
         return {
             ...client,
-            memo: <MemoPlugin>{
+            memo: {
                 instructions: { addMemo: input => addSelfPlanAndSendFunctions(client, getAddMemoInstruction(input)) },
             },
         };

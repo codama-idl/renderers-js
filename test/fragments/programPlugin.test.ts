@@ -231,7 +231,7 @@ test('it renders the program plugin function', async () => {
 
     // Then we expect the following plugin function.
     await fragmentContains(fragment, [
-        'export function splTokenProgram() { return <T extends SplTokenPluginRequirements>(client: T) => { return { ...client, splToken: <SplTokenPlugin>{',
+        'export function splTokenProgram() { return <T extends SplTokenPluginRequirements>( client: T ): T & { splToken: SplTokenPlugin } => { return { ...client, splToken: {',
         'accounts: { mint: addSelfFetchFunctions( client, getMintCodec() ) },',
         'instructions: { initializeMint: ( input ) => addSelfPlanAndSendFunctions( client, getInitializeMintInstruction( input ) ) }',
     ]);

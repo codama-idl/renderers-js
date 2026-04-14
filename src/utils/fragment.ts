@@ -32,7 +32,10 @@ export function fragment(template: TemplateStringsArray, ...items: unknown[]): F
     return createFragmentTemplate(template, items, isFragment, mergeFragments);
 }
 
-export function mergeFragments(fragments: (Fragment | undefined)[], mergeContent: (contents: string[]) => string) {
+export function mergeFragments(
+    fragments: (Fragment | undefined)[],
+    mergeContent: (contents: string[]) => string,
+): Fragment {
     const filteredFragments = fragments.filter((f): f is Fragment => f !== undefined);
     return Object.freeze({
         content: mergeContent(filteredFragments.map(fragment => fragment.content)),
