@@ -13,3 +13,9 @@ CHANGELOG.md
 
 pnpm-lock.yaml
 pnpm-workspace.yaml
+
+.agents/
+skills-lock.json
+.skills-inject.json
+CLAUDE.md
+AGENTS.md
