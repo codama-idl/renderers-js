@@ -1,5 +1,19 @@
 # @codama/renderers-js
 
+## 2.2.0
+
+### Minor Changes
+
+- [#140](https://github.com/codama-idl/renderers-js/pull/140) [`467e6cf`](https://github.com/codama-idl/renderers-js/commit/467e6cfecdf9529681efafb0209cd03962e2a106) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Use `extendClient` from `@solana/plugin-core` in generated program plugins instead of manually spreading the client object. This improves type narrowing when composing plugins with overlapping keys. Bump minimum `@solana/kit` dependency to `^6.4.0`.
+
+### Patch Changes
+
+- [#136](https://github.com/codama-idl/renderers-js/pull/136) [`85962b6`](https://github.com/codama-idl/renderers-js/commit/85962b65beac8963da0ad08e7cce4247121c1d77) Thanks [@ioxde](https://github.com/ioxde)! - Use bracket notation for index signature property access
+
+- [#133](https://github.com/codama-idl/renderers-js/pull/133) [`f043320`](https://github.com/codama-idl/renderers-js/commit/f04332075150f867e31668fbc93a7e55d21b76fd) Thanks [@ioxde](https://github.com/ioxde)! - Enable `isolatedDeclarations` support in renderer and generated output
+
+- [#131](https://github.com/codama-idl/renderers-js/pull/131) [`48903ed`](https://github.com/codama-idl/renderers-js/commit/48903ed9033bff647cd2fbd695874e8fbba9fca7) Thanks [@amilz](https://github.com/amilz)! - Include source and dist files in generated package.json for IDE navigation
+
 ## 2.1.0
 
 ### Minor Changes
