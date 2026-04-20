@@ -1,10 +1,11 @@
-import { AccountNode, DefinedTypeNode, InstructionNode, PdaNode, ProgramNode } from '@codama/nodes';
+import { AccountNode, DefinedTypeNode, EventNode, InstructionNode, PdaNode, ProgramNode } from '@codama/nodes';
 
 import { Fragment, fragment, getExportAllFragment, mergeFragments } from '../utils';
 
 export function getRootIndexPageFragment(scope: {
     accountsToExport: AccountNode[];
     definedTypesToExport: DefinedTypeNode[];
+    eventsToExport: EventNode[];
     instructionsToExport: InstructionNode[];
     pdasToExport: PdaNode[];
     programsToExport: ProgramNode[];
@@ -12,6 +13,7 @@ export function getRootIndexPageFragment(scope: {
     const hasAnythingToExport =
         scope.programsToExport.length > 0 ||
         scope.accountsToExport.length > 0 ||
+        scope.eventsToExport.length > 0 ||
         scope.instructionsToExport.length > 0 ||
         scope.definedTypesToExport.length > 0;
 
@@ -25,6 +27,7 @@ export function getRootIndexPageFragment(scope: {
         [
             scope.accountsToExport.length > 0 ? getExportAllFragment('./accounts') : undefined,
             programsWithErrorsToExport.length > 0 ? getExportAllFragment('./errors') : undefined,
+            scope.eventsToExport.length > 0 ? getExportAllFragment('./events') : undefined,
             scope.instructionsToExport.length > 0 ? getExportAllFragment('./instructions') : undefined,
             scope.pdasToExport.length > 0 ? getExportAllFragment('./pdas') : undefined,
             scope.programsToExport.length > 0 ? getExportAllFragment('./programs') : undefined,

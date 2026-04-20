@@ -52,6 +52,7 @@ import {
     getAddressFromResolvedInstructionAccount,
     type ResolvedInstructionAccount,
 } from '@solana/kit/program-client-core';
+import { findGuardPda } from '../pdas';
 import { WEN_TRANSFER_GUARD_PROGRAM_ADDRESS } from '../programs';
 import {
     getCpiRuleDecoder,
@@ -247,18 +248,8 @@ export async function getCreateGuardInstructionAsync<
 
     // Resolve default values.
     if (!accounts.guard.value) {
-        accounts.guard.value = await getProgramDerivedAddress({
-            programAddress,
-            seeds: [
-                getBytesEncoder().encode(
-                    new Uint8Array([
-                        119, 101, 110, 95, 116, 111, 107, 101, 110, 95, 116, 114, 97, 110, 115, 102, 101, 114, 95, 103,
-                        117, 97, 114, 100,
-                    ]),
-                ),
-                getBytesEncoder().encode(new Uint8Array([103, 117, 97, 114, 100, 95, 118, 49])),
-                getAddressEncoder().encode(getAddressFromResolvedInstructionAccount('mint', accounts.mint.value)),
-            ],
+        accounts.guard.value = await findGuardPda({
+            mint: getAddressFromResolvedInstructionAccount('mint', accounts.mint.value),
         });
     }
     if (!accounts.tokenProgram.value) {

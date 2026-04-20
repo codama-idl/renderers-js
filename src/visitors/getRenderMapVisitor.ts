@@ -1,11 +1,14 @@
 import {
     camelCase,
     CamelCaseString,
+    definedTypeNode,
     getAllAccounts,
     getAllDefinedTypes,
+    getAllEvents,
     getAllInstructionsWithSubs,
     getAllPdas,
     getAllPrograms,
+    resolveNestedTypeNode,
 } from '@codama/nodes';
 import { createRenderMap, mergeRenderMaps, RenderMap } from '@codama/renderers-core';
 import {
@@ -25,6 +28,7 @@ import {
 import {
     getAccountPageFragment,
     getErrorPageFragment,
+    getEventPageFragment,
     getIndexPageFragment,
     getInstructionPageFragment,
     getPdaPageFragment,
@@ -50,7 +54,7 @@ export function getRenderMapVisitor(
     options: GetRenderMapOptions = {},
 ): Visitor<
     RenderMap<Fragment>,
-    'accountNode' | 'definedTypeNode' | 'instructionNode' | 'pdaNode' | 'programNode' | 'rootNode'
+    'accountNode' | 'definedTypeNode' | 'eventNode' | 'instructionNode' | 'pdaNode' | 'programNode' | 'rootNode'
 > {
     const linkables = new LinkableDictionary();
     const stack = new NodeStack();
@@ -90,7 +94,15 @@ export function getRenderMapVisitor(
 
     return pipe(
         staticVisitor(() => createRenderMap<Fragment>(), {
-            keys: ['rootNode', 'programNode', 'pdaNode', 'accountNode', 'definedTypeNode', 'instructionNode'],
+            keys: [
+                'rootNode',
+                'programNode',
+                'pdaNode',
+                'accountNode',
+                'definedTypeNode',
+                'eventNode',
+                'instructionNode',
+            ],
         }),
         v =>
             extendVisitor(v, {
@@ -113,6 +125,22 @@ export function getRenderMapVisitor(
                         asPage(getTypePageFragment({ ...renderScope, node, size: visit(node, byteSizeVisitor) }), {
                             generatedTypes: '.',
                         }),
+                    );
+                },
+
+                visitEvent(node) {
+                    const innerType = resolveNestedTypeNode(node.data);
+                    const syntheticType = definedTypeNode({ docs: node.docs, name: node.name, type: innerType });
+                    return createRenderMap(
+                        `events/${camelCase(node.name)}.ts`,
+                        asPage(
+                            getEventPageFragment({
+                                ...renderScope,
+                                eventNode: node,
+                                size: visit(syntheticType, byteSizeVisitor),
+                            }),
+                            { generatedEvents: '.' },
+                        ),
                     );
                 },
 
@@ -153,6 +181,7 @@ export function getRenderMapVisitor(
                         ...node.pdas.map(p => visit(p, self)),
                         ...node.accounts.map(a => visit(a, self)),
                         ...node.definedTypes.map(t => visit(t, self)),
+                        ...(node.events ?? []).map(event => visit(event, self)),
                         ...customDataDefinedType.map(t => visit(t, self)),
                         ...getAllInstructionsWithSubs(node, { leavesOnly: !renderScope.renderParentInstructions }).map(
                             i => visit(i, self),
@@ -170,11 +199,14 @@ export function getRenderMapVisitor(
                         leavesOnly: !renderScope.renderParentInstructions,
                     }).filter(isNotInternal);
                     const definedTypesToExport = getAllDefinedTypes(node).filter(isNotInternal);
+                    // program.events may be undefined when no events exist.
+                    const eventsToExport = getAllEvents(node).filter(Boolean).filter(isNotInternal);
 
                     const scope = {
                         ...renderScope,
                         accountsToExport,
                         definedTypesToExport,
+                        eventsToExport,
                         instructionsToExport,
                         pdasToExport,
                         programsToExport,
@@ -184,6 +216,7 @@ export function getRenderMapVisitor(
                         createRenderMap({
                             ['accounts/index.ts']: asPage(getIndexPageFragment(accountsToExport)),
                             ['errors/index.ts']: asPage(getIndexPageFragment(programsWithErrorsToExport)),
+                            ['events/index.ts']: asPage(getIndexPageFragment(eventsToExport)),
                             ['index.ts']: asPage(getRootIndexPageFragment(scope)),
                             ['instructions/index.ts']: asPage(getIndexPageFragment(instructionsToExport)),
                             ['pdas/index.ts']: asPage(getIndexPageFragment(pdasToExport)),

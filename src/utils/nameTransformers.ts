@@ -31,6 +31,7 @@ export type NameTransformerKey =
     | 'discriminatedUnionVariant'
     | 'encoderFunction'
     | 'enumVariant'
+    | 'eventDecodeFunction'
     | 'instructionAsyncFunction'
     | 'instructionAsyncInputType'
     | 'instructionDataType'
@@ -51,6 +52,11 @@ export type NameTransformerKey =
     | 'programErrorConstantPrefix'
     | 'programErrorMessagesMap'
     | 'programErrorUnion'
+    | 'programEventsEnum'
+    | 'programEventsEnumVariant'
+    | 'programEventsIdentifierFunction'
+    | 'programEventsParsedUnionType'
+    | 'programEventsParseFunction'
     | 'programGetErrorMessageFunction'
     | 'programInstructionsEnum'
     | 'programInstructionsEnumVariant'
@@ -60,6 +66,8 @@ export type NameTransformerKey =
     | 'programIsErrorFunction'
     | 'programPluginAccountKey'
     | 'programPluginAccountsType'
+    | 'programPluginEventKey'
+    | 'programPluginEventsType'
     | 'programPluginFunction'
     | 'programPluginInstructionKey'
     | 'programPluginInstructionsType'
@@ -108,6 +116,7 @@ export const DEFAULT_NAME_TRANSFORMERS: NameTransformers = {
     discriminatedUnionVariant: name => `${pascalCase(name)}`,
     encoderFunction: name => `get${pascalCase(name)}Encoder`,
     enumVariant: name => `${pascalCase(name)}`,
+    eventDecodeFunction: name => `decode${pascalCase(name)}`,
     instructionAsyncFunction: name => `get${pascalCase(name)}InstructionAsync`,
     instructionAsyncInputType: name => `${pascalCase(name)}AsyncInput`,
     instructionDataType: name => `${pascalCase(name)}InstructionData`,
@@ -128,6 +137,11 @@ export const DEFAULT_NAME_TRANSFORMERS: NameTransformers = {
     programErrorConstantPrefix: name => `${snakeCase(name).toUpperCase()}_ERROR__`,
     programErrorMessagesMap: name => `${camelCase(name)}ErrorMessages`,
     programErrorUnion: name => `${pascalCase(name)}Error`,
+    programEventsEnum: name => `${pascalCase(name)}Event`,
+    programEventsEnumVariant: name => `${pascalCase(name)}`,
+    programEventsIdentifierFunction: name => `identify${pascalCase(name)}Event`,
+    programEventsParseFunction: name => `parse${pascalCase(name)}Event`,
+    programEventsParsedUnionType: name => `Parsed${pascalCase(name)}Event`,
     programGetErrorMessageFunction: name => `get${pascalCase(name)}ErrorMessage`,
     programInstructionsEnum: name => `${pascalCase(name)}Instruction`,
     programInstructionsEnumVariant: name => `${pascalCase(name)}`,
@@ -137,6 +151,8 @@ export const DEFAULT_NAME_TRANSFORMERS: NameTransformers = {
     programIsErrorFunction: name => `is${pascalCase(name)}Error`,
     programPluginAccountKey: name => `${camelCase(name)}`,
     programPluginAccountsType: name => `${pascalCase(name)}PluginAccounts`,
+    programPluginEventKey: name => `${camelCase(name)}`,
+    programPluginEventsType: name => `${pascalCase(name)}PluginEvents`,
     programPluginFunction: name => `${camelCase(name)}Program`,
     programPluginInstructionKey: name => `${camelCase(name)}`,
     programPluginInstructionsType: name => `${pascalCase(name)}PluginInstructions`,
