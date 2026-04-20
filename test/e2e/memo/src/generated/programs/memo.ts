@@ -6,7 +6,12 @@
  * @see https://github.com/codama-idl/codama
  */
 
-import { type Address, type ClientWithTransactionPlanning, type ClientWithTransactionSending } from '@solana/kit';
+import {
+    extendClient,
+    type Address,
+    type ClientWithTransactionPlanning,
+    type ClientWithTransactionSending,
+} from '@solana/kit';
 import { addSelfPlanAndSendFunctions, type SelfPlanAndSendFunctions } from '@solana/kit/program-client-core';
 import { getAddMemoInstruction, type AddMemoInput, type ParsedAddMemoInstruction } from '../instructions';
 
@@ -30,12 +35,11 @@ export type MemoPluginInstructions = {
 export type MemoPluginRequirements = ClientWithTransactionPlanning & ClientWithTransactionSending;
 
 export function memoProgram() {
-    return <T extends MemoPluginRequirements>(client: T): T & { memo: MemoPlugin } => {
-        return {
-            ...client,
-            memo: {
+    return <T extends MemoPluginRequirements>(client: T): Omit<T, 'memo'> & { memo: MemoPlugin } => {
+        return extendClient(client, {
+            memo: <MemoPlugin>{
                 instructions: { addMemo: input => addSelfPlanAndSendFunctions(client, getAddMemoInstruction(input)) },
             },
-        };
+        });
     };
 }

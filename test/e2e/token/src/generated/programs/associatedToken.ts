@@ -9,6 +9,7 @@
 import {
     assertIsInstructionWithAccounts,
     containsBytes,
+    extendClient,
     getU8Encoder,
     SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION,
     SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE,
@@ -135,10 +136,11 @@ export type AssociatedTokenPluginRequirements = ClientWithPayer &
     ClientWithTransactionSending;
 
 export function associatedTokenProgram() {
-    return <T extends AssociatedTokenPluginRequirements>(client: T): T & { associatedToken: AssociatedTokenPlugin } => {
-        return {
-            ...client,
-            associatedToken: {
+    return <T extends AssociatedTokenPluginRequirements>(
+        client: T,
+    ): Omit<T, 'associatedToken'> & { associatedToken: AssociatedTokenPlugin } => {
+        return extendClient(client, {
+            associatedToken: <AssociatedTokenPlugin>{
                 instructions: {
                     createAssociatedToken: input =>
                         addSelfPlanAndSendFunctions(
@@ -158,7 +160,7 @@ export function associatedTokenProgram() {
                 },
                 pdas: { associatedToken: findAssociatedTokenPda },
             },
-        };
+        });
     };
 }
 

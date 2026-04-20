@@ -9,6 +9,7 @@
 import {
     assertIsInstructionWithAccounts,
     containsBytes,
+    extendClient,
     getU32Encoder,
     SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION,
     SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE,
@@ -194,10 +195,9 @@ export type DummyPluginInstructions = {
 export type DummyPluginRequirements = ClientWithPayer & ClientWithTransactionPlanning & ClientWithTransactionSending;
 
 export function dummyProgram() {
-    return <T extends DummyPluginRequirements>(client: T): T & { dummy: DummyPlugin } => {
-        return {
-            ...client,
-            dummy: {
+    return <T extends DummyPluginRequirements>(client: T): Omit<T, 'dummy'> & { dummy: DummyPlugin } => {
+        return extendClient(client, {
+            dummy: <DummyPlugin>{
                 instructions: {
                     instruction1: input => addSelfPlanAndSendFunctions(client, getInstruction1Instruction(input)),
                     instruction2: input => addSelfPlanAndSendFunctions(client, getInstruction2Instruction(input)),
@@ -219,7 +219,7 @@ export function dummyProgram() {
                     instruction10: input => addSelfPlanAndSendFunctions(client, getInstruction10Instruction(input)),
                 },
             },
-        };
+        });
     };
 }
 
