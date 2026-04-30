@@ -16,7 +16,7 @@ import { visit } from '@codama/visitors-core';
 import { expect, test } from 'vitest';
 
 import { getRenderMapVisitor } from '../src';
-import { renderMapContains, renderMapContainsImports } from './_setup';
+import { renderMapContains, renderMapContainsImports, renderMapDoesNotContain } from './_setup';
 
 test('it renders the program address constant', async () => {
     // Given the following program.
@@ -318,6 +318,173 @@ test('it renders a function that parses instructions in a program', async () => 
     await renderMapContainsImports(renderMap, 'programs/splToken.ts', {
         '@solana/kit': ['Instruction', 'InstructionWithData', 'ReadonlyUint8Array'],
     });
+});
+
+test('the program plugin re-exposes identifyAccount, identifyInstruction and parseInstruction when discriminators exist', async () => {
+    // Given a program where one account and one instruction carry discriminators.
+    const node = programNode({
+        accounts: [
+            accountNode({
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: numberValueNode(5),
+                        name: 'key',
+                        type: numberTypeNode('u8'),
+                    }),
+                ]),
+                discriminators: [fieldDiscriminatorNode('key')],
+                name: 'metadata',
+            }),
+        ],
+        instructions: [
+            instructionNode({
+                arguments: [
+                    instructionArgumentNode({
+                        defaultValue: numberValueNode(1),
+                        name: 'discriminator',
+                        type: numberTypeNode('u8'),
+                    }),
+                ],
+                discriminators: [fieldDiscriminatorNode('discriminator')],
+                name: 'mintTokens',
+            }),
+        ],
+        name: 'splToken',
+        publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the plugin type wires the helpers as `typeof` references...
+    await renderMapContains(renderMap, 'programs/splToken.ts', [
+        'identifyAccount: typeof identifySplTokenAccount;',
+        'identifyInstruction: typeof identifySplTokenInstruction;',
+        'parseInstruction: typeof parseSplTokenInstruction;',
+    ]);
+
+    // ...and the plugin function exposes them on the extended client.
+    await renderMapContains(renderMap, 'programs/splToken.ts', [
+        'identifyAccount: identifySplTokenAccount',
+        'identifyInstruction: identifySplTokenInstruction',
+        'parseInstruction: parseSplTokenInstruction',
+    ]);
+});
+
+test('the program plugin exposes identifyInstruction/parseInstruction when only a sub-instruction has a discriminator', async () => {
+    // Given a program whose top-level instruction has no discriminator,
+    // but whose sub-instruction does. The leaves-only walk in
+    // getProgramInstructionsFragment still emits identify*/parse*.
+    const node = programNode({
+        instructions: [
+            instructionNode({
+                arguments: [
+                    instructionArgumentNode({
+                        defaultValue: numberValueNode(1),
+                        name: 'subDiscriminator',
+                        type: numberTypeNode('u8'),
+                    }),
+                ],
+                discriminators: [],
+                name: 'mintTokens',
+                subInstructions: [
+                    instructionNode({
+                        arguments: [
+                            instructionArgumentNode({
+                                defaultValue: numberValueNode(1),
+                                name: 'subDiscriminator',
+                                type: numberTypeNode('u8'),
+                            }),
+                        ],
+                        discriminators: [fieldDiscriminatorNode('subDiscriminator')],
+                        name: 'mintTokensV2',
+                    }),
+                ],
+            }),
+        ],
+        name: 'splToken',
+        publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the plugin must expose the helpers even though the top-level
+    // instruction itself has no discriminator.
+    await renderMapContains(renderMap, 'programs/splToken.ts', [
+        'identifyInstruction: typeof identifySplTokenInstruction;',
+        'parseInstruction: typeof parseSplTokenInstruction;',
+        'identifyInstruction: identifySplTokenInstruction',
+        'parseInstruction: parseSplTokenInstruction',
+    ]);
+});
+
+test('the program plugin omits identify/parse keys when no node carries a discriminator', async () => {
+    // Given a program with accounts and instructions but no discriminators.
+    const node = programNode({
+        accounts: [accountNode({ discriminators: [], name: 'mint' })],
+        instructions: [instructionNode({ discriminators: [], name: 'mintTokens' })],
+        name: 'splToken',
+        publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the program file does not reference any of the new plugin keys.
+    await renderMapDoesNotContain(renderMap, 'programs/splToken.ts', [
+        'identifyAccount',
+        'identifyInstruction',
+        'parseInstruction',
+    ]);
+});
+
+test('the program plugin honors renderParentInstructions when deciding whether to expose identify/parse', async () => {
+    // Given a program whose parent instruction has a discriminator but the
+    // sub-instruction does not. Without renderParentInstructions the parent
+    // is filtered out by the leaves-only walk, so no identifier is emitted.
+    const node = programNode({
+        instructions: [
+            instructionNode({
+                arguments: [
+                    instructionArgumentNode({
+                        defaultValue: numberValueNode(1),
+                        name: 'parentDiscriminator',
+                        type: numberTypeNode('u8'),
+                    }),
+                ],
+                discriminators: [fieldDiscriminatorNode('parentDiscriminator')],
+                name: 'mintTokens',
+                subInstructions: [
+                    instructionNode({
+                        arguments: [
+                            instructionArgumentNode({
+                                defaultValue: numberValueNode(1),
+                                name: 'parentDiscriminator',
+                                type: numberTypeNode('u8'),
+                            }),
+                        ],
+                        discriminators: [],
+                        name: 'mintTokensV1',
+                    }),
+                ],
+            }),
+        ],
+        name: 'splToken',
+        publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    });
+
+    // When we render with renderParentInstructions: true, the parent is
+    // included in the walk and its discriminator drives identifier emission.
+    const renderMap = visit(node, getRenderMapVisitor({ renderParentInstructions: true }));
+
+    // Then the plugin exposes identifyInstruction/parseInstruction.
+    await renderMapContains(renderMap, 'programs/splToken.ts', [
+        'identifyInstruction: typeof identifySplTokenInstruction;',
+        'parseInstruction: typeof parseSplTokenInstruction;',
+        'identifyInstruction: identifySplTokenInstruction',
+        'parseInstruction: parseSplTokenInstruction',
+    ]);
 });
 
 test('it does not render parse function when no instructions have discriminators', async () => {

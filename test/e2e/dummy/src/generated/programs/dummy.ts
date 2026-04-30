@@ -157,7 +157,11 @@ export function parseDummyInstruction<TProgram extends string>(
     }
 }
 
-export type DummyPlugin = { instructions: DummyPluginInstructions };
+export type DummyPlugin = {
+    instructions: DummyPluginInstructions;
+    identifyInstruction: typeof identifyDummyInstruction;
+    parseInstruction: typeof parseDummyInstruction;
+};
 
 export type DummyPluginInstructions = {
     instruction1: (
@@ -218,6 +222,8 @@ export function dummyProgram() {
                         ),
                     instruction10: input => addSelfPlanAndSendFunctions(client, getInstruction10Instruction(input)),
                 },
+                identifyInstruction: identifyDummyInstruction,
+                parseInstruction: parseDummyInstruction,
             },
         });
     };

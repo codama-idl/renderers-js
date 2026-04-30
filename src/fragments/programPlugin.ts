@@ -1,5 +1,6 @@
 import {
     CamelCaseString,
+    getAllInstructionsWithSubs,
     InstructionAccountNode,
     InstructionArgumentNode,
     InstructionNode,
@@ -12,7 +13,7 @@ import { Fragment, fragment, hasAsyncFunction, mergeFragments, RenderScope, use 
 import { getRenamedArgsMap } from './instructionPage';
 
 export function getProgramPluginFragment(
-    scope: Pick<RenderScope, 'asyncResolvers' | 'nameApi'> & { programNode: ProgramNode },
+    scope: Pick<RenderScope, 'asyncResolvers' | 'nameApi' | 'renderParentInstructions'> & { programNode: ProgramNode },
 ): Fragment | undefined {
     if (
         scope.programNode.accounts.length === 0 &&
@@ -28,32 +29,61 @@ export function getProgramPluginFragment(
         )
         .map(i => i.name);
 
+    const extendedScope = { ...scope, asyncInstructions };
     return mergeFragments(
         [
-            getProgramPluginTypeFragment(scope),
+            getProgramPluginTypeFragment(extendedScope),
             getProgramPluginAccountsTypeFragment(scope),
-            getProgramPluginInstructionsTypeFragment({ ...scope, asyncInstructions }),
+            getProgramPluginInstructionsTypeFragment(extendedScope),
             getProgramPluginPdasTypeFragment(scope),
             getProgramPluginRequirementsTypeFragment(scope),
-            getProgramPluginFunctionFragment({ ...scope, asyncInstructions }),
+            getProgramPluginFunctionFragment(extendedScope),
             getMakeOptionalHelperTypeFragment(scope),
         ],
         c => c.join('\n\n'),
     );
 }
 
-function getProgramPluginTypeFragment(scope: Pick<RenderScope, 'nameApi'> & { programNode: ProgramNode }): Fragment {
-    const { programNode, nameApi } = scope;
+function hasAccountIdentifier(programNode: ProgramNode): boolean {
+    return programNode.accounts.some(account => (account.discriminators ?? []).length > 0);
+}
+
+function hasInstructionIdentifier(
+    programNode: ProgramNode,
+    renderParentInstructions: boolean | undefined,
+): boolean {
+    // Mirrors getProgramInstructionsFragment so the plugin tracks whichever
+    // instructions actually flow into identify*/parse* generation.
+    const allInstructions = getAllInstructionsWithSubs(programNode, {
+        leavesOnly: !renderParentInstructions,
+        subInstructionsFirst: true,
+    });
+    return allInstructions.some(instruction => (instruction.discriminators ?? []).length > 0);
+}
+
+function getProgramPluginTypeFragment(
+    scope: Pick<RenderScope, 'nameApi' | 'renderParentInstructions'> & { programNode: ProgramNode },
+): Fragment {
+    const { programNode, nameApi, renderParentInstructions } = scope;
     const programPluginType = nameApi.programPluginType(programNode.name);
     const programPluginAccountsType = nameApi.programPluginAccountsType(programNode.name);
     const programPluginInstructionsType = nameApi.programPluginInstructionsType(programNode.name);
     const programPluginPdasType = nameApi.programPluginPdasType(programNode.name);
+    const accountsIdentifierFunction = nameApi.programAccountsIdentifierFunction(programNode.name);
+    const instructionsIdentifierFunction = nameApi.programInstructionsIdentifierFunction(programNode.name);
+    const instructionsParseFunction = nameApi.programInstructionsParseFunction(programNode.name);
 
     const fields = mergeFragments(
         [
             programNode.accounts.length > 0 ? fragment`accounts: ${programPluginAccountsType};` : undefined,
             programNode.instructions.length > 0 ? fragment`instructions: ${programPluginInstructionsType};` : undefined,
             programNode.pdas.length > 0 ? fragment`pdas: ${programPluginPdasType};` : undefined,
+            hasAccountIdentifier(programNode)
+                ? fragment`identifyAccount: typeof ${accountsIdentifierFunction};`
+                : undefined,
+            hasInstructionIdentifier(programNode, renderParentInstructions)
+                ? fragment`identifyInstruction: typeof ${instructionsIdentifierFunction}; parseInstruction: typeof ${instructionsParseFunction};`
+                : undefined,
         ],
         c => c.join(' '),
     );
@@ -182,20 +212,33 @@ function getProgramPluginRequirementsTypeFragment(
 }
 
 function getProgramPluginFunctionFragment(
-    scope: Pick<RenderScope, 'nameApi'> & { asyncInstructions: CamelCaseString[]; programNode: ProgramNode },
+    scope: Pick<RenderScope, 'nameApi' | 'renderParentInstructions'> & {
+        asyncInstructions: CamelCaseString[];
+        programNode: ProgramNode;
+    },
 ): Fragment {
-    const { programNode, nameApi } = scope;
+    const { programNode, nameApi, renderParentInstructions } = scope;
     const programPluginFunction = nameApi.programPluginFunction(programNode.name);
     const programPluginType = nameApi.programPluginType(programNode.name);
     const programPluginRequirementsType = nameApi.programPluginRequirementsType(programNode.name);
     const programPluginKey = nameApi.programPluginKey(programNode.name);
     const extendClient = use('extendClient', 'solanaPluginCore');
 
+    const accountsIdentifierFunction = nameApi.programAccountsIdentifierFunction(programNode.name);
+    const instructionsIdentifierFunction = nameApi.programInstructionsIdentifierFunction(programNode.name);
+    const instructionsParseFunction = nameApi.programInstructionsParseFunction(programNode.name);
+
     const fields = mergeFragments(
         [
             getProgramPluginAccountsObjectFragment(scope),
             getProgramPluginInstructionsObjectFragment(scope),
             getProgramPluginPdasObjectFragment(scope),
+            hasAccountIdentifier(programNode)
+                ? fragment`identifyAccount: ${accountsIdentifierFunction}`
+                : undefined,
+            hasInstructionIdentifier(programNode, renderParentInstructions)
+                ? fragment`identifyInstruction: ${instructionsIdentifierFunction}, parseInstruction: ${instructionsParseFunction}`
+                : undefined,
         ],
         c => c.join(', '),
     );
