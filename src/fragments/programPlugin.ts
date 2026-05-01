@@ -48,10 +48,7 @@ function hasAccountIdentifier(programNode: ProgramNode): boolean {
     return programNode.accounts.some(account => (account.discriminators ?? []).length > 0);
 }
 
-function hasInstructionIdentifier(
-    programNode: ProgramNode,
-    renderParentInstructions: boolean | undefined,
-): boolean {
+function hasInstructionIdentifier(programNode: ProgramNode, renderParentInstructions: boolean | undefined): boolean {
     // Mirrors getProgramInstructionsFragment so the plugin tracks whichever
     // instructions actually flow into identify*/parse* generation.
     const allInstructions = getAllInstructionsWithSubs(programNode, {
@@ -233,9 +230,7 @@ function getProgramPluginFunctionFragment(
             getProgramPluginAccountsObjectFragment(scope),
             getProgramPluginInstructionsObjectFragment(scope),
             getProgramPluginPdasObjectFragment(scope),
-            hasAccountIdentifier(programNode)
-                ? fragment`identifyAccount: ${accountsIdentifierFunction}`
-                : undefined,
+            hasAccountIdentifier(programNode) ? fragment`identifyAccount: ${accountsIdentifierFunction}` : undefined,
             hasInstructionIdentifier(programNode, renderParentInstructions)
                 ? fragment`identifyInstruction: ${instructionsIdentifierFunction}, parseInstruction: ${instructionsParseFunction}`
                 : undefined,
