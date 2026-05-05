@@ -1,6 +1,7 @@
 import {
     accountNode,
     accountValueNode,
+    fieldDiscriminatorNode,
     instructionAccountNode,
     instructionArgumentNode,
     instructionNode,
@@ -500,6 +501,65 @@ test('it renders the plugin function with instructions and PDAs but no accounts'
         'instructions: { initializeMint: ( input ) => addSelfPlanAndSendFunctions( client, getInitializeMintInstruction( input ) ) }',
         'pdas: { associatedTokenAccount: findAssociatedTokenAccountPda }',
     ]);
+});
+
+test('it exposes identifyAccount on the plugin when accounts have discriminators', async () => {
+    // Given a program with one account that has a discriminator.
+    const node = programNode({
+        accounts: [accountNode({ discriminators: [fieldDiscriminatorNode('key')], name: 'mint' })],
+        name: 'splToken',
+        publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    });
+
+    // When we get the program plugin fragment.
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+
+    // Then the plugin type and function expose identifyAccount.
+    await fragmentContains(fragment, [
+        'identifyAccount: typeof identifySplTokenAccount;',
+        'identifyAccount: identifySplTokenAccount',
+    ]);
+});
+
+test('it exposes identifyInstruction and parseInstruction when instructions have discriminators', async () => {
+    // Given a program with an instruction that has a discriminator.
+    const node = programNode({
+        instructions: [
+            instructionNode({
+                discriminators: [fieldDiscriminatorNode('discriminator')],
+                name: 'initializeMint',
+            }),
+        ],
+        name: 'splToken',
+        publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    });
+
+    // When we get the program plugin fragment.
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+
+    // Then the plugin type and function expose identifyInstruction and parseInstruction.
+    await fragmentContains(fragment, [
+        'identifyInstruction: typeof identifySplTokenInstruction;',
+        'parseInstruction: typeof parseSplTokenInstruction;',
+        'identifyInstruction: identifySplTokenInstruction',
+        'parseInstruction: parseSplTokenInstruction',
+    ]);
+});
+
+test('it omits identify/parse helpers when nodes have no discriminators', async () => {
+    // Given a program with accounts and instructions but no discriminators.
+    const node = programNode({
+        accounts: [accountNode({ name: 'mint' })],
+        instructions: [instructionNode({ name: 'initializeMint' })],
+        name: 'splToken',
+        publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    });
+
+    // When we get the program plugin fragment.
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+
+    // Then the plugin omits identify/parse keys entirely.
+    await fragmentDoesNotContain(fragment, ['identifyAccount', 'identifyInstruction', 'parseInstruction']);
 });
 
 test('it omits the pdas field when program has no PDAs', async () => {

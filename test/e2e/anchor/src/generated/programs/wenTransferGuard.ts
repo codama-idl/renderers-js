@@ -179,6 +179,9 @@ export function parseWenTransferGuardInstruction<TProgram extends string>(
 export type WenTransferGuardPlugin = {
     accounts: WenTransferGuardPluginAccounts;
     instructions: WenTransferGuardPluginInstructions;
+    identifyAccount: typeof identifyWenTransferGuardAccount;
+    identifyInstruction: typeof identifyWenTransferGuardInstruction;
+    parseInstruction: typeof parseWenTransferGuardInstruction;
 };
 
 export type WenTransferGuardPluginAccounts = {
@@ -224,6 +227,9 @@ export function wenTransferGuardProgram() {
                         ),
                     updateGuard: input => addSelfPlanAndSendFunctions(client, getUpdateGuardInstructionAsync(input)),
                 },
+                identifyAccount: identifyWenTransferGuardAccount,
+                identifyInstruction: identifyWenTransferGuardInstruction,
+                parseInstruction: parseWenTransferGuardInstruction,
             },
         });
     };

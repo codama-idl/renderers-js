@@ -70,7 +70,11 @@ export function parseSystemInstruction<TProgram extends string>(
     }
 }
 
-export type SystemPlugin = { instructions: SystemPluginInstructions };
+export type SystemPlugin = {
+    instructions: SystemPluginInstructions;
+    identifyInstruction: typeof identifySystemInstruction;
+    parseInstruction: typeof parseSystemInstruction;
+};
 
 export type SystemPluginInstructions = {
     createAccount: (
@@ -91,6 +95,8 @@ export function systemProgram() {
                             getCreateAccountInstruction({ ...input, payer: input.payer ?? client.payer }),
                         ),
                 },
+                identifyInstruction: identifySystemInstruction,
+                parseInstruction: parseSystemInstruction,
             },
         });
     };

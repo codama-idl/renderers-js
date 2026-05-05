@@ -267,7 +267,12 @@ export function parseSystemInstruction<TProgram extends string>(
     }
 }
 
-export type SystemPlugin = { accounts: SystemPluginAccounts; instructions: SystemPluginInstructions };
+export type SystemPlugin = {
+    accounts: SystemPluginAccounts;
+    instructions: SystemPluginInstructions;
+    identifyInstruction: typeof identifySystemInstruction;
+    parseInstruction: typeof parseSystemInstruction;
+};
 
 export type SystemPluginAccounts = { nonce: ReturnType<typeof getNonceCodec> & SelfFetchFunctions<NonceArgs, Nonce> };
 
@@ -347,6 +352,8 @@ export function systemProgram() {
                     upgradeNonceAccount: input =>
                         addSelfPlanAndSendFunctions(client, getUpgradeNonceAccountInstruction(input)),
                 },
+                identifyInstruction: identifySystemInstruction,
+                parseInstruction: parseSystemInstruction,
             },
         });
     };

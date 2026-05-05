@@ -459,7 +459,13 @@ export function parseTokenInstruction<TProgram extends string>(
     }
 }
 
-export type TokenPlugin = { accounts: TokenPluginAccounts; instructions: TokenPluginInstructions };
+export type TokenPlugin = {
+    accounts: TokenPluginAccounts;
+    instructions: TokenPluginInstructions;
+    identifyAccount: typeof identifyTokenAccount;
+    identifyInstruction: typeof identifyTokenInstruction;
+    parseInstruction: typeof parseTokenInstruction;
+};
 
 export type TokenPluginAccounts = {
     mint: ReturnType<typeof getMintCodec> & SelfFetchFunctions<MintArgs, Mint>;
@@ -578,6 +584,9 @@ export function tokenProgram() {
                     uiAmountToAmount: input =>
                         addSelfPlanAndSendFunctions(client, getUiAmountToAmountInstruction(input)),
                 },
+                identifyAccount: identifyTokenAccount,
+                identifyInstruction: identifyTokenInstruction,
+                parseInstruction: parseTokenInstruction,
             },
         });
     };

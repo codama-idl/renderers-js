@@ -115,6 +115,8 @@ export function parseAssociatedTokenInstruction<TProgram extends string>(
 export type AssociatedTokenPlugin = {
     instructions: AssociatedTokenPluginInstructions;
     pdas: AssociatedTokenPluginPdas;
+    identifyInstruction: typeof identifyAssociatedTokenInstruction;
+    parseInstruction: typeof parseAssociatedTokenInstruction;
 };
 
 export type AssociatedTokenPluginInstructions = {
@@ -159,6 +161,8 @@ export function associatedTokenProgram() {
                         addSelfPlanAndSendFunctions(client, getRecoverNestedAssociatedTokenInstructionAsync(input)),
                 },
                 pdas: { associatedToken: findAssociatedTokenPda },
+                identifyInstruction: identifyAssociatedTokenInstruction,
+                parseInstruction: parseAssociatedTokenInstruction,
             },
         });
     };
