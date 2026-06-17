@@ -18,6 +18,7 @@ import {
     type ClientWithPayer,
     type ClientWithTransactionPlanning,
     type ClientWithTransactionSending,
+    type ExtendedClient,
     type Instruction,
     type InstructionWithData,
     type ReadonlyUint8Array,
@@ -140,7 +141,7 @@ export type AssociatedTokenPluginRequirements = ClientWithPayer &
 export function associatedTokenProgram() {
     return <T extends AssociatedTokenPluginRequirements>(
         client: T,
-    ): Omit<T, 'associatedToken'> & { associatedToken: AssociatedTokenPlugin } => {
+    ): ExtendedClient<T, { associatedToken: AssociatedTokenPlugin }> => {
         return extendClient(client, {
             associatedToken: <AssociatedTokenPlugin>{
                 instructions: {

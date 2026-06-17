@@ -21,6 +21,7 @@ import {
     type ClientWithRpc,
     type ClientWithTransactionPlanning,
     type ClientWithTransactionSending,
+    type ExtendedClient,
     type GetAccountInfoApi,
     type GetMultipleAccountsApi,
     type Instruction,
@@ -52,6 +53,7 @@ import {
     type ParsedUpdateGuardInstruction,
     type UpdateGuardAsyncInput,
 } from '../instructions';
+import { findExtraMetasAccountPda, findGuardPda } from '../pdas';
 
 export const WEN_TRANSFER_GUARD_PROGRAM_ADDRESS =
     'LockdqYQ9X2kwtWB99ioSbxubAmEi8o9jqYwbXgrrRw' as Address<'LockdqYQ9X2kwtWB99ioSbxubAmEi8o9jqYwbXgrrRw'>;
@@ -179,6 +181,7 @@ export function parseWenTransferGuardInstruction<TProgram extends string>(
 export type WenTransferGuardPlugin = {
     accounts: WenTransferGuardPluginAccounts;
     instructions: WenTransferGuardPluginInstructions;
+    pdas: WenTransferGuardPluginPdas;
     identifyAccount: typeof identifyWenTransferGuardAccount;
     identifyInstruction: typeof identifyWenTransferGuardInstruction;
     parseInstruction: typeof parseWenTransferGuardInstruction;
@@ -201,6 +204,11 @@ export type WenTransferGuardPluginInstructions = {
     ) => ReturnType<typeof getUpdateGuardInstructionAsync> & SelfPlanAndSendFunctions;
 };
 
+export type WenTransferGuardPluginPdas = {
+    guard: typeof findGuardPda;
+    extraMetasAccount: typeof findExtraMetasAccountPda;
+};
+
 export type WenTransferGuardPluginRequirements = ClientWithRpc<GetAccountInfoApi & GetMultipleAccountsApi> &
     ClientWithPayer &
     ClientWithTransactionPlanning &
@@ -209,7 +217,7 @@ export type WenTransferGuardPluginRequirements = ClientWithRpc<GetAccountInfoApi
 export function wenTransferGuardProgram() {
     return <T extends WenTransferGuardPluginRequirements>(
         client: T,
-    ): Omit<T, 'wenTransferGuard'> & { wenTransferGuard: WenTransferGuardPlugin } => {
+    ): ExtendedClient<T, { wenTransferGuard: WenTransferGuardPlugin }> => {
         return extendClient(client, {
             wenTransferGuard: <WenTransferGuardPlugin>{
                 accounts: { guardV1: addSelfFetchFunctions(client, getGuardV1Codec()) },
@@ -227,6 +235,7 @@ export function wenTransferGuardProgram() {
                         ),
                     updateGuard: input => addSelfPlanAndSendFunctions(client, getUpdateGuardInstructionAsync(input)),
                 },
+                pdas: { guard: findGuardPda, extraMetasAccount: findExtraMetasAccountPda },
                 identifyAccount: identifyWenTransferGuardAccount,
                 identifyInstruction: identifyWenTransferGuardInstruction,
                 parseInstruction: parseWenTransferGuardInstruction,
