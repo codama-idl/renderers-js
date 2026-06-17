@@ -1,5 +1,13 @@
 # @codama/renderers-js
 
+## 2.3.0
+
+### Minor Changes
+
+- [#146](https://github.com/codama-idl/renderers-js/pull/146) [`b75dce1`](https://github.com/codama-idl/renderers-js/commit/b75dce1c5bd801e2369eadad935a70c63a333752) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Support `@solana/kit` 6.10.0 in generated program plugins. The generated `xxxProgram()` factory previously annotated its return type as `Omit<T, 'xxx'> & { xxx: XxxPlugin }`, which is no longer assignable to the value returned by `extendClient` now that the latter returns the homomorphic `ExtendedClient<T, TAdditions>` type. The factory now annotates its return type with `ExtendedClient` directly, and the default `@solana/*` dependency versions written into a generated client's `package.json` (via `syncPackageJson`) are bumped to `^6.10.0` so that `ExtendedClient` is available.
+
+- [#143](https://github.com/codama-idl/renderers-js/pull/143) [`f513041`](https://github.com/codama-idl/renderers-js/commit/f5130415cefc29786ef7bddec7439279ef743cf4) Thanks [@amilz](https://github.com/amilz)! - Expose `identifyAccount`, `identifyInstruction`, and `parseInstruction` on generated program plugins. When a program has accounts or instructions with discriminators, the plugin object now surfaces the corresponding identifier and parser helpers as `client.myProgram.identifyAccount(...)`, `client.myProgram.identifyInstruction(...)`, and `client.myProgram.parseInstruction(...)`, making it easier to build indexers without re-importing the per-function helpers.
+
 ## 2.2.0
 
 ### Minor Changes
