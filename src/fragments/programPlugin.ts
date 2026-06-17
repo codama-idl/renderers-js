@@ -220,6 +220,7 @@ function getProgramPluginFunctionFragment(
     const programPluginRequirementsType = nameApi.programPluginRequirementsType(programNode.name);
     const programPluginKey = nameApi.programPluginKey(programNode.name);
     const extendClient = use('extendClient', 'solanaPluginCore');
+    const extendedClient = use('type ExtendedClient', 'solanaPluginCore');
 
     const accountsIdentifierFunction = nameApi.programAccountsIdentifierFunction(programNode.name);
     const instructionsIdentifierFunction = nameApi.programInstructionsIdentifierFunction(programNode.name);
@@ -239,7 +240,7 @@ function getProgramPluginFunctionFragment(
     );
 
     return fragment`export function ${programPluginFunction}() {
-    return <T extends ${programPluginRequirementsType}>(client: T): Omit<T, "${programPluginKey}"> & { ${programPluginKey}: ${programPluginType} } => {
+    return <T extends ${programPluginRequirementsType}>(client: T): ${extendedClient}<T, { ${programPluginKey}: ${programPluginType} }> => {
         return ${extendClient}(client, { ${programPluginKey}: <${programPluginType}>{ ${fields} } });
     };
 }`;

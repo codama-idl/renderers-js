@@ -10,10 +10,8 @@ import {
     combineCodec,
     fixDecoderSize,
     fixEncoderSize,
-    getAddressEncoder,
     getBytesDecoder,
     getBytesEncoder,
-    getProgramDerivedAddress,
     getStructDecoder,
     getStructEncoder,
     SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
@@ -39,6 +37,7 @@ import {
     getAddressFromResolvedInstructionAccount,
     type ResolvedInstructionAccount,
 } from '@solana/kit/program-client-core';
+import { findExtraMetasAccountPda } from '../pdas';
 import { WEN_TRANSFER_GUARD_PROGRAM_ADDRESS } from '../programs';
 
 export const INITIALIZE_DISCRIMINATOR: ReadonlyUint8Array = new Uint8Array([43, 34, 13, 49, 167, 88, 235, 235]);
@@ -160,16 +159,8 @@ export async function getInitializeInstructionAsync<
 
     // Resolve default values.
     if (!accounts.extraMetasAccount.value) {
-        accounts.extraMetasAccount.value = await getProgramDerivedAddress({
-            programAddress,
-            seeds: [
-                getBytesEncoder().encode(
-                    new Uint8Array([
-                        101, 120, 116, 114, 97, 45, 97, 99, 99, 111, 117, 110, 116, 45, 109, 101, 116, 97, 115,
-                    ]),
-                ),
-                getAddressEncoder().encode(getAddressFromResolvedInstructionAccount('mint', accounts.mint.value)),
-            ],
+        accounts.extraMetasAccount.value = await findExtraMetasAccountPda({
+            mint: getAddressFromResolvedInstructionAccount('mint', accounts.mint.value),
         });
     }
     if (!accounts.systemProgram.value) {

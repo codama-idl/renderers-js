@@ -19,6 +19,7 @@ import {
     type ClientWithRpc,
     type ClientWithTransactionPlanning,
     type ClientWithTransactionSending,
+    type ExtendedClient,
     type GetAccountInfoApi,
     type GetMultipleAccountsApi,
     type Instruction,
@@ -318,7 +319,7 @@ export type SystemPluginRequirements = ClientWithRpc<GetAccountInfoApi & GetMult
     ClientWithTransactionSending;
 
 export function systemProgram() {
-    return <T extends SystemPluginRequirements>(client: T): Omit<T, 'system'> & { system: SystemPlugin } => {
+    return <T extends SystemPluginRequirements>(client: T): ExtendedClient<T, { system: SystemPlugin }> => {
         return extendClient(client, {
             system: <SystemPlugin>{
                 accounts: { nonce: addSelfFetchFunctions(client, getNonceCodec()) },

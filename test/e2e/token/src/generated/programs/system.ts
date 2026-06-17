@@ -18,6 +18,7 @@ import {
     type ClientWithPayer,
     type ClientWithTransactionPlanning,
     type ClientWithTransactionSending,
+    type ExtendedClient,
     type Instruction,
     type InstructionWithData,
     type ReadonlyUint8Array,
@@ -85,7 +86,7 @@ export type SystemPluginInstructions = {
 export type SystemPluginRequirements = ClientWithPayer & ClientWithTransactionPlanning & ClientWithTransactionSending;
 
 export function systemProgram() {
-    return <T extends SystemPluginRequirements>(client: T): Omit<T, 'system'> & { system: SystemPlugin } => {
+    return <T extends SystemPluginRequirements>(client: T): ExtendedClient<T, { system: SystemPlugin }> => {
         return extendClient(client, {
             system: <SystemPlugin>{
                 instructions: {
