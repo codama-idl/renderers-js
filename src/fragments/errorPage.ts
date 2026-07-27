@@ -18,7 +18,7 @@ export function getErrorPageFragment(scope: Pick<RenderScope, 'nameApi'> & { pro
 function getConstantsFragment(scope: Pick<RenderScope, 'nameApi'> & { programNode: ProgramNode }): Fragment {
     const constantPrefix = scope.nameApi.programErrorConstantPrefix(scope.programNode.name);
     return mergeFragments(
-        [...scope.programNode.errors]
+        [...(scope.programNode.errors ?? [])]
             .sort((a, b) => a.code - b.code)
             .map(error => {
                 const docs = getDocblockFragment(error.docs ?? [], true);
@@ -33,7 +33,7 @@ function getConstantUnionTypeFragment(scope: Pick<RenderScope, 'nameApi'> & { pr
     const constantPrefix = scope.nameApi.programErrorConstantPrefix(scope.programNode.name);
     const typeName = scope.nameApi.programErrorUnion(scope.programNode.name);
     const errorTypes = mergeFragments(
-        [...scope.programNode.errors]
+        [...(scope.programNode.errors ?? [])]
             .sort((a, b) => a.name.localeCompare(b.name))
             .map(error => fragment`typeof ${constantPrefix + scope.nameApi.programErrorConstant(error.name)}`),
         cs => cs.join(' | '),
@@ -47,7 +47,7 @@ function getErrorMessagesFragment(scope: Pick<RenderScope, 'nameApi'> & { progra
     const errorUnionType = scope.nameApi.programErrorUnion(scope.programNode.name);
     const constantPrefix = scope.nameApi.programErrorConstantPrefix(scope.programNode.name);
     const messageEntries = mergeFragments(
-        [...scope.programNode.errors]
+        [...(scope.programNode.errors ?? [])]
             .sort((a, b) => a.name.localeCompare(b.name))
             .map(error => {
                 const constantName = constantPrefix + scope.nameApi.programErrorConstant(error.name);

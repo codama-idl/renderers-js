@@ -24,7 +24,7 @@ export function getAccountPdaHelpersFragment(
     const importFrom = 'generatedPdas';
     const pdaSeedsType = nameApi.pdaSeedsType(pdaNode.name);
     const findPdaFunction = nameApi.pdaFindFunction(pdaNode.name);
-    const hasVariableSeeds = pdaNode.seeds.filter(isNodeFilter('variablePdaSeedNode')).length > 0;
+    const hasVariableSeeds = (pdaNode.seeds ?? []).filter(isNodeFilter('variablePdaSeedNode')).length > 0;
 
     const fetchFromSeedsFunction = nameApi.accountFetchFromSeedsFunction(accountNode.name);
     const fetchMaybeFromSeedsFunction = nameApi.accountFetchMaybeFromSeedsFunction(accountNode.name);

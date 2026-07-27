@@ -35,8 +35,7 @@ import {
  * * Excludes - The field must not include any of the values in the vector.
  */
 export type MetadataAdditionalFieldRestriction =
-    | { __kind: 'Includes'; fields: readonly [Array<string>] }
-    | { __kind: 'Excludes'; fields: readonly [Array<string>] };
+    { __kind: 'Includes'; fields: readonly [Array<string>] } | { __kind: 'Excludes'; fields: readonly [Array<string>] };
 
 export type MetadataAdditionalFieldRestrictionArgs = MetadataAdditionalFieldRestriction;
 

@@ -57,8 +57,8 @@ export function getInstructionDependencies(
 ): (AccountValueNode | ArgumentValueNode)[] {
     if (isNode(input, 'instructionNode')) {
         return deduplicateInstructionDependencies([
-            ...input.accounts.flatMap(x => getInstructionDependencies(x, asyncResolvers, useAsync)),
-            ...input.arguments.flatMap(x => getInstructionDependencies(x, asyncResolvers, useAsync)),
+            ...(input.accounts ?? []).flatMap(x => getInstructionDependencies(x, asyncResolvers, useAsync)),
+            ...(input.arguments ?? []).flatMap(x => getInstructionDependencies(x, asyncResolvers, useAsync)),
             ...(input.extraArguments ?? []).flatMap(x => getInstructionDependencies(x, asyncResolvers, useAsync)),
         ]);
     }
@@ -82,7 +82,7 @@ export function getInstructionDependencies(
 
     if (isNode(input.defaultValue, 'pdaValueNode')) {
         const dependencies = new Map<CamelCaseString, AccountValueNode | ArgumentValueNode>();
-        input.defaultValue.seeds.forEach(seed => {
+        (input.defaultValue.seeds ?? []).forEach(seed => {
             if (isNode(seed.value, ['accountValueNode', 'argumentValueNode'])) {
                 dependencies.set(seed.value.name, { ...seed.value });
             }

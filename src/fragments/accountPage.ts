@@ -20,7 +20,7 @@ export function getAccountPageFragment(
     }
 
     const typeManifest = visit(node, scope.typeManifestVisitor);
-    const fields = resolveNestedTypeNode(node.data).fields;
+    const fields = resolveNestedTypeNode(node.data).fields ?? [];
     return mergeFragments(
         [
             getDiscriminatorConstantsFragment({

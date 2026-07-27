@@ -102,7 +102,7 @@ export function getTypeManifestVisitor(input: {
 
                 visitArrayValue(node, { self }) {
                     return mergeTypeManifests(
-                        node.items.map(v => visit(v, self)),
+                        (node.items ?? []).map(v => visit(v, self)),
                         { mergeValues: renders => `[${renders.join(', ')}]` },
                     );
                 },
@@ -285,7 +285,7 @@ export function getTypeManifestVisitor(input: {
                                     'defined type that is a scalar enum through a visitor.',
                             );
                         }
-                        const variantNames = enumType.variants.map(({ name }) => nameApi.enumVariant(name));
+                        const variantNames = (enumType.variants ?? []).map(({ name }) => nameApi.enumVariant(name));
                         return typeManifest({
                             decoder: fragment`${use('getEnumDecoder', 'solanaCodecsDataStructures')}(${currentParentName.strict}${decoderOptionsFragment})`,
                             encoder: fragment`${use('getEnumEncoder', 'solanaCodecsDataStructures')}(${currentParentName.strict}${encoderOptionsFragment})`,
@@ -296,7 +296,7 @@ export function getTypeManifestVisitor(input: {
                     }
 
                     const mergedManifest = mergeTypeManifests(
-                        enumType.variants.map(variant => visit(variant, self)),
+                        (enumType.variants ?? []).map(variant => visit(variant, self)),
                         {
                             mergeCodecs: renders => renders.join(', '),
                             mergeTypes: renders => renders.join(' | '),
@@ -367,7 +367,7 @@ export function getTypeManifestVisitor(input: {
 
                 visitHiddenPrefixType(node, { self }) {
                     const manifest = visit(node.type, self);
-                    const prefixes = node.prefix.map(c => visit(c, self).value);
+                    const prefixes = (node.prefix ?? []).map(c => visit(c, self).value);
                     const prefixEncoders = pipe(
                         mergeFragments(prefixes, cs => cs.map(c => `getConstantEncoder(${c})`).join(', ')),
                         f => addFragmentImports(f, 'solanaCodecsCore', ['getConstantEncoder']),
@@ -386,7 +386,7 @@ export function getTypeManifestVisitor(input: {
 
                 visitHiddenSuffixType(node, { self }) {
                     const manifest = visit(node.type, self);
-                    const suffixes = node.suffix.map(c => visit(c, self).value);
+                    const suffixes = (node.suffix ?? []).map(c => visit(c, self).value);
                     const suffixEncoders = pipe(
                         mergeFragments(suffixes, cs => cs.map(c => `getConstantEncoder(${c})`).join(', ')),
                         f => addFragmentImports(f, 'solanaCodecsCore', ['getConstantEncoder']),
@@ -410,7 +410,7 @@ export function getTypeManifestVisitor(input: {
                         strict: nameApi.dataType(instructionDataName),
                     };
                     const link = customInstructionData.get(instruction.name)?.linkNode;
-                    const struct = structTypeNodeFromInstructionArgumentNodes(instruction.arguments);
+                    const struct = structTypeNodeFromInstructionArgumentNodes(instruction.arguments ?? []);
                     const manifest = link ? visit(link, self) : visit(struct, self);
                     parentName = null;
                     return manifest;
@@ -441,7 +441,7 @@ export function getTypeManifestVisitor(input: {
                 },
 
                 visitMapValue(node, { self }) {
-                    const entryFragments = node.entries.map(entry => visit(entry, self));
+                    const entryFragments = (node.entries ?? []).map(entry => visit(entry, self));
                     return mergeTypeManifests(entryFragments, {
                         mergeValues: renders => `new Map([${renders.join(', ')}])`,
                     });
@@ -635,7 +635,7 @@ export function getTypeManifestVisitor(input: {
 
                 visitSetValue(node, { self }) {
                     return mergeTypeManifests(
-                        node.items.map(v => visit(v, self)),
+                        (node.items ?? []).map(v => visit(v, self)),
                         { mergeValues: renders => `new Set([${renders.join(', ')}])` },
                     );
                 },
@@ -738,11 +738,11 @@ export function getTypeManifestVisitor(input: {
                 },
 
                 visitStructType(structType, { self }) {
-                    const optionalFields = structType.fields.filter(f => !!f.defaultValue);
+                    const optionalFields = (structType.fields ?? []).filter(f => !!f.defaultValue);
 
                     const mergedManifest = pipe(
                         mergeTypeManifests(
-                            structType.fields.map(field => visit(field, self)),
+                            (structType.fields ?? []).map(field => visit(field, self)),
                             {
                                 mergeCodecs: renders => `([${renders.join(', ')}])`,
                                 mergeTypes: renders => `{ ${renders.join('')} }`,
@@ -798,13 +798,13 @@ export function getTypeManifestVisitor(input: {
 
                 visitStructValue(node, { self }) {
                     return mergeTypeManifests(
-                        node.fields.map(field => visit(field, self)),
+                        (node.fields ?? []).map(field => visit(field, self)),
                         { mergeValues: renders => `{ ${renders.join(', ')} }` },
                     );
                 },
 
                 visitTupleType(tupleType, { self }) {
-                    const items = tupleType.items.map(item => visit(item, self));
+                    const items = (tupleType.items ?? []).map(item => visit(item, self));
                     const mergedManifest = mergeTypeManifests(items, {
                         mergeCodecs: codecs => `[${codecs.join(', ')}]`,
                         mergeTypes: types => `readonly [${types.join(', ')}]`,
@@ -819,7 +819,7 @@ export function getTypeManifestVisitor(input: {
 
                 visitTupleValue(node, { self }) {
                     return mergeTypeManifests(
-                        node.items.map(v => visit(v, self)),
+                        (node.items ?? []).map(v => visit(v, self)),
                         { mergeValues: renders => `[${renders.join(', ')}]` },
                     );
                 },

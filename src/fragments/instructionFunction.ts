@@ -46,10 +46,10 @@ export function getInstructionFunctionFragment(
     if (useAsync && !hasAsyncFunction(instructionNode, resolvedInputs, asyncResolvers)) return;
 
     const customData = customInstructionData.get(instructionNode.name);
-    const hasAccounts = instructionNode.accounts.length > 0;
+    const hasAccounts = (instructionNode.accounts ?? []).length > 0;
     const instructionDependencies = getInstructionDependencies(instructionNode, asyncResolvers, useAsync);
     const argDependencies = instructionDependencies.filter(isNodeFilter('argumentValueNode')).map(node => node.name);
-    const hasData = !!customData || instructionNode.arguments.length > 0;
+    const hasData = !!customData || (instructionNode.arguments ?? []).length > 0;
     const argIsNotOmitted = (arg: InstructionArgumentNode) =>
         !(arg.defaultValue && arg.defaultValueStrategy === 'omitted');
     const argIsDependent = (arg: InstructionArgumentNode) => argDependencies.includes(arg.name);
@@ -58,7 +58,7 @@ export function getInstructionFunctionFragment(
         if (useAsync) return true;
         return !isAsyncDefaultValue(arg.defaultValue, asyncResolvers);
     };
-    const hasDataArgs = !!customData || instructionNode.arguments.filter(argIsNotOmitted).length > 0;
+    const hasDataArgs = !!customData || (instructionNode.arguments ?? []).filter(argIsNotOmitted).length > 0;
     const hasExtraArgs =
         (instructionNode.extraArguments ?? []).filter(
             field => argIsNotOmitted(field) && (argIsDependent(field) || argHasDefaultValue(field)),
@@ -121,10 +121,10 @@ const programAddress = config?.programAddress ?? ${programAddressConstant};`;
 }
 
 function getAccountsInitializationFragment(instructionNode: InstructionNode): Fragment | undefined {
-    if (instructionNode.accounts.length === 0) return;
+    if ((instructionNode.accounts ?? []).length === 0) return;
 
     const accounts = mergeFragments(
-        instructionNode.accounts.map(account => {
+        (instructionNode.accounts ?? []).map(account => {
             const name = camelCase(account.name);
             const isWritable = account.isWritable ? 'true' : 'false';
             return fragment`${name}: { value: input.${name} ?? null, isWritable: ${isWritable} }`;
@@ -180,10 +180,10 @@ function getReturnStatementFragment(
 ): Fragment {
     const { instructionNode, hasByteDeltas, hasData, hasDataArgs, hasRemainingAccounts, nameApi } = scope;
     const optionalAccountStrategy = instructionNode.optionalAccountStrategy ?? 'programId';
-    const hasAccounts = instructionNode.accounts.length > 0;
+    const hasAccounts = (instructionNode.accounts ?? []).length > 0;
     const hasLegacyOptionalAccounts =
         instructionNode.optionalAccountStrategy === 'omitted' &&
-        instructionNode.accounts.some(account => account.isOptional);
+        (instructionNode.accounts ?? []).some(account => account.isOptional);
 
     // Account meta helper.
     const getAccountMeta = hasAccounts
@@ -192,7 +192,7 @@ function getReturnStatementFragment(
 
     // Accounts.
     const accountItems = [
-        ...instructionNode.accounts.map(account => `getAccountMeta(accounts.${camelCase(account.name)})`),
+        ...(instructionNode.accounts ?? []).map(account => `getAccountMeta(accounts.${camelCase(account.name)})`),
         ...(hasRemainingAccounts ? ['...remainingAccounts'] : []),
     ].join(', ');
     let accounts: Fragment | undefined;
@@ -238,7 +238,9 @@ function getReturnTypeFragment(instructionTypeFragment: Fragment, hasByteDeltas:
 function getTypeParamsFragment(instructionNode: InstructionNode, programAddressConstant: Fragment): Fragment {
     return mergeFragments(
         [
-            ...instructionNode.accounts.map(account => fragment`TAccount${pascalCase(account.name)} extends string`),
+            ...(instructionNode.accounts ?? []).map(
+                account => fragment`TAccount${pascalCase(account.name)} extends string`,
+            ),
             fragment`TProgramAddress extends ${use('type Address', 'solanaAddresses')} = typeof ${programAddressConstant}`,
         ],
         cs => `<${cs.join(', ')}>`,
@@ -249,7 +251,7 @@ function getInstructionTypeFragment(scope: { instructionPath: NodePath<Instructi
     const { instructionPath, nameApi } = scope;
     const instructionNode = getLastNodeFromPath(instructionPath);
     const instructionTypeName = nameApi.instructionType(instructionNode.name);
-    const accountTypeParamsFragments = instructionNode.accounts.map(account => {
+    const accountTypeParamsFragments = (instructionNode.accounts ?? []).map(account => {
         const typeParam = fragment`TAccount${pascalCase(account.name)}`;
         const camelName = camelCase(account.name);
 
@@ -283,8 +285,10 @@ function getInputTypeCallFragment(scope: {
     const inputTypeName = useAsync
         ? nameApi.instructionAsyncInputType(instructionNode.name)
         : nameApi.instructionSyncInputType(instructionNode.name);
-    if (instructionNode.accounts.length === 0) return fragment`${inputTypeName}`;
-    const accountTypeParams = instructionNode.accounts.map(account => `TAccount${pascalCase(account.name)}`).join(', ');
+    if ((instructionNode.accounts ?? []).length === 0) return fragment`${inputTypeName}`;
+    const accountTypeParams = (instructionNode.accounts ?? [])
+        .map(account => `TAccount${pascalCase(account.name)}`)
+        .join(', ');
 
     return fragment`${inputTypeName}<${accountTypeParams}>`;
 }
