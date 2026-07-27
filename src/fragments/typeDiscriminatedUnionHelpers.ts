@@ -18,7 +18,7 @@ export function getTypeDiscriminatedUnionHelpersFragment(
     const getVariantContentType = use('type GetDiscriminatedUnionVariantContent', 'solanaCodecsDataStructures');
     const getVariantType = use('type GetDiscriminatedUnionVariant', 'solanaCodecsDataStructures');
     const variantSignatures = mergeFragments(
-        typeNode.variants.map(variant => {
+        (typeNode.variants ?? []).map(variant => {
             const variantName = nameApi.discriminatedUnionVariant(variant.name);
             if (isNode(variant, 'enumStructVariantTypeNode')) {
                 return fragment`export function ${functionName}(kind: '${variantName}', data: ${getVariantContentType}<${looseName}, '${discriminatorName}', '${variantName}'>): ${getVariantType}<${looseName}, '${discriminatorName}', '${variantName}'>;`;

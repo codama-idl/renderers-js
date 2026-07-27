@@ -13,14 +13,14 @@ export function getInstructionDataFragment(
 ): Fragment | undefined {
     const { instructionPath, dataArgsManifest, nameApi, customInstructionData } = scope;
     const instructionNode = getLastNodeFromPath(instructionPath);
-    if (instructionNode.arguments.length === 0 || customInstructionData.has(instructionNode.name)) return;
+    if ((instructionNode.arguments ?? []).length === 0 || customInstructionData.has(instructionNode.name)) return;
 
     const instructionDataName = nameApi.instructionDataType(instructionNode.name);
     return getTypeWithCodecFragment({
         manifest: dataArgsManifest,
         name: instructionDataName,
         nameApi,
-        node: structTypeNodeFromInstructionArgumentNodes(instructionNode.arguments),
+        node: structTypeNodeFromInstructionArgumentNodes(instructionNode.arguments ?? []),
         size: scope.size,
     });
 }

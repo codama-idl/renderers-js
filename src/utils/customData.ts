@@ -69,7 +69,7 @@ export const getDefinedTypeNodesToExtract = (
         return [
             definedTypeNode({
                 name: options.extractAs,
-                type: structTypeNodeFromInstructionArgumentNodes(node.arguments),
+                type: structTypeNodeFromInstructionArgumentNodes(node.arguments ?? []),
             }),
         ];
     });

@@ -9,7 +9,7 @@ export function getPdaFunctionFragment(
     },
 ): Fragment {
     const pdaNode = getLastNodeFromPath(scope.pdaPath);
-    const seeds = parsePdaSeedNodes(pdaNode.seeds, scope);
+    const seeds = parsePdaSeedNodes(pdaNode.seeds ?? [], scope);
 
     return mergeFragments([getSeedInputTypeFragment(seeds, scope), getFunctionFragment(seeds, scope)], cs =>
         cs.join('\n\n'),
