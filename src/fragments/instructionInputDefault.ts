@@ -97,7 +97,7 @@ export function getInstructionInputDefaultFragment(
                 } else if (defaultValue.pda.programId) {
                     pdaProgram = fragment`'${defaultValue.pda.programId}' as ${addressType}<'${defaultValue.pda.programId}'>`;
                 }
-                const pdaSeeds = defaultValue.pda.seeds.flatMap((seed): Fragment[] => {
+                const pdaSeeds = (defaultValue.pda.seeds ?? []).flatMap((seed): Fragment[] => {
                     if (isNode(seed, 'constantPdaSeedNode') && isNode(seed.value, 'programIdValueNode')) {
                         return [fragment`${use('getAddressEncoder', 'solanaAddresses')}().encode(${pdaProgram})`];
                     }
@@ -108,7 +108,7 @@ export function getInstructionInputDefaultFragment(
                     }
                     if (isNode(seed, 'variablePdaSeedNode')) {
                         const typeManifest = visit(seed.type, typeManifestVisitor);
-                        const valueSeed = defaultValue.seeds.find(s => s.name === seed.name)?.value;
+                        const valueSeed = (defaultValue.seeds ?? []).find(s => s.name === seed.name)?.value;
                         if (!valueSeed) return [];
                         if (isNode(valueSeed, 'accountValueNode')) {
                             const name = camelCase(valueSeed.name);
@@ -139,7 +139,7 @@ export function getInstructionInputDefaultFragment(
             // Linked PDA value.
             const pdaFunction = use(nameApi.pdaFindFunction(defaultValue.pda.name), getImportFrom(defaultValue.pda));
             const pdaArgs: Fragment[] = [];
-            const pdaSeeds = defaultValue.seeds.map((seed): Fragment => {
+            const pdaSeeds = (defaultValue.seeds ?? []).map((seed): Fragment => {
                 if (isNode(seed.value, 'accountValueNode')) {
                     const name = camelCase(seed.value.name);
                     return fragment`${seed.name}: ${getAddressFromResolvedInstructionAccount}("${name}", accounts.${name}.value)`;
@@ -263,6 +263,11 @@ export function getInstructionInputDefaultFragment(
                 conditionalFragment,
                 `if (${condition}) {\n${ifTrueRenderer ? ifTrueRenderer.content : ifFalseRenderer?.content}\n}`,
             );
+
+        case 'accountFieldValueNode':
+        case 'injectedValueNode':
+            // These contextual value nodes are not yet supported as instruction input defaults by this renderer.
+            throw new Error(`Unsupported instruction input default value node: [${defaultValue.kind}]`);
 
         default:
             const valueManifest = visit(defaultValue, typeManifestVisitor).value;

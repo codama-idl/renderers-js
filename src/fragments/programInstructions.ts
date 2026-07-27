@@ -13,7 +13,7 @@ export function getProgramInstructionsFragment(
         programNode: ProgramNode;
     },
 ): Fragment | undefined {
-    if (scope.programNode.instructions.length === 0) return;
+    if ((scope.programNode.instructions ?? []).length === 0) return;
 
     const allInstructions = getAllInstructionsWithSubs(scope.programNode, {
         leavesOnly: !scope.renderParentInstructions,
@@ -68,7 +68,7 @@ function getProgramInstructionsIdentifierFunctionFragment(
                 dataName: 'data',
                 discriminators: instruction.discriminators ?? [],
                 ifTrue: `return ${programInstructionsEnum}.${variant};`,
-                struct: structTypeNodeFromInstructionArgumentNodes(instruction.arguments),
+                struct: structTypeNodeFromInstructionArgumentNodes(instruction.arguments ?? []),
             });
         }),
         c => c.join('\n'),
@@ -141,7 +141,7 @@ function getProgramInstructionsParseFunctionFragment(
             const parseFunction = use(nameApi.instructionParseFunction(instruction.name), 'generatedInstructions');
             const assertIsInstructionWithAccounts = use('assertIsInstructionWithAccounts', 'solanaInstructions');
             // Only need accounts assertion since data is guaranteed by the input type
-            const hasAccounts = instruction.accounts.length > 0;
+            const hasAccounts = (instruction.accounts ?? []).length > 0;
             const assertionsCode = hasAccounts
                 ? fragment`${assertIsInstructionWithAccounts}(instruction);\n`
                 : fragment``;

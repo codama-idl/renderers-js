@@ -49,7 +49,7 @@ export function getInstructionPageFragment(
             getDiscriminatorConstantsFragment({
                 ...childScope,
                 discriminatorNodes: node.discriminators ?? [],
-                fields: node.arguments,
+                fields: node.arguments ?? [],
                 prefix: node.name,
             }),
             getInstructionTypeFragment(childScope),
@@ -65,7 +65,7 @@ export function getInstructionPageFragment(
 
 export function getRenamedArgsMap(instruction: InstructionNode): Map<string, string> {
     const argNames = [
-        ...instruction.arguments.map(a => a.name),
+        ...(instruction.arguments ?? []).map(a => a.name),
         ...(instruction.extraArguments ?? []).map(a => a.name),
     ];
     const duplicateArgs = argNames.filter((e, i, a) => a.indexOf(e) !== i);
@@ -73,7 +73,7 @@ export function getRenamedArgsMap(instruction: InstructionNode): Map<string, str
         throw new Error(`Duplicate args found: [${duplicateArgs.join(', ')}] in instruction [${instruction.name}].`);
     }
 
-    const allNames = [...instruction.accounts.map(account => account.name), ...argNames];
+    const allNames = [...(instruction.accounts ?? []).map(account => account.name), ...argNames];
     const duplicates = allNames.filter((e, i, a) => a.indexOf(e) !== i);
     if (duplicates.length === 0) return new Map();
 
