@@ -1,5 +1,11 @@
 # @codama/renderers-js
 
+## 2.3.1
+
+### Patch Changes
+
+- [#166](https://github.com/codama-idl/renderers-js/pull/166) [`28793b5`](https://github.com/codama-idl/renderers-js/commit/28793b59497b5f386721961d69eb75c3c351e700) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Support `@codama/nodes@1.10`, whose node array attributes are now optional (`Array<T> | undefined`). Array reads are guarded with `?? []` throughout the renderer, and the new `injectedValueNode` and `accountFieldValueNode` instruction-input default kinds now throw an explicit unsupported-node error rather than being silently mishandled.
+
 ## 2.3.0
 
 ### Minor Changes
