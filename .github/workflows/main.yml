@@ -2,7 +2,7 @@ name: Main
 
 on:
   push:
-    branches: [main, 1.x]
+    branches: [main, '*.x']
   pull_request:
 
 env:
