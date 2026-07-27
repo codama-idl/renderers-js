@@ -89,7 +89,7 @@ function getFieldConditionFragment(
         struct: StructTypeNode;
     },
 ): Fragment {
-    const field = scope.struct.fields.find(f => f.name === discriminator.name);
+    const field = (scope.struct.fields ?? []).find(f => f.name === discriminator.name);
     if (!field || !field.defaultValue) {
         // TODO: Coded error.
         throw new Error(
@@ -99,17 +99,16 @@ function getFieldConditionFragment(
 
     // This handles the case where a field uses an u8 array to represent its discriminator.
     // In this case, we can simplify the generated code by delegating to a constantDiscriminatorNode.
+    const defaultValueItems = isNode(field.defaultValue, 'arrayValueNode') ? (field.defaultValue.items ?? []) : [];
     if (
         isNode(field.type, 'arrayTypeNode') &&
         isNode(field.type.item, 'numberTypeNode') &&
         field.type.item.format === 'u8' &&
         isNode(field.type.count, 'fixedCountNode') &&
         isNode(field.defaultValue, 'arrayValueNode') &&
-        field.defaultValue.items.every(isNodeFilter('numberValueNode'))
+        defaultValueItems.every(isNodeFilter('numberValueNode'))
     ) {
-        const base64Bytes = getBase64Decoder().decode(
-            new Uint8Array(field.defaultValue.items.map(node => node.number)),
-        );
+        const base64Bytes = getBase64Decoder().decode(new Uint8Array(defaultValueItems.map(node => node.number)));
         return getByteConditionFragment(
             constantDiscriminatorNode(constantValueNodeFromBytes('base64', base64Bytes), discriminator.offset),
             scope,

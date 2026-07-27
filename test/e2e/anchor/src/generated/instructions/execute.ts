@@ -10,10 +10,8 @@ import {
     combineCodec,
     fixDecoderSize,
     fixEncoderSize,
-    getAddressEncoder,
     getBytesDecoder,
     getBytesEncoder,
-    getProgramDerivedAddress,
     getStructDecoder,
     getStructEncoder,
     getU64Decoder,
@@ -30,6 +28,7 @@ import {
     type ReadonlyAccount,
     type ReadonlyUint8Array,
 } from '@solana/kit';
+import { findExtraMetasAccountPda } from '../pdas';
 import { WEN_TRANSFER_GUARD_PROGRAM_ADDRESS } from '../programs';
 import { expectAddress, getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
@@ -167,17 +166,7 @@ export async function getExecuteInstructionAsync<
 
     // Resolve default values.
     if (!accounts.extraMetasAccount.value) {
-        accounts.extraMetasAccount.value = await getProgramDerivedAddress({
-            programAddress,
-            seeds: [
-                getBytesEncoder().encode(
-                    new Uint8Array([
-                        101, 120, 116, 114, 97, 45, 97, 99, 99, 111, 117, 110, 116, 45, 109, 101, 116, 97, 115,
-                    ]),
-                ),
-                getAddressEncoder().encode(expectAddress(accounts.mint.value)),
-            ],
-        });
+        accounts.extraMetasAccount.value = await findExtraMetasAccountPda({ mint: expectAddress(accounts.mint.value) });
     }
     if (!accounts.instructionSysvarAccount.value) {
         accounts.instructionSysvarAccount.value =

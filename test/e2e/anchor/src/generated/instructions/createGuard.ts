@@ -45,6 +45,7 @@ import {
     type WritableAccount,
     type WritableSignerAccount,
 } from '@solana/kit';
+import { findGuardPda } from '../pdas';
 import { WEN_TRANSFER_GUARD_PROGRAM_ADDRESS } from '../programs';
 import { expectAddress, getAccountMetaFactory, type ResolvedAccount } from '../shared';
 import {
@@ -241,19 +242,7 @@ export async function getCreateGuardInstructionAsync<
 
     // Resolve default values.
     if (!accounts.guard.value) {
-        accounts.guard.value = await getProgramDerivedAddress({
-            programAddress,
-            seeds: [
-                getBytesEncoder().encode(
-                    new Uint8Array([
-                        119, 101, 110, 95, 116, 111, 107, 101, 110, 95, 116, 114, 97, 110, 115, 102, 101, 114, 95, 103,
-                        117, 97, 114, 100,
-                    ]),
-                ),
-                getBytesEncoder().encode(new Uint8Array([103, 117, 97, 114, 100, 95, 118, 49])),
-                getAddressEncoder().encode(expectAddress(accounts.mint.value)),
-            ],
-        });
+        accounts.guard.value = await findGuardPda({ mint: expectAddress(accounts.mint.value) });
     }
     if (!accounts.tokenProgram.value) {
         accounts.tokenProgram.value =

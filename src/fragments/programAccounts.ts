@@ -10,7 +10,7 @@ export function getProgramAccountsFragment(
         programNode: ProgramNode;
     },
 ): Fragment | undefined {
-    if (scope.programNode.accounts.length === 0) return;
+    if ((scope.programNode.accounts ?? []).length === 0) return;
     return mergeFragments(
         [getProgramAccountsEnumFragment(scope), getProgramAccountsIdentifierFunctionFragment(scope)],
         c => c.join('\n\n'),
@@ -24,7 +24,7 @@ function getProgramAccountsEnumFragment(
 ): Fragment {
     const { programNode, nameApi } = scope;
     const programAccountsEnum = nameApi.programAccountsEnum(programNode.name);
-    const programAccountsEnumVariants = programNode.accounts.map(account =>
+    const programAccountsEnumVariants = (programNode.accounts ?? []).map(account =>
         nameApi.programAccountsEnumVariant(account.name),
     );
     return fragment`export enum ${programAccountsEnum} { ${programAccountsEnumVariants.join(', ')} }`;
@@ -36,7 +36,7 @@ function getProgramAccountsIdentifierFunctionFragment(
     },
 ): Fragment | undefined {
     const { programNode, nameApi } = scope;
-    const accountsWithDiscriminators = programNode.accounts.filter(
+    const accountsWithDiscriminators = (programNode.accounts ?? []).filter(
         account => (account.discriminators ?? []).length > 0,
     );
     const hasAccountDiscriminators = accountsWithDiscriminators.length > 0;
