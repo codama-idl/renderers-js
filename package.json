@@ -41,7 +41,7 @@
         "dev": "vitest --project node",
         "lint": "eslint . && prettier --check .",
         "lint:fix": "eslint --fix . && prettier --write .",
-        "publish-package": "pnpm build && changeset publish",
+        "publish-package": "pnpm build && changeset publish --tag release-1.x",
         "test": "pnpm test:types && pnpm test:treeshakability && pnpm test:unit && pnpm test:e2e && pnpm test:exports",
         "test:e2e": "./test/e2e/test.sh",
         "test:exports": "node ./test/exports/module.mjs && node ./test/exports/commonjs.cjs",
