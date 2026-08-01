@@ -14,6 +14,7 @@ import {
     type Fragment,
     getImportFromFactory,
     getNameApi,
+    ImportExtension,
     importMapToString,
     KitImportStrategy,
     ParsedCustomDataOptions,
@@ -144,20 +145,38 @@ export function renderMapDoesNotContainImports(
 export function fragmentContainsImports(
     actual: Fragment | undefined,
     expectedImports: Record<string, string[]>,
-    options?: { dependencyMap?: Record<string, string>; kitImportStrategy?: KitImportStrategy },
+    options?: {
+        dependencyMap?: Record<string, string>;
+        importExtension?: ImportExtension;
+        kitImportStrategy?: KitImportStrategy;
+    },
 ): Promise<void> {
     expect(actual).toBeDefined();
-    const imports = importMapToString(actual!.imports, options?.dependencyMap, options?.kitImportStrategy);
+    const imports = importMapToString(
+        actual!.imports,
+        options?.dependencyMap,
+        options?.kitImportStrategy,
+        options?.importExtension,
+    );
     return codeContainsImports(imports, expectedImports);
 }
 
 export function fragmentDoesNotContainImports(
     actual: Fragment | undefined,
     expectedImports: Record<string, string[]>,
-    options?: { dependencyMap?: Record<string, string>; kitImportStrategy?: KitImportStrategy },
+    options?: {
+        dependencyMap?: Record<string, string>;
+        importExtension?: ImportExtension;
+        kitImportStrategy?: KitImportStrategy;
+    },
 ): Promise<void> {
     expect(actual).toBeDefined();
-    const imports = importMapToString(actual!.imports, options?.dependencyMap, options?.kitImportStrategy);
+    const imports = importMapToString(
+        actual!.imports,
+        options?.dependencyMap,
+        options?.kitImportStrategy,
+        options?.importExtension,
+    );
     return codeDoesNotContainImports(imports, expectedImports);
 }
 

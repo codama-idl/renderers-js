@@ -21,6 +21,7 @@ export type GetRenderMapOptions = {
     customInstructionData?: CustomDataOptions[];
     dependencyMap?: Record<string, string>;
     dependencyVersions?: Record<string, string>;
+    importExtension?: ImportExtension;
     internalNodes?: string[];
     kitImportStrategy?: KitImportStrategy;
     linkOverrides?: LinkOverrides;
@@ -36,6 +37,7 @@ export type RenderScope = {
     dependencyMap: Record<string, string>;
     dependencyVersions: Record<string, string>;
     getImportFrom: GetImportFromFunction;
+    importExtension?: ImportExtension;
     kitImportStrategy: KitImportStrategy;
     linkables: LinkableDictionary;
     nameApi: NameApi;
@@ -70,3 +72,33 @@ export type RenderScope = {
 export type KitImportStrategy = 'granular' | 'preferRoot' | 'rootOnly';
 
 export const DEFAULT_KIT_IMPORT_STRATEGY: KitImportStrategy = 'preferRoot';
+
+/**
+ * Defines the file extension appended to the relative module specifiers of generated code.
+ *
+ * Relative imports and re-exports normally omit their extension, which requires a bundler
+ * or a resolver that can guess it. Setting this option makes those specifiers explicit:
+ * generated files are referenced as `./myAccount.<ext>` and generated directories as
+ * `./accounts/index.<ext>`. Only paths the renderer generates itself are rewritten, so
+ * relative paths provided through {@link GetRenderMapOptions.linkOverrides} are emitted
+ * verbatim and non-relative specifiers — npm packages, subpath imports — are never touched.
+ *
+ * Variants:
+ * - `'js'`:
+ *   Appends `.js` extensions, as expected by Node's ESM resolution — i.e. TypeScript's
+ *   `moduleResolution: "nodenext"` — where the compiled JavaScript file is the resolution target.
+ *
+ * - `'ts'`:
+ *   Appends `.ts` extensions, as expected by runtimes that execute TypeScript sources
+ *   directly — e.g. Deno or Node type stripping. With TypeScript, this requires the
+ *   `allowImportingTsExtensions` option, alongside `rewriteRelativeImportExtensions`
+ *   when the sources are also compiled to JavaScript.
+ *
+ * @example
+ * ```ts
+ * // With `importExtension: 'js'`.
+ * import { type MyType } from '../types/index.js';
+ * export * from './myAccount.js';
+ * ```
+ */
+export type ImportExtension = 'js' | 'ts';

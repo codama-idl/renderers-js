@@ -1,4 +1,4 @@
-import { DEFAULT_KIT_IMPORT_STRATEGY, KitImportStrategy } from '.';
+import { DEFAULT_KIT_IMPORT_STRATEGY, ImportExtension, KitImportStrategy } from '.';
 
 const DEFAULT_EXTERNAL_MODULE_MAP: Record<string, string> = {
     solanaAccounts: '@solana/kit',
@@ -53,6 +53,8 @@ const DEFAULT_INTERNAL_MODULE_MAP: Record<string, string> = {
     shared: '../shared',
     types: '../types',
 };
+
+const RECOGNIZED_EXTENSION_REGEX = /\.(?:[mc]?[jt]sx?|json)$/;
 
 type ImportInput = string;
 type Module = string;
@@ -135,8 +137,9 @@ export function importMapToString(
     importMap: ImportMap,
     dependencyMap: Record<string, string> = {},
     kitImportStrategy: KitImportStrategy = DEFAULT_KIT_IMPORT_STRATEGY,
+    importExtension?: ImportExtension,
 ): string {
-    const resolvedMap = resolveImportMapModules(importMap, dependencyMap, kitImportStrategy);
+    const resolvedMap = resolveImportMapModules(importMap, dependencyMap, kitImportStrategy, importExtension);
 
     return [...resolvedMap.entries()]
         .sort(([a], [b]) => {
@@ -183,6 +186,7 @@ function resolveImportMapModules(
     importMap: ImportMap,
     dependencyMap: Record<string, string>,
     kitImportStrategy: KitImportStrategy,
+    importExtension?: ImportExtension,
 ): ImportMap {
     const defaultExternalModuleMap =
         kitImportStrategy === 'granular' ? DEFAULT_GRANULAR_EXTERNAL_MODULE_MAP : DEFAULT_EXTERNAL_MODULE_MAP;
@@ -199,9 +203,32 @@ function resolveImportMapModules(
     return mergeImportMaps(
         [...importMap.entries()].map(([module, imports]) => {
             const resolvedModule = dependencyMapWithDefaults[module] ?? module;
-            return new Map([[resolvedModule, imports]]);
+            const isInternalAlias = module in DEFAULT_INTERNAL_MODULE_MAP;
+            return new Map([[applyImportExtension(resolvedModule, isInternalAlias, importExtension), imports]]);
         }),
     );
+}
+
+/**
+ * Appends an explicit extension to the relative module specifiers the renderer owns.
+ *
+ * Classification happens on the symbolic module key rather than on the resolved path so that
+ * per-file `dependencyMap` overrides — such as the `{ generatedTypes: '.' }` override used by
+ * files inside the `types` folder — still resolve to the directory's index file.
+ */
+function applyImportExtension(
+    resolvedModule: string,
+    isInternalAlias: boolean,
+    importExtension: ImportExtension | undefined,
+): string {
+    // Only relative specifiers can be rewritten; npm packages and subpath imports are left alone.
+    if (!importExtension || !resolvedModule.startsWith('.')) return resolvedModule;
+    // An explicit extension means the alias already points at a file.
+    if (RECOGNIZED_EXTENSION_REGEX.test(resolvedModule)) return resolvedModule;
+    // Any other relative path is user-supplied and emitted verbatim.
+    if (!isInternalAlias) return resolvedModule;
+    // Internal aliases resolve to directories by convention, so target their index file.
+    return `${resolvedModule}/index.${importExtension}`;
 }
 
 function importInfoToString(

@@ -64,6 +64,7 @@ export function getRenderMapVisitor(
         dependencyMap: options.dependencyMap ?? {},
         dependencyVersions: options.dependencyVersions ?? {},
         getImportFrom: getImportFromFactory(options.linkOverrides ?? {}, customAccountData, customInstructionData),
+        importExtension: options.importExtension,
         kitImportStrategy: options.kitImportStrategy ?? DEFAULT_KIT_IMPORT_STRATEGY,
         linkables,
         nameApi: getNameApi({ ...DEFAULT_NAME_TRANSFORMERS, ...options.nameTransformers }),
@@ -182,13 +183,13 @@ export function getRenderMapVisitor(
 
                     return mergeRenderMaps([
                         createRenderMap({
-                            ['accounts/index.ts']: asPage(getIndexPageFragment(accountsToExport)),
-                            ['errors/index.ts']: asPage(getIndexPageFragment(programsWithErrorsToExport)),
+                            ['accounts/index.ts']: asPage(getIndexPageFragment(accountsToExport, renderScope)),
+                            ['errors/index.ts']: asPage(getIndexPageFragment(programsWithErrorsToExport, renderScope)),
                             ['index.ts']: asPage(getRootIndexPageFragment(scope)),
-                            ['instructions/index.ts']: asPage(getIndexPageFragment(instructionsToExport)),
-                            ['pdas/index.ts']: asPage(getIndexPageFragment(pdasToExport)),
-                            ['programs/index.ts']: asPage(getIndexPageFragment(programsToExport)),
-                            ['types/index.ts']: asPage(getIndexPageFragment(definedTypesToExport)),
+                            ['instructions/index.ts']: asPage(getIndexPageFragment(instructionsToExport, renderScope)),
+                            ['pdas/index.ts']: asPage(getIndexPageFragment(pdasToExport, renderScope)),
+                            ['programs/index.ts']: asPage(getIndexPageFragment(programsToExport, renderScope)),
+                            ['types/index.ts']: asPage(getIndexPageFragment(definedTypesToExport, renderScope)),
                         }),
                         ...getAllPrograms(node).map(p => visit(p, self)),
                     ]);
