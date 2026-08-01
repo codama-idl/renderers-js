@@ -36,8 +36,8 @@ test('it renders zeroable option codecs', async () => {
             'getOptionDecoder',
             'getAddressEncoder',
             'getAddressDecoder',
-            'Option',
-            'OptionOrNullable',
+            'type Option',
+            'type OptionOrNullable',
         ],
     });
 });
@@ -67,8 +67,8 @@ test('it renders zeroable option codecs with custom zero values', async () => {
             'getOptionDecoder',
             'getU16Encoder',
             'getU16Decoder',
-            'Option',
-            'OptionOrNullable',
+            'type Option',
+            'type OptionOrNullable',
         ],
     });
 });

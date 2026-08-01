@@ -287,9 +287,24 @@ describe('importMapToString', () => {
         expect(importMapToString(importMap)).toBe("import { import1, import2, import3 } from 'module-a';");
     });
 
-    test('it supports type-only import statements', () => {
+    test('it preserves empty import statements', () => {
+        const importMap = addToImportMap(createImportMap(), 'module-a', []);
+        expect(importMapToString(importMap)).toBe("import {  } from 'module-a';");
+    });
+
+    test('it groups type-only import statements using the `import type` syntax', () => {
         const importMap = addToImportMap(createImportMap(), 'module-a', ['type import1']);
-        expect(importMapToString(importMap)).toBe("import { type import1 } from 'module-a';");
+        expect(importMapToString(importMap)).toBe("import type { import1 } from 'module-a';");
+    });
+
+    test('it groups multiple type-only imports of the same module using the `import type` syntax', () => {
+        const importMap = addToImportMap(createImportMap(), 'module-a', ['type import1', 'type import2']);
+        expect(importMapToString(importMap)).toBe("import type { import1, import2 } from 'module-a';");
+    });
+
+    test('it keeps inline type markers when a module mixes type-only and value imports', () => {
+        const importMap = addToImportMap(createImportMap(), 'module-a', ['import1', 'type import2']);
+        expect(importMapToString(importMap)).toBe("import { import1, type import2 } from 'module-a';");
     });
 
     test('it supports aliased import statements', () => {
@@ -299,7 +314,12 @@ describe('importMapToString', () => {
 
     test('it supports aliased type-only import statements', () => {
         const importMap = addToImportMap(createImportMap(), 'module-a', ['type import1 as alias1']);
-        expect(importMapToString(importMap)).toBe("import { type import1 as alias1 } from 'module-a';");
+        expect(importMapToString(importMap)).toBe("import type { import1 as alias1 } from 'module-a';");
+    });
+
+    test('it supports aliased type-only imports within a mixed module', () => {
+        const importMap = addToImportMap(createImportMap(), 'module-a', ['import1', 'type import2 as alias2']);
+        expect(importMapToString(importMap)).toBe("import { import1, type import2 as alias2 } from 'module-a';");
     });
 
     test('it orders import items alphabetically', () => {
@@ -341,18 +361,18 @@ describe('importMapToString', () => {
 
     test('it replaces placeholder kit packages with their @solana/kit', () => {
         const importMap = addToImportMap(createImportMap(), 'solanaAddresses', ['type Address']);
-        expect(importMapToString(importMap)).toBe("import { type Address } from '@solana/kit';");
+        expect(importMapToString(importMap)).toBe("import type { Address } from '@solana/kit';");
     });
 
     test('it can use granular packages when replacing placeholder kit packages', () => {
         const importMap = addToImportMap(createImportMap(), 'solanaAddresses', ['type Address']);
-        expect(importMapToString(importMap, {}, 'granular')).toBe("import { type Address } from '@solana/addresses';");
+        expect(importMapToString(importMap, {}, 'granular')).toBe("import type { Address } from '@solana/addresses';");
     });
 
     test('it can override the module of placeholder kit packages', () => {
         const importMap = addToImportMap(createImportMap(), 'solanaAddresses', ['type Address']);
         expect(importMapToString(importMap, { solanaAddresses: '@acme/solana-addresses' })).toBe(
-            "import { type Address } from '@acme/solana-addresses';",
+            "import type { Address } from '@acme/solana-addresses';",
         );
     });
 });

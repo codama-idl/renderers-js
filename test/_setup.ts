@@ -162,13 +162,13 @@ export function fragmentDoesNotContainImports(
 }
 
 export async function codeContainsImports(actual: string, expectedImports: Record<string, string[]>): Promise<void> {
-    const normalizedActual = await inlineCode(actual);
+    const actualImports = await getImportPairs(actual);
     const importPairs = Object.entries(expectedImports).flatMap(([key, value]) => {
         return value.map(v => [key, v] as const);
     });
 
-    importPairs.forEach(([importFrom, importValue]) => {
-        expect(normalizedActual).toMatch(new RegExp(`import{[^}]*\\b${importValue}\\b[^}]*}from'${importFrom}'`));
+    importPairs.forEach(importPair => {
+        expect(actualImports).toContainEqual(importPair);
     });
 }
 
@@ -176,14 +176,28 @@ export async function codeDoesNotContainImports(
     actual: string,
     expectedImports: Record<string, string[]>,
 ): Promise<void> {
-    const normalizedActual = await inlineCode(actual);
+    const actualImports = await getImportPairs(actual);
     const importPairs = Object.entries(expectedImports).flatMap(([key, value]) => {
         return value.map(v => [key, v] as const);
     });
 
-    importPairs.forEach(([importFrom, importValue]) => {
-        expect(normalizedActual).not.toMatch(new RegExp(`import{[^}]*\\b${importValue}\\b[^}]*}from'${importFrom}'`));
+    importPairs.forEach(importPair => {
+        expect(actualImports).not.toContainEqual(importPair);
     });
+}
+
+async function getImportPairs(code: string): Promise<(readonly [string, string])[]> {
+    const normalizedCode = await inlineCode(code);
+    return [...normalizedCode.matchAll(/import( type)?\{([^}]*)\}from'([^']+)'/g)].flatMap(
+        ([_, typeKeyword, imports, importFrom]) =>
+            imports
+                .split(',')
+                .filter(Boolean)
+                .map(importValue => {
+                    const canonicalImportValue = typeKeyword ? `type ${importValue}` : importValue;
+                    return [importFrom, canonicalImportValue] as const;
+                }),
+    );
 }
 
 export function codeStringAsRegex(code: string): RegExp {

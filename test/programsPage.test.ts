@@ -35,7 +35,7 @@ test('it renders the program address constant', async () => {
 
     // And we expect the following imports.
     await renderMapContainsImports(renderMap, 'programs/splToken.ts', {
-        '@solana/kit': ['Address'],
+        '@solana/kit': ['type Address'],
     });
 });
 
@@ -103,7 +103,7 @@ test('it renders an function that identifies accounts in a program', async () =>
     await renderMapContainsImports(renderMap, 'programs/splToken.ts', {
         '@solana/kit': [
             'containsBytes',
-            'ReadonlyUint8Array',
+            'type ReadonlyUint8Array',
             'SolanaError',
             'SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_ACCOUNT',
         ],
@@ -178,7 +178,7 @@ test('it renders an function that identifies instructions in a program', async (
 
     // And we expect the following imports.
     await renderMapContainsImports(renderMap, 'programs/splToken.ts', {
-        '@solana/kit': ['containsBytes', 'ReadonlyUint8Array'],
+        '@solana/kit': ['containsBytes', 'type ReadonlyUint8Array'],
     });
 });
 
@@ -316,7 +316,7 @@ test('it renders a function that parses instructions in a program', async () => 
 
     // And we expect the following imports.
     await renderMapContainsImports(renderMap, 'programs/splToken.ts', {
-        '@solana/kit': ['Instruction', 'InstructionWithData', 'ReadonlyUint8Array'],
+        '@solana/kit': ['type Instruction', 'type InstructionWithData', 'type ReadonlyUint8Array'],
     });
 });
 

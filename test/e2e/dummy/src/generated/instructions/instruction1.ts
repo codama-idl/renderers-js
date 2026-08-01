@@ -6,7 +6,7 @@
  * @see https://github.com/codama-idl/codama
  */
 
-import { type AccountMeta, type Address, type Instruction, type InstructionWithAccounts } from '@solana/kit';
+import type { AccountMeta, Address, Instruction, InstructionWithAccounts } from '@solana/kit';
 import { DUMMY_PROGRAM_ADDRESS } from '../programs';
 
 export type Instruction1Instruction<

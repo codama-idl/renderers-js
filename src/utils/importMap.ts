@@ -147,11 +147,17 @@ export function importMapToString(
             return a.localeCompare(b);
         })
         .map(([module, imports]) => {
-            const innerImports = [...imports.values()]
-                .map(importInfoToString)
+            const importInfos = [...imports.values()];
+            // When every import of a module is type-only, we can use a single
+            // `import type` statement. This ensures the statement is fully erased
+            // from the emitted JavaScript under `verbatimModuleSyntax`, instead of
+            // leaving an empty `import {} from '...'` side-effect statement behind.
+            const isTypeOnlyModule = importInfos.length > 0 && importInfos.every(({ isType }) => isType);
+            const innerImports = importInfos
+                .map(importInfo => importInfoToString(importInfo, isTypeOnlyModule))
                 .sort((a, b) => a.localeCompare(b))
                 .join(', ');
-            return `import { ${innerImports} } from '${module}';`;
+            return `import ${isTypeOnlyModule ? 'type ' : ''}{ ${innerImports} } from '${module}';`;
         })
         .join('\n');
 }
@@ -198,7 +204,10 @@ function resolveImportMapModules(
     );
 }
 
-function importInfoToString({ importedIdentifier, isType, usedIdentifier }: ImportInfo): string {
+function importInfoToString(
+    { importedIdentifier, isType, usedIdentifier }: ImportInfo,
+    omitTypeKeyword: boolean = false,
+): string {
     const alias = importedIdentifier !== usedIdentifier ? ` as ${usedIdentifier}` : '';
-    return `${isType ? 'type ' : ''}${importedIdentifier}${alias}`;
+    return `${isType && !omitTypeKeyword ? 'type ' : ''}${importedIdentifier}${alias}`;
 }
