@@ -64,6 +64,7 @@ export function getRenderMapVisitor(
         customInstructionData,
         dependencyMap: options.dependencyMap ?? {},
         dependencyVersions: options.dependencyVersions ?? {},
+        erasableSyntax: options.erasableSyntax ?? false,
         getImportFrom: getImportFromFactory(options.linkOverrides ?? {}, customAccountData, customInstructionData),
         getImportPath: getImportPathFactory(options.importExtension),
         kitImportStrategy: options.kitImportStrategy ?? DEFAULT_KIT_IMPORT_STRATEGY,

@@ -5,7 +5,7 @@ import { getTypeFragment } from './type';
 import { getTypeCodecFragment } from './typeCodec';
 
 export function getTypeWithCodecFragment(
-    scope: Pick<RenderScope, 'nameApi'> & {
+    scope: Pick<RenderScope, 'erasableSyntax' | 'nameApi'> & {
         codecDocs?: string[];
         decoderDocs?: string[];
         encoderDocs?: string[];

@@ -34,6 +34,7 @@ import {
     fragment,
     getBytesFromBytesValueNode,
     getDocblockFragment,
+    getErasableEnumBody,
     type GetImportFromFunction,
     mergeFragments,
     mergeTypeManifests,
@@ -49,6 +50,7 @@ export type TypeManifestVisitor = ReturnType<typeof getTypeManifestVisitor>;
 export function getTypeManifestVisitor(input: {
     customAccountData: ParsedCustomDataOptions;
     customInstructionData: ParsedCustomDataOptions;
+    erasableSyntax?: boolean;
     getImportFrom: GetImportFromFunction;
     linkables: LinkableDictionary;
     nameApi: NameApi;
@@ -63,7 +65,15 @@ export function getTypeManifestVisitor(input: {
     | 'definedTypeNode'
     | 'instructionNode'
 > {
-    const { nameApi, linkables, nonScalarEnums, customAccountData, customInstructionData, getImportFrom } = input;
+    const {
+        nameApi,
+        linkables,
+        nonScalarEnums,
+        customAccountData,
+        customInstructionData,
+        getImportFrom,
+        erasableSyntax = false,
+    } = input;
     const stack = input.stack ?? new NodeStack();
     let parentName: { loose: string; strict: string } | null = null;
 
@@ -296,12 +306,13 @@ export function getTypeManifestVisitor(input: {
                             );
                         }
                         const variantNames = (enumType.variants ?? []).map(({ name }) => nameApi.enumVariant(name));
+                        const body = erasableSyntax ? getErasableEnumBody(variantNames) : variantNames.join(', ');
                         return typeManifest({
                             decoder: fragment`${use('getEnumDecoder', 'solanaCodecsDataStructures')}(${currentParentName.strict}${decoderOptionsFragment})`,
                             encoder: fragment`${use('getEnumEncoder', 'solanaCodecsDataStructures')}(${currentParentName.strict}${encoderOptionsFragment})`,
                             isEnum: true,
-                            looseType: fragment`{ ${variantNames.join(', ')} }`,
-                            strictType: fragment`{ ${variantNames.join(', ')} }`,
+                            looseType: fragment`{ ${body} }`,
+                            strictType: fragment`{ ${body} }`,
                         });
                     }
 

@@ -2,9 +2,10 @@ import { ProgramNode, resolveNestedTypeNode } from '@codama/nodes';
 
 import { Fragment, fragment, mergeFragments, RenderScope, use } from '../utils';
 import { getDiscriminatorConditionFragment } from './discriminatorCondition';
+import { getEnumDeclarationFragment } from './enumDeclaration';
 
 export function getProgramAccountsFragment(
-    scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<RenderScope, 'erasableSyntax' | 'nameApi' | 'typeManifestVisitor'> & {
         programNode: ProgramNode;
     },
 ): Fragment | undefined {
@@ -16,16 +17,16 @@ export function getProgramAccountsFragment(
 }
 
 function getProgramAccountsEnumFragment(
-    scope: Pick<RenderScope, 'nameApi'> & {
+    scope: Pick<RenderScope, 'erasableSyntax' | 'nameApi'> & {
         programNode: ProgramNode;
     },
 ): Fragment {
     const { programNode, nameApi } = scope;
-    const programAccountsEnum = nameApi.programAccountsEnum(programNode.name);
-    const programAccountsEnumVariants = (programNode.accounts ?? []).map(account =>
-        nameApi.programAccountsEnumVariant(account.name),
-    );
-    return fragment`export enum ${programAccountsEnum} { ${programAccountsEnumVariants.join(', ')} }`;
+    return getEnumDeclarationFragment({
+        ...scope,
+        name: nameApi.programAccountsEnum(programNode.name),
+        variantNames: (programNode.accounts ?? []).map(account => nameApi.programAccountsEnumVariant(account.name)),
+    });
 }
 
 function getProgramAccountsIdentifierFunctionFragment(

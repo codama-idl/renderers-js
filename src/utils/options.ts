@@ -21,6 +21,14 @@ export type GetRenderMapOptions = {
     customInstructionData?: CustomDataOptions[];
     dependencyMap?: Record<string, string>;
     dependencyVersions?: Record<string, string>;
+    /**
+     * Whether generated code should avoid TypeScript syntax that cannot be erased
+     * by a type-stripping compiler. When `true`, `enum` declarations are replaced
+     * with `const` objects and union types of the same name.
+     *
+     * @defaultValue `false`
+     */
+    erasableSyntax?: boolean;
     importExtension?: ImportExtension;
     internalNodes?: string[];
     kitImportStrategy?: KitImportStrategy;
@@ -36,6 +44,13 @@ export type RenderScope = {
     customInstructionData: ParsedCustomDataOptions;
     dependencyMap: Record<string, string>;
     dependencyVersions: Record<string, string>;
+    /**
+     * Whether generated code should avoid non-erasable TypeScript syntax.
+     * Optional so existing scopes built before this option was introduced keep working.
+     *
+     * @defaultValue `false`
+     */
+    erasableSyntax?: boolean;
     getImportFrom: GetImportFromFunction;
     getImportPath: GetImportPathFunction;
     kitImportStrategy: KitImportStrategy;

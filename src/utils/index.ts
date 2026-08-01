@@ -1,6 +1,7 @@
 export * from './async';
 export * from './codecs';
 export * from './customData';
+export * from './erasableSyntax';
 export * from './formatCode';
 export * from './fragment';
 export * from './importMap';
