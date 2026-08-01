@@ -45,8 +45,9 @@ test('it renders an event with an 8-byte constant discriminator', async () => {
         /export const OFFER_CANCELLED_DISCRIMINATOR: ReadonlyUint8Array = new Uint8Array\(\s*\[\s*10, 11, 12, 13, 14, 15, 16, 17\s*\]\s*\);/,
         'export function getOfferCancelledDiscriminatorBytes(): ReadonlyUint8Array',
         'getConstantDecoder(OFFER_CANCELLED_DISCRIMINATOR)',
-        /export type OfferCancelledEvent = \{\s*\};/,
-        /export function parseOfferCancelledEvent\(\s*data: Uint8Array\s*\): OfferCancelledEvent/,
+        /export type OfferCancelled = \{\s*\};/,
+        /function getOfferCancelledDecoder\(\): Decoder<OfferCancelled>/,
+        /export function parseOfferCancelled\(\s*data: Uint8Array\s*\): OfferCancelled/,
     ]);
 });
 
@@ -87,8 +88,8 @@ test('it renders a valid module for an event with no discriminator', async () =>
     const renderMap = visit(node, getRenderMapVisitor());
 
     await renderMapContains(renderMap, 'events/heartbeat.ts', [
-        'export type HeartbeatEvent = {};',
-        'export function parseHeartbeatEvent(data: Uint8Array): HeartbeatEvent',
+        'export type Heartbeat = {};',
+        'export function parseHeartbeat(data: Uint8Array): Heartbeat',
     ]);
     await renderMapContains(renderMap, 'events/index.ts', "export * from './heartbeat';");
     await renderMapContains(renderMap, 'index.ts', "export * from './events';");

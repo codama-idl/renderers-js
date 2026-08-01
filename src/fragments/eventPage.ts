@@ -28,7 +28,7 @@ export function getEventPageFragment(
         : resolvedData;
     const publicManifest = visit(publicData, scope.typeManifestVisitor);
     const wireManifest = visit(scope.node.data, scope.typeManifestVisitor);
-    const eventName = `${scope.nameApi.dataType(scope.node.name)}Event`;
+    const eventName = scope.nameApi.dataType(scope.node.name);
     const decoderName = `get${eventName}Decoder`;
     const parserName = `parse${eventName}`;
     const discriminators = scope.node.discriminators ?? [];
