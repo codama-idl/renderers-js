@@ -1,0 +1,25 @@
+{
+    "name": "@codama/renderers-js-e2e-nodenext",
+    "private": true,
+    "version": "0.0.0",
+    "type": "module",
+    "sideEffects": false,
+    "scripts": {
+        "build": "rimraf dist && tsc",
+        "test": "ava",
+        "lint": "eslint --ext js,ts,tsx src && prettier --check src test",
+        "lint:fix": "eslint --fix --ext js,ts,tsx src && prettier --write src test"
+    },
+    "dependencies": {
+        "@solana/kit": "^6.10.0"
+    },
+    "license": "MIT",
+    "ava": {
+        "typescript": {
+            "compile": false,
+            "rewritePaths": {
+                "test/": "dist/test/"
+            }
+        }
+    }
+}
