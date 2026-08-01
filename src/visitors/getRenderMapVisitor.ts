@@ -2,6 +2,7 @@ import {
     camelCase,
     CamelCaseString,
     getAllAccounts,
+    getAllConstants,
     getAllDefinedTypes,
     getAllInstructionsWithSubs,
     getAllPdas,
@@ -24,6 +25,7 @@ import {
 
 import {
     getAccountPageFragment,
+    getConstantsPageFragment,
     getErrorPageFragment,
     getIndexPageFragment,
     getInstructionPageFragment,
@@ -169,6 +171,7 @@ export function getRenderMapVisitor(
                     const programsWithErrorsToExport = programsToExport.filter(p => (p.errors ?? []).length > 0);
                     const pdasToExport = getAllPdas(node);
                     const accountsToExport = getAllAccounts(node).filter(isNotInternal);
+                    const constantsToExport = getAllConstants(node).filter(isNotInternal);
                     const instructionsToExport = getAllInstructionsWithSubs(node, {
                         leavesOnly: !renderScope.renderParentInstructions,
                     }).filter(isNotInternal);
@@ -177,6 +180,7 @@ export function getRenderMapVisitor(
                     const scope = {
                         ...renderScope,
                         accountsToExport,
+                        constantsToExport,
                         definedTypesToExport,
                         instructionsToExport,
                         pdasToExport,
@@ -186,6 +190,10 @@ export function getRenderMapVisitor(
                     return mergeRenderMaps([
                         createRenderMap({
                             ['accounts/index.ts']: asPage(getIndexPageFragment(accountsToExport, renderScope)),
+                            ['constants.ts']: asPage(
+                                getConstantsPageFragment({ ...renderScope, nodes: constantsToExport }),
+                                { generatedTypes: renderScope.getImportPath('./types', 'directory') },
+                            ),
                             ['errors/index.ts']: asPage(getIndexPageFragment(programsWithErrorsToExport, renderScope)),
                             ['index.ts']: asPage(getRootIndexPageFragment(scope)),
                             ['instructions/index.ts']: asPage(getIndexPageFragment(instructionsToExport, renderScope)),
