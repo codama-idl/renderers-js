@@ -22,3 +22,4 @@ test_project memo
 test_project token
 test_project dummy
 test_project nodenext
+test_project modern

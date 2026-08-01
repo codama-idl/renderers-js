@@ -13,6 +13,7 @@ const DEFAULT_OPTIONS = { kitImportStrategy: 'rootOnly' };
 
 // Render options per project, falling back to DEFAULT_OPTIONS.
 const PROJECT_OPTIONS = {
+    modern: { ...DEFAULT_OPTIONS, erasableSyntax: true, importExtension: 'ts' },
     nodenext: { ...DEFAULT_OPTIONS, importExtension: 'js' },
 };
 

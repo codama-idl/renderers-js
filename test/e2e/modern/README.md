@@ -1,0 +1,32 @@
+# `modern` e2e fixture
+
+Proves that a generated client can be executed directly by Node.js 24+ through
+type stripping, with no compilation step in between. That needs two things at
+once: every relative import already names a real file, and no non-erasable
+TypeScript syntax survives into the output.
+
+So this project renders the same IDL as the `dummy` fixture, but with
+`importExtension: 'ts'` and `erasableSyntax: true`, then compiles the result
+under the strictest "modern TypeScript" tsconfig we support:
+
+| Option                            | What it proves about the generated client                                   |
+| --------------------------------- | --------------------------------------------------------------------------- |
+| `erasableSyntaxOnly`              | No `enum`, `namespace`, or parameter properties are emitted.                  |
+| `allowImportingTsExtensions`      | Relative specifiers may name the real `.ts` file.                             |
+| `rewriteRelativeImportExtensions` | Those `.ts` specifiers still compile to runnable `.js`.                       |
+| `verbatimModuleSyntax`            | Every type-only import is marked as such.                                     |
+| `isolatedDeclarations`            | Every export is annotated well enough to emit declarations without inference. |
+
+`pnpm build` runs `tsc` and is the core proof: it type-checks the generated
+sources and emits JavaScript whose `./x.ts` imports have been rewritten to
+`./x.js`. `pnpm test` then runs the AVA suite against that emitted JavaScript
+and, on Node versions that can strip types, executes `smoke.ts` — which imports
+the **TypeScript sources** directly, so the client has to be erasable and
+extension-explicit at runtime too. Neither needs a validator.
+
+One caveat worth knowing: TypeScript rewrites extensions in emitted JavaScript
+but not in emitted declarations, so `dist/**/*.d.ts` still refers to `./x.ts`.
+That is a TypeScript limitation rather than a renderer one — see
+https://github.com/microsoft/TypeScript/issues/61037 — and it is harmless for
+consumers on TypeScript 5.0+, which resolve those specifiers fine. It only
+matters if you publish declarations to consumers on older compilers.
