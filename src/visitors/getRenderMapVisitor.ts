@@ -26,6 +26,7 @@ import {
     getAccountPageFragment,
     getConstantsPageFragment,
     getErrorPageFragment,
+    getEventPageFragment,
     getIndexPageFragment,
     getInstructionPageFragment,
     getPdaPageFragment,
@@ -52,7 +53,7 @@ export function getRenderMapVisitor(
     options: GetRenderMapOptions = {},
 ): Visitor<
     RenderMap<Fragment>,
-    'accountNode' | 'definedTypeNode' | 'instructionNode' | 'pdaNode' | 'programNode' | 'rootNode'
+    'accountNode' | 'definedTypeNode' | 'eventNode' | 'instructionNode' | 'pdaNode' | 'programNode' | 'rootNode'
 > {
     const linkables = new LinkableDictionary();
     const stack = new NodeStack();
@@ -95,7 +96,15 @@ export function getRenderMapVisitor(
 
     return pipe(
         staticVisitor(() => createRenderMap<Fragment>(), {
-            keys: ['rootNode', 'programNode', 'pdaNode', 'accountNode', 'definedTypeNode', 'instructionNode'],
+            keys: [
+                'rootNode',
+                'programNode',
+                'pdaNode',
+                'accountNode',
+                'definedTypeNode',
+                'eventNode',
+                'instructionNode',
+            ],
         }),
         v =>
             extendVisitor(v, {
@@ -118,6 +127,13 @@ export function getRenderMapVisitor(
                         asPage(getTypePageFragment({ ...renderScope, node, size: visit(node, byteSizeVisitor) }), {
                             generatedTypes: renderScope.getImportPath('.', 'directory'),
                         }),
+                    );
+                },
+
+                visitEvent(node) {
+                    return createRenderMap(
+                        `events/${camelCase(node.name)}.ts`,
+                        asPage(getEventPageFragment({ ...renderScope, node })),
                     );
                 },
 
@@ -169,6 +185,7 @@ export function getRenderMapVisitor(
                         }),
                         ...(node.pdas ?? []).map(p => visit(p, self)),
                         ...(node.accounts ?? []).map(a => visit(a, self)),
+                        ...(node.events ?? []).map(e => visit(e, self)),
                         ...(node.definedTypes ?? []).map(t => visit(t, self)),
                         ...customDataDefinedType.map(t => visit(t, self)),
                         ...getAllInstructionsWithSubs(node, { leavesOnly: !renderScope.renderParentInstructions }).map(
@@ -185,6 +202,9 @@ export function getRenderMapVisitor(
                     const programsWithErrorsToExport = programsToExport.filter(p => (p.errors ?? []).length > 0);
                     const pdasToExport = getAllPdas(node);
                     const accountsToExport = getAllAccounts(node).filter(isNotInternal);
+                    const eventsToExport = getAllPrograms(node)
+                        .flatMap(program => program.events ?? [])
+                        .filter(isNotInternal);
                     const instructionsToExport = getAllInstructionsWithSubs(node, {
                         leavesOnly: !renderScope.renderParentInstructions,
                     }).filter(isNotInternal);
@@ -194,6 +214,7 @@ export function getRenderMapVisitor(
                         ...renderScope,
                         accountsToExport,
                         definedTypesToExport,
+                        eventsToExport,
                         instructionsToExport,
                         pdasToExport,
                         programsToExport,
@@ -207,6 +228,7 @@ export function getRenderMapVisitor(
                                 getIndexPageFragment(programsWithConstantsToExport, renderScope),
                             ),
                             ['errors/index.ts']: asPage(getIndexPageFragment(programsWithErrorsToExport, renderScope)),
+                            ['events/index.ts']: asPage(getIndexPageFragment(eventsToExport, renderScope)),
                             ['index.ts']: asPage(getRootIndexPageFragment(scope)),
                             ['instructions/index.ts']: asPage(getIndexPageFragment(instructionsToExport, renderScope)),
                             ['pdas/index.ts']: asPage(getIndexPageFragment(pdasToExport, renderScope)),

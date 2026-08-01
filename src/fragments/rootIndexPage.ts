@@ -1,4 +1,4 @@
-import { AccountNode, DefinedTypeNode, InstructionNode, PdaNode, ProgramNode } from '@codama/nodes';
+import { AccountNode, DefinedTypeNode, EventNode, InstructionNode, PdaNode, ProgramNode } from '@codama/nodes';
 
 import { Fragment, fragment, getExportAllFragment, mergeFragments, RenderScope } from '../utils';
 
@@ -6,6 +6,7 @@ export function getRootIndexPageFragment(
     scope: Pick<RenderScope, 'getImportPath'> & {
         accountsToExport: AccountNode[];
         definedTypesToExport: DefinedTypeNode[];
+        eventsToExport: EventNode[];
         instructionsToExport: InstructionNode[];
         pdasToExport: PdaNode[];
         programsToExport: ProgramNode[];
@@ -16,6 +17,7 @@ export function getRootIndexPageFragment(
         scope.programsToExport.length > 0 ||
         scope.accountsToExport.length > 0 ||
         scope.programsWithConstantsToExport.length > 0 ||
+        scope.eventsToExport.length > 0 ||
         scope.instructionsToExport.length > 0 ||
         scope.definedTypesToExport.length > 0;
 
@@ -35,6 +37,9 @@ export function getRootIndexPageFragment(
                 : undefined,
             programsWithErrorsToExport.length > 0
                 ? getExportAllFragment(scope.getImportPath('./errors', 'directory'))
+                : undefined,
+            scope.eventsToExport.length > 0
+                ? getExportAllFragment(scope.getImportPath('./events', 'directory'))
                 : undefined,
             scope.instructionsToExport.length > 0
                 ? getExportAllFragment(scope.getImportPath('./instructions', 'directory'))

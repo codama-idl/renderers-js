@@ -7,6 +7,7 @@ export * from './constantPage';
 export * from './discriminatorCondition';
 export * from './discriminatorConstants';
 export * from './errorPage';
+export * from './eventPage';
 export * from './indexPage';
 export * from './instructionAccountMeta';
 export * from './instructionAccountTypeParam';
