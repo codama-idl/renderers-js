@@ -165,11 +165,14 @@ export async function getCreateAssociatedTokenInstructionAsync<
             'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
     }
     if (!accounts.ata.value) {
-        accounts.ata.value = await findAssociatedTokenPda({
-            owner: getAddressFromResolvedInstructionAccount('owner', accounts.owner.value),
-            tokenProgram: getAddressFromResolvedInstructionAccount('tokenProgram', accounts.tokenProgram.value),
-            mint: getAddressFromResolvedInstructionAccount('mint', accounts.mint.value),
-        });
+        accounts.ata.value = await findAssociatedTokenPda(
+            {
+                owner: getAddressFromResolvedInstructionAccount('owner', accounts.owner.value),
+                tokenProgram: getAddressFromResolvedInstructionAccount('tokenProgram', accounts.tokenProgram.value),
+                mint: getAddressFromResolvedInstructionAccount('mint', accounts.mint.value),
+            },
+            { programAddress },
+        );
     }
     if (!accounts.systemProgram.value) {
         accounts.systemProgram.value =

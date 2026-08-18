@@ -1,7 +1,22 @@
 /* eslint-disable no-case-declarations */
-import { camelCase, InstructionInputValueNode, isNode, OptionalAccountStrategy } from '@codama/nodes';
+import {
+    camelCase,
+    InstructionInputValueNode,
+    InstructionNode,
+    isNode,
+    isNodeFilter,
+    OptionalAccountStrategy,
+    PdaNode,
+} from '@codama/nodes';
 import { mapFragmentContent, setFragmentContent } from '@codama/renderers-core';
-import { pipe, ResolvedInstructionInput, visit } from '@codama/visitors-core';
+import {
+    findProgramNodeFromPath,
+    getLastNodeFromPath,
+    NodePath,
+    pipe,
+    ResolvedInstructionInput,
+    visit,
+} from '@codama/visitors-core';
 
 import {
     addFragmentFeatures,
@@ -15,14 +30,24 @@ import {
 } from '../utils';
 
 export function getInstructionInputDefaultFragment(
-    scope: Pick<RenderScope, 'asyncResolvers' | 'getImportFrom' | 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<RenderScope, 'asyncResolvers' | 'getImportFrom' | 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         input: ResolvedInstructionInput;
+        instructionPath: NodePath<InstructionNode>;
         optionalAccountStrategy: OptionalAccountStrategy;
         useAsync: boolean;
     },
 ): Fragment {
-    const { input, optionalAccountStrategy, asyncResolvers, useAsync, nameApi, typeManifestVisitor, getImportFrom } =
-        scope;
+    const {
+        input,
+        instructionPath,
+        optionalAccountStrategy,
+        asyncResolvers,
+        useAsync,
+        nameApi,
+        linkables,
+        typeManifestVisitor,
+        getImportFrom,
+    } = scope;
     if (!input.defaultValue) {
         return fragment``;
     }
@@ -138,6 +163,7 @@ export function getInstructionInputDefaultFragment(
 
             // Linked PDA value.
             const pdaFunction = use(nameApi.pdaFindFunction(defaultValue.pda.name), getImportFrom(defaultValue.pda));
+            const pdaPath = linkables.getPath([...instructionPath, defaultValue.pda]);
             const pdaArgs: Fragment[] = [];
             const pdaSeeds = (defaultValue.seeds ?? []).map((seed): Fragment => {
                 if (isNode(seed.value, 'accountValueNode')) {
@@ -156,11 +182,13 @@ export function getInstructionInputDefaultFragment(
                 mergeFragments(pdaSeeds, renders => renders.join(', ')),
                 f => mapFragmentContent(f, c => `{ ${c} }`),
             );
-            if (pdaSeeds.length > 0) {
+            if (pdaSeeds.length > 0 || hasVariablePdaSeeds(pdaPath)) {
                 pdaArgs.push(pdaSeedsFragment);
             }
             if (pdaProgramValue) {
                 pdaArgs.push(fragment`{ programAddress: ${pdaProgramValue} }`);
+            } else if (isPdaDerivedFromInstructionProgram(pdaPath, instructionPath)) {
+                pdaArgs.push(fragment`{ programAddress }`);
             }
             return defaultFragment(fragment`await ${pdaFunction}(${mergeFragments(pdaArgs, c => c.join(', '))})`);
 
@@ -286,4 +314,33 @@ function renderNestedInstructionDefault(
         ...scope,
         input: { ...input, defaultValue },
     });
+}
+
+/**
+ * Whether a linked PDA is derived from the same program as the instruction using it.
+ *
+ * When it is, the generated find function bakes in that program's address as its default,
+ * so the instruction must forward its own — possibly overridden — program address to keep
+ * the derivation in sync with the program the instruction is sent to. PDAs owned by another
+ * program, or pinned to an explicit program ID, keep their own default instead.
+ */
+function isPdaDerivedFromInstructionProgram(
+    pdaPath: NodePath<PdaNode> | undefined,
+    instructionPath: NodePath<InstructionNode>,
+): boolean {
+    if (!pdaPath || getLastNodeFromPath(pdaPath).programId) return false;
+    const pdaProgram = findProgramNodeFromPath(pdaPath);
+    const instructionProgram = findProgramNodeFromPath(instructionPath);
+    return !!pdaProgram && !!instructionProgram && pdaProgram.name === instructionProgram.name;
+}
+
+/**
+ * Whether a linked PDA takes a seeds argument on its generated find function.
+ *
+ * The seeds argument comes first, so it must be rendered — even with no seed values to fill
+ * it — for any following argument to land in the right position.
+ */
+function hasVariablePdaSeeds(pdaPath: NodePath<PdaNode> | undefined): boolean {
+    if (!pdaPath) return false;
+    return (getLastNodeFromPath(pdaPath).seeds ?? []).some(isNodeFilter('variablePdaSeedNode'));
 }

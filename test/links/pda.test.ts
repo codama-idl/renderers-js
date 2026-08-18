@@ -37,7 +37,7 @@ test('it imports functions from the linked pda', async () => {
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the following to be exported.
-    await renderMapContains(renderMap, 'instructions/createCounter.ts', ['await findCounterPda()']);
+    await renderMapContains(renderMap, 'instructions/createCounter.ts', ['await findCounterPda({ programAddress })']);
 
     // And we expect the following imports.
     await renderMapContainsImports(renderMap, 'instructions/createCounter.ts', {
@@ -76,8 +76,10 @@ test('it can override the import of a linked account', async () => {
         }),
     );
 
-    // Then we expect the following to be exported.
-    await renderMapContains(renderMap, 'instructions/createCounter.ts', ['await findCounterPda()']);
+    // Then we expect the following to be exported. Note that overridden PDA finders are called
+    // with the same signature as generated ones, meaning they must accept a trailing
+    // `config: { programAddress?: Address }` argument.
+    await renderMapContains(renderMap, 'instructions/createCounter.ts', ['await findCounterPda({ programAddress })']);
 
     // And we expect the imports to be overridden.
     await renderMapContainsImports(renderMap, 'instructions/createCounter.ts', {

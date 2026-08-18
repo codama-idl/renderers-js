@@ -29,7 +29,7 @@ import { getInstructionRemainingAccountsFragment } from './instructionRemainingA
 export function getInstructionFunctionFragment(
     scope: Pick<
         RenderScope,
-        'asyncResolvers' | 'customInstructionData' | 'getImportFrom' | 'nameApi' | 'typeManifestVisitor'
+        'asyncResolvers' | 'customInstructionData' | 'getImportFrom' | 'linkables' | 'nameApi' | 'typeManifestVisitor'
     > & {
         dataArgsManifest: TypeManifest;
         extraArgsManifest: TypeManifest;
