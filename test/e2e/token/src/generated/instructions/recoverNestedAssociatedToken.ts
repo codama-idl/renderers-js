@@ -187,37 +187,46 @@ export async function getRecoverNestedAssociatedTokenInstructionAsync<
             'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
     }
     if (!accounts.ownerAssociatedAccountAddress.value) {
-        accounts.ownerAssociatedAccountAddress.value = await findAssociatedTokenPda({
-            owner: getAddressFromResolvedInstructionAccount('walletAddress', accounts.walletAddress.value),
-            tokenProgram: getAddressFromResolvedInstructionAccount('tokenProgram', accounts.tokenProgram.value),
-            mint: getAddressFromResolvedInstructionAccount(
-                'ownerTokenMintAddress',
-                accounts.ownerTokenMintAddress.value,
-            ),
-        });
+        accounts.ownerAssociatedAccountAddress.value = await findAssociatedTokenPda(
+            {
+                owner: getAddressFromResolvedInstructionAccount('walletAddress', accounts.walletAddress.value),
+                tokenProgram: getAddressFromResolvedInstructionAccount('tokenProgram', accounts.tokenProgram.value),
+                mint: getAddressFromResolvedInstructionAccount(
+                    'ownerTokenMintAddress',
+                    accounts.ownerTokenMintAddress.value,
+                ),
+            },
+            { programAddress },
+        );
     }
     if (!accounts.nestedAssociatedAccountAddress.value) {
-        accounts.nestedAssociatedAccountAddress.value = await findAssociatedTokenPda({
-            owner: getAddressFromResolvedInstructionAccount(
-                'ownerAssociatedAccountAddress',
-                accounts.ownerAssociatedAccountAddress.value,
-            ),
-            tokenProgram: getAddressFromResolvedInstructionAccount('tokenProgram', accounts.tokenProgram.value),
-            mint: getAddressFromResolvedInstructionAccount(
-                'nestedTokenMintAddress',
-                accounts.nestedTokenMintAddress.value,
-            ),
-        });
+        accounts.nestedAssociatedAccountAddress.value = await findAssociatedTokenPda(
+            {
+                owner: getAddressFromResolvedInstructionAccount(
+                    'ownerAssociatedAccountAddress',
+                    accounts.ownerAssociatedAccountAddress.value,
+                ),
+                tokenProgram: getAddressFromResolvedInstructionAccount('tokenProgram', accounts.tokenProgram.value),
+                mint: getAddressFromResolvedInstructionAccount(
+                    'nestedTokenMintAddress',
+                    accounts.nestedTokenMintAddress.value,
+                ),
+            },
+            { programAddress },
+        );
     }
     if (!accounts.destinationAssociatedAccountAddress.value) {
-        accounts.destinationAssociatedAccountAddress.value = await findAssociatedTokenPda({
-            owner: getAddressFromResolvedInstructionAccount('walletAddress', accounts.walletAddress.value),
-            tokenProgram: getAddressFromResolvedInstructionAccount('tokenProgram', accounts.tokenProgram.value),
-            mint: getAddressFromResolvedInstructionAccount(
-                'nestedTokenMintAddress',
-                accounts.nestedTokenMintAddress.value,
-            ),
-        });
+        accounts.destinationAssociatedAccountAddress.value = await findAssociatedTokenPda(
+            {
+                owner: getAddressFromResolvedInstructionAccount('walletAddress', accounts.walletAddress.value),
+                tokenProgram: getAddressFromResolvedInstructionAccount('tokenProgram', accounts.tokenProgram.value),
+                mint: getAddressFromResolvedInstructionAccount(
+                    'nestedTokenMintAddress',
+                    accounts.nestedTokenMintAddress.value,
+                ),
+            },
+            { programAddress },
+        );
     }
 
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');

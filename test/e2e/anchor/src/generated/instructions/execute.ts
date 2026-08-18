@@ -172,9 +172,10 @@ export async function getExecuteInstructionAsync<
 
     // Resolve default values.
     if (!accounts.extraMetasAccount.value) {
-        accounts.extraMetasAccount.value = await findExtraMetasAccountPda({
-            mint: getAddressFromResolvedInstructionAccount('mint', accounts.mint.value),
-        });
+        accounts.extraMetasAccount.value = await findExtraMetasAccountPda(
+            { mint: getAddressFromResolvedInstructionAccount('mint', accounts.mint.value) },
+            { programAddress },
+        );
     }
     if (!accounts.instructionSysvarAccount.value) {
         accounts.instructionSysvarAccount.value =

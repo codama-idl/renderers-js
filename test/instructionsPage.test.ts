@@ -19,12 +19,14 @@ import {
     instructionNode,
     numberTypeNode,
     numberValueNode,
+    pdaLinkNode,
     pdaNode,
     pdaSeedValueNode,
     pdaValueNode,
     programNode,
     publicKeyTypeNode,
     resolverValueNode,
+    rootNode,
     stringTypeNode,
     stringValueNode,
     variablePdaSeedNode,
@@ -208,7 +210,7 @@ test('it renders instruction accounts with linked PDAs as default value', async 
     // Then we expect the following default value to be rendered.
     await renderMapContains(renderMap, 'instructions/increment.ts', [
         'if (!accounts.counter.value) { ' +
-            "accounts.counter.value = await findCounterPda( { authority: getAddressFromResolvedInstructionAccount ( 'authority', accounts.authority.value ) } ); " +
+            "accounts.counter.value = await findCounterPda( { authority: getAddressFromResolvedInstructionAccount ( 'authority', accounts.authority.value ) }, { programAddress } ); " +
             '}',
     ]);
     await renderMapContainsImports(renderMap, 'instructions/increment.ts', { '../pdas': ['findCounterPda'] });
@@ -260,6 +262,138 @@ test('it renders instruction accounts with linked PDA default values that point 
             '}',
     ]);
     await renderMapContainsImports(renderMap, 'instructions/increment.ts', { '../pdas': ['findCounterPda'] });
+});
+
+test('it does not render the program address for linked PDA default values that belong to another program', async () => {
+    // Given the following program with an instruction account using a PDA from another program as default value.
+    const node = rootNode(
+        programNode({
+            instructions: [
+                instructionNode({
+                    accounts: [
+                        instructionAccountNode({
+                            defaultValue: pdaValueNode(pdaLinkNode('counter', 'myOtherProgram')),
+                            isSigner: false,
+                            isWritable: false,
+                            name: 'counter',
+                        }),
+                    ],
+                    name: 'increment',
+                }),
+            ],
+            name: 'myProgram',
+            publicKey: '1111',
+        }),
+        [
+            programNode({
+                name: 'myOtherProgram',
+                pdas: [pdaNode({ name: 'counter', seeds: [] })],
+                publicKey: '2222',
+            }),
+        ],
+    );
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then we expect the PDA function to keep its own program address.
+    await renderMapContains(renderMap, 'instructions/increment.ts', [
+        'if (!accounts.counter.value) { accounts.counter.value = await findCounterPda(); }',
+    ]);
+});
+
+test('it does not render the program address for linked PDA default values with an explicit program ID', async () => {
+    // Given the following program with a PDA node pinned to an explicit program ID.
+    const node = programNode({
+        instructions: [
+            instructionNode({
+                accounts: [
+                    instructionAccountNode({
+                        defaultValue: pdaValueNode('counter'),
+                        isSigner: false,
+                        isWritable: false,
+                        name: 'counter',
+                    }),
+                ],
+                name: 'increment',
+            }),
+        ],
+        name: 'counter',
+        pdas: [pdaNode({ name: 'counter', programId: '2222', seeds: [] })],
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then we expect the PDA function to keep its own program address.
+    await renderMapContains(renderMap, 'instructions/increment.ts', [
+        'if (!accounts.counter.value) { accounts.counter.value = await findCounterPda(); }',
+    ]);
+});
+
+test('it renders instruction arguments with linked PDA default values that forward the program address', async () => {
+    // Given the following program with an instruction argument using a PDA as default value.
+    const node = programNode({
+        instructions: [
+            instructionNode({
+                arguments: [
+                    instructionArgumentNode({
+                        defaultValue: pdaValueNode('counter'),
+                        name: 'counterAddress',
+                        type: publicKeyTypeNode(),
+                    }),
+                ],
+                name: 'increment',
+            }),
+        ],
+        name: 'counter',
+        pdas: [pdaNode({ name: 'counter', seeds: [] })],
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then we expect the argument default to use the program address of the instruction.
+    await renderMapContains(renderMap, 'instructions/increment.ts', [
+        'if (!args.counterAddress) { args.counterAddress = await findCounterPda({ programAddress }); }',
+    ]);
+});
+
+test('it renders the seeds argument of linked PDA default values that provide no seed values', async () => {
+    // Given the following program with a PDA node whose seeds are not filled by the default value.
+    const node = programNode({
+        instructions: [
+            instructionNode({
+                accounts: [
+                    instructionAccountNode({
+                        defaultValue: pdaValueNode('counter'),
+                        isSigner: false,
+                        isWritable: false,
+                        name: 'counter',
+                    }),
+                ],
+                name: 'increment',
+            }),
+        ],
+        name: 'counter',
+        pdas: [
+            pdaNode({
+                name: 'counter',
+                seeds: [variablePdaSeedNode('authority', publicKeyTypeNode())],
+            }),
+        ],
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then we expect the seeds argument to keep its position before the program address.
+    await renderMapContains(renderMap, 'instructions/increment.ts', [
+        'if (!accounts.counter.value) { accounts.counter.value = await findCounterPda({}, { programAddress }); }',
+    ]);
 });
 
 test('it renders instruction accounts with inlined PDAs as default value', async () => {

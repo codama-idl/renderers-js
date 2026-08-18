@@ -159,9 +159,10 @@ export async function getInitializeInstructionAsync<
 
     // Resolve default values.
     if (!accounts.extraMetasAccount.value) {
-        accounts.extraMetasAccount.value = await findExtraMetasAccountPda({
-            mint: getAddressFromResolvedInstructionAccount('mint', accounts.mint.value),
-        });
+        accounts.extraMetasAccount.value = await findExtraMetasAccountPda(
+            { mint: getAddressFromResolvedInstructionAccount('mint', accounts.mint.value) },
+            { programAddress },
+        );
     }
     if (!accounts.systemProgram.value) {
         accounts.systemProgram.value =

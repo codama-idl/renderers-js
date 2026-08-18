@@ -248,9 +248,10 @@ export async function getCreateGuardInstructionAsync<
 
     // Resolve default values.
     if (!accounts.guard.value) {
-        accounts.guard.value = await findGuardPda({
-            mint: getAddressFromResolvedInstructionAccount('mint', accounts.mint.value),
-        });
+        accounts.guard.value = await findGuardPda(
+            { mint: getAddressFromResolvedInstructionAccount('mint', accounts.mint.value) },
+            { programAddress },
+        );
     }
     if (!accounts.tokenProgram.value) {
         accounts.tokenProgram.value =
