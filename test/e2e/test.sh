@@ -11,7 +11,9 @@ function start_validator() {
 function test_project() {
     ./test/e2e/generate.cjs $1
     cd test/e2e/$1
-    pnpm install && pnpm build && pnpm test
+    pnpm install
+    pnpm build
+    pnpm test
     cd ../../..
 }
 
