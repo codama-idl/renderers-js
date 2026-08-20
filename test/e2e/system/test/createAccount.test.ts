@@ -1,57 +1,31 @@
-import {
-  appendTransactionMessageInstruction,
-  fetchEncodedAccount,
-  generateKeyPairSigner,
-  pipe,
-} from '@solana/kit';
+import { generateKeyPairSigner } from '@solana/kit';
 import test from 'ava';
-import {
-  SYSTEM_PROGRAM_ADDRESS,
-  getCreateAccountInstruction,
-} from '../src/index.js';
-import {
-  createDefaultSolanaClient,
-  createDefaultTransaction,
-  generateKeyPairSignerWithSol,
-  signAndSendTransaction,
-} from './_setup.js';
 
-test('it creates a new empty account', async (t) => {
-  // Given we have a newly generated account keypair to create with 42 bytes of space.
-  const client = createDefaultSolanaClient();
-  const space = 42n;
-  const [payer, newAccount, lamports] = await Promise.all([
-    generateKeyPairSignerWithSol(client),
-    generateKeyPairSigner(),
-    client.rpc.getMinimumBalanceForRentExemption(space).send(),
-  ]);
+import { SYSTEM_PROGRAM_ADDRESS } from '../src/index.js';
+import { createTestClient } from './_setup.js';
 
-  // When we call createAccount in a transaction.
-  const createAccount = getCreateAccountInstruction({
-    payer,
-    newAccount,
-    space,
-    lamports,
-    programAddress: SYSTEM_PROGRAM_ADDRESS,
-  });
-  await pipe(
-    await createDefaultTransaction(client, payer),
-    (tx) => appendTransactionMessageInstruction(createAccount, tx),
-    (tx) => signAndSendTransaction(client, tx)
-  );
+test('it creates a new empty account', async t => {
+    // Given a newly generated account keypair and 42 bytes of space.
+    const client = await createTestClient();
+    const space = 42n;
+    const [newAccount, rent] = await Promise.all([
+        generateKeyPairSigner(),
+        client.rpc.getMinimumBalanceForRentExemption(space).send(),
+    ]);
 
-  // Then we expect the following account data.
-  const fetchedAccount = await fetchEncodedAccount(
-    client.rpc,
-    newAccount.address
-  );
-  t.deepEqual(fetchedAccount, {
-    executable: false,
-    lamports,
-    programAddress: SYSTEM_PROGRAM_ADDRESS,
-    space: 42n,
-    address: newAccount.address,
-    data: new Uint8Array(Array.from({ length: 42 }, () => 0)),
-    exists: true,
-  });
+    // When we create the account using the generated program plugin.
+    await client.system.instructions
+        .createAccount({ newAccount, lamports: rent, space, programAddress: SYSTEM_PROGRAM_ADDRESS })
+        .sendTransaction();
+
+    // Then the account exists with the expected owner, balance and data size.
+    const { value: fetchedAccount } = await client.rpc
+        .getAccountInfo(newAccount.address, { encoding: 'base64' })
+        .send();
+    t.like(fetchedAccount, {
+        executable: false,
+        lamports: rent,
+        owner: SYSTEM_PROGRAM_ADDRESS,
+        space: 42n,
+    });
 });

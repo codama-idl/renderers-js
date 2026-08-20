@@ -17,7 +17,6 @@ env:
   # Among other things, opts out of Turborepo telemetry. See https://consoledonottrack.com/.
   DO_NOT_TRACK: '1'
   NODE_VERSION: 24
-  SOLANA_VERSION: 2.1.9
   RELEASE_VERSION: 2.x
 
 jobs:
@@ -40,10 +39,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install e2e dependencies
-        run: pnpm install --frozen-lockfile
-        working-directory: test/e2e
-
       - name: Compile JS and types
         run: pnpm build
 
@@ -56,11 +51,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-
-      - name: Install Solana ${{ env.SOLANA_VERSION }}
-        uses: solana-program/actions/install-solana@v1
-        with:
-          version: ${{ env.SOLANA_VERSION }}
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v6

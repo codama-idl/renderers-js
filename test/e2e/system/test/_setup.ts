@@ -1,127 +1,66 @@
 import {
-  type Address,
-  type TransactionMessage,
-  type Commitment,
-  type Signature,
-  type Rpc,
-  type RpcSubscriptions,
-  type SolanaRpcApi,
-  type SolanaRpcSubscriptionsApi,
-  type TransactionMessageWithBlockhashLifetime,
-  type TransactionMessageWithFeePayer,
-  type KeyPairSigner,
-  type TransactionSigner,
-  airdropFactory,
-  appendTransactionMessageInstruction,
-  assertIsSendableTransaction,
-  assertIsTransactionWithBlockhashLifetime,
-  createSolanaRpc,
-  createSolanaRpcSubscriptions,
-  createTransactionMessage,
-  generateKeyPairSigner,
-  getSignatureFromTransaction,
-  type Lamports,
-  lamports,
-  pipe,
-  sendAndConfirmTransactionFactory,
-  setTransactionMessageFeePayerSigner,
-  setTransactionMessageLifetimeUsingBlockhash,
-  signTransactionMessageWithSigners,
+    type ClientWithPayer,
+    type ClientWithRpc,
+    type GetMinimumBalanceForRentExemptionApi,
+    type TransactionSigner,
+    createClient,
+    lamports,
+    sequentialInstructionPlan,
 } from '@solana/kit';
+import { litesvm } from '@solana/kit-plugin-litesvm';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+
 import {
-  SYSTEM_PROGRAM_ADDRESS,
-  getCreateAccountInstruction,
-  getInitializeNonceAccountInstruction,
-  getNonceSize,
+    SYSTEM_PROGRAM_ADDRESS,
+    getCreateAccountInstruction,
+    getInitializeNonceAccountInstruction,
+    getNonceSize,
+    systemProgram,
 } from '../src/index.js';
 
-type Client = {
-  rpc: Rpc<SolanaRpcApi>;
-  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+/**
+ * Creates a funded LiteSVM client with the generated System Program plugin.
+ *
+ * @return A promise resolving to the configured test client.
+ */
+export const createTestClient = () => {
+    return createClient()
+        .use(generatedSigner())
+        .use(litesvm())
+        .use(systemProgram())
+        .use(airdropSigner(lamports(1_000_000_000n)));
 };
 
-export const createDefaultSolanaClient = (): Client => {
-  const rpc = createSolanaRpc('http://127.0.0.1:8899');
-  const rpcSubscriptions = createSolanaRpcSubscriptions('ws://127.0.0.1:8900');
-  return { rpc, rpcSubscriptions };
-};
+/** A LiteSVM client configured for System Program E2E tests. */
+export type TestClient = Awaited<ReturnType<typeof createTestClient>>;
 
-export const generateKeyPairSignerWithSol = async (
-  client: Client,
-  putativeLamports: bigint = 1_000_000_000n
-): Promise<KeyPairSigner> => {
-  const signer = await generateKeyPairSigner();
-  await airdropFactory(client)({
-    recipientAddress: signer.address,
-    lamports: lamports(putativeLamports),
-    commitment: 'confirmed',
-  });
-  return signer;
-};
+/**
+ * Creates an instruction plan that creates and initialises a durable nonce account.
+ *
+ * @param client - The client used to determine the rent-exempt balance.
+ * @param nonce - The signer for the nonce account.
+ * @param nonceAuthority - The authority allowed to advance the nonce.
+ * @return A promise resolving to the sequential instruction plan.
+ */
+export const getCreateNonceInstructionPlan = async (
+    client: ClientWithPayer & ClientWithRpc<GetMinimumBalanceForRentExemptionApi>,
+    nonce: TransactionSigner,
+    nonceAuthority: TransactionSigner,
+) => {
+    const space = BigInt(getNonceSize());
+    const rent = await client.rpc.getMinimumBalanceForRentExemption(space).send();
 
-export const createDefaultTransaction = async (
-  client: Client,
-  feePayer: TransactionSigner
-): Promise<
-  TransactionMessage &
-  TransactionMessageWithFeePayer &
-  TransactionMessageWithBlockhashLifetime
-> => {
-  const { value: latestBlockhash } = await client.rpc
-    .getLatestBlockhash()
-    .send();
-  return pipe(
-    createTransactionMessage({ version: 0 }),
-    (tx) => setTransactionMessageFeePayerSigner(feePayer, tx),
-    (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx)
-  );
-};
-
-export const signAndSendTransaction = async (
-  client: Client,
-  transactionMessage: TransactionMessage &
-    TransactionMessageWithFeePayer &
-    TransactionMessageWithBlockhashLifetime,
-  commitment: Commitment = 'confirmed'
-): Promise<Signature> => {
-  const signedTransaction =
-    await signTransactionMessageWithSigners(transactionMessage);
-  const signature = getSignatureFromTransaction(signedTransaction);
-  assertIsSendableTransaction(signedTransaction);
-  assertIsTransactionWithBlockhashLifetime(signedTransaction);
-  await sendAndConfirmTransactionFactory(client)(signedTransaction, {
-    commitment,
-  });
-  return signature;
-};
-
-export const getBalance = async (client: Client, address: Address): Promise<Lamports> =>
-  (await client.rpc.getBalance(address, { commitment: 'confirmed' }).send())
-    .value;
-
-export const createNonceAccount = async (
-  client: Client,
-  payer: TransactionSigner,
-  nonce: TransactionSigner,
-  nonceAuthority: TransactionSigner
-): Promise<void> => {
-  const space = BigInt(getNonceSize());
-  const rent = await client.rpc.getMinimumBalanceForRentExemption(space).send();
-  const createAccount = getCreateAccountInstruction({
-    payer,
-    newAccount: nonce,
-    lamports: rent,
-    space,
-    programAddress: SYSTEM_PROGRAM_ADDRESS,
-  });
-  const initializeNonceAccount = getInitializeNonceAccountInstruction({
-    nonceAccount: nonce.address,
-    nonceAuthority: nonceAuthority.address,
-  });
-  await pipe(
-    await createDefaultTransaction(client, payer),
-    (tx) => appendTransactionMessageInstruction(createAccount, tx),
-    (tx) => appendTransactionMessageInstruction(initializeNonceAccount, tx),
-    (tx) => signAndSendTransaction(client, tx)
-  );
+    return sequentialInstructionPlan([
+        getCreateAccountInstruction({
+            payer: client.payer,
+            newAccount: nonce,
+            lamports: rent,
+            space,
+            programAddress: SYSTEM_PROGRAM_ADDRESS,
+        }),
+        getInitializeNonceAccountInstruction({
+            nonceAccount: nonce.address,
+            nonceAuthority: nonceAuthority.address,
+        }),
+    ]);
 };

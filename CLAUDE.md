@@ -303,17 +303,19 @@ E2E tests are excluded from Vitest.
 
 ### E2E tests
 
-`test/e2e/` contains small generated-client packages such as `anchor`, `system`, `memo`, `token`, and `dummy`.
+`test/e2e/` contains small generated-client fixtures such as `anchor`, `system`, `memo`, `token`, and `dummy`. Their dependencies, build configuration, and test runner are owned by the root package.
 
-`test/e2e/test.sh`:
+`pnpm test:e2e`:
 
-- starts `solana-test-validator` on port `8899` if needed
-- regenerates a project using `test/e2e/generate.cjs`
-- runs `pnpm install && pnpm build && pnpm test` inside each project
+- builds the root renderer
+- regenerates every fixture through its `codama.json` config and the Codama CLI
+- builds the shared fixtures with tsup and type-checks them with the shared E2E tsconfig
+- runs the shared AVA suite against LiteSVM clients configured with the official Kit plugins
+- compiles and runs the separate `node-esm` compatibility checks under NodeNext and Node type stripping
 
-`test/e2e/generate.cjs` uses the built root package from `dist/index.node.cjs`, so root builds must succeed before E2E generation works.
+Codama configs load the built root package from `dist/index.node.cjs`, so the root build must succeed before E2E generation works. The fixtures use `@solana/kit-plugin-litesvm` instead of a local validator and `@solana/kit-plugin-signer` for test signers and funded payers.
 
-E2E projects use AVA, not Vitest.
+The shared E2E projects use AVA, not Vitest. The `node-esm` fixture uses direct Node execution because it validates emitted ESM and type-stripped TypeScript.
 
 ## Build, lint, and release
 
