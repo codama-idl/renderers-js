@@ -37,7 +37,7 @@ export type RenderScope = {
     dependencyMap: Record<string, string>;
     dependencyVersions: Record<string, string>;
     getImportFrom: GetImportFromFunction;
-    importExtension?: ImportExtension;
+    getImportPath: GetImportPathFunction;
     kitImportStrategy: KitImportStrategy;
     linkables: LinkableDictionary;
     nameApi: NameApi;
@@ -45,6 +45,12 @@ export type RenderScope = {
     renderParentInstructions: boolean;
     typeManifestVisitor: TypeManifestVisitor;
 };
+
+/** Defines whether a generated import path targets a file or a directory. */
+export type ImportPathType = 'directory' | 'file';
+
+/** Resolves a renderer-owned import path according to the configured import options. */
+export type GetImportPathFunction = (path: string, type: ImportPathType) => string;
 
 /**
  * Defines how generated code should import utilities that exist both as standalone
@@ -80,8 +86,9 @@ export const DEFAULT_KIT_IMPORT_STRATEGY: KitImportStrategy = 'preferRoot';
  * or a resolver that can guess it. Setting this option makes those specifiers explicit:
  * generated files are referenced as `./myAccount.<ext>` and generated directories as
  * `./accounts/index.<ext>`. Only paths the renderer generates itself are rewritten, so
- * relative paths provided through {@link GetRenderMapOptions.linkOverrides} are emitted
- * verbatim and non-relative specifiers — npm packages, subpath imports — are never touched.
+ * paths provided through {@link GetRenderMapOptions.dependencyMap} or
+ * {@link GetRenderMapOptions.linkOverrides} are emitted verbatim and non-relative specifiers —
+ * npm packages, subpath imports — are never touched.
  *
  * Variants:
  * - `'js'`:

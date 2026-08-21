@@ -4,6 +4,7 @@ import { describe, expect, test } from 'vitest';
 import {
     addToImportMap,
     createImportMap,
+    getImportPathFactory,
     importMapToString,
     mergeImportMaps,
     parseImportInput,
@@ -380,49 +381,52 @@ describe('importMapToString', () => {
 describe('importMapToString with an import extension', () => {
     test('it appends the index file of internal modules', () => {
         const importMap = addToImportMap(createImportMap(), 'generatedAccounts', ['myAccount']);
-        expect(importMapToString(importMap, {}, undefined, 'js')).toBe(
+        expect(importMapToString(importMap, {}, undefined, getImportPathFactory('js'))).toBe(
             "import { myAccount } from '../accounts/index.js';",
         );
     });
 
     test('it supports TypeScript extensions', () => {
         const importMap = addToImportMap(createImportMap(), 'generatedAccounts', ['myAccount']);
-        expect(importMapToString(importMap, {}, undefined, 'ts')).toBe(
+        expect(importMapToString(importMap, {}, undefined, getImportPathFactory('ts'))).toBe(
             "import { myAccount } from '../accounts/index.ts';",
         );
     });
 
     test('it appends the index file of overridden internal modules', () => {
         const importMap = addToImportMap(createImportMap(), 'generatedTypes', ['type MyType']);
-        expect(importMapToString(importMap, { generatedTypes: '.' }, undefined, 'js')).toBe(
+        const getImportPath = getImportPathFactory('js');
+        expect(importMapToString(importMap, { generatedTypes: getImportPath('.', 'directory') })).toBe(
             "import type { MyType } from './index.js';",
         );
     });
 
     test('it appends the index file of hooked modules', () => {
         const importMap = addToImportMap(createImportMap(), 'hooked', ['myHook']);
-        expect(importMapToString(importMap, {}, undefined, 'js')).toBe(
+        expect(importMapToString(importMap, {}, undefined, getImportPathFactory('js'))).toBe(
             "import { myHook } from '../../hooked/index.js';",
         );
     });
 
     test('it leaves relative modules it does not own untouched', () => {
         const importMap = addToImportMap(createImportMap(), './relative-module', ['import1']);
-        expect(importMapToString(importMap, {}, undefined, 'js')).toBe("import { import1 } from './relative-module';");
+        expect(importMapToString(importMap, {}, undefined, getImportPathFactory('js'))).toBe(
+            "import { import1 } from './relative-module';",
+        );
     });
 
-    test('it leaves internal modules overridden to an explicit file untouched', () => {
+    test('it leaves user-provided relative overrides untouched', () => {
         const importMap = addToImportMap(createImportMap(), 'generatedTypes', ['type MyType']);
-        expect(importMapToString(importMap, { generatedTypes: '../types/custom.js' }, undefined, 'js')).toBe(
-            "import type { MyType } from '../types/custom.js';",
-        );
+        expect(
+            importMapToString(importMap, { generatedTypes: '../types/custom' }, undefined, getImportPathFactory('js')),
+        ).toBe("import type { MyType } from '../types/custom';");
     });
 
     test('it leaves internal modules overridden to a package untouched', () => {
         const importMap = addToImportMap(createImportMap(), 'generatedTypes', ['type MyType']);
-        expect(importMapToString(importMap, { generatedTypes: '@acme/types' }, undefined, 'js')).toBe(
-            "import type { MyType } from '@acme/types';",
-        );
+        expect(
+            importMapToString(importMap, { generatedTypes: '@acme/types' }, undefined, getImportPathFactory('js')),
+        ).toBe("import type { MyType } from '@acme/types';");
     });
 
     test('it leaves everything untouched when no extension is provided', () => {

@@ -13,6 +13,7 @@ import {
     DEFAULT_NAME_TRANSFORMERS,
     type Fragment,
     getImportFromFactory,
+    getImportPathFactory,
     getNameApi,
     ImportExtension,
     importMapToString,
@@ -47,6 +48,7 @@ export function getDefaultScope(): RenderScope {
         dependencyMap: {},
         dependencyVersions: {},
         getImportFrom,
+        getImportPath: getImportPathFactory(),
         kitImportStrategy: DEFAULT_KIT_IMPORT_STRATEGY,
         linkables,
         nameApi,
@@ -156,7 +158,7 @@ export function fragmentContainsImports(
         actual!.imports,
         options?.dependencyMap,
         options?.kitImportStrategy,
-        options?.importExtension,
+        getImportPathFactory(options?.importExtension),
     );
     return codeContainsImports(imports, expectedImports);
 }
@@ -175,7 +177,7 @@ export function fragmentDoesNotContainImports(
         actual!.imports,
         options?.dependencyMap,
         options?.kitImportStrategy,
-        options?.importExtension,
+        getImportPathFactory(options?.importExtension),
     );
     return codeDoesNotContainImports(imports, expectedImports);
 }

@@ -1,4 +1,10 @@
-import { DEFAULT_KIT_IMPORT_STRATEGY, ImportExtension, KitImportStrategy } from '.';
+import {
+    DEFAULT_KIT_IMPORT_STRATEGY,
+    GetImportPathFunction,
+    ImportExtension,
+    ImportPathType,
+    KitImportStrategy,
+} from '.';
 
 const DEFAULT_EXTERNAL_MODULE_MAP: Record<string, string> = {
     solanaAccounts: '@solana/kit',
@@ -38,20 +44,6 @@ const DEFAULT_GRANULAR_EXTERNAL_MODULE_MAP: Record<string, string> = {
     solanaRpcApi: '@solana/rpc-api',
     solanaRpcTypes: '@solana/rpc-types',
     solanaSigners: '@solana/signers',
-};
-
-const DEFAULT_INTERNAL_MODULE_MAP: Record<string, string> = {
-    errors: '../errors',
-    generated: '..',
-    generatedAccounts: '../accounts',
-    generatedErrors: '../errors',
-    generatedInstructions: '../instructions',
-    generatedPdas: '../pdas',
-    generatedPrograms: '../programs',
-    generatedTypes: '../types',
-    hooked: '../../hooked',
-    shared: '../shared',
-    types: '../types',
 };
 
 const RECOGNIZED_EXTENSION_REGEX = /\.(?:[mc]?[jt]sx?|json)$/;
@@ -137,9 +129,9 @@ export function importMapToString(
     importMap: ImportMap,
     dependencyMap: Record<string, string> = {},
     kitImportStrategy: KitImportStrategy = DEFAULT_KIT_IMPORT_STRATEGY,
-    importExtension?: ImportExtension,
+    getImportPath: GetImportPathFunction = getImportPathFactory(),
 ): string {
-    const resolvedMap = resolveImportMapModules(importMap, dependencyMap, kitImportStrategy, importExtension);
+    const resolvedMap = resolveImportMapModules(importMap, dependencyMap, kitImportStrategy, getImportPath);
 
     return [...resolvedMap.entries()]
         .sort(([a], [b]) => {
@@ -186,7 +178,7 @@ function resolveImportMapModules(
     importMap: ImportMap,
     dependencyMap: Record<string, string>,
     kitImportStrategy: KitImportStrategy,
-    importExtension?: ImportExtension,
+    getImportPath: GetImportPathFunction = getImportPathFactory(),
 ): ImportMap {
     const defaultExternalModuleMap =
         kitImportStrategy === 'granular' ? DEFAULT_GRANULAR_EXTERNAL_MODULE_MAP : DEFAULT_EXTERNAL_MODULE_MAP;
@@ -196,39 +188,45 @@ function resolveImportMapModules(
 
     const dependencyMapWithDefaults = {
         ...defaultExternalModuleMap,
-        ...DEFAULT_INTERNAL_MODULE_MAP,
+        ...getDefaultInternalModuleMap(getImportPath),
         ...dependencyMap,
     };
 
     return mergeImportMaps(
         [...importMap.entries()].map(([module, imports]) => {
             const resolvedModule = dependencyMapWithDefaults[module] ?? module;
-            const isInternalAlias = module in DEFAULT_INTERNAL_MODULE_MAP;
-            return new Map([[applyImportExtension(resolvedModule, isInternalAlias, importExtension), imports]]);
+            return new Map([[resolvedModule, imports]]);
         }),
     );
 }
 
+function getDefaultInternalModuleMap(getImportPath: GetImportPathFunction): Record<string, string> {
+    return {
+        errors: getImportPath('../errors', 'directory'),
+        generated: getImportPath('..', 'directory'),
+        generatedAccounts: getImportPath('../accounts', 'directory'),
+        generatedErrors: getImportPath('../errors', 'directory'),
+        generatedInstructions: getImportPath('../instructions', 'directory'),
+        generatedPdas: getImportPath('../pdas', 'directory'),
+        generatedPrograms: getImportPath('../programs', 'directory'),
+        generatedTypes: getImportPath('../types', 'directory'),
+        hooked: getImportPath('../../hooked', 'directory'),
+        shared: getImportPath('../shared', 'directory'),
+        types: getImportPath('../types', 'directory'),
+    };
+}
+
 /**
- * Appends an explicit extension to the relative module specifiers the renderer owns.
+ * Creates a function that prepares renderer-owned import paths for generated output.
  *
- * Classification happens on the symbolic module key rather than on the resolved path so that
- * per-file `dependencyMap` overrides — such as the `{ generatedTypes: '.' }` override used by
- * files inside the `types` folder — still resolve to the directory's index file.
+ * @param importExtension - The explicit extension to append, if any.
+ * @return A function that resolves generated file and directory import paths.
  */
-function applyImportExtension(
-    resolvedModule: string,
-    isInternalAlias: boolean,
-    importExtension: ImportExtension | undefined,
-): string {
-    // Only relative specifiers can be rewritten; npm packages and subpath imports are left alone.
-    if (!importExtension || !resolvedModule.startsWith('.')) return resolvedModule;
-    // An explicit extension means the alias already points at a file.
-    if (RECOGNIZED_EXTENSION_REGEX.test(resolvedModule)) return resolvedModule;
-    // Any other relative path is user-supplied and emitted verbatim.
-    if (!isInternalAlias) return resolvedModule;
-    // Internal aliases resolve to directories by convention, so target their index file.
-    return `${resolvedModule}/index.${importExtension}`;
+export function getImportPathFactory(importExtension?: ImportExtension): GetImportPathFunction {
+    return (path: string, type: ImportPathType): string => {
+        if (!importExtension || !path.startsWith('.') || RECOGNIZED_EXTENSION_REGEX.test(path)) return path;
+        return type === 'directory' ? `${path}/index.${importExtension}` : `${path}.${importExtension}`;
+    };
 }
 
 function importInfoToString(

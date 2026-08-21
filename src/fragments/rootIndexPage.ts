@@ -3,7 +3,7 @@ import { AccountNode, DefinedTypeNode, InstructionNode, PdaNode, ProgramNode } f
 import { Fragment, fragment, getExportAllFragment, mergeFragments, RenderScope } from '../utils';
 
 export function getRootIndexPageFragment(
-    scope: Pick<RenderScope, 'importExtension'> & {
+    scope: Pick<RenderScope, 'getImportPath'> & {
         accountsToExport: AccountNode[];
         definedTypesToExport: DefinedTypeNode[];
         instructionsToExport: InstructionNode[];
@@ -23,17 +23,26 @@ export function getRootIndexPageFragment(
 
     const programsWithErrorsToExport = scope.programsToExport.filter(p => (p.errors ?? []).length > 0);
 
-    // Each entry is a directory, so an explicit extension must target its index file.
-    const index = scope.importExtension ? `/index.${scope.importExtension}` : '';
-
     return mergeFragments(
         [
-            scope.accountsToExport.length > 0 ? getExportAllFragment(`./accounts${index}`) : undefined,
-            programsWithErrorsToExport.length > 0 ? getExportAllFragment(`./errors${index}`) : undefined,
-            scope.instructionsToExport.length > 0 ? getExportAllFragment(`./instructions${index}`) : undefined,
-            scope.pdasToExport.length > 0 ? getExportAllFragment(`./pdas${index}`) : undefined,
-            scope.programsToExport.length > 0 ? getExportAllFragment(`./programs${index}`) : undefined,
-            scope.definedTypesToExport.length > 0 ? getExportAllFragment(`./types${index}`) : undefined,
+            scope.accountsToExport.length > 0
+                ? getExportAllFragment(scope.getImportPath('./accounts', 'directory'))
+                : undefined,
+            programsWithErrorsToExport.length > 0
+                ? getExportAllFragment(scope.getImportPath('./errors', 'directory'))
+                : undefined,
+            scope.instructionsToExport.length > 0
+                ? getExportAllFragment(scope.getImportPath('./instructions', 'directory'))
+                : undefined,
+            scope.pdasToExport.length > 0
+                ? getExportAllFragment(scope.getImportPath('./pdas', 'directory'))
+                : undefined,
+            scope.programsToExport.length > 0
+                ? getExportAllFragment(scope.getImportPath('./programs', 'directory'))
+                : undefined,
+            scope.definedTypesToExport.length > 0
+                ? getExportAllFragment(scope.getImportPath('./types', 'directory'))
+                : undefined,
         ],
         cs => cs.join('\n'),
     );
