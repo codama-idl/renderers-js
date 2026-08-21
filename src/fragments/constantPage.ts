@@ -26,10 +26,7 @@ function getConstantFragment(
 ): Fragment {
     const typeManifest = visit(node.type, scope.typeManifestVisitor);
     const rawValue = visit(node.value, scope.typeManifestVisitor).value;
-    const isNumberValue = isNode(node.value, 'numberValueNode');
-    const isNumberType = isNode(node.type, 'numberTypeNode');
-    const isSafeNumberType = isNumberType && ['u8', 'u16', 'u32'].includes(node.type.format);
-    const useBigInt = isNumberValue && isNumberType && !isSafeNumberType;
+    const useBigInt = isNode(node.value, 'numberValueNode') && typeManifest.strictType.content === 'bigint';
     const value = useBigInt ? fragment`${rawValue}n` : rawValue;
     const valueType = isNode(node.value, 'stringValueNode')
         ? fragment`string`
