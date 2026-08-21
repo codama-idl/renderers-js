@@ -14,7 +14,7 @@ export function getEnumDeclarationFragment(
         variantNames: string[];
     },
 ): Fragment {
-    const { variantNames, erasableSyntax = false } = scope;
+    const { variantNames, erasableSyntax } = scope;
     const body = erasableSyntax ? getErasableEnumBody(variantNames) : variantNames.join(', ');
     return getEnumDeclarationFromBodyFragment({ ...scope, body: fragment`{ ${body} }` });
 }
@@ -24,9 +24,9 @@ export function getEnumDeclarationFragment(
  *
  * When `erasableSyntax` is enabled, the `enum` keyword is replaced with a `const` object
  * and a union type of the same name so the declaration can be erased by a type-stripping
- * compiler. The object is aliased through a local lookup constant whose numeric keys are
- * then dropped with `Omit`, which makes `typeof Name` model the enum the same way
- * TypeScript models a real one while leaving the reverse mapping in place at runtime.
+ * compiler. The object exposes both its forward and reverse mappings at runtime and in
+ * TypeScript. The type alias selects only the values of the forward mapping, matching the
+ * value union of a native enum.
  *
  * @param scope - The exported name, the object body, an optional docblock and the render scope.
  * @returns A {@link Fragment} declaring the enum.
@@ -38,9 +38,8 @@ export function getEnumDeclarationFragment(
  *     erasableSyntax: true,
  *     name: 'Key',
  * });
- * // const KeyLookup = { 0: 'A', 1: 'B', A: 0, B: 1 } as const;
- * // export const Key: Omit<typeof KeyLookup, number> = KeyLookup;
- * // export type Key = (typeof Key)[keyof typeof Key];
+ * // export const Key = { 0: 'A', 1: 'B', A: 0, B: 1 } as const;
+ * // export type Key = (typeof Key)[Exclude<keyof typeof Key, number>];
  * ```
  */
 export function getEnumDeclarationFromBodyFragment(
@@ -50,12 +49,11 @@ export function getEnumDeclarationFromBodyFragment(
         name: string;
     },
 ): Fragment {
-    const { name, body, docblock = fragment``, erasableSyntax = false } = scope;
+    const { name, body, docblock = fragment``, erasableSyntax } = scope;
 
     if (!erasableSyntax) {
         return fragment`${docblock}export enum ${name} ${body}`;
     }
 
-    const lookupName = `${name}Lookup`;
-    return fragment`const ${lookupName} = ${body} as const;\n\n${docblock}export const ${name}: Omit<typeof ${lookupName}, number> = ${lookupName};\n\nexport type ${name} = (typeof ${name})[keyof typeof ${name}];`;
+    return fragment`${docblock}export const ${name} = ${body} as const;\n\nexport type ${name} = (typeof ${name})[Exclude<keyof typeof ${name}, number>];`;
 }

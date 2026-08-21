@@ -5,7 +5,7 @@ import { Fragment, RenderScope, TypeManifest } from '../utils';
 import { getTypeWithCodecFragment } from './typeWithCodec';
 
 export function getAccountTypeFragment(
-    scope: Pick<RenderScope, 'customAccountData' | 'nameApi'> & {
+    scope: Pick<RenderScope, 'customAccountData' | 'erasableSyntax' | 'nameApi'> & {
         accountPath: NodePath<AccountNode>;
         size: number | null;
         typeManifest: TypeManifest;
@@ -19,6 +19,7 @@ export function getAccountTypeFragment(
         codecDocs: [`Gets the codec for {@link ${nameApi.dataType(accountNode.name)}} account data.`],
         decoderDocs: [`Gets the decoder for {@link ${nameApi.dataType(accountNode.name)}} account data.`],
         encoderDocs: [`Gets the encoder for {@link ${nameApi.dataArgsType(accountNode.name)}} account data.`],
+        erasableSyntax: scope.erasableSyntax,
         manifest: typeManifest,
         name: accountNode.name,
         nameApi,

@@ -57,11 +57,10 @@ test('it renders scalar enums as const objects when erasableSyntax is enabled', 
     // When we render a scalar enum with the erasableSyntax option.
     const renderMap = visit(keyTypeNode, getRenderMapVisitor({ erasableSyntax: true }));
 
-    // Then we expect a const object aliased through a lookup constant and a union type.
+    // Then we expect a const object with typed reverse lookups and a value union type.
     await renderMapContains(renderMap, 'types/key.ts', [
-        "const KeyLookup = { 0: 'Uninitialized', 1: 'Asset', Uninitialized: 0, Asset: 1 } as const;",
-        'export const Key: Omit< typeof KeyLookup, number > = KeyLookup;',
-        'export type Key = (typeof Key)[keyof typeof Key];',
+        "export const Key = { 0: 'Uninitialized', 1: 'Asset', Uninitialized: 0, Asset: 1 } as const;",
+        'export type Key = (typeof Key)[Exclude< keyof typeof Key, number >];',
         'export type KeyArgs = Key;',
     ]);
 
@@ -83,9 +82,8 @@ test('it renders program account enums as const objects when erasableSyntax is e
 
     // Then we expect the program account enum to be a const object.
     await renderMapContains(renderMap, 'programs/splToken.ts', [
-        "const SplTokenAccountLookup = { 0: 'Mint', 1: 'Token', Mint: 0, Token: 1 } as const;",
-        'export const SplTokenAccount: Omit< typeof SplTokenAccountLookup, number > = SplTokenAccountLookup;',
-        'export type SplTokenAccount = (typeof SplTokenAccount)[keyof typeof SplTokenAccount];',
+        "export const SplTokenAccount = { 0: 'Mint', 1: 'Token', Mint: 0, Token: 1 } as const;",
+        'export type SplTokenAccount = (typeof SplTokenAccount)[Exclude< keyof typeof SplTokenAccount, number >];',
     ]);
 
     // And we expect no enum declaration.
@@ -98,9 +96,8 @@ test('it renders program instruction enums as const objects when erasableSyntax 
 
     // Then we expect the program instruction enum to be a const object.
     await renderMapContains(renderMap, 'programs/splToken.ts', [
-        "const SplTokenInstructionLookup = { 0: 'MintTokens', MintTokens: 0 } as const;",
-        'export const SplTokenInstruction: Omit< typeof SplTokenInstructionLookup, number > = SplTokenInstructionLookup;',
-        'export type SplTokenInstruction = (typeof SplTokenInstruction)[keyof typeof SplTokenInstruction];',
+        "export const SplTokenInstruction = { 0: 'MintTokens', MintTokens: 0 } as const;",
+        'export type SplTokenInstruction = (typeof SplTokenInstruction)[Exclude< keyof typeof SplTokenInstruction, number >];',
     ]);
 
     // And we expect no enum declaration.

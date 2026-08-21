@@ -44,13 +44,8 @@ export type RenderScope = {
     customInstructionData: ParsedCustomDataOptions;
     dependencyMap: Record<string, string>;
     dependencyVersions: Record<string, string>;
-    /**
-     * Whether generated code should avoid non-erasable TypeScript syntax.
-     * Optional so existing scopes built before this option was introduced keep working.
-     *
-     * @defaultValue `false`
-     */
-    erasableSyntax?: boolean;
+    /** Whether generated code should avoid non-erasable TypeScript syntax. */
+    erasableSyntax: boolean;
     getImportFrom: GetImportFromFunction;
     getImportPath: GetImportPathFunction;
     kitImportStrategy: KitImportStrategy;

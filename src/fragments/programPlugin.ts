@@ -218,7 +218,7 @@ function getProgramPluginFunctionFragment(
         programNode: ProgramNode;
     },
 ): Fragment {
-    const { programNode, nameApi, renderParentInstructions, erasableSyntax = false } = scope;
+    const { programNode, nameApi, renderParentInstructions, erasableSyntax } = scope;
     const programPluginFunction = nameApi.programPluginFunction(programNode.name);
     const programPluginType = nameApi.programPluginType(programNode.name);
     const programPluginRequirementsType = nameApi.programPluginRequirementsType(programNode.name);
@@ -243,8 +243,8 @@ function getProgramPluginFunctionFragment(
         c => c.join(', '),
     );
 
-    // Angle-bracket assertions are rejected under `erasableSyntaxOnly` because they are
-    // ambiguous with JSX, so fall back to the equivalent `as` assertion.
+    // Angle-bracket assertions are rejected under `erasableSyntaxOnly`, so use the
+    // equivalent `as` assertion instead.
     const pluginObject = erasableSyntax
         ? fragment`{ ${fields} } as ${programPluginType}`
         : fragment`<${programPluginType}>{ ${fields} }`;

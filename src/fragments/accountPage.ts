@@ -9,7 +9,10 @@ import { getAccountTypeFragment } from './accountType';
 import { getDiscriminatorConstantsFragment } from './discriminatorConstants';
 
 export function getAccountPageFragment(
-    scope: Pick<RenderScope, 'customAccountData' | 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<
+        RenderScope,
+        'customAccountData' | 'erasableSyntax' | 'linkables' | 'nameApi' | 'typeManifestVisitor'
+    > & {
         accountPath: NodePath<AccountNode>;
         size: number | null;
     },

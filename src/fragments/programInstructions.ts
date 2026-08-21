@@ -92,7 +92,7 @@ function getProgramInstructionsParsedUnionTypeFragment(
         programNode: ProgramNode;
     },
 ): Fragment {
-    const { programNode, allInstructions, nameApi, erasableSyntax = false } = scope;
+    const { programNode, allInstructions, nameApi, erasableSyntax } = scope;
 
     const programAddress = programNode.publicKey;
     const programInstructionsType = nameApi.programInstructionsParsedUnionType(programNode.name);
