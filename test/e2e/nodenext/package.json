@@ -5,7 +5,7 @@
     "type": "module",
     "sideEffects": false,
     "scripts": {
-        "build": "rimraf dist && tsc",
+        "build": "rimraf dist && tsc -p ../tsconfig.nodenext.json",
         "test": "ava",
         "lint": "eslint --ext js,ts,tsx src && prettier --check src test",
         "lint:fix": "eslint --fix --ext js,ts,tsx src && prettier --write src test"

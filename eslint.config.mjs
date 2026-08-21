@@ -16,4 +16,14 @@ export default defineConfig([
             'typescript-sort-keys/interface': 'off',
         },
     },
+    {
+        files: ['test/e2e/nodenext/**/*.ts'],
+        languageOptions: {
+            parserOptions: {
+                project: ['./test/e2e/tsconfig.nodenext.json'],
+                projectService: false,
+                tsconfigRootDir: import.meta.dirname,
+            },
+        },
+    },
 ]);

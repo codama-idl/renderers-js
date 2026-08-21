@@ -6,5 +6,4 @@
  * @see https://github.com/codama-idl/codama
  */
 
-export * from './extraMetasAccount.js';
-export * from './guard.js';
+export * from './counter.js';

@@ -2,7 +2,7 @@ module.exports = {
   extends: ['@solana/eslint-config-solana'],
   ignorePatterns: ['.eslintrc.cjs'],
   parserOptions: {
-    project: 'tsconfig.json',
+    project: '../tsconfig.nodenext.json',
     tsconfigRootDir: __dirname,
     sourceType: 'module',
   },
