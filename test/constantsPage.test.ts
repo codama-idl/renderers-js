@@ -17,7 +17,7 @@ import { expect, test } from 'vitest';
 import { getRenderMapVisitor } from '../src';
 import { renderMapContains, renderMapContainsImports, renderMapDoesNotContainImports } from './_setup';
 
-test('it renders program constants in a top-level constants page', async () => {
+test('it renders program constants in a program-specific constants page', async () => {
     const node = rootNode(
         programNode({
             constants: [
@@ -34,7 +34,7 @@ test('it renders program constants in a top-level constants page', async () => {
 
     const renderMap = visit(node, getRenderMapVisitor());
 
-    await renderMapContains(renderMap, 'constants.ts', [
+    await renderMapContains(renderMap, 'constants/governance.ts', [
         '/** Maximum options. */',
         'export const MAX_OPTION: number = 10;',
         'export const MIN_OPTION: number = 1;',
@@ -43,9 +43,36 @@ test('it renders program constants in a top-level constants page', async () => {
         'export const WEIGHT: number = 1.5;',
     ]);
     await renderMapContains(renderMap, 'index.ts', "export * from './constants';");
+    await renderMapContains(renderMap, 'constants/index.ts', "export * from './governance';");
 
-    expect(renderMap.has('constants/index.ts')).toBe(false);
+    expect(renderMap.has('constants.ts')).toBe(false);
     expect(renderMap.size).toBeGreaterThan(0);
+});
+
+test('it renders one constants file per program', async () => {
+    const node = rootNode(
+        programNode({
+            constants: [constantNode('governanceLimit', numberTypeNode('u8'), numberValueNode(1))],
+            name: 'governance',
+            publicKey: 'GovER5Lthms3bLBqWub97yVrQm9WLZ7YgRrxYQYy2P',
+        }),
+        [
+            programNode({
+                constants: [constantNode('treasuryLimit', numberTypeNode('u8'), numberValueNode(2))],
+                name: 'treasury',
+                publicKey: '11111111111111111111111111111111',
+            }),
+        ],
+    );
+
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    await renderMapContains(renderMap, 'constants/governance.ts', 'export const GOVERNANCE_LIMIT: number = 1;');
+    await renderMapContains(renderMap, 'constants/treasury.ts', 'export const TREASURY_LIMIT: number = 2;');
+    await renderMapContains(renderMap, 'constants/index.ts', [
+        "export * from './governance';",
+        "export * from './treasury';",
+    ]);
 });
 
 test('it renders values and imports using their declared types', async () => {
@@ -73,11 +100,11 @@ test('it renders values and imports using their declared types', async () => {
 
     await renderMapContains(
         renderMap,
-        'constants.ts',
+        'constants/governance.ts',
         'export const DEFAULT_STATUS: AccountStatus = AccountStatus.Active;',
     );
-    await renderMapContainsImports(renderMap, 'constants.ts', {
-        './types': ['AccountStatus'],
+    await renderMapContainsImports(renderMap, 'constants/governance.ts', {
+        '../types': ['AccountStatus'],
     });
 });
 
@@ -93,8 +120,8 @@ test('it imports linked types from the top-level types directory', async () => {
 
     const renderMap = visit(node, getRenderMapVisitor());
 
-    await renderMapContainsImports(renderMap, 'constants.ts', {
-        './types': ['type OptionCountType'],
+    await renderMapContainsImports(renderMap, 'constants/governance.ts', {
+        '../types': ['type OptionCountType'],
     });
 });
 
@@ -109,8 +136,8 @@ test('it renders string constants without importing their declared type', async 
 
     const renderMap = visit(node, getRenderMapVisitor());
 
-    await renderMapContains(renderMap, 'constants.ts', "export const ABSTAIN_VOTE_INDEX: string = '0';");
-    await renderMapDoesNotContainImports(renderMap, 'constants.ts', {
-        './types': ['Usize'],
+    await renderMapContains(renderMap, 'constants/governance.ts', "export const ABSTAIN_VOTE_INDEX: string = '0';");
+    await renderMapDoesNotContainImports(renderMap, 'constants/governance.ts', {
+        '../types': ['Usize'],
     });
 });

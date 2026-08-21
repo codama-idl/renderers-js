@@ -75,8 +75,8 @@ test('it appends explicit extensions to the relative imports of generated files'
     // And we expect sibling types to import from their own folder's index file.
     await renderMapContains(renderMap, 'types/counterConfig.ts', "from './index.js'");
 
-    // And we expect top-level constants to import linked types from the types index.
-    await renderMapContains(renderMap, 'constants.ts', "from './types/index.js'");
+    // And we expect program constants to import linked types from the types index.
+    await renderMapContains(renderMap, 'constants/myProgram.ts', "from '../types/index.js'");
 
     // And we expect instructions to import their program constants the same way.
     await renderMapContains(renderMap, 'instructions/increment.ts', "from '../programs/index.js'");
@@ -89,7 +89,7 @@ test('it appends explicit extensions to the re-exports of generated barrels', as
     // Then we expect the root index to re-export each folder's index file.
     await renderMapContains(renderMap, 'index.ts', [
         "export * from './accounts/index.js';",
-        "export * from './constants.js';",
+        "export * from './constants/index.js';",
         "export * from './instructions/index.js';",
         "export * from './pdas/index.js';",
         "export * from './programs/index.js';",
@@ -98,6 +98,7 @@ test('it appends explicit extensions to the re-exports of generated barrels', as
 
     // And we expect folder barrels to re-export each file directly.
     await renderMapContains(renderMap, 'accounts/index.ts', "export * from './counter.js';");
+    await renderMapContains(renderMap, 'constants/index.ts', "export * from './myProgram.js';");
     await renderMapContains(renderMap, 'types/index.ts', [
         "export * from './accountStatus.js';",
         "export * from './counterConfig.js';",
@@ -111,7 +112,8 @@ test('it supports TypeScript extensions', async () => {
     // Then we expect every generated specifier to use the `.ts` extension.
     await renderMapContains(renderMap, 'accounts/counter.ts', "from '../pdas/index.ts'");
     await renderMapContains(renderMap, 'index.ts', "export * from './accounts/index.ts';");
-    await renderMapContains(renderMap, 'index.ts', "export * from './constants.ts';");
+    await renderMapContains(renderMap, 'index.ts', "export * from './constants/index.ts';");
+    await renderMapContains(renderMap, 'constants/index.ts', "export * from './myProgram.ts';");
     await renderMapContains(renderMap, 'accounts/index.ts', "export * from './counter.ts';");
 });
 

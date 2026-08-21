@@ -2,7 +2,6 @@ import {
     camelCase,
     CamelCaseString,
     getAllAccounts,
-    getAllConstants,
     getAllDefinedTypes,
     getAllInstructionsWithSubs,
     getAllPdas,
@@ -80,6 +79,7 @@ export function getRenderMapVisitor(
     const renderScope: RenderScope = { ...renderScopeWithTypeManifestVisitor, typeManifestVisitor };
 
     const internalNodes = (options.internalNodes ?? []).map(camelCase);
+    const isNotInternal = (node: { name: CamelCaseString }) => !internalNodes.includes(node.name);
     const resolvedInstructionInputVisitor = getResolvedInstructionInputsVisitor();
     const byteSizeVisitor = getByteSizeVisitor(linkables, { stack });
     const asPage = <TFragment extends Fragment | undefined>(
@@ -143,6 +143,7 @@ export function getRenderMapVisitor(
                 },
 
                 visitProgram(node, { self }) {
+                    const constantsToExport = (node.constants ?? []).filter(isNotInternal);
                     const customDataDefinedType = [
                         ...getDefinedTypeNodesToExtract(node.accounts ?? [], customAccountData),
                         ...getDefinedTypeNodesToExtract(node.instructions ?? [], customInstructionData),
@@ -151,6 +152,12 @@ export function getRenderMapVisitor(
 
                     return mergeRenderMaps([
                         createRenderMap({
+                            [`constants/${camelCase(node.name)}.ts`]:
+                                constantsToExport.length > 0
+                                    ? asPage(getConstantsPageFragment({ ...renderScope, nodes: constantsToExport }), {
+                                          generatedTypes: renderScope.getImportPath('../types', 'directory'),
+                                      })
+                                    : undefined,
                             [`programs/${camelCase(node.name)}.ts`]: asPage(getProgramPageFragment(scope)),
                             [`errors/${camelCase(node.name)}.ts`]:
                                 (node.errors ?? []).length > 0 ? asPage(getErrorPageFragment(scope)) : undefined,
@@ -166,12 +173,13 @@ export function getRenderMapVisitor(
                 },
 
                 visitRoot(node, { self }) {
-                    const isNotInternal = (n: { name: CamelCaseString }) => !internalNodes.includes(n.name);
                     const programsToExport = getAllPrograms(node).filter(isNotInternal);
+                    const programsWithConstantsToExport = programsToExport.filter(program =>
+                        (program.constants ?? []).some(isNotInternal),
+                    );
                     const programsWithErrorsToExport = programsToExport.filter(p => (p.errors ?? []).length > 0);
                     const pdasToExport = getAllPdas(node);
                     const accountsToExport = getAllAccounts(node).filter(isNotInternal);
-                    const constantsToExport = getAllConstants(node).filter(isNotInternal);
                     const instructionsToExport = getAllInstructionsWithSubs(node, {
                         leavesOnly: !renderScope.renderParentInstructions,
                     }).filter(isNotInternal);
@@ -180,19 +188,18 @@ export function getRenderMapVisitor(
                     const scope = {
                         ...renderScope,
                         accountsToExport,
-                        constantsToExport,
                         definedTypesToExport,
                         instructionsToExport,
                         pdasToExport,
                         programsToExport,
+                        programsWithConstantsToExport,
                     };
 
                     return mergeRenderMaps([
                         createRenderMap({
                             ['accounts/index.ts']: asPage(getIndexPageFragment(accountsToExport, renderScope)),
-                            ['constants.ts']: asPage(
-                                getConstantsPageFragment({ ...renderScope, nodes: constantsToExport }),
-                                { generatedTypes: renderScope.getImportPath('./types', 'directory') },
+                            ['constants/index.ts']: asPage(
+                                getIndexPageFragment(programsWithConstantsToExport, renderScope),
                             ),
                             ['errors/index.ts']: asPage(getIndexPageFragment(programsWithErrorsToExport, renderScope)),
                             ['index.ts']: asPage(getRootIndexPageFragment(scope)),
