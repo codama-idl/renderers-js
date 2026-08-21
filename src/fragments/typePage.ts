@@ -6,7 +6,10 @@ import { getTypeDiscriminatedUnionHelpersFragment } from './typeDiscriminatedUni
 import { getTypeWithCodecFragment } from './typeWithCodec';
 
 export function getTypePageFragment(
-    scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & { node: DefinedTypeNode; size: number | null },
+    scope: Pick<RenderScope, 'erasableSyntax' | 'nameApi' | 'typeManifestVisitor'> & {
+        node: DefinedTypeNode;
+        size: number | null;
+    },
 ): Fragment {
     const node = scope.node;
     const manifest = visit(node, scope.typeManifestVisitor);

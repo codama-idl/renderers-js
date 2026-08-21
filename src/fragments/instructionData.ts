@@ -5,7 +5,7 @@ import { Fragment, RenderScope, TypeManifest } from '../utils';
 import { getTypeWithCodecFragment } from './typeWithCodec';
 
 export function getInstructionDataFragment(
-    scope: Pick<RenderScope, 'customInstructionData' | 'nameApi'> & {
+    scope: Pick<RenderScope, 'customInstructionData' | 'erasableSyntax' | 'nameApi'> & {
         dataArgsManifest: TypeManifest;
         instructionPath: NodePath<InstructionNode>;
         size: number | null;
@@ -17,6 +17,7 @@ export function getInstructionDataFragment(
 
     const instructionDataName = nameApi.instructionDataType(instructionNode.name);
     return getTypeWithCodecFragment({
+        erasableSyntax: scope.erasableSyntax,
         manifest: dataArgsManifest,
         name: instructionDataName,
         nameApi,

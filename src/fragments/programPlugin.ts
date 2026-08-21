@@ -13,7 +13,9 @@ import { Fragment, fragment, hasAsyncFunction, mergeFragments, RenderScope, use 
 import { getRenamedArgsMap } from './instructionPage';
 
 export function getProgramPluginFragment(
-    scope: Pick<RenderScope, 'asyncResolvers' | 'nameApi' | 'renderParentInstructions'> & { programNode: ProgramNode },
+    scope: Pick<RenderScope, 'asyncResolvers' | 'erasableSyntax' | 'nameApi' | 'renderParentInstructions'> & {
+        programNode: ProgramNode;
+    },
 ): Fragment | undefined {
     if (
         (scope.programNode.accounts ?? []).length === 0 &&
@@ -211,12 +213,12 @@ function getProgramPluginRequirementsTypeFragment(
 }
 
 function getProgramPluginFunctionFragment(
-    scope: Pick<RenderScope, 'nameApi' | 'renderParentInstructions'> & {
+    scope: Pick<RenderScope, 'erasableSyntax' | 'nameApi' | 'renderParentInstructions'> & {
         asyncInstructions: CamelCaseString[];
         programNode: ProgramNode;
     },
 ): Fragment {
-    const { programNode, nameApi, renderParentInstructions } = scope;
+    const { programNode, nameApi, renderParentInstructions, erasableSyntax } = scope;
     const programPluginFunction = nameApi.programPluginFunction(programNode.name);
     const programPluginType = nameApi.programPluginType(programNode.name);
     const programPluginRequirementsType = nameApi.programPluginRequirementsType(programNode.name);
@@ -241,9 +243,15 @@ function getProgramPluginFunctionFragment(
         c => c.join(', '),
     );
 
+    // Angle-bracket assertions are rejected under `erasableSyntaxOnly`, so use the
+    // equivalent `as` assertion instead.
+    const pluginObject = erasableSyntax
+        ? fragment`{ ${fields} } as ${programPluginType}`
+        : fragment`<${programPluginType}>{ ${fields} }`;
+
     return fragment`export function ${programPluginFunction}() {
     return <T extends ${programPluginRequirementsType}>(client: T): ${extendedClient}<T, { ${programPluginKey}: ${programPluginType} }> => {
-        return ${extendClient}(client, { ${programPluginKey}: <${programPluginType}>{ ${fields} } });
+        return ${extendClient}(client, { ${programPluginKey}: ${pluginObject} });
     };
 }`;
 }

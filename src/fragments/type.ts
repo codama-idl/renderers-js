@@ -1,7 +1,8 @@
 import { Fragment, fragment, getDocblockFragment, RenderScope, TypeManifest } from '../utils';
+import { getEnumDeclarationFromBodyFragment } from './enumDeclaration';
 
 export function getTypeFragment(
-    scope: Pick<RenderScope, 'nameApi'> & {
+    scope: Pick<RenderScope, 'erasableSyntax' | 'nameApi'> & {
         docs?: string[];
         manifest: TypeManifest;
         name: string;
@@ -15,7 +16,13 @@ export function getTypeFragment(
     const aliasedLooseName = `export type ${looseName} = ${strictName};`;
 
     if (manifest.isEnum) {
-        return fragment`${docblock}export enum ${strictName} ${manifest.strictType};\n\n${aliasedLooseName}`;
+        const enumDeclaration = getEnumDeclarationFromBodyFragment({
+            ...scope,
+            body: manifest.strictType,
+            docblock,
+            name: strictName,
+        });
+        return fragment`${enumDeclaration}\n\n${aliasedLooseName}`;
     }
 
     const looseExport =

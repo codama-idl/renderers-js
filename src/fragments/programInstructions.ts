@@ -7,9 +7,10 @@ import {
 
 import { Fragment, fragment, mergeFragments, RenderScope, use } from '../utils';
 import { getDiscriminatorConditionFragment } from './discriminatorCondition';
+import { getEnumDeclarationFragment } from './enumDeclaration';
 
 export function getProgramInstructionsFragment(
-    scope: Pick<RenderScope, 'nameApi' | 'renderParentInstructions' | 'typeManifestVisitor'> & {
+    scope: Pick<RenderScope, 'erasableSyntax' | 'nameApi' | 'renderParentInstructions' | 'typeManifestVisitor'> & {
         programNode: ProgramNode;
     },
 ): Fragment | undefined {
@@ -32,17 +33,17 @@ export function getProgramInstructionsFragment(
 }
 
 function getProgramInstructionsEnumFragment(
-    scope: Pick<RenderScope, 'nameApi'> & {
+    scope: Pick<RenderScope, 'erasableSyntax' | 'nameApi'> & {
         allInstructions: InstructionNode[];
         programNode: ProgramNode;
     },
 ): Fragment {
     const { programNode, allInstructions, nameApi } = scope;
-    const programInstructionsEnum = nameApi.programInstructionsEnum(programNode.name);
-    const programInstructionsEnumVariants = allInstructions.map(instruction =>
-        nameApi.programInstructionsEnumVariant(instruction.name),
-    );
-    return fragment`export enum ${programInstructionsEnum} { ${programInstructionsEnumVariants.join(', ')} }`;
+    return getEnumDeclarationFragment({
+        ...scope,
+        name: nameApi.programInstructionsEnum(programNode.name),
+        variantNames: allInstructions.map(instruction => nameApi.programInstructionsEnumVariant(instruction.name)),
+    });
 }
 
 function getProgramInstructionsIdentifierFunctionFragment(
@@ -86,12 +87,12 @@ function getProgramInstructionsIdentifierFunctionFragment(
 }
 
 function getProgramInstructionsParsedUnionTypeFragment(
-    scope: Pick<RenderScope, 'nameApi'> & {
+    scope: Pick<RenderScope, 'erasableSyntax' | 'nameApi'> & {
         allInstructions: InstructionNode[];
         programNode: ProgramNode;
     },
 ): Fragment {
-    const { programNode, allInstructions, nameApi } = scope;
+    const { programNode, allInstructions, nameApi, erasableSyntax } = scope;
 
     const programAddress = programNode.publicKey;
     const programInstructionsType = nameApi.programInstructionsParsedUnionType(programNode.name);
@@ -104,7 +105,13 @@ function getProgramInstructionsParsedUnionTypeFragment(
             'generatedInstructions',
         );
 
-        return fragment`| { instructionType: ${programInstructionsEnum}.${instructionEnumVariant} } & ${parsedInstructionType}<TProgram>`;
+        // A const object only lives in the value space, so its members need a `typeof` query
+        // to be referenced from a type position.
+        const memberType = erasableSyntax
+            ? `typeof ${programInstructionsEnum}.${instructionEnumVariant}`
+            : `${programInstructionsEnum}.${instructionEnumVariant}`;
+
+        return fragment`| { instructionType: ${memberType} } & ${parsedInstructionType}<TProgram>`;
     });
 
     return mergeFragments(

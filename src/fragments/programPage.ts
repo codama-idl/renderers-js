@@ -7,7 +7,10 @@ import { getProgramInstructionsFragment } from './programInstructions';
 import { getProgramPluginFragment } from './programPlugin';
 
 export function getProgramPageFragment(
-    scope: Pick<RenderScope, 'asyncResolvers' | 'nameApi' | 'renderParentInstructions' | 'typeManifestVisitor'> & {
+    scope: Pick<
+        RenderScope,
+        'asyncResolvers' | 'erasableSyntax' | 'nameApi' | 'renderParentInstructions' | 'typeManifestVisitor'
+    > & {
         programNode: ProgramNode;
     },
 ): Fragment {

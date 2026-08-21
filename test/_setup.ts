@@ -47,6 +47,7 @@ export function getDefaultScope(): RenderScope {
         customInstructionData,
         dependencyMap: {},
         dependencyVersions: {},
+        erasableSyntax: false,
         getImportFrom,
         getImportPath: getImportPathFactory(),
         kitImportStrategy: DEFAULT_KIT_IMPORT_STRATEGY,
@@ -57,6 +58,7 @@ export function getDefaultScope(): RenderScope {
         typeManifestVisitor: getTypeManifestVisitor({
             customAccountData,
             customInstructionData,
+            erasableSyntax: false,
             getImportFrom,
             linkables,
             nameApi,

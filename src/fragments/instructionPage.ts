@@ -19,7 +19,13 @@ import { getInstructionTypeFragment } from './instructionType';
 export function getInstructionPageFragment(
     scope: Pick<
         RenderScope,
-        'asyncResolvers' | 'customInstructionData' | 'getImportFrom' | 'linkables' | 'nameApi' | 'typeManifestVisitor'
+        | 'asyncResolvers'
+        | 'customInstructionData'
+        | 'erasableSyntax'
+        | 'getImportFrom'
+        | 'linkables'
+        | 'nameApi'
+        | 'typeManifestVisitor'
     > & {
         instructionPath: NodePath<InstructionNode>;
         resolvedInputs: ResolvedInstructionInput[];
