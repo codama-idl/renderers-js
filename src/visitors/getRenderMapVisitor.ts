@@ -154,9 +154,14 @@ export function getRenderMapVisitor(
                         createRenderMap({
                             [`constants/${camelCase(node.name)}.ts`]:
                                 constantsToExport.length > 0
-                                    ? asPage(getConstantsPageFragment({ ...renderScope, nodes: constantsToExport }), {
-                                          generatedTypes: renderScope.getImportPath('../types', 'directory'),
-                                      })
+                                    ? asPage(
+                                          getConstantsPageFragment({
+                                              ...renderScope,
+                                              nodes: constantsToExport,
+                                              programPath: stack.getPath('programNode'),
+                                          }),
+                                          { generatedTypes: renderScope.getImportPath('../types', 'directory') },
+                                      )
                                     : undefined,
                             [`programs/${camelCase(node.name)}.ts`]: asPage(getProgramPageFragment(scope)),
                             [`errors/${camelCase(node.name)}.ts`]:

@@ -1,4 +1,6 @@
 import {
+    bytesTypeNode,
+    bytesValueNode,
     constantNode,
     definedTypeLinkNode,
     definedTypeNode,
@@ -8,6 +10,8 @@ import {
     numberTypeNode,
     numberValueNode,
     programNode,
+    publicKeyTypeNode,
+    publicKeyValueNode,
     rootNode,
     stringValueNode,
 } from '@codama/nodes';
@@ -122,6 +126,52 @@ test('it imports linked types from the top-level types directory', async () => {
 
     await renderMapContainsImports(renderMap, 'constants/governance.ts', {
         '../types': ['type OptionCountType'],
+    });
+});
+
+test('it renders bigint literals for linked bigint types', async () => {
+    const node = rootNode(
+        programNode({
+            constants: [constantNode('maxAmount', definedTypeLinkNode('bigNumber'), numberValueNode(42))],
+            definedTypes: [definedTypeNode({ name: 'bigNumber', type: numberTypeNode('u64') })],
+            name: 'governance',
+            publicKey: 'GovER5Lthms3bLBqWub97yVrQm9WLZ7YgRrxYQYy2P',
+        }),
+    );
+
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    await renderMapContains(renderMap, 'constants/governance.ts', 'export const MAX_AMOUNT: BigNumber = 42n;');
+    await renderMapContainsImports(renderMap, 'constants/governance.ts', {
+        '../types': ['type BigNumber'],
+    });
+});
+
+test('it renders public key and bytes constants', async () => {
+    const node = rootNode(
+        programNode({
+            constants: [
+                constantNode(
+                    'adminAddress',
+                    publicKeyTypeNode(),
+                    publicKeyValueNode('11111111111111111111111111111111'),
+                ),
+                constantNode('seedBytes', bytesTypeNode(), bytesValueNode('base16', '0102ff')),
+            ],
+            name: 'governance',
+            publicKey: 'GovER5Lthms3bLBqWub97yVrQm9WLZ7YgRrxYQYy2P',
+        }),
+    );
+
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    await renderMapContains(renderMap, 'constants/governance.ts', [
+        'export const ADMIN_ADDRESS: Address = address(',
+        "'11111111111111111111111111111111'",
+        'export const SEED_BYTES: ReadonlyUint8Array = new Uint8Array([1, 2, 255]);',
+    ]);
+    await renderMapContainsImports(renderMap, 'constants/governance.ts', {
+        '@solana/kit': ['address', 'type Address', 'type ReadonlyUint8Array'],
     });
 });
 
