@@ -15,11 +15,11 @@ import {
     type FixedSizeEncoder,
 } from '@solana/kit';
 
-const KeyLookup = { 0: 'Uninitialized', 1: 'Asset', Uninitialized: 0, Asset: 1 } as const;
+/** Identifies a key. */
+export const Key = { 0: 'Uninitialized', 1: 'Asset', Uninitialized: 0, Asset: 1 } as const;
 
-export const Key: Omit<typeof KeyLookup, number> = KeyLookup;
-
-export type Key = (typeof Key)[keyof typeof Key];
+/** Identifies a key. */
+export type Key = (typeof Key)[Exclude<keyof typeof Key, number>];
 
 export type KeyArgs = Key;
 
@@ -28,7 +28,7 @@ export function getKeyEncoder(): FixedSizeEncoder<KeyArgs> {
 }
 
 export function getKeyDecoder(): FixedSizeDecoder<Key> {
-    return getEnumDecoder(Key);
+    return getEnumDecoder(Key as Omit<typeof Key, number>);
 }
 
 export function getKeyCodec(): FixedSizeCodec<KeyArgs, Key> {

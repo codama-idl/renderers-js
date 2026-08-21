@@ -1,0 +1,17 @@
+{
+    "name": "@codama/renderers-js-e2e-node-esm",
+    "private": true,
+    "version": "0.0.0",
+    "type": "module",
+    "sideEffects": false,
+    "scripts": {
+        "build": "rimraf dist && tsc",
+        "test": "node ./dist/compatibility.js && node ./run-type-stripping.cjs",
+        "lint": "eslint --ext ts src compatibility.ts && prettier --check src compatibility.ts run-type-stripping.cjs README.md",
+        "lint:fix": "eslint --fix --ext ts src compatibility.ts && prettier --write src compatibility.ts run-type-stripping.cjs README.md"
+    },
+    "dependencies": {
+        "@solana/kit": "^6.10.0"
+    },
+    "license": "MIT"
+}

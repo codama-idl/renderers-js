@@ -6,4 +6,4 @@
  * @see https://github.com/codama-idl/codama
  */
 
-export * from './dummy.ts';
+export * from './useKey.ts';

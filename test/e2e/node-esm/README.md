@@ -1,16 +1,16 @@
-# `modern` e2e fixture
+# `node-esm` e2e fixture
 
 Proves that a generated client can be executed directly by Node.js 24+ through
 type stripping, with no compilation step in between. That needs two things at
 once: every relative import already names a real file, and no non-erasable
 TypeScript syntax survives into the output.
 
-So this project renders the same IDL as the `dummy` fixture, but with
-`importExtension: 'ts'` and `erasableSyntax: true`, then compiles the result
-under the strictest "modern TypeScript" tsconfig we support:
+The fixture deliberately contains only one scalar enum and one instruction. It
+is rendered with `importExtension: 'ts'` and `erasableSyntax: true`, then
+compiled under the strictest "modern TypeScript" tsconfig we support:
 
-| Option                            | What it proves about the generated client                                   |
-| --------------------------------- | --------------------------------------------------------------------------- |
+| Option                            | What it proves about the generated client                                     |
+| --------------------------------- | ----------------------------------------------------------------------------- |
 | `erasableSyntaxOnly`              | No `enum`, `namespace`, or parameter properties are emitted.                  |
 | `allowImportingTsExtensions`      | Relative specifiers may name the real `.ts` file.                             |
 | `rewriteRelativeImportExtensions` | Those `.ts` specifiers still compile to runnable `.js`.                       |
@@ -19,10 +19,11 @@ under the strictest "modern TypeScript" tsconfig we support:
 
 `pnpm build` runs `tsc` and is the core proof: it type-checks the generated
 sources and emits JavaScript whose `./x.ts` imports have been rewritten to
-`./x.js`. `pnpm test` then runs the AVA suite against that emitted JavaScript
-and, on Node versions that can strip types, executes `smoke.ts` — which imports
-the **TypeScript sources** directly, so the client has to be erasable and
-extension-explicit at runtime too. Neither needs a validator.
+`./x.js`. `pnpm test` executes the same compatibility test first from that
+emitted JavaScript and then, on Node versions that can strip types, directly
+from its TypeScript source. This covers scalar and program-level enums, codecs,
+instruction identification and parsing, and the program plugin without needing
+a validator.
 
 One caveat worth knowing: TypeScript rewrites extensions in emitted JavaScript
 but not in emitted declarations, so `dist/**/*.d.ts` still refers to `./x.ts`.
