@@ -6,4 +6,6 @@
  * @see https://github.com/codama-idl/codama
  */
 
-export * from './counter.js';
+export * from './instructions/index.ts';
+export * from './programs/index.ts';
+export * from './types/index.ts';

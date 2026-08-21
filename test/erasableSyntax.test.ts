@@ -72,12 +72,16 @@ test('it renders scalar enums as const objects when erasableSyntax is enabled', 
     await renderMapDoesNotContain(renderMap, 'types/key.ts', ['export enum Key']);
 });
 
-test('it keeps the enum codec calls unchanged when erasableSyntax is enabled', async () => {
+test('it narrows reverse mappings when building codecs for erasable enums', async () => {
     // When we render a scalar enum with the erasableSyntax option.
     const renderMap = visit(keyTypeNode, getRenderMapVisitor({ erasableSyntax: true }));
 
-    // Then we expect the codecs to be built from the const object as they would from an enum.
-    await renderMapContains(renderMap, 'types/key.ts', ['return getEnumEncoder(Key);', 'return getEnumDecoder(Key);']);
+    // Then the codec types should only include the named variants, whilst the runtime
+    // object still retains the numeric reverse mappings needed by the codec implementation.
+    await renderMapContains(renderMap, 'types/key.ts', [
+        'return getEnumEncoder(Key);',
+        'return getEnumDecoder(Key as Omit< typeof Key, number >);',
+    ]);
 });
 
 test('it renders program account enums as const objects when erasableSyntax is enabled', async () => {

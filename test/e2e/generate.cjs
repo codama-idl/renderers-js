@@ -13,7 +13,7 @@ const DEFAULT_OPTIONS = { kitImportStrategy: 'rootOnly' };
 
 // Render options per project, falling back to DEFAULT_OPTIONS.
 const PROJECT_OPTIONS = {
-    nodenext: { ...DEFAULT_OPTIONS, importExtension: 'js' },
+    'node-esm': { ...DEFAULT_OPTIONS, erasableSyntax: true, importExtension: 'ts' },
 };
 
 async function main() {

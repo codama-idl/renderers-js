@@ -1,9 +1,11 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
+    "allowImportingTsExtensions": true,
     "composite": false,
     "declaration": true,
     "declarationMap": true,
+    "erasableSyntaxOnly": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "inlineSources": false,
@@ -15,14 +17,15 @@
     "noPropertyAccessFromIndexSignature": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "outDir": "./nodenext/dist",
+    "outDir": "./dist",
     "preserveWatchOutput": true,
-    "rootDir": "./nodenext",
+    "rewriteRelativeImportExtensions": true,
+    "rootDir": ".",
     "skipLibCheck": true,
     "strict": true,
     "target": "ESNext",
     "verbatimModuleSyntax": true
   },
   "exclude": ["node_modules"],
-  "include": ["nodenext/src", "nodenext/test"]
+  "include": ["src", "compatibility.ts"]
 }
