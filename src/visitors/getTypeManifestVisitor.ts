@@ -307,6 +307,8 @@ export function getTypeManifestVisitor(input: {
                         }
                         const variantNames = (enumType.variants ?? []).map(({ name }) => nameApi.enumVariant(name));
                         const body = getEnumBody(variantNames, erasableSyntax);
+                        // Reverse mappings would widen the decoder output type. The encoder
+                        // can safely accept the wider input type, so only narrow the decoder.
                         const decoderConstructor = erasableSyntax
                             ? fragment`${currentParentName.strict} as Omit<typeof ${currentParentName.strict}, number>`
                             : fragment`${currentParentName.strict}`;

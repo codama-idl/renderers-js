@@ -1,9 +1,9 @@
 # `node-esm` e2e fixture
 
-Proves that a generated client can be executed directly by Node.js 24+ through
-type stripping, with no compilation step in between. That needs two things at
-once: every relative import already names a real file, and no non-erasable
-TypeScript syntax survives into the output.
+Proves that a generated client can be executed directly by Node versions with
+built-in type stripping, with no compilation step in between. That needs two
+things at once: every relative import already names a real file, and no
+non-erasable TypeScript syntax survives into the output.
 
 The fixture deliberately contains only one scalar enum and one instruction. It
 is rendered with `importExtension: 'ts'` and `erasableSyntax: true`, then
