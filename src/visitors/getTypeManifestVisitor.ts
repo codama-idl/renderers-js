@@ -34,7 +34,7 @@ import {
     fragment,
     getBytesFromBytesValueNode,
     getDocblockFragment,
-    getErasableEnumBody,
+    getEnumBody,
     type GetImportFromFunction,
     mergeFragments,
     mergeTypeManifests,
@@ -306,7 +306,7 @@ export function getTypeManifestVisitor(input: {
                             );
                         }
                         const variantNames = (enumType.variants ?? []).map(({ name }) => nameApi.enumVariant(name));
-                        const body = erasableSyntax ? getErasableEnumBody(variantNames) : variantNames.join(', ');
+                        const body = getEnumBody(variantNames, erasableSyntax);
                         return typeManifest({
                             decoder: fragment`${use('getEnumDecoder', 'solanaCodecsDataStructures')}(${currentParentName.strict}${decoderOptionsFragment})`,
                             encoder: fragment`${use('getEnumEncoder', 'solanaCodecsDataStructures')}(${currentParentName.strict}${encoderOptionsFragment})`,

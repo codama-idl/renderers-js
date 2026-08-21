@@ -1,4 +1,4 @@
-import { Fragment, fragment, getErasableEnumBody, RenderScope } from '../utils';
+import { Fragment, fragment, getEnumBody, RenderScope } from '../utils';
 
 /**
  * Renders an enum declaration whose variants are numbered sequentially from zero.
@@ -15,7 +15,7 @@ export function getEnumDeclarationFragment(
     },
 ): Fragment {
     const { variantNames, erasableSyntax } = scope;
-    const body = erasableSyntax ? getErasableEnumBody(variantNames) : variantNames.join(', ');
+    const body = getEnumBody(variantNames, erasableSyntax);
     return getEnumDeclarationFromBodyFragment({ ...scope, body: fragment`{ ${body} }` });
 }
 
@@ -55,5 +55,5 @@ export function getEnumDeclarationFromBodyFragment(
         return fragment`${docblock}export enum ${name} ${body}`;
     }
 
-    return fragment`${docblock}export const ${name} = ${body} as const;\n\nexport type ${name} = (typeof ${name})[Exclude<keyof typeof ${name}, number>];`;
+    return fragment`${docblock}export const ${name} = ${body} as const;\n\n${docblock}export type ${name} = (typeof ${name})[Exclude<keyof typeof ${name}, number>];`;
 }

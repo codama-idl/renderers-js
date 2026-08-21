@@ -18,6 +18,7 @@ import { renderMapContains, renderMapDoesNotContain } from './_setup';
 
 // Given the following scalar enum.
 const keyTypeNode = definedTypeNode({
+    docs: ['Identifies the key type.'],
     name: 'key',
     type: enumTypeNode([enumEmptyVariantTypeNode('uninitialized'), enumEmptyVariantTypeNode('asset')]),
 });
@@ -59,8 +60,11 @@ test('it renders scalar enums as const objects when erasableSyntax is enabled', 
 
     // Then we expect a const object with typed reverse lookups and a value union type.
     await renderMapContains(renderMap, 'types/key.ts', [
-        "export const Key = { 0: 'Uninitialized', 1: 'Asset', Uninitialized: 0, Asset: 1 } as const;",
-        'export type Key = (typeof Key)[Exclude< keyof typeof Key, number >];',
+        `/** Identifies the key type. */
+        export const Key = { 0: 'Uninitialized', 1: 'Asset', Uninitialized: 0, Asset: 1 } as const;
+
+        /** Identifies the key type. */
+        export type Key = (typeof Key)[Exclude< keyof typeof Key, number >];`,
         'export type KeyArgs = Key;',
     ]);
 
