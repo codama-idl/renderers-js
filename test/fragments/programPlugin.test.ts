@@ -68,7 +68,7 @@ test('it renders program plugin account types', async () => {
 
     // And we expect the necessary imports to be included.
     await fragmentContainsImports(fragment, {
-        '@solana/program-client-core': ['SelfFetchFunctions'],
+        '@solana/program-client-core': ['type SelfFetchFunctions'],
     });
 });
 
@@ -92,7 +92,7 @@ test('it renders program plugin instruction types', async () => {
 
     // And we expect the necessary imports to be included.
     await fragmentContainsImports(fragment, {
-        '@solana/program-client-core': ['SelfPlanAndSendFunctions'],
+        '@solana/program-client-core': ['type SelfPlanAndSendFunctions'],
     });
 });
 
@@ -240,7 +240,7 @@ test('it renders the program plugin function', async () => {
     // And we expect the necessary imports to be included.
     await fragmentContainsImports(fragment, {
         '../accounts': ['getMintCodec'],
-        '@solana/kit': ['ExtendedClient', 'extendClient'],
+        '@solana/kit': ['type ExtendedClient', 'extendClient'],
         '@solana/program-client-core': ['addSelfFetchFunctions', 'addSelfPlanAndSendFunctions'],
     });
 });

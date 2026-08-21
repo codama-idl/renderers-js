@@ -50,7 +50,12 @@ export async function ${fetchMaybeFromSeedsFunction}(
   const [address] = await ${findPdaFunction}(${hasVariableSeeds ? 'seeds, ' : ''}{ programAddress });
   return await ${fetchMaybeFunction}(rpc, address, fetchConfig);
 }`,
-        f => addFragmentImports(f, importFrom, hasVariableSeeds ? [pdaSeedsType, findPdaFunction] : [findPdaFunction]),
+        f =>
+            addFragmentImports(
+                f,
+                importFrom,
+                hasVariableSeeds ? [`type ${pdaSeedsType}`, findPdaFunction] : [findPdaFunction],
+            ),
         f => addFragmentImports(f, 'solanaAddresses', ['type Address']),
         f =>
             addFragmentImports(f, 'solanaAccounts', [

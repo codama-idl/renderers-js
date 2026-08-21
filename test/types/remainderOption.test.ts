@@ -30,8 +30,8 @@ test('it renders remainder option codecs', async () => {
             'getOptionDecoder',
             'getAddressEncoder',
             'getAddressDecoder',
-            'Option',
-            'OptionOrNullable',
+            'type Option',
+            'type OptionOrNullable',
         ],
     });
 });

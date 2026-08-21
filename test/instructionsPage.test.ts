@@ -546,7 +546,7 @@ test('it renders instruction accounts with inlined PDAs from another program as 
             '}',
     ]);
     await renderMapContainsImports(renderMap, 'instructions/increment.ts', {
-        '@solana/kit': ['Address', 'getProgramDerivedAddress'],
+        '@solana/kit': ['type Address', 'getProgramDerivedAddress'],
     });
 });
 

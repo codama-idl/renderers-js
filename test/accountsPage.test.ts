@@ -17,6 +17,7 @@ import {
     publicKeyTypeNode,
     structFieldTypeNode,
     structTypeNode,
+    variablePdaSeedNode,
 } from '@codama/nodes';
 import { visit } from '@codama/visitors-core';
 import { test } from 'vitest';
@@ -41,6 +42,27 @@ test('it renders PDA helpers for PDA with no seeds', async () => {
         'export async function fetchFooFromSeeds',
         'export async function fetchMaybeFooFromSeeds',
         'await findBarPda({ programAddress })',
+    ]);
+});
+
+test('it renders PDA helpers for PDA with variable seeds', async () => {
+    // Given the following program with 1 account and 1 pda with a variable seed.
+    const node = programNode({
+        accounts: [accountNode({ name: 'foo', pda: pdaLinkNode('bar') })],
+        name: 'myProgram',
+        pdas: [pdaNode({ name: 'bar', seeds: [variablePdaSeedNode('owner', publicKeyTypeNode())] })],
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then we expect the seeds type to be imported as a type-only import
+    // so that the generated code is compatible with `verbatimModuleSyntax`.
+    await renderMapContains(renderMap, 'accounts/foo.ts', [
+        "import { findBarPda, type BarSeeds } from '../pdas'",
+        'seeds: BarSeeds',
+        'await findBarPda(seeds, { programAddress })',
     ]);
 });
 
