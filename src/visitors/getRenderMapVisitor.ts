@@ -38,6 +38,7 @@ import {
     Fragment,
     getDefinedTypeNodesToExtract,
     getImportFromFactory,
+    getImportPathFactory,
     getNameApi,
     getPageFragment,
     GetRenderMapOptions,
@@ -64,6 +65,7 @@ export function getRenderMapVisitor(
         dependencyMap: options.dependencyMap ?? {},
         dependencyVersions: options.dependencyVersions ?? {},
         getImportFrom: getImportFromFactory(options.linkOverrides ?? {}, customAccountData, customInstructionData),
+        getImportPath: getImportPathFactory(options.importExtension),
         kitImportStrategy: options.kitImportStrategy ?? DEFAULT_KIT_IMPORT_STRATEGY,
         linkables,
         nameApi: getNameApi({ ...DEFAULT_NAME_TRANSFORMERS, ...options.nameTransformers }),
@@ -79,12 +81,12 @@ export function getRenderMapVisitor(
     const byteSizeVisitor = getByteSizeVisitor(linkables, { stack });
     const asPage = <TFragment extends Fragment | undefined>(
         fragment: TFragment,
-        dependencyMap: Record<string, string> = {},
+        pageDependencyMap: Record<string, string> = {},
     ): TFragment => {
         if (!fragment) return undefined as TFragment;
         return getPageFragment(fragment, {
             ...renderScope,
-            dependencyMap: { ...renderScope.dependencyMap, ...dependencyMap },
+            dependencyMap: { ...renderScope.dependencyMap, ...pageDependencyMap },
         }) as TFragment;
     };
 
@@ -111,7 +113,7 @@ export function getRenderMapVisitor(
                     return createRenderMap(
                         `types/${camelCase(node.name)}.ts`,
                         asPage(getTypePageFragment({ ...renderScope, node, size: visit(node, byteSizeVisitor) }), {
-                            generatedTypes: '.',
+                            generatedTypes: renderScope.getImportPath('.', 'directory'),
                         }),
                     );
                 },
@@ -182,13 +184,13 @@ export function getRenderMapVisitor(
 
                     return mergeRenderMaps([
                         createRenderMap({
-                            ['accounts/index.ts']: asPage(getIndexPageFragment(accountsToExport)),
-                            ['errors/index.ts']: asPage(getIndexPageFragment(programsWithErrorsToExport)),
+                            ['accounts/index.ts']: asPage(getIndexPageFragment(accountsToExport, renderScope)),
+                            ['errors/index.ts']: asPage(getIndexPageFragment(programsWithErrorsToExport, renderScope)),
                             ['index.ts']: asPage(getRootIndexPageFragment(scope)),
-                            ['instructions/index.ts']: asPage(getIndexPageFragment(instructionsToExport)),
-                            ['pdas/index.ts']: asPage(getIndexPageFragment(pdasToExport)),
-                            ['programs/index.ts']: asPage(getIndexPageFragment(programsToExport)),
-                            ['types/index.ts']: asPage(getIndexPageFragment(definedTypesToExport)),
+                            ['instructions/index.ts']: asPage(getIndexPageFragment(instructionsToExport, renderScope)),
+                            ['pdas/index.ts']: asPage(getIndexPageFragment(pdasToExport, renderScope)),
+                            ['programs/index.ts']: asPage(getIndexPageFragment(programsToExport, renderScope)),
+                            ['types/index.ts']: asPage(getIndexPageFragment(definedTypesToExport, renderScope)),
                         }),
                         ...getAllPrograms(node).map(p => visit(p, self)),
                     ]);
