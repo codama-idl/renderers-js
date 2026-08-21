@@ -9,11 +9,13 @@ export function getRootIndexPageFragment(
         instructionsToExport: InstructionNode[];
         pdasToExport: PdaNode[];
         programsToExport: ProgramNode[];
+        programsWithConstantsToExport: ProgramNode[];
     },
 ): Fragment {
     const hasAnythingToExport =
         scope.programsToExport.length > 0 ||
         scope.accountsToExport.length > 0 ||
+        scope.programsWithConstantsToExport.length > 0 ||
         scope.instructionsToExport.length > 0 ||
         scope.definedTypesToExport.length > 0;
 
@@ -27,6 +29,9 @@ export function getRootIndexPageFragment(
         [
             scope.accountsToExport.length > 0
                 ? getExportAllFragment(scope.getImportPath('./accounts', 'directory'))
+                : undefined,
+            scope.programsWithConstantsToExport.length > 0
+                ? getExportAllFragment(scope.getImportPath('./constants', 'directory'))
                 : undefined,
             programsWithErrorsToExport.length > 0
                 ? getExportAllFragment(scope.getImportPath('./errors', 'directory'))

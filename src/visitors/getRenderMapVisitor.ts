@@ -24,6 +24,7 @@ import {
 
 import {
     getAccountPageFragment,
+    getConstantsPageFragment,
     getErrorPageFragment,
     getIndexPageFragment,
     getInstructionPageFragment,
@@ -78,6 +79,7 @@ export function getRenderMapVisitor(
     const renderScope: RenderScope = { ...renderScopeWithTypeManifestVisitor, typeManifestVisitor };
 
     const internalNodes = (options.internalNodes ?? []).map(camelCase);
+    const isNotInternal = (node: { name: CamelCaseString }) => !internalNodes.includes(node.name);
     const resolvedInstructionInputVisitor = getResolvedInstructionInputsVisitor();
     const byteSizeVisitor = getByteSizeVisitor(linkables, { stack });
     const asPage = <TFragment extends Fragment | undefined>(
@@ -141,6 +143,7 @@ export function getRenderMapVisitor(
                 },
 
                 visitProgram(node, { self }) {
+                    const constantsToExport = (node.constants ?? []).filter(isNotInternal);
                     const customDataDefinedType = [
                         ...getDefinedTypeNodesToExtract(node.accounts ?? [], customAccountData),
                         ...getDefinedTypeNodesToExtract(node.instructions ?? [], customInstructionData),
@@ -149,6 +152,17 @@ export function getRenderMapVisitor(
 
                     return mergeRenderMaps([
                         createRenderMap({
+                            [`constants/${camelCase(node.name)}.ts`]:
+                                constantsToExport.length > 0
+                                    ? asPage(
+                                          getConstantsPageFragment({
+                                              ...renderScope,
+                                              nodes: constantsToExport,
+                                              programPath: stack.getPath('programNode'),
+                                          }),
+                                          { generatedTypes: renderScope.getImportPath('../types', 'directory') },
+                                      )
+                                    : undefined,
                             [`programs/${camelCase(node.name)}.ts`]: asPage(getProgramPageFragment(scope)),
                             [`errors/${camelCase(node.name)}.ts`]:
                                 (node.errors ?? []).length > 0 ? asPage(getErrorPageFragment(scope)) : undefined,
@@ -164,8 +178,10 @@ export function getRenderMapVisitor(
                 },
 
                 visitRoot(node, { self }) {
-                    const isNotInternal = (n: { name: CamelCaseString }) => !internalNodes.includes(n.name);
                     const programsToExport = getAllPrograms(node).filter(isNotInternal);
+                    const programsWithConstantsToExport = programsToExport.filter(program =>
+                        (program.constants ?? []).some(isNotInternal),
+                    );
                     const programsWithErrorsToExport = programsToExport.filter(p => (p.errors ?? []).length > 0);
                     const pdasToExport = getAllPdas(node);
                     const accountsToExport = getAllAccounts(node).filter(isNotInternal);
@@ -181,11 +197,15 @@ export function getRenderMapVisitor(
                         instructionsToExport,
                         pdasToExport,
                         programsToExport,
+                        programsWithConstantsToExport,
                     };
 
                     return mergeRenderMaps([
                         createRenderMap({
                             ['accounts/index.ts']: asPage(getIndexPageFragment(accountsToExport, renderScope)),
+                            ['constants/index.ts']: asPage(
+                                getIndexPageFragment(programsWithConstantsToExport, renderScope),
+                            ),
                             ['errors/index.ts']: asPage(getIndexPageFragment(programsWithErrorsToExport, renderScope)),
                             ['index.ts']: asPage(getRootIndexPageFragment(scope)),
                             ['instructions/index.ts']: asPage(getIndexPageFragment(instructionsToExport, renderScope)),

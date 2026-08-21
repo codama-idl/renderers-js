@@ -3,6 +3,7 @@ export * from './accountPage';
 export * from './accountPdaHelpers';
 export * from './accountSizeHelpers';
 export * from './accountType';
+export * from './constantPage';
 export * from './discriminatorCondition';
 export * from './discriminatorConstants';
 export * from './errorPage';
