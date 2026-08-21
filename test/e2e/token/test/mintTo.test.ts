@@ -1,54 +1,23 @@
-import {
-  appendTransactionMessageInstruction,
-  generateKeyPairSigner,
-  pipe,
-} from '@solana/kit';
+import { generateKeyPairSigner } from '@solana/kit';
 import test from 'ava';
-import {
-  type Mint,
-  type Token,
-  fetchMint,
-  fetchToken,
-  getMintToInstruction,
-} from '../src/index.js';
-import {
-  createDefaultSolanaClient,
-  createDefaultTransaction,
-  createMint,
-  createToken,
-  generateKeyPairSignerWithSol,
-  signAndSendTransaction,
-} from './_setup.js';
 
-test('it mints tokens to a token account', async (t) => {
-  // Given a mint account and a token account.
-  const client = createDefaultSolanaClient();
-  const [payer, mintAuthority, owner] = await Promise.all([
-    generateKeyPairSignerWithSol(client),
-    generateKeyPairSigner(),
-    generateKeyPairSigner(),
-  ]);
-  const mint = await createMint(client, payer, mintAuthority.address);
-  const token = await createToken(client, payer, mint, owner.address);
+import { createMint, createTestClient, createToken } from './_setup.js';
 
-  // When the mint authority mints tokens to the token account.
-  const mintTo = getMintToInstruction({
-    mint,
-    token,
-    mintAuthority,
-    amount: 100n,
-  });
-  await pipe(
-    await createDefaultTransaction(client, payer),
-    (tx) => appendTransactionMessageInstruction(mintTo, tx),
-    (tx) => signAndSendTransaction(client, tx)
-  );
+test('it mints tokens to a token account', async t => {
+    // Given a mint and a token account.
+    const client = await createTestClient();
+    const [mintAuthority, owner] = await Promise.all([generateKeyPairSigner(), generateKeyPairSigner()]);
+    const mint = await createMint(client, mintAuthority.address);
+    const token = await createToken(client, mint, owner.address);
 
-  // Then we expect the mint and token accounts to have the following updated data.
-  const [{ data: mintData }, { data: tokenData }] = await Promise.all([
-    fetchMint(client.rpc, mint),
-    fetchToken(client.rpc, token),
-  ]);
-  t.like(mintData, <Mint>{ supply: 100n });
-  t.like(tokenData, <Token>{ amount: 100n });
+    // When the mint authority mints tokens using the generated plugin.
+    await client.token.instructions.mintTo({ mint, token, mintAuthority, amount: 100n }).sendTransaction();
+
+    // Then the generated account plugins fetch the updated state.
+    const [mintAccount, tokenAccount] = await Promise.all([
+        client.token.accounts.mint.fetch(mint),
+        client.token.accounts.token.fetch(token),
+    ]);
+    t.is(mintAccount.data.supply, 100n);
+    t.is(tokenAccount.data.amount, 100n);
 });

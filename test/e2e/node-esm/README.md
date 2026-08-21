@@ -17,13 +17,16 @@ compiled under the strictest "modern TypeScript" tsconfig we support:
 | `verbatimModuleSyntax`            | Every type-only import is marked as such.                                     |
 | `isolatedDeclarations`            | Every export is annotated well enough to emit declarations without inference. |
 
-`pnpm build` runs `tsc` and is the core proof: it type-checks the generated
-sources and emits JavaScript whose `./x.ts` imports have been rewritten to
-`./x.js`. `pnpm test` executes the same compatibility test first from that
-emitted JavaScript and then, on Node versions that can strip types, directly
-from its TypeScript source. This covers scalar and program-level enums, codecs,
-instruction identification and parsing, and the program plugin without needing
-a validator.
+The root `pnpm test:e2e` command generates this fixture through its Codama CLI
+config, then compiles it using `test/e2e/tsconfig.node-esm.json`. This is the
+core proof: it type-checks the generated sources and emits JavaScript whose
+`./x.ts` imports have been rewritten to `./x.js`. The command executes the same
+compatibility test first from that emitted JavaScript and then, on Node versions
+that can strip types, directly from its TypeScript source. This covers scalar
+and program-level enums, codecs, instruction identification and parsing, and
+the program plugin without needing a validator. The minimal `package.json` in
+this directory only marks these files as ESM; all dependencies and scripts are
+owned by the root package.
 
 One caveat worth knowing: TypeScript rewrites extensions in emitted JavaScript
 but not in emitted declarations, so `dist/**/*.d.ts` still refers to `./x.ts`.

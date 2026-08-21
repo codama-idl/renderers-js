@@ -1,44 +1,27 @@
-import {
-  appendTransactionMessageInstruction,
-  generateKeyPairSigner,
-  pipe,
-} from '@solana/kit';
+import { generateKeyPairSigner } from '@solana/kit';
 import test from 'ava';
-import { fetchNonce, getAdvanceNonceAccountInstruction } from '../src/index.js';
-import {
-  createDefaultSolanaClient,
-  createDefaultTransaction,
-  createNonceAccount,
-  generateKeyPairSignerWithSol,
-  signAndSendTransaction,
-} from './_setup.js';
 
-test('it advances the nonce account', async (t) => {
-  // Given an existing nonce account.
-  const client = createDefaultSolanaClient();
-  const [payer, nonce, authority] = await Promise.all([
-    generateKeyPairSignerWithSol(client),
-    generateKeyPairSigner(),
-    generateKeyPairSigner(),
-  ]);
-  await createNonceAccount(client, payer, nonce, authority);
-  const originalNonceAccount = await fetchNonce(client.rpc, nonce.address);
+import { createTestClient, getCreateNonceInstructionPlan } from './_setup.js';
 
-  // When the authority advances the nonce account.
-  const advanceNonce = getAdvanceNonceAccountInstruction({
-    nonceAccount: nonce.address,
-    nonceAuthority: authority,
-  });
-  await pipe(
-    await createDefaultTransaction(client, payer),
-    (tx) => appendTransactionMessageInstruction(advanceNonce, tx),
-    (tx) => signAndSendTransaction(client, tx)
-  );
+test('it advances the nonce account', async t => {
+    // Given an existing nonce account.
+    const [client, nonce, authority] = await Promise.all([
+        createTestClient(),
+        generateKeyPairSigner(),
+        generateKeyPairSigner(),
+    ]);
+    await client.sendTransaction(await getCreateNonceInstructionPlan(client, nonce, authority));
+    const originalNonceAccount = await client.system.accounts.nonce.fetch(nonce.address);
 
-  // Then we expect the blockhash to have been updated.
-  const updatedNonceAccount = await fetchNonce(client.rpc, nonce.address);
-  t.not(
-    originalNonceAccount.data.blockhash,
-    updatedNonceAccount.data.blockhash
-  );
+    // LiteSVM needs an explicit blockhash expiry because no blocks pass naturally.
+    client.svm.expireBlockhash();
+
+    // When the authority advances the nonce account.
+    await client.system.instructions
+        .advanceNonceAccount({ nonceAccount: nonce.address, nonceAuthority: authority })
+        .sendTransaction();
+
+    // Then we expect the blockhash to have been updated.
+    const updatedNonceAccount = await client.system.accounts.nonce.fetch(nonce.address);
+    t.not(originalNonceAccount.data.blockhash, updatedNonceAccount.data.blockhash);
 });

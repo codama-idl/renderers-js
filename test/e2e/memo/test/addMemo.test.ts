@@ -1,41 +1,29 @@
-import {
-  appendTransactionMessageInstruction,
-  getBase58Encoder,
-  getUtf8Decoder,
-  pipe,
-} from '@solana/kit';
+import { createClient, lamports } from '@solana/kit';
+import { litesvm } from '@solana/kit-plugin-litesvm';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
 import test from 'ava';
-import { getAddMemoInstruction } from '../src/index.js';
-import {
-  createDefaultSolanaClient,
-  createDefaultTransaction,
-  generateKeyPairSignerWithSol,
-  signAndSendTransaction,
-} from './_setup.js';
 
-test('it adds custom text to the transaction logs', async (t) => {
-  // Given a payer wallet.
-  const client = createDefaultSolanaClient();
-  const payer = await generateKeyPairSignerWithSol(client);
+import { memoProgram } from '../src/index.js';
 
-  // When we create a transaction with a custom memo.
-  const addMemo = getAddMemoInstruction({ memo: 'Hello world!' });
-  const signature = await pipe(
-    await createDefaultTransaction(client, payer),
-    (tx) => appendTransactionMessageInstruction(addMemo, tx),
-    async (tx) => await signAndSendTransaction(client, tx)
-  );
+const isTransactionMetadata = (value: unknown): value is { logs: () => readonly string[] } => {
+    return typeof value === 'object' && value !== null && 'logs' in value && typeof value.logs === 'function';
+};
 
-  // Then the instruction data contains our memo.
-  const result = await client.rpc
-    .getTransaction(signature, {
-      encoding: 'json',
-      maxSupportedTransactionVersion: 0,
-    })
-    .send();
-  const instructionDataBase58 =
-    result!.transaction.message.instructions[0].data;
-  const instructionDataBytes = getBase58Encoder().encode(instructionDataBase58);
-  const instructionMemo = getUtf8Decoder().decode(instructionDataBytes);
-  t.is(instructionMemo, 'Hello world!');
+test('it adds custom text to the transaction logs', async t => {
+    // Given a funded LiteSVM client with the generated Memo Program plugin.
+    const client = await createClient()
+        .use(generatedSigner())
+        .use(litesvm())
+        .use(memoProgram())
+        .use(airdropSigner(lamports(1_000_000_000n)));
+
+    // When we send a memo using the generated program plugin.
+    const result = await client.memo.instructions.addMemo({ memo: 'Hello world!' }).sendTransaction();
+
+    // Then the LiteSVM transaction metadata contains our memo.
+    const transactionMetadata = result.context['transactionMetadata'];
+    t.true(isTransactionMetadata(transactionMetadata));
+    if (isTransactionMetadata(transactionMetadata)) {
+        t.true(transactionMetadata.logs().some(log => log.includes('Hello world!')));
+    }
 });

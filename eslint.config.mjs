@@ -17,10 +17,10 @@ export default defineConfig([
         },
     },
     {
-        files: ['test/e2e/nodenext/**/*.ts'],
+        files: ['test/e2e/node-esm/**/*.ts'],
         languageOptions: {
             parserOptions: {
-                project: ['./test/e2e/tsconfig.nodenext.json'],
+                project: ['./test/e2e/tsconfig.node-esm.json'],
                 projectService: false,
                 tsconfigRootDir: import.meta.dirname,
             },

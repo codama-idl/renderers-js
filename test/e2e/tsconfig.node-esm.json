@@ -1,0 +1,31 @@
+{
+    "$schema": "https://json.schemastore.org/tsconfig",
+    "compilerOptions": {
+        "allowImportingTsExtensions": true,
+        "composite": false,
+        "declaration": true,
+        "declarationMap": true,
+        "erasableSyntaxOnly": true,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "inlineSources": false,
+        "isolatedModules": true,
+        "isolatedDeclarations": true,
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "noFallthroughCasesInSwitch": true,
+        "noPropertyAccessFromIndexSignature": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "outDir": "./node-esm/dist",
+        "preserveWatchOutput": true,
+        "rewriteRelativeImportExtensions": true,
+        "rootDir": "./node-esm",
+        "skipLibCheck": true,
+        "strict": true,
+        "target": "ESNext",
+        "verbatimModuleSyntax": true
+    },
+    "exclude": ["node_modules"],
+    "include": ["node-esm/src", "node-esm/compatibility.ts"]
+}

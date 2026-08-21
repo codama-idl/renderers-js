@@ -1,0 +1,15 @@
+{
+    "idl": "idl.json",
+    "scripts": {
+        "js": {
+            "from": "../../../dist/index.node.cjs",
+            "args": [
+                "test/e2e/memo",
+                {
+                    "kitImportStrategy": "rootOnly",
+                    "syncPackageJson": false
+                }
+            ]
+        }
+    }
+}

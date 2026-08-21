@@ -1,203 +1,138 @@
+import { type Address, type TransactionSigner, createClient, generateKeyPairSigner, lamports } from '@solana/kit';
+import { litesvm } from '@solana/kit-plugin-litesvm';
+import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
+
 import {
-  type Address,
-  type TransactionMessage,
-  type Commitment,
-  type Signature,
-  type Rpc,
-  type RpcSubscriptions,
-  type SolanaRpcApi,
-  type SolanaRpcSubscriptionsApi,
-  type TransactionMessageWithBlockhashLifetime,
-  type TransactionMessageWithFeePayer,
-  type KeyPairSigner,
-  type TransactionSigner,
-  airdropFactory,
-  appendTransactionMessageInstructions,
-  assertIsSendableTransaction,
-  assertIsTransactionWithBlockhashLifetime,
-  createSolanaRpc,
-  createSolanaRpcSubscriptions,
-  createTransactionMessage,
-  generateKeyPairSigner,
-  getSignatureFromTransaction,
-  type Lamports,
-  lamports,
-  pipe,
-  sendAndConfirmTransactionFactory,
-  setTransactionMessageFeePayerSigner,
-  setTransactionMessageLifetimeUsingBlockhash,
-  signTransactionMessageWithSigners,
-} from '@solana/kit';
-import {
-  TOKEN_PROGRAM_ADDRESS,
-  getCreateAccountInstruction,
-  getInitializeAccountInstruction,
-  getInitializeMintInstruction,
-  getMintSize,
-  getMintToInstruction,
-  getTokenSize,
+    TOKEN_PROGRAM_ADDRESS,
+    associatedTokenProgram,
+    getMintSize,
+    getTokenSize,
+    systemProgram,
+    tokenProgram,
 } from '../src/index.js';
 
-type Client = {
-  rpc: Rpc<SolanaRpcApi>;
-  rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+/**
+ * Creates a funded LiteSVM client with the generated token-related program plugins.
+ *
+ * @return A promise resolving to the configured test client.
+ */
+export const createTestClient = () => {
+    return createClient()
+        .use(generatedSigner())
+        .use(litesvm())
+        .use(airdropSigner(lamports(1_000_000_000n)))
+        .use(systemProgram())
+        .use(tokenProgram())
+        .use(associatedTokenProgram());
 };
 
-export const createDefaultSolanaClient = (): Client => {
-  const rpc = createSolanaRpc('http://127.0.0.1:8899');
-  const rpcSubscriptions = createSolanaRpcSubscriptions('ws://127.0.0.1:8900');
-  return { rpc, rpcSubscriptions };
-};
+/** A LiteSVM client configured for Token Program E2E tests. */
+export type TestClient = Awaited<ReturnType<typeof createTestClient>>;
 
-export const generateKeyPairSignerWithSol = async (
-  client: Client,
-  putativeLamports: bigint = 1_000_000_000n
-): Promise<KeyPairSigner> => {
-  const signer = await generateKeyPairSigner();
-  await airdropFactory(client)({
-    recipientAddress: signer.address,
-    lamports: lamports(putativeLamports),
-    commitment: 'confirmed',
-  });
-  return signer;
-};
-
-export const createDefaultTransaction = async (
-  client: Client,
-  feePayer: TransactionSigner
-): Promise<
-  TransactionMessage &
-  TransactionMessageWithFeePayer &
-  TransactionMessageWithBlockhashLifetime
-> => {
-  const { value: latestBlockhash } = await client.rpc
-    .getLatestBlockhash()
-    .send();
-  return pipe(
-    createTransactionMessage({ version: 0 }),
-    (tx) => setTransactionMessageFeePayerSigner(feePayer, tx),
-    (tx) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx)
-  );
-};
-
-export const signAndSendTransaction = async (
-  client: Client,
-  transactionMessage: TransactionMessage &
-    TransactionMessageWithFeePayer &
-    TransactionMessageWithBlockhashLifetime,
-  commitment: Commitment = 'confirmed'
-): Promise<Signature> => {
-  const signedTransaction =
-    await signTransactionMessageWithSigners(transactionMessage);
-  const signature = getSignatureFromTransaction(signedTransaction);
-  assertIsSendableTransaction(signedTransaction);
-  assertIsTransactionWithBlockhashLifetime(signedTransaction);
-  await sendAndConfirmTransactionFactory(client)(signedTransaction, {
-    commitment,
-  });
-  return signature;
-};
-
-export const getBalance = async (client: Client, address: Address): Promise<Lamports> =>
-  (await client.rpc.getBalance(address, { commitment: 'confirmed' }).send())
-    .value;
-
+/**
+ * Creates and initialises a token mint.
+ *
+ * @param client - The configured Token Program test client.
+ * @param mintAuthority - The authority allowed to mint tokens.
+ * @param decimals - The number of decimal places used by the mint.
+ * @return The address of the created mint.
+ */
 export const createMint = async (
-  client: Client,
-  payer: TransactionSigner,
-  mintAuthority: Address,
-  decimals: number = 0
+    client: TestClient,
+    mintAuthority: Address,
+    decimals: number = 0,
 ): Promise<Address> => {
-  const space = BigInt(getMintSize());
-  const [transactionMessage, rent, mint] = await Promise.all([
-    createDefaultTransaction(client, payer),
-    client.rpc.getMinimumBalanceForRentExemption(space).send(),
-    generateKeyPairSigner(),
-  ]);
-  const instructions = [
-    getCreateAccountInstruction({
-      payer,
-      newAccount: mint,
-      lamports: rent,
-      space,
-      programAddress: TOKEN_PROGRAM_ADDRESS,
-    }),
-    getInitializeMintInstruction({
-      mint: mint.address,
-      decimals,
-      mintAuthority,
-    }),
-  ];
-  await pipe(
-    transactionMessage,
-    (tx) => appendTransactionMessageInstructions(instructions, tx),
-    (tx) => signAndSendTransaction(client, tx)
-  );
-
-  return mint.address;
+    const space = BigInt(getMintSize());
+    const [rent, mint] = await Promise.all([
+        client.rpc.getMinimumBalanceForRentExemption(space).send(),
+        generateKeyPairSigner(),
+    ]);
+    await client.sendTransaction([
+        client.system.instructions.createAccount({
+            newAccount: mint,
+            lamports: rent,
+            space,
+            programAddress: TOKEN_PROGRAM_ADDRESS,
+        }),
+        client.token.instructions.initializeMint({
+            mint: mint.address,
+            decimals,
+            mintAuthority,
+        }),
+    ]);
+    return mint.address;
 };
 
-export const createToken = async (
-  client: Client,
-  payer: TransactionSigner,
-  mint: Address,
-  owner: Address
-): Promise<Address> => {
-  const space = BigInt(getTokenSize());
-  const [transactionMessage, rent, token] = await Promise.all([
-    createDefaultTransaction(client, payer),
-    client.rpc.getMinimumBalanceForRentExemption(space).send(),
-    generateKeyPairSigner(),
-  ]);
-  const instructions = [
-    getCreateAccountInstruction({
-      payer,
-      newAccount: token,
-      lamports: rent,
-      space,
-      programAddress: TOKEN_PROGRAM_ADDRESS,
-    }),
-    getInitializeAccountInstruction({ account: token.address, mint, owner }),
-  ];
-  await pipe(
-    transactionMessage,
-    (tx) => appendTransactionMessageInstructions(instructions, tx),
-    (tx) => signAndSendTransaction(client, tx)
-  );
-
-  return token.address;
+/**
+ * Creates and initialises a token account.
+ *
+ * @param client - The configured Token Program test client.
+ * @param mint - The mint associated with the token account.
+ * @param owner - The owner of the token account.
+ * @return The address of the created token account.
+ */
+export const createToken = async (client: TestClient, mint: Address, owner: Address): Promise<Address> => {
+    const space = BigInt(getTokenSize());
+    const [rent, token] = await Promise.all([
+        client.rpc.getMinimumBalanceForRentExemption(space).send(),
+        generateKeyPairSigner(),
+    ]);
+    await client.sendTransaction([
+        client.system.instructions.createAccount({
+            newAccount: token,
+            lamports: rent,
+            space,
+            programAddress: TOKEN_PROGRAM_ADDRESS,
+        }),
+        client.token.instructions.initializeAccount({
+            account: token.address,
+            mint,
+            owner,
+        }),
+    ]);
+    return token.address;
 };
 
+/**
+ * Creates a token account and mints an initial amount into it.
+ *
+ * @param client - The configured Token Program test client.
+ * @param mintAuthority - The authority allowed to mint tokens.
+ * @param mint - The mint associated with the token account.
+ * @param owner - The owner of the token account.
+ * @param amount - The initial token amount.
+ * @return The address of the created token account.
+ */
 export const createTokenWithAmount = async (
-  client: Client,
-  payer: TransactionSigner,
-  mintAuthority: TransactionSigner,
-  mint: Address,
-  owner: Address,
-  amount: bigint
+    client: TestClient,
+    mintAuthority: TransactionSigner,
+    mint: Address,
+    owner: Address,
+    amount: bigint,
 ): Promise<Address> => {
-  const space = BigInt(getTokenSize());
-  const [transactionMessage, rent, token] = await Promise.all([
-    createDefaultTransaction(client, payer),
-    client.rpc.getMinimumBalanceForRentExemption(space).send(),
-    generateKeyPairSigner(),
-  ]);
-  const instructions = [
-    getCreateAccountInstruction({
-      payer,
-      newAccount: token,
-      lamports: rent,
-      space,
-      programAddress: TOKEN_PROGRAM_ADDRESS,
-    }),
-    getInitializeAccountInstruction({ account: token.address, mint, owner }),
-    getMintToInstruction({ mint, token: token.address, mintAuthority, amount }),
-  ];
-  await pipe(
-    transactionMessage,
-    (tx) => appendTransactionMessageInstructions(instructions, tx),
-    (tx) => signAndSendTransaction(client, tx)
-  );
-
-  return token.address;
+    const space = BigInt(getTokenSize());
+    const [rent, token] = await Promise.all([
+        client.rpc.getMinimumBalanceForRentExemption(space).send(),
+        generateKeyPairSigner(),
+    ]);
+    await client.sendTransaction([
+        client.system.instructions.createAccount({
+            newAccount: token,
+            lamports: rent,
+            space,
+            programAddress: TOKEN_PROGRAM_ADDRESS,
+        }),
+        client.token.instructions.initializeAccount({
+            account: token.address,
+            mint,
+            owner,
+        }),
+        client.token.instructions.mintTo({
+            mint,
+            token: token.address,
+            mintAuthority,
+            amount,
+        }),
+    ]);
+    return token.address;
 };
