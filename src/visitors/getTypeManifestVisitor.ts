@@ -307,8 +307,11 @@ export function getTypeManifestVisitor(input: {
                         }
                         const variantNames = (enumType.variants ?? []).map(({ name }) => nameApi.enumVariant(name));
                         const body = getEnumBody(variantNames, erasableSyntax);
+                        const decoderConstructor = erasableSyntax
+                            ? fragment`${currentParentName.strict} as Omit<typeof ${currentParentName.strict}, number>`
+                            : fragment`${currentParentName.strict}`;
                         return typeManifest({
-                            decoder: fragment`${use('getEnumDecoder', 'solanaCodecsDataStructures')}(${currentParentName.strict}${decoderOptionsFragment})`,
+                            decoder: fragment`${use('getEnumDecoder', 'solanaCodecsDataStructures')}(${decoderConstructor}${decoderOptionsFragment})`,
                             encoder: fragment`${use('getEnumEncoder', 'solanaCodecsDataStructures')}(${currentParentName.strict}${encoderOptionsFragment})`,
                             isEnum: true,
                             looseType: fragment`{ ${body} }`,
