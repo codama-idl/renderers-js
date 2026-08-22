@@ -6,7 +6,7 @@ import {
     isSolanaError,
     lamports,
 } from '@solana/kit';
-import test from 'ava';
+import { expect, test } from 'vitest';
 
 import {
     SYSTEM_ERROR__RESULT_WITH_NEGATIVE_LAMPORTS,
@@ -16,7 +16,7 @@ import {
 } from '../src/index.js';
 import { createTestClient } from './_setup.js';
 
-test('it transfers SOL from one account to another', async t => {
+test('it transfers SOL from one account to another', async () => {
     // Given a source account with 3 SOL and a destination account with no SOL.
     const client = await createTestClient();
     const [source, destination] = await Promise.all([
@@ -33,11 +33,11 @@ test('it transfers SOL from one account to another', async t => {
         client.rpc.getBalance(source.address).send(),
         client.rpc.getBalance(destination).send(),
     ]);
-    t.is(sourceBalance, lamports(2_000_000_000n));
-    t.is(destinationBalance, lamports(1_000_000_000n));
+    expect(sourceBalance).toBe(lamports(2_000_000_000n));
+    expect(destinationBalance).toBe(lamports(1_000_000_000n));
 });
 
-test('it exposes generated System Program errors', async t => {
+test('it exposes generated System Program errors', async () => {
     // Given a source with less SOL than it attempts to transfer.
     const client = await createTestClient();
     const [source, destination] = await Promise.all([
@@ -53,16 +53,19 @@ test('it exposes generated System Program errors', async t => {
     const transactionMessage = await transfer.planTransaction();
 
     // When the transfer fails, the LiteSVM plugin converts it into a Kit error.
-    const error = await t.throwsAsync(transfer.sendTransaction());
+    const error = await transfer.sendTransaction().then(
+        () => expect.unreachable('expected the transfer to fail'),
+        (cause: unknown) => cause,
+    );
 
     // Then the generated error helper identifies its exact program error code.
-    t.true(
+    expect(
         isSolanaError(error, SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION) &&
             isSystemError(error.cause, transactionMessage, SYSTEM_ERROR__RESULT_WITH_NEGATIVE_LAMPORTS),
-    );
+    ).toBe(true);
 });
 
-test('it parses the accounts and data of a transfer instruction', async t => {
+test('it parses the accounts and data of a transfer instruction', async () => {
     // Given a transfer instruction with generated accounts and data.
     const source = await generateKeyPairSigner();
     const destination = (await generateKeyPairSigner()).address;
@@ -72,14 +75,13 @@ test('it parses the accounts and data of a transfer instruction', async t => {
     const parsedTransferSol = parseTransferSolInstruction(transferSol);
 
     // Then its accounts and data round-trip correctly.
-    t.is(parsedTransferSol.accounts.source.address, source.address);
-    t.is(parsedTransferSol.accounts.source.role, AccountRole.WRITABLE_SIGNER);
-    t.is(parsedTransferSol.accounts.source.signer, source);
-    t.is(parsedTransferSol.accounts.destination.address, destination);
-    t.is(parsedTransferSol.accounts.destination.role, AccountRole.WRITABLE);
-    t.is(parsedTransferSol.data.amount, 1_000_000_000n);
-    t.is(
-        parsedTransferSol.programAddress,
+    expect(parsedTransferSol.accounts.source.address).toBe(source.address);
+    expect(parsedTransferSol.accounts.source.role).toBe(AccountRole.WRITABLE_SIGNER);
+    expect(parsedTransferSol.accounts.source.signer).toBe(source);
+    expect(parsedTransferSol.accounts.destination.address).toBe(destination);
+    expect(parsedTransferSol.accounts.destination.role).toBe(AccountRole.WRITABLE);
+    expect(parsedTransferSol.data.amount).toBe(1_000_000_000n);
+    expect(parsedTransferSol.programAddress).toBe(
         '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>,
     );
 });

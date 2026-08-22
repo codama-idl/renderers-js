@@ -22,13 +22,6 @@ const config: ReturnType<typeof defineConfig> = defineConfig(() => [
         format: 'cjs',
         outDir: './test/e2e/dist',
     },
-    {
-        ...SHARED_OPTIONS,
-        bundle: false,
-        entry: E2E_PROJECTS.map(project => `./test/e2e/${project}/test/*.ts`),
-        format: 'cjs',
-        outDir: './test/e2e/dist',
-    },
 ]);
 
 export default config;

@@ -1,8 +1,9 @@
 import { address, generateKeyPairSigner } from '@solana/kit';
-import test from 'ava';
+import { expect, test } from 'vitest';
+
 import { getInitializeMintInstruction } from '../src/index.js';
 
-test('it can override the program address of an instruction', async t => {
+test('it can override the program address of an instruction', async () => {
     // Note: this test does not need to run the generated instruction
 
     // Given: a program address that we want to create instructions for
@@ -22,5 +23,5 @@ test('it can override the program address of an instruction', async t => {
     );
 
     // Then: the generated instruction has the correct program address
-    t.is(mintInstruction.programAddress, TOKEN_22_PROGRAM_ADDRESS);
+    expect(mintInstruction.programAddress).toBe(TOKEN_22_PROGRAM_ADDRESS);
 });

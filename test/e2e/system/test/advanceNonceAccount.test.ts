@@ -1,9 +1,9 @@
 import { generateKeyPairSigner } from '@solana/kit';
-import test from 'ava';
+import { expect, test } from 'vitest';
 
 import { createTestClient, getCreateNonceInstructionPlan } from './_setup.js';
 
-test('it advances the nonce account', async t => {
+test('it advances the nonce account', async () => {
     // Given an existing nonce account.
     const [client, nonce, authority] = await Promise.all([
         createTestClient(),
@@ -23,5 +23,5 @@ test('it advances the nonce account', async t => {
 
     // Then we expect the blockhash to have been updated.
     const updatedNonceAccount = await client.system.accounts.nonce.fetch(nonce.address);
-    t.not(originalNonceAccount.data.blockhash, updatedNonceAccount.data.blockhash);
+    expect(originalNonceAccount.data.blockhash).not.toBe(updatedNonceAccount.data.blockhash);
 });

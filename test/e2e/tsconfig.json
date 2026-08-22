@@ -20,5 +20,5 @@
         "verbatimModuleSyntax": true
     },
     "exclude": ["node-esm", "node_modules"],
-    "include": ["*/src", "*/test", "env-shim.ts", "tsup.config.ts"]
+    "include": ["*/src", "*/test", "env-shim.ts", "tsup.config.ts", "vitest.config.mts"]
 }
