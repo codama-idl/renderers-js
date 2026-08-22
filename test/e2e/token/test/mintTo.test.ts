@@ -1,7 +1,7 @@
 import { generateKeyPairSigner } from '@solana/kit';
 import { expect, test } from 'vitest';
 
-import { createMint, createTestClient, createToken } from './_setup.js';
+import { createMint, createTestClient, createToken } from '../../_setup.js';
 
 test('it mints tokens to a token account', async () => {
     // Given a mint and a token account.
