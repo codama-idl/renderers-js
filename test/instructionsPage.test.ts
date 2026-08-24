@@ -708,6 +708,34 @@ test('it renders constants for bigint constant discriminators', async () => {
     ]);
 });
 
+test('it renders large bigint discriminators up to the safe integer range', async () => {
+    // Number.MAX_SAFE_INTEGER (2^53 - 1) is the largest integer a numberValueNode can
+    // carry exactly, since its value is stored as a 64-bit float. It must render as a
+    // BigInt literal for its u64 type.
+    const node = programNode({
+        instructions: [
+            instructionNode({
+                arguments: [
+                    instructionArgumentNode({
+                        defaultValue: numberValueNode(Number.MAX_SAFE_INTEGER),
+                        defaultValueStrategy: 'omitted',
+                        name: 'myDiscriminator',
+                        type: numberTypeNode('u64'),
+                    }),
+                ],
+                discriminators: [fieldDiscriminatorNode('myDiscriminator')],
+                name: 'myInstruction',
+            }),
+        ],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+    const renderMap = visit(node, getRenderMapVisitor());
+    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+        'export const MY_INSTRUCTION_MY_DISCRIMINATOR = 9007199254740991n;',
+    ]);
+});
+
 test('it renders constants for instruction constant discriminators', async () => {
     // Given the following instruction with two constant discriminators.
     const node = programNode({
@@ -894,5 +922,64 @@ test('it renders instructions with no arguments but with some accounts', async (
     await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
         'export type MyInstructionInput <TAccountMyAccount extends string = string> = { myAccount: Address<TAccountMyAccount>; };',
         'input: MyInstructionInput<TAccountMyAccount>',
+    ]);
+});
+
+test("it passes the program address for an unset optional account under the default 'programId' strategy", async () => {
+    // Given an instruction with an optional account that is not the last account,
+    // so account ordering must be preserved when it is unset.
+    // See https://github.com/codama-idl/renderers-js/issues/94
+    const node = programNode({
+        instructions: [
+            instructionNode({
+                accounts: [
+                    instructionAccountNode({ isOptional: true, isSigner: false, isWritable: false, name: 'group' }),
+                    instructionAccountNode({ isSigner: false, isWritable: true, name: 'permission' }),
+                ],
+                name: 'myInstruction',
+                // optionalAccountStrategy left unset, defaulting to 'programId'.
+            }),
+        ],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the account meta factory uses the 'programId' strategy and every account keeps
+    // its slot in declaration order, so an unset optional account is replaced by the program
+    // address rather than dropped.
+    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+        "const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');",
+        /accounts:\s*\[\s*getAccountMeta\('group', accounts\.group\),\s*getAccountMeta\('permission', accounts\.permission\)\s*\]/,
+    ]);
+    // And the accounts array is not filtered, so ordering cannot shift.
+    await renderMapDoesNotContain(renderMap, 'instructions/myInstruction.ts', [/\.filter\(<T>/]);
+});
+
+test("it drops an unset optional account under the legacy 'omitted' strategy", async () => {
+    // Given the same instruction but with the legacy 'omitted' strategy, which models
+    // Anchor's legacyOptionalAccountsStrategy where unset optional accounts are removed.
+    const node = programNode({
+        instructions: [
+            instructionNode({
+                accounts: [
+                    instructionAccountNode({ isOptional: true, isSigner: false, isWritable: false, name: 'group' }),
+                    instructionAccountNode({ isSigner: false, isWritable: true, name: 'permission' }),
+                ],
+                name: 'myInstruction',
+                optionalAccountStrategy: 'omitted',
+            }),
+        ],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the account meta factory uses the 'omitted' strategy, the optional account's type
+    // parameter accepts undefined, and the accounts array is filtered to remove unset accounts.
+    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+        "const getAccountMeta = getAccountMetaFactory(programAddress, 'omitted');",
+        'TAccountGroup extends string | AccountMeta<string> | undefined = undefined',
+        /\.filter\(<T,?>\(x: T \| undefined\): x is T => x !== undefined\)/,
     ]);
 });

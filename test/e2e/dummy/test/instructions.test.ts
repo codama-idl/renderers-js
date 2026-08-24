@@ -1,3 +1,4 @@
+import { address, AccountRole } from '@solana/kit';
 import { expect, test } from 'vitest';
 
 import {
@@ -6,9 +7,11 @@ import {
     dummyProgram,
     getInstruction1Instruction,
     getInstruction10Instruction,
+    getInstruction11Instruction,
     getInstruction3Instruction,
     identifyDummyInstruction,
     parseDummyInstruction,
+    parseInstruction11Instruction,
     type DummyPluginRequirements,
 } from '../src/index.js';
 
@@ -40,6 +43,52 @@ test('parseDummyInstruction returns the matching parsed variant', () => {
     // Then we get the parsed variant tagged with the right enum value.
     expect(parsed.instructionType).toBe(DummyInstruction.Instruction3);
     expect(parsed.programAddress).toBe(DUMMY_PROGRAM_ADDRESS);
+});
+
+test('an unset optional account is replaced by the program address and preserves account order', () => {
+    // Given an instruction with an optional account followed by a required account,
+    // built with the optional account left unset.
+    // See https://github.com/codama-idl/renderers-js/issues/94
+    const requiredAccount = address('So11111111111111111111111111111111111111112');
+    const instruction = getInstruction11Instruction({ requiredAccount });
+
+    // Then both account slots are kept in declaration order: the unset optional
+    // account is filled with the program address (an Anchor-style placeholder)
+    // rather than being dropped, so the required account stays at index 1.
+    expect(instruction.accounts).toHaveLength(2);
+    expect(instruction.accounts[0]).toStrictEqual({
+        address: DUMMY_PROGRAM_ADDRESS,
+        role: AccountRole.READONLY,
+    });
+    expect(instruction.accounts[1].address).toBe(requiredAccount);
+});
+
+test('parsing an instruction with an unset optional account round-trips back to undefined', () => {
+    // Given an instruction built with an unset optional account.
+    const requiredAccount = address('So11111111111111111111111111111111111111112');
+    const instruction = getInstruction11Instruction({ requiredAccount });
+
+    // When we parse it back.
+    const parsed = parseInstruction11Instruction(instruction);
+
+    // Then the placeholder is recognised as an unset optional account, and the
+    // required account is still correctly resolved from its position.
+    expect(parsed.accounts.optionalAccount).toBeUndefined();
+    expect(parsed.accounts.requiredAccount.address).toBe(requiredAccount);
+});
+
+test('a set optional account is passed through and round-trips on parse', () => {
+    // Given an instruction built with both accounts set.
+    const optionalAccount = address('SysvarRent111111111111111111111111111111111');
+    const requiredAccount = address('So11111111111111111111111111111111111111112');
+    const instruction = getInstruction11Instruction({ optionalAccount, requiredAccount });
+
+    // Then both addresses are passed in order and parse restores the optional account.
+    expect(instruction.accounts[0].address).toBe(optionalAccount);
+    expect(instruction.accounts[1].address).toBe(requiredAccount);
+    const parsed = parseInstruction11Instruction(instruction);
+    expect(parsed.accounts.optionalAccount?.address).toBe(optionalAccount);
+    expect(parsed.accounts.requiredAccount.address).toBe(requiredAccount);
 });
 
 test('the dummy program plugin re-exposes identifyInstruction and parseInstruction', () => {

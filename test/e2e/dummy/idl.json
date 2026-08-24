@@ -208,6 +208,31 @@
             "offset": 0
           }
         ]
+      },
+      {
+        "kind": "instructionNode",
+        "name": "instruction11",
+        "optionalAccountStrategy": "programId",
+        "docs": ["Testing an optional account followed by a required account"],
+        "accounts": [
+          {
+            "kind": "instructionAccountNode",
+            "name": "optionalAccount",
+            "isWritable": false,
+            "isSigner": false,
+            "isOptional": true,
+            "docs": []
+          },
+          {
+            "kind": "instructionAccountNode",
+            "name": "requiredAccount",
+            "isWritable": true,
+            "isSigner": false,
+            "isOptional": false,
+            "docs": []
+          }
+        ],
+        "arguments": []
       }
     ],
     "definedTypes": [
