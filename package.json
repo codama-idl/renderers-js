@@ -1,6 +1,6 @@
 {
     "name": "@codama/renderers-js",
-    "version": "2.3.1",
+    "version": "2.4.0",
     "description": "JavaScript renderer compatible with the Solana Kit library",
     "keywords": [
         "client",
