@@ -10,12 +10,11 @@ export function getEventPageFragment(
     scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & { node: EventNode },
 ): Fragment {
     const unsupportedDiscriminator = (scope.node.discriminators ?? []).find(
-        discriminator => !isNode(discriminator, 'constantDiscriminatorNode') && !isNode(discriminator, 'fieldDiscriminatorNode'),
+        discriminator =>
+            !isNode(discriminator, 'constantDiscriminatorNode') && !isNode(discriminator, 'fieldDiscriminatorNode'),
     );
     if (unsupportedDiscriminator) {
-        throw new Error(
-            `Cannot render event "${scope.node.name}": unsupported ${unsupportedDiscriminator.kind}.`,
-        );
+        throw new Error(`Cannot render event "${scope.node.name}": unsupported ${unsupportedDiscriminator.kind}.`);
     }
     const resolvedData = resolveNestedTypeNode(scope.node.data);
     const discriminatorFields = new Set(
@@ -45,19 +44,19 @@ export function getEventPageFragment(
         const discriminatorValue = visit(discriminator.constant, scope.typeManifestVisitor).value.content;
         return mapFragmentContent(decoder, content => content.replace(discriminatorValue, constantName));
     }, wireManifest.decoder);
-    const validations = constantDiscriminators
-        .map((discriminator, index) => {
-            const suffix = index === 0 ? '' : `_${index + 1}`;
-            const constantName = scope.nameApi.constant(camelCase(`${scope.node.name}_discriminator${suffix}`));
-            return fragment`if (!${use('containsBytes', 'solanaCodecsCore')}(data, ${constantName}, ${discriminator.offset})) {
+    const validations = constantDiscriminators.map((discriminator, index) => {
+        const suffix = index === 0 ? '' : `_${index + 1}`;
+        const constantName = scope.nameApi.constant(camelCase(`${scope.node.name}_discriminator${suffix}`));
+        return fragment`if (!${use('containsBytes', 'solanaCodecsCore')}(data, ${constantName}, ${discriminator.offset})) {
     throw new Error('${eventName} discriminator mismatch');
   }`;
-        });
+    });
     const validation = mergeFragments(validations, contents => contents.join('\n  '));
 
-    return mergeFragments([
-        constants,
-        fragment`export type ${eventName} = ${publicManifest.strictType};
+    return mergeFragments(
+        [
+            constants,
+            fragment`export type ${eventName} = ${publicManifest.strictType};
 
 function ${decoderName}(): ${use('type Decoder', 'solanaCodecsCore')}<${eventName}> {
   return ${wireDecoder} as ${use('type Decoder', 'solanaCodecsCore')}<${eventName}>;
@@ -67,5 +66,7 @@ export function ${parserName}(data: Uint8Array): ${eventName} {
   ${validation}
   return ${decoderName}().decode(data);
 }`,
-    ], contents => contents.join('\n\n'));
+        ],
+        contents => contents.join('\n\n'),
+    );
 }
