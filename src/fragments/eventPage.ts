@@ -1,9 +1,9 @@
-import { camelCase, EventNode, isNode, resolveNestedTypeNode, structTypeNode } from '@codama/nodes';
+import { EventNode, isNode, resolveNestedTypeNode, structTypeNode } from '@codama/nodes';
 import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
 
 import { Fragment, fragment, mergeFragments, RenderScope, use } from '../utils';
 import { getDiscriminatorConditionFragment } from './discriminatorCondition';
-import { getDiscriminatorConstantsFragment } from './discriminatorConstants';
+import { getDiscriminatorConstantsFragment, getEventDiscriminatorPrefix } from './discriminatorConstants';
 import { getTypeWithCodecFragment } from './typeWithCodec';
 
 /**
@@ -36,7 +36,7 @@ export function getEventPageFragment(
                 ...scope,
                 discriminatorNodes: node.discriminators ?? [],
                 fields,
-                prefix: camelCase(eventDataName),
+                prefix: getEventDiscriminatorPrefix(nameApi, node.name),
             }),
             getTypeWithCodecFragment({
                 codecDocs: [`Gets the codec for {@link ${nameApi.dataType(eventDataName)}} event data.`],

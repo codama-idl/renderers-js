@@ -29,7 +29,7 @@ import {
     type Visitor,
 } from '@codama/visitors-core';
 
-import { getConstantDiscriminatorName } from '../fragments/discriminatorConstants';
+import { getConstantDiscriminatorName, getEventDiscriminatorPrefix } from '../fragments/discriminatorConstants';
 import {
     addFragmentImports,
     Fragment,
@@ -96,7 +96,7 @@ export function getTypeManifestVisitor(input: {
             discriminator => JSON.stringify(discriminator.constant) === serializedConstant,
         );
         if (index < 0) return null;
-        const prefix = camelCase(nameApi.eventDataType(eventNode.name));
+        const prefix = getEventDiscriminatorPrefix(nameApi, eventNode.name);
         return nameApi.constant(getConstantDiscriminatorName(prefix, index));
     };
 

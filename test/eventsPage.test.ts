@@ -333,6 +333,27 @@ test('it exports public events while keeping internal events private', async () 
     await renderMapContains(renderMap, 'index.ts', "export * from './events';");
 });
 
+test('it fails loudly when a field discriminator has no matching payload field', () => {
+    // Given an event with a non-struct payload and a field discriminator that
+    // can therefore never resolve to a payload field.
+    const node = programNode({
+        events: [
+            eventNode({
+                data: enumTypeNode([enumEmptyVariantTypeNode('opened')]),
+                discriminators: [fieldDiscriminatorNode('key')],
+                name: 'broken',
+            }),
+        ],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+
+    // Then rendering fails at generation time with a clear error.
+    expect(() => visit(node, getRenderMapVisitor())).toThrowError(
+        'Field discriminator "key" does not have a matching argument with default value.',
+    );
+});
+
 test('it omits event barrels for programs with no events', async () => {
     const node = rootNode(programNode({ name: 'emptyProgram', publicKey: '1111' }));
 
