@@ -833,7 +833,7 @@ export function getTypeManifestVisitor(input: {
                     const discriminatorParent = instructionNode ?? accountNode ?? eventNode;
                     const discriminatorPrefix =
                         discriminatorParent && isNode(discriminatorParent, 'eventNode')
-                            ? camelCase(nameApi.eventDataType(discriminatorParent.name))
+                            ? getEventDiscriminatorPrefix(nameApi, discriminatorParent.name)
                             : discriminatorParent?.name;
                     const discriminators = discriminatorParent?.discriminators ?? [];
                     const fieldDiscriminators = discriminators.filter(isNodeFilter('fieldDiscriminatorNode'));
