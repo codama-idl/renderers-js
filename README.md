@@ -32,6 +32,8 @@ Add the following script to your Codama configuration file.
 
 The first argument is the package folder — i.e. where the `package.json` lives. The generated files will be written to `src/generated` within that folder by default.
 
+The generated client contains typed helpers for the accounts, instructions, PDAs, defined types, errors, events and program of each program in the Codama tree. For instance, program events are each rendered into a dedicated `events/` page exposing their discriminator constants, payload type, codec functions and a `parseMyEvent` helper, whilst the program page offers an `identifyMyProgramEvent` function to recognise raw event data.
+
 An object can be passed as a second argument to further configure the renderer. See the [Options](#options) section below for more details.
 
 ## Options

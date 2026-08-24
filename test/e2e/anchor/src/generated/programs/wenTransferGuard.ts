@@ -81,6 +81,26 @@ export function identifyWenTransferGuardAccount(
     });
 }
 
+export enum WenTransferGuardEvent {
+    GuardCreated,
+}
+
+export function identifyWenTransferGuardEvent(
+    event: { data: ReadonlyUint8Array } | ReadonlyUint8Array,
+): WenTransferGuardEvent {
+    const data = 'data' in event ? event.data : event;
+    if (
+        containsBytes(
+            data,
+            fixEncoderSize(getBytesEncoder(), 8).encode(new Uint8Array([137, 249, 125, 83, 3, 164, 81, 198])),
+            0,
+        )
+    ) {
+        return WenTransferGuardEvent.GuardCreated;
+    }
+    throw new Error('The provided event could not be identified as a wenTransferGuard event.');
+}
+
 export enum WenTransferGuardInstruction {
     CreateGuard,
     Execute,

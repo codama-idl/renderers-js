@@ -3,6 +3,7 @@ import { ProgramNode } from '@codama/nodes';
 import { Fragment, mergeFragments, RenderScope } from '../utils';
 import { getProgramAccountsFragment } from './programAccounts';
 import { getProgramConstantFragment } from './programConstant';
+import { getProgramEventsFragment } from './programEvents';
 import { getProgramInstructionsFragment } from './programInstructions';
 import { getProgramPluginFragment } from './programPlugin';
 
@@ -18,6 +19,7 @@ export function getProgramPageFragment(
         [
             getProgramConstantFragment(scope),
             getProgramAccountsFragment(scope),
+            getProgramEventsFragment(scope),
             getProgramInstructionsFragment(scope),
             getProgramPluginFragment(scope),
         ],

@@ -1,6 +1,7 @@
 import {
     camelCase,
     CamelCaseString,
+    ConstantValueNode,
     CountNode,
     isNode,
     isNodeFilter,
@@ -28,6 +29,7 @@ import {
     type Visitor,
 } from '@codama/visitors-core';
 
+import { getConstantDiscriminatorName, getEventDiscriminatorPrefix } from '../fragments/discriminatorConstants';
 import {
     addFragmentImports,
     Fragment,
@@ -63,6 +65,7 @@ export function getTypeManifestVisitor(input: {
     | 'accountNode'
     | 'definedTypeLinkNode'
     | 'definedTypeNode'
+    | 'eventNode'
     | 'instructionNode'
 > {
     const {
@@ -77,6 +80,26 @@ export function getTypeManifestVisitor(input: {
     const stack = input.stack ?? new NodeStack();
     let parentName: { loose: string; strict: string } | null = null;
 
+    /**
+     * Finds the name of the discriminator constant matching the provided constant value,
+     * when visited inside an event whose constant discriminators include it — so codecs
+     * and conditions can render `MY_EVENT_DISCRIMINATOR` instead of inline bytes.
+     */
+    const getEventDiscriminatorConstantName = (constant: ConstantValueNode): string | null => {
+        const eventNode = findLastNodeFromPath(stack.getPath(), 'eventNode');
+        if (!eventNode) return null;
+        const constantDiscriminators = (eventNode.discriminators ?? []).filter(
+            isNodeFilter('constantDiscriminatorNode'),
+        );
+        const serializedConstant = JSON.stringify(constant);
+        const index = constantDiscriminators.findIndex(
+            discriminator => JSON.stringify(discriminator.constant) === serializedConstant,
+        );
+        if (index < 0) return null;
+        const prefix = getEventDiscriminatorPrefix(nameApi, eventNode.name);
+        return nameApi.constant(getConstantDiscriminatorName(prefix, index));
+    };
+
     return pipe(
         staticVisitor(() => typeManifest(), {
             keys: [
@@ -85,6 +108,7 @@ export function getTypeManifestVisitor(input: {
                 'definedTypeLinkNode',
                 'definedTypeNode',
                 'accountNode',
+                'eventNode',
                 'instructionNode',
             ],
         }),
@@ -165,6 +189,10 @@ export function getTypeManifestVisitor(input: {
                 },
 
                 visitConstantValue(node, { self }) {
+                    const discriminatorConstantName = getEventDiscriminatorConstantName(node);
+                    if (discriminatorConstantName) {
+                        return typeManifest({ value: fragment`${discriminatorConstantName}` });
+                    }
                     if (isNode(node.type, 'bytesTypeNode') && isNode(node.value, 'bytesValueNode')) {
                         return visit(node.value, self);
                     }
@@ -380,6 +408,17 @@ export function getTypeManifestVisitor(input: {
                             f => addFragmentImports(f, importFrom, [enumFunction]),
                         ),
                     });
+                },
+
+                visitEvent(event, { self }) {
+                    const eventDataName = nameApi.eventDataType(event.name);
+                    parentName = {
+                        loose: nameApi.dataArgsType(eventDataName),
+                        strict: nameApi.dataType(eventDataName),
+                    };
+                    const manifest = visit(event.data, self);
+                    parentName = null;
+                    return manifest;
                 },
 
                 visitFixedSizeType(node, { self }) {
@@ -786,13 +825,17 @@ export function getTypeManifestVisitor(input: {
                         return mergedManifest;
                     }
 
-                    // Check if we are inside an instruction or account to use discriminator constants when available.
+                    // Check if we are inside an instruction, account or event to use discriminator constants when available.
                     const parentPath = stack.getPath();
                     const instructionNode = findLastNodeFromPath(parentPath, 'instructionNode');
                     const accountNode = findLastNodeFromPath(parentPath, 'accountNode');
-                    const discriminatorPrefix = instructionNode ? instructionNode.name : accountNode?.name;
-                    const discriminators =
-                        (instructionNode ? instructionNode.discriminators : accountNode?.discriminators) ?? [];
+                    const eventNode = findLastNodeFromPath(parentPath, 'eventNode');
+                    const discriminatorParent = instructionNode ?? accountNode ?? eventNode;
+                    const discriminatorPrefix =
+                        discriminatorParent && isNode(discriminatorParent, 'eventNode')
+                            ? getEventDiscriminatorPrefix(nameApi, discriminatorParent.name)
+                            : discriminatorParent?.name;
+                    const discriminators = discriminatorParent?.discriminators ?? [];
                     const fieldDiscriminators = discriminators.filter(isNodeFilter('fieldDiscriminatorNode'));
 
                     const defaultValues = mergeFragments(
