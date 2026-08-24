@@ -20,12 +20,7 @@ export type LinkOverrides = {
 };
 
 type OverridableNodes =
-    | AccountLinkNode
-    | DefinedTypeLinkNode
-    | InstructionLinkNode
-    | PdaLinkNode
-    | ProgramLinkNode
-    | ResolverValueNode;
+    AccountLinkNode | DefinedTypeLinkNode | InstructionLinkNode | PdaLinkNode | ProgramLinkNode | ResolverValueNode;
 
 export type GetImportFromFunction = (node: OverridableNodes, fallback?: string) => string;
 
