@@ -1,9 +1,6 @@
-import { createClient, lamports } from '@solana/kit';
-import { litesvm } from '@solana/kit-plugin-litesvm';
-import { airdropSigner, generatedSigner } from '@solana/kit-plugin-signer';
 import { expect, test } from 'vitest';
 
-import { memoProgram } from '../src/index.js';
+import { createTestClient } from '../../_setup.js';
 
 const isTransactionMetadata = (value: unknown): value is { logs: () => readonly string[] } => {
     return typeof value === 'object' && value !== null && 'logs' in value && typeof value.logs === 'function';
@@ -11,11 +8,7 @@ const isTransactionMetadata = (value: unknown): value is { logs: () => readonly 
 
 test('it adds custom text to the transaction logs', async () => {
     // Given a funded LiteSVM client with the generated Memo Program plugin.
-    const client = await createClient()
-        .use(generatedSigner())
-        .use(litesvm())
-        .use(memoProgram())
-        .use(airdropSigner(lamports(1_000_000_000n)));
+    const client = await createTestClient();
 
     // When we send a memo using the generated program plugin.
     const result = await client.memo.instructions.addMemo({ memo: 'Hello world!' }).sendTransaction();

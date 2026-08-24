@@ -14,7 +14,7 @@ import {
     isSystemError,
     parseTransferSolInstruction,
 } from '../src/index.js';
-import { createTestClient } from './_setup.js';
+import { createTestClient } from '../../_setup.js';
 
 test('it transfers SOL from one account to another', async () => {
     // Given a source account with 3 SOL and a destination account with no SOL.

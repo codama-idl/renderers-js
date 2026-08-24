@@ -303,7 +303,7 @@ E2E tests are excluded from these unit-test projects and run through a dedicated
 
 ### E2E tests
 
-`test/e2e/` contains small generated-client fixtures such as `anchor`, `system`, `memo`, `token`, and `dummy`. Their dependencies, build configuration, and test runner are owned by the root package.
+`test/e2e/` contains small generated-client fixtures such as `anchor`, `system`, `memo`, `token`, and `dummy`. Their dependencies, build configuration, and test runner are owned by the root package. A shared `test/e2e/_setup.ts` provides one LiteSVM test client composing the generated program plugins of every fixture, which also proves that plugins from independently generated clients compose on a single Kit client.
 
 `pnpm test:e2e`:
 

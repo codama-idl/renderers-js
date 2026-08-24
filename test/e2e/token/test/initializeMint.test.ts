@@ -2,7 +2,7 @@ import { generateKeyPairSigner, none, some } from '@solana/kit';
 import { expect, test } from 'vitest';
 
 import { TOKEN_PROGRAM_ADDRESS, getMintSize } from '../src/index.js';
-import { createTestClient } from './_setup.js';
+import { createTestClient } from '../../_setup.js';
 
 test('it creates and initialises a new mint account', async () => {
     // Given an authority and a mint account.
