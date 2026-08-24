@@ -1,5 +1,29 @@
 # @codama/renderers-js
 
+## 2.4.0
+
+### Minor Changes
+
+- [#175](https://github.com/codama-idl/renderers-js/pull/175) [`716f6ef`](https://github.com/codama-idl/renderers-js/commit/716f6ef97e412286b7cb82b0d689a2279222f9c2) Thanks [@ChiefWoods](https://github.com/ChiefWoods)! - Generate typed program constants in program-specific files under a top-level `constants` directory and re-export them from the generated client.
+
+- [#177](https://github.com/codama-idl/renderers-js/pull/177) [`67b330d`](https://github.com/codama-idl/renderers-js/commit/67b330d9f06821bba059b2e289be64e03f4e93d2) Thanks [@macalinao](https://github.com/macalinao)! - Add a new `importExtension` option that appends explicit extensions to relative imports in generated code — `.js`/`.ts` for generated files and `/index.js`/`/index.ts` for generated directories. This enables consumers using Node ESM resolution, Deno, Node type stripping, or TypeScript's `allowImportingTsExtensions`/`rewriteRelativeImportExtensions` options.
+
+- [#178](https://github.com/codama-idl/renderers-js/pull/178) [`68385f9`](https://github.com/codama-idl/renderers-js/commit/68385f9b8b3ad4dd4d153706800d2c231b09cd38) Thanks [@macalinao](https://github.com/macalinao)! - Add a new `erasableSyntax` option that replaces generated `enum` declarations with `const` objects and union types, making generated clients compatible with TypeScript's `erasableSyntaxOnly` option and Node.js type stripping.
+
+- [#174](https://github.com/codama-idl/renderers-js/pull/174) [`a6221c9`](https://github.com/codama-idl/renderers-js/commit/a6221c99f79eb08023e7e4ed4b0427714782bf75) Thanks [@ChiefWoods](https://github.com/ChiefWoods)! - Add event generation from `EventNode`s. Each program event is rendered into a dedicated `events/` page containing its discriminator constants, a typed event payload, encoder/decoder/codec functions and a `parseXxxEvent` helper validating the event discriminators before decoding. Program pages additionally expose an event enum and an `identifyMyProgramEvent` helper mirroring the existing account and instruction identification helpers. Event codecs reference their discriminator constants instead of inlining the bytes, and all generated names are configurable through the new `eventDataType`, `eventParseFunction`, `programEventsEnum`, `programEventsEnumVariant` and `programEventsIdentifierFunction` name transformers.
+
+- [#188](https://github.com/codama-idl/renderers-js/pull/188) [`114b8ca`](https://github.com/codama-idl/renderers-js/commit/114b8cac6c25fb24ab320b34f67233fdd1a68697) Thanks [@amilz](https://github.com/amilz)! - Forward the program address to linked PDA default values in async instruction builders
+  
+  Instruction accounts defaulting to a linked PDA were derived by calling the generated `find*Pda()` function with no config, so the derivation always used the address baked into that function and silently ignored the `programAddress` passed to the instruction builder. Programs deployed at different addresses per cluster produced instructions aimed at the overridden program with PDAs derived from the original one.
+  
+  Async builders now pass `{ programAddress }` through to the find function when the PDA is derived from the instruction's own program, matching what the generated `fetch*FromSeeds` account helpers already did. PDAs owned by another program, or pinned to an explicit program ID, keep their own address.
+  
+  This changes generated output for any client with a same-program linked PDA default, so regenerate after upgrading. PDA finders supplied through `linkOverrides.pdas` are called with the same signature as generated ones, so they must accept a trailing `config: { programAddress?: Address }` argument.
+
+### Patch Changes
+
+- [#176](https://github.com/codama-idl/renderers-js/pull/176) [`3764a46`](https://github.com/codama-idl/renderers-js/commit/3764a46f3eef4abfa6f0641a1923239403b68728) Thanks [@macalinao](https://github.com/macalinao)! - Group type-only imports as `import type { ... }` statements so that generated code no longer leaves empty side-effect imports in JavaScript emitted under `verbatimModuleSyntax`, and fix a missing `type` keyword on PDA seeds type imports in account PDA helpers. Consumers regenerating clients will see cosmetic `import { type A }` → `import type { A }` diffs.
+
 ## 2.3.1
 
 ### Patch Changes
