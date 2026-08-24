@@ -31,8 +31,7 @@ import {
  * enforcing Allow and Deny lists.
  */
 export type CpiRule =
-    | { __kind: 'Allow'; fields: readonly [Array<Address>] }
-    | { __kind: 'Deny'; fields: readonly [Array<Address>] };
+    { __kind: 'Allow'; fields: readonly [Array<Address>] } | { __kind: 'Deny'; fields: readonly [Array<Address>] };
 
 export type CpiRuleArgs = CpiRule;
 
