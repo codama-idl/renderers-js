@@ -1,5 +1,6 @@
-import { env } from 'node:process';
 import path from 'node:path';
+import { env } from 'node:process';
+
 import { defineConfig, type Options } from 'tsup';
 
 const E2E_PROJECTS = ['anchor', 'dummy', 'memo', 'system', 'token'];

@@ -1,8 +1,8 @@
 import { generateKeyPairSigner } from '@solana/kit';
 import { expect, test } from 'vitest';
 
-import { SYSTEM_PROGRAM_ADDRESS } from '../src/index.js';
 import { createTestClient } from '../../_setup.js';
+import { SYSTEM_PROGRAM_ADDRESS } from '../src/index.js';
 
 test('it creates a new empty account', async () => {
     // Given a newly generated account keypair and 42 bytes of space.

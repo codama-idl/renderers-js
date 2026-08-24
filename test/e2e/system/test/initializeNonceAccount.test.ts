@@ -1,8 +1,8 @@
 import { generateKeyPairSigner } from '@solana/kit';
 import { expect, test } from 'vitest';
 
-import { NonceState, NonceVersion } from '../src/index.js';
 import { createTestClient, getCreateNonceInstructionPlan } from '../../_setup.js';
+import { NonceState, NonceVersion } from '../src/index.js';
 
 test('it creates and initialises a durable nonce account', async () => {
     // Given a nonce account and authority.
