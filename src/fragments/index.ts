@@ -26,6 +26,7 @@ export * from './pdaFunction';
 export * from './pdaPage';
 export * from './programAccounts';
 export * from './programConstant';
+export * from './programEvents';
 export * from './programInstructions';
 export * from './programPage';
 export * from './programPlugin';

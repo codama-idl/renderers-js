@@ -45,6 +45,21 @@ export function getDiscriminatorConstantFragment(
     }
 }
 
+/**
+ * Derives the camel-case name of the constant rendered for a constant discriminator.
+ *
+ * The first constant discriminator of a node gets no index suffix, whilst subsequent
+ * ones are numbered from 2 — e.g. `myEventDiscriminator` and `myEventDiscriminator_2`.
+ *
+ * @param prefix - The camel-case name of the node owning the discriminator.
+ * @param index - The position of the discriminator amongst the node's constant discriminators.
+ * @returns The camel-case constant name, before any {@link NameApi.constant} transformation.
+ */
+export function getConstantDiscriminatorName(prefix: string, index: number): string {
+    const suffix = index <= 0 ? '' : `_${index + 1}`;
+    return camelCase(`${prefix}_discriminator${suffix}`);
+}
+
 export function getConstantDiscriminatorConstantFragment(
     discriminatorNode: ConstantDiscriminatorNode,
     scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
@@ -55,9 +70,7 @@ export function getConstantDiscriminatorConstantFragment(
     const { discriminatorNodes, typeManifestVisitor, prefix } = scope;
 
     const index = discriminatorNodes.filter(isNodeFilter('constantDiscriminatorNode')).indexOf(discriminatorNode);
-    const suffix = index <= 0 ? '' : `_${index + 1}`;
-
-    const name = camelCase(`${prefix}_discriminator${suffix}`);
+    const name = getConstantDiscriminatorName(prefix, index);
     const typeManifest = visit(discriminatorNode.constant.type, typeManifestVisitor);
     const encoder = typeManifest.encoder;
     const { value, valueType } = resolveDiscriminatorValue(

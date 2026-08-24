@@ -95,7 +95,7 @@ Maps relative output file paths to fragments/content before final writing.
 ### `src/visitors`
 
 - `renderVisitor.ts`: orchestration with side effects.
-- `getRenderMapVisitor.ts`: generates output files for root/program/account/instruction/pda/type nodes.
+- `getRenderMapVisitor.ts`: generates output files for root/program/account/event/instruction/pda/type nodes.
 - `getTypeManifestVisitor.ts`: semantic lowering engine for Codama types and values.
 - `index.ts`: visitor exports.
 
@@ -108,8 +108,8 @@ Main page builders:
 - accounts: `accountPage`, `accountType`, `accountFetchHelpers`, `accountPdaHelpers`, `accountSizeHelpers`
 - instructions: `instructionPage`, `instructionType`, `instructionFunction`, `instructionInputType`, `instructionInputResolved`, `instructionData`, `instructionParseFunction`, `instructionRemainingAccounts`, `instructionByteDelta`, `instructionExtraArgs`
 - types: `typePage`, `type`, `typeCodec`, `typeDecoder`, `typeEncoder`, `typeWithCodec`, `typeDiscriminatedUnionHelpers`
-- programs: `programPage`, `programConstant`, `programAccounts`, `programInstructions`, `programPlugin`
-- misc: `errorPage`, `pdaPage`, `indexPage`, `rootIndexPage`, discriminator helpers
+- programs: `programPage`, `programConstant`, `programAccounts`, `programEvents`, `programInstructions`, `programPlugin`
+- misc: `errorPage`, `eventPage`, `pdaPage`, `indexPage`, `rootIndexPage`, discriminator helpers
 
 Page builders mostly compose subfragments rather than embedding all logic inline.
 
@@ -133,6 +133,7 @@ Generated trees typically contain:
 
 - `accounts/`
 - `errors/`
+- `events/`
 - `instructions/`
 - `pdas/`
 - `programs/`
@@ -158,6 +159,9 @@ Important defaults:
 - instruction input types: `PascalCaseNameInput` / `PascalCaseNameAsyncInput`
 - PDA finder: `findPascalCaseNamePda`
 - program address constant: `PROGRAM_NAME_PROGRAM_ADDRESS`
+- event data type: `PascalCaseNameEvent` (codec and constants derive from it, e.g. `getPascalCaseNameEventDecoder`)
+- event parser: `parsePascalCaseNameEvent`
+- program event identifier: `identifyPascalCaseNameEvent`
 - default discriminated union discriminator: `__kind`
 
 These are overrideable via the `nameTransformers` option.

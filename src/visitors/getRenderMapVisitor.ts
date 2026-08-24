@@ -3,6 +3,7 @@ import {
     CamelCaseString,
     getAllAccounts,
     getAllDefinedTypes,
+    getAllEvents,
     getAllInstructionsWithSubs,
     getAllPdas,
     getAllPrograms,
@@ -133,7 +134,13 @@ export function getRenderMapVisitor(
                 visitEvent(node) {
                     return createRenderMap(
                         `events/${camelCase(node.name)}.ts`,
-                        asPage(getEventPageFragment({ ...renderScope, node })),
+                        asPage(
+                            getEventPageFragment({
+                                ...renderScope,
+                                eventPath: stack.getPath('eventNode'),
+                                size: visit(node.data, byteSizeVisitor),
+                            }),
+                        ),
                     );
                 },
 
@@ -202,9 +209,7 @@ export function getRenderMapVisitor(
                     const programsWithErrorsToExport = programsToExport.filter(p => (p.errors ?? []).length > 0);
                     const pdasToExport = getAllPdas(node);
                     const accountsToExport = getAllAccounts(node).filter(isNotInternal);
-                    const eventsToExport = getAllPrograms(node)
-                        .flatMap(program => program.events ?? [])
-                        .filter(isNotInternal);
+                    const eventsToExport = getAllEvents(node).filter(isNotInternal);
                     const instructionsToExport = getAllInstructionsWithSubs(node, {
                         leavesOnly: !renderScope.renderParentInstructions,
                     }).filter(isNotInternal);
