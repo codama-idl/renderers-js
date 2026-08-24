@@ -1,9 +1,9 @@
 import { generateKeyPairSigner } from '@solana/kit';
-import test from 'ava';
+import { expect, test } from 'vitest';
 
 import { createMint, createTestClient, createToken, createTokenWithAmount } from './_setup.js';
 
-test('it transfers tokens from one account to another', async t => {
+test('it transfers tokens from one account to another', async () => {
     // Given a mint and two token accounts containing 100 and 0 tokens.
     const client = await createTestClient();
     const [mintAuthority, ownerA, ownerB] = await Promise.all([
@@ -28,7 +28,7 @@ test('it transfers tokens from one account to another', async t => {
         client.token.accounts.token.fetch(tokenA),
         client.token.accounts.token.fetch(tokenB),
     ]);
-    t.is(mintAccount.data.supply, 100n);
-    t.is(tokenAccountA.data.amount, 50n);
-    t.is(tokenAccountB.data.amount, 50n);
+    expect(mintAccount.data.supply).toBe(100n);
+    expect(tokenAccountA.data.amount).toBe(50n);
+    expect(tokenAccountB.data.amount).toBe(50n);
 });

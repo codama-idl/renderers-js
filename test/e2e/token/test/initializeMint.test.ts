@@ -1,10 +1,10 @@
 import { generateKeyPairSigner, none, some } from '@solana/kit';
-import test from 'ava';
+import { expect, test } from 'vitest';
 
 import { TOKEN_PROGRAM_ADDRESS, getMintSize } from '../src/index.js';
 import { createTestClient } from './_setup.js';
 
-test('it creates and initialises a new mint account', async t => {
+test('it creates and initialises a new mint account', async () => {
     // Given an authority and a mint account.
     const client = await createTestClient();
     const [authority, mint] = await Promise.all([generateKeyPairSigner(), generateKeyPairSigner()]);
@@ -28,7 +28,7 @@ test('it creates and initialises a new mint account', async t => {
 
     // Then the generated account plugin fetches and decodes it.
     const mintAccount = await client.token.accounts.mint.fetch(mint.address);
-    t.like(mintAccount, {
+    expect(mintAccount).toMatchObject({
         address: mint.address,
         data: {
             mintAuthority: some(authority.address),
@@ -40,7 +40,7 @@ test('it creates and initialises a new mint account', async t => {
     });
 });
 
-test('it creates a new mint account with a freeze authority', async t => {
+test('it creates a new mint account with a freeze authority', async () => {
     // Given distinct mint and freeze authorities.
     const client = await createTestClient();
     const [mintAuthority, freezeAuthority, mint] = await Promise.all([
@@ -69,7 +69,7 @@ test('it creates a new mint account with a freeze authority', async t => {
 
     // Then both authorities are decoded correctly.
     const mintAccount = await client.token.accounts.mint.fetch(mint.address);
-    t.like(mintAccount.data, {
+    expect(mintAccount.data).toMatchObject({
         mintAuthority: some(mintAuthority.address),
         freezeAuthority: some(freezeAuthority.address),
     });

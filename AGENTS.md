@@ -299,7 +299,7 @@ Common pattern:
 - `node`
 - `react-native`
 
-E2E tests are excluded from Vitest.
+E2E tests are excluded from these unit-test projects and run through a dedicated Vitest config at `test/e2e/vitest.config.mts`.
 
 ### E2E tests
 
@@ -310,12 +310,12 @@ E2E tests are excluded from Vitest.
 - builds the root renderer
 - regenerates every fixture through its `codama.json` config and the Codama CLI
 - builds the shared fixtures with tsup and type-checks them with the shared E2E tsconfig
-- runs the shared AVA suite against LiteSVM clients configured with the official Kit plugins
+- runs the shared Vitest E2E suite against LiteSVM clients configured with the official Kit plugins
 - compiles and runs the separate `node-esm` compatibility checks under NodeNext and Node type stripping
 
 Codama configs load the built root package from `dist/index.node.cjs`, so the root build must succeed before E2E generation works. The fixtures use `@solana/kit-plugin-litesvm` instead of a local validator and `@solana/kit-plugin-signer` for test signers and funded payers.
 
-The shared E2E projects use AVA, not Vitest. The `node-esm` fixture uses direct Node execution because it validates emitted ESM and type-stripped TypeScript.
+The shared E2E suite runs its TypeScript tests directly through a dedicated Vitest config (`test/e2e/vitest.config.mts`), separate from the root unit-test projects, while the tsup bundle of each fixture remains a bundler-compatibility proof. The `node-esm` fixture uses direct Node execution because it validates emitted ESM and type-stripped TypeScript.
 
 ## Build, lint, and release
 

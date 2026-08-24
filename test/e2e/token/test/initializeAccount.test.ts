@@ -1,10 +1,10 @@
 import { generateKeyPairSigner, none } from '@solana/kit';
-import test from 'ava';
+import { expect, test } from 'vitest';
 
 import { AccountState, TOKEN_PROGRAM_ADDRESS, getTokenSize } from '../src/index.js';
 import { createMint, createTestClient } from './_setup.js';
 
-test('it creates and initialises a new token account', async t => {
+test('it creates and initialises a new token account', async () => {
     // Given a mint, a token account and its owner.
     const client = await createTestClient();
     const [mintAuthority, token, owner] = await Promise.all([
@@ -33,7 +33,7 @@ test('it creates and initialises a new token account', async t => {
 
     // Then the generated account plugin fetches and decodes it.
     const tokenAccount = await client.token.accounts.token.fetch(token.address);
-    t.like(tokenAccount, {
+    expect(tokenAccount).toMatchObject({
         address: token.address,
         data: {
             mint,

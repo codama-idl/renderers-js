@@ -1,10 +1,10 @@
 import { generateKeyPairSigner, none } from '@solana/kit';
-import test from 'ava';
+import { expect, test } from 'vitest';
 
 import { AccountState, TOKEN_PROGRAM_ADDRESS } from '../src/index.js';
 import { createMint, createTestClient } from './_setup.js';
 
-test('it creates a new associated token account', async t => {
+test('it creates a new associated token account', async () => {
     // Given a mint, its authority and a token owner.
     const client = await createTestClient();
     const [mintAuthority, owner] = await Promise.all([generateKeyPairSigner(), generateKeyPairSigner()]);
@@ -20,7 +20,7 @@ test('it creates a new associated token account', async t => {
         tokenProgram: TOKEN_PROGRAM_ADDRESS,
     });
     const tokenAccount = await client.token.accounts.token.fetch(ata);
-    t.like(tokenAccount, {
+    expect(tokenAccount).toMatchObject({
         address: ata,
         data: {
             mint,
