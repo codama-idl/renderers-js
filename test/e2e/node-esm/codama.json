@@ -4,10 +4,10 @@
         "js": {
             "from": "../../../dist/index.node.cjs",
             "args": [
-                ".",
+                "test/e2e/node-esm",
                 {
                     "erasableSyntax": true,
-                    "generatedFolder": "test/e2e/node-esm/src/generated",
+                    "generatedFolder": "src/generated",
                     "importExtension": "ts",
                     "kitImportStrategy": "rootOnly",
                     "syncPackageJson": false

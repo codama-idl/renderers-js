@@ -41,7 +41,6 @@ function getDefaultAddress(
         case 'publicKeyValueNode':
             return `"${defaultValue.publicKey}"`;
         case 'programLinkNode':
-            // eslint-disable-next-line no-case-declarations
             const programNode = linkables.get([defaultValue]);
             return programNode ? `"${programNode.publicKey}"` : 'string';
         case 'programIdValueNode':

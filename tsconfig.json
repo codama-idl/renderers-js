@@ -9,8 +9,9 @@
         "inlineSources": false,
         "isolatedModules": true,
         "isolatedDeclarations": true,
-        "lib": [],
-        "moduleResolution": "node",
+        "lib": ["ESNext"],
+        "module": "preserve",
+        "moduleResolution": "bundler",
         "noFallthroughCasesInSwitch": true,
         "noPropertyAccessFromIndexSignature": true,
         "noUnusedLocals": true,
@@ -18,7 +19,8 @@
         "preserveWatchOutput": true,
         "skipLibCheck": true,
         "strict": true,
-        "target": "ESNext"
+        "target": "ESNext",
+        "types": ["node"]
     },
     "display": "@codama/renderers-js",
     "include": ["src", "test", "tsup.config.ts"],

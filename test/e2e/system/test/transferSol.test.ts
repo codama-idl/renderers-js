@@ -8,13 +8,13 @@ import {
 } from '@solana/kit';
 import { expect, test } from 'vitest';
 
+import { createTestClient } from '../../_setup.js';
 import {
     SYSTEM_ERROR__RESULT_WITH_NEGATIVE_LAMPORTS,
     getTransferSolInstruction,
     isSystemError,
     parseTransferSolInstruction,
 } from '../src/index.js';
-import { createTestClient } from '../../_setup.js';
 
 test('it transfers SOL from one account to another', async () => {
     // Given a source account with 3 SOL and a destination account with no SOL.

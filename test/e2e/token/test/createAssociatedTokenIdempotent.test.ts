@@ -1,8 +1,8 @@
 import { generateKeyPairSigner } from '@solana/kit';
 import { expect, test } from 'vitest';
 
-import { TOKEN_PROGRAM_ADDRESS } from '../src/index.js';
 import { createMint, createTestClient } from '../../_setup.js';
+import { TOKEN_PROGRAM_ADDRESS } from '../src/index.js';
 
 test('it creates an associated token account idempotently', async () => {
     // Given a mint, its authority and a token owner.

@@ -20,7 +20,12 @@ export type LinkOverrides = {
 };
 
 type OverridableNodes =
-    AccountLinkNode | DefinedTypeLinkNode | InstructionLinkNode | PdaLinkNode | ProgramLinkNode | ResolverValueNode;
+    | AccountLinkNode
+    | DefinedTypeLinkNode
+    | InstructionLinkNode
+    | PdaLinkNode
+    | ProgramLinkNode
+    | ResolverValueNode;
 
 export type GetImportFromFunction = (node: OverridableNodes, fallback?: string) => string;
 
@@ -62,11 +67,11 @@ export function getImportFromFactory(
             default:
                 throw new CodamaError(CODAMA_ERROR__UNEXPECTED_NODE_KIND, {
                     expectedKinds: [
-                        'AccountLinkNode',
-                        'DefinedTypeLinkNode',
-                        'InstructionLinkNode',
-                        'PdaLinkNode',
-                        'ProgramLinkNode',
+                        'accountLinkNode',
+                        'definedTypeLinkNode',
+                        'instructionLinkNode',
+                        'pdaLinkNode',
+                        'programLinkNode',
                         'resolverValueNode',
                     ],
                     kind: kind satisfies never,

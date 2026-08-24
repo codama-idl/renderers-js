@@ -329,6 +329,8 @@ The shared E2E suite runs its TypeScript tests directly through a dedicated Vite
 - `pnpm build`
 - `pnpm lint`
 - `pnpm lint:fix`
+- `pnpm format`
+- `pnpm format:fix`
 - `pnpm test`
 - `pnpm test:types`
 - `pnpm test:unit`
@@ -358,7 +360,7 @@ Declarations are emitted separately into `dist/types`.
 
 From `.github/workflows/main.yml`:
 
-- CI runs lint and the full test suite.
+- CI runs lint, format checks and the full test suite.
 - CI requires the working tree to stay clean after build and tests.
 
 That means if a code change affects generated outputs, fixtures, or checked-in artifacts, update them so `git status --porcelain` stays empty after validation.
@@ -367,10 +369,11 @@ That means if a code change affects generated outputs, fixtures, or checked-in a
 
 - TypeScript is strict.
 - Important compiler settings include `isolatedModules`, `isolatedDeclarations`, `noUnusedLocals`, `noUnusedParameters`, and `noPropertyAccessFromIndexSignature`.
-- Root uses `moduleResolution: "node"`.
+- Root uses `module: "preserve"` with `moduleResolution: "bundler"`.
 - E2E packages often use `moduleResolution: "bundler"` because `@solana/kit` subpath exports may require it.
-- ESLint uses `@solana/eslint-config-solana`.
-- Prettier uses `@solana/prettier-config-solana`.
+- Linting uses oxlint (`oxlint.config.ts`) and repo formatting uses oxfmt (`oxfmt.config.ts`), both extending the shared `@solana-config/oxc` config. Type-aware lint rules run through `oxlint-tsgolint`, which uses the native TypeScript compiler and therefore requires the modernised `moduleResolution`.
+- Prettier is NOT a repo formatting tool: it remains a production dependency used exclusively at runtime to format generated code (`src/utils/formatCode.ts`). Its options live in `test/e2e/.prettierrc.json` so that generated E2E fixtures resolve them at generation time; keep them in sync with `@solana-config/oxc/oxfmt` when they change.
+- Generated E2E fixtures (`test/e2e/*/src/generated/**`) are excluded from oxlint and oxfmt: they are formatted by the runtime Prettier path and validated by `tsc` and the clean-tree CI check instead.
 
 ## High-signal files for common tasks
 

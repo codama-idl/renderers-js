@@ -76,18 +76,15 @@ export async function syncPackageJson(
 
 export function createNewPackageJson(dependencyVersions: DependencyVersions): PackageJson {
     return updateExistingPackageJson(
+        // oxlint-disable-next-line sort-keys -- Follows the conventional package.json field order instead.
         {
             name: 'js-client',
             version: '1.0.0',
-            // eslint-disable-next-line sort-keys-fix/sort-keys-fix
             description: '',
             main: 'src/index.ts',
-            // eslint-disable-next-line sort-keys-fix/sort-keys-fix
             files: ['./dist/src', './dist/types', './src/'],
             scripts: { test: 'echo "Error: no test specified" && exit 1' },
-            // eslint-disable-next-line sort-keys-fix/sort-keys-fix
             keywords: [],
-            // eslint-disable-next-line sort-keys-fix/sort-keys-fix
             author: '',
         },
         dependencyVersions,
