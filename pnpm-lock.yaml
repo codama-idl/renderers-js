@@ -42,6 +42,9 @@ importers:
       '@codama/nodes-from-anchor':
         specifier: ^1.5.3
         version: 1.5.5(fastestsmallesttextencoderdecoder@1.0.22)(typescript@7.0.2)
+      '@codama/release-tools':
+        specifier: github:codama-idl/release-tools#v1.0.0
+        version: https://codeload.github.com/codama-idl/release-tools/tar.gz/60c0f05d093d7c307ba80c20cd78e50e9dd1eb3e
       '@solana-config/oxc':
         specifier: ^0.1.1
         version: 0.1.1(oxfmt@0.65.0)(oxlint@1.80.0(oxlint-tsgolint@0.23.0))
@@ -186,6 +189,12 @@ packages:
 
   '@codama/nodes@1.10.2':
     resolution: {integrity: sha512-wR2LKg6/GQ+ctgOiH9XPVb7ktq+gu7X/WEiCk45d4L1+P/JJh2kJeS/sMbktrgJNimcoO2G1Ms3+eUDjrwfo5g==}
+
+  '@codama/release-tools@https://codeload.github.com/codama-idl/release-tools/tar.gz/60c0f05d093d7c307ba80c20cd78e50e9dd1eb3e':
+    resolution: {tarball: https://codeload.github.com/codama-idl/release-tools/tar.gz/60c0f05d093d7c307ba80c20cd78e50e9dd1eb3e}
+    version: 1.0.0
+    engines: {node: '>=20'}
+    hasBin: true
 
   '@codama/renderers-core@1.4.0':
     resolution: {integrity: sha512-JkqKWaN5nKampHgJ3jWh7u6kNPrwp7DB/lpkyS1hpL6NiC45tZGie6foaq8TnSTpaVPtVsL8Q46AP1MZpongpg==}
@@ -2567,6 +2576,8 @@ snapshots:
     dependencies:
       '@codama/errors': 1.10.2
       '@codama/node-types': 1.10.2
+
+  '@codama/release-tools@https://codeload.github.com/codama-idl/release-tools/tar.gz/60c0f05d093d7c307ba80c20cd78e50e9dd1eb3e': {}
 
   '@codama/renderers-core@1.4.0':
     dependencies:
