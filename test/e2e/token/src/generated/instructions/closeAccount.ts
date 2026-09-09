@@ -31,7 +31,14 @@ import {
     type TransactionSigner,
     type WritableAccount,
 } from '@solana/kit';
-import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
+import {
+    getAccountMetaFactory,
+    type InstructionAccountInput,
+    type InstructionAccountInputAddress,
+    type InstructionSignerInput,
+    type ResolvedInstructionAccount,
+    type ResolvedInstructionAccountMeta,
+} from '@solana/kit/program-client-core';
 import { TOKEN_PROGRAM_ADDRESS } from '../programs';
 
 export const CLOSE_ACCOUNT_DISCRIMINATOR = 9;
@@ -80,43 +87,47 @@ export function getCloseAccountInstructionDataCodec(): FixedSizeCodec<
 }
 
 export type CloseAccountInput<
-    TAccountAccount extends string = string,
-    TAccountDestination extends string = string,
-    TAccountOwner extends string = string,
+    TAccountAccount extends InstructionAccountInput = InstructionAccountInput,
+    TAccountDestination extends InstructionAccountInput = InstructionAccountInput,
+    TAccountOwner extends InstructionAccountInput | InstructionSignerInput =
+        InstructionAccountInput | InstructionSignerInput,
 > = {
     /** The account to close. */
-    account: Address<TAccountAccount>;
+    account: TAccountAccount;
     /** The destination account. */
-    destination: Address<TAccountDestination>;
+    destination: TAccountDestination;
     /** The account's owner or its multisignature account. */
-    owner: Address<TAccountOwner> | TransactionSigner<TAccountOwner>;
+    owner: TAccountOwner;
     multiSigners?: Array<TransactionSigner>;
 };
 
 export function getCloseAccountInstruction<
-    TAccountAccount extends string,
-    TAccountDestination extends string,
-    TAccountOwner extends string,
+    TAccountAccount extends InstructionAccountInput,
+    TAccountDestination extends InstructionAccountInput,
+    TAccountOwner extends InstructionAccountInput | InstructionSignerInput,
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,
 >(
     input: CloseAccountInput<TAccountAccount, TAccountDestination, TAccountOwner>,
     config?: { programAddress?: TProgramAddress },
 ): CloseAccountInstruction<
     TProgramAddress,
-    TAccountAccount,
-    TAccountDestination,
-    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
-        ? ReadonlySignerAccount<TAccountOwner> & AccountSignerMeta<TAccountOwner>
-        : TAccountOwner
+    ResolvedInstructionAccountMeta<TAccountAccount, InstructionAccountInputAddress<TAccountAccount>>,
+    ResolvedInstructionAccountMeta<TAccountDestination, InstructionAccountInputAddress<TAccountDestination>>,
+    ResolvedInstructionAccountMeta<
+        TAccountOwner,
+        InstructionAccountInputAddress<TAccountOwner>,
+        ReadonlySignerAccount<InstructionAccountInputAddress<TAccountOwner>> &
+            AccountSignerMeta<InstructionAccountInputAddress<TAccountOwner>>
+    >
 > {
     // Program address.
     const programAddress = config?.programAddress ?? TOKEN_PROGRAM_ADDRESS;
 
     // Original accounts.
     const originalAccounts = {
-        account: { value: input.account ?? null, isWritable: true },
-        destination: { value: input.destination ?? null, isWritable: true },
-        owner: { value: input.owner ?? null, isWritable: false },
+        account: { value: input.account ?? null, isSigner: false, isWritable: true },
+        destination: { value: input.destination ?? null, isSigner: false, isWritable: true },
+        owner: { value: input.owner ?? null, isSigner: 'either', isWritable: false },
     };
     const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
@@ -142,11 +153,14 @@ export function getCloseAccountInstruction<
         programAddress,
     } as CloseAccountInstruction<
         TProgramAddress,
-        TAccountAccount,
-        TAccountDestination,
-        (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
-            ? ReadonlySignerAccount<TAccountOwner> & AccountSignerMeta<TAccountOwner>
-            : TAccountOwner
+        ResolvedInstructionAccountMeta<TAccountAccount, InstructionAccountInputAddress<TAccountAccount>>,
+        ResolvedInstructionAccountMeta<TAccountDestination, InstructionAccountInputAddress<TAccountDestination>>,
+        ResolvedInstructionAccountMeta<
+            TAccountOwner,
+            InstructionAccountInputAddress<TAccountOwner>,
+            ReadonlySignerAccount<InstructionAccountInputAddress<TAccountOwner>> &
+                AccountSignerMeta<InstructionAccountInputAddress<TAccountOwner>>
+        >
     >);
 }
 

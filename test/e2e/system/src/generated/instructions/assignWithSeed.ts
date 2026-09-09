@@ -32,10 +32,16 @@ import {
     type InstructionWithData,
     type ReadonlySignerAccount,
     type ReadonlyUint8Array,
-    type TransactionSigner,
     type WritableAccount,
 } from '@solana/kit';
-import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
+import {
+    getAccountMetaFactory,
+    type InstructionAccountInput,
+    type InstructionAccountInputAddress,
+    type InstructionSignerInput,
+    type ResolvedInstructionAccount,
+    type ResolvedInstructionAccountMeta,
+} from '@solana/kit/program-client-core';
 import { SYSTEM_PROGRAM_ADDRESS } from '../programs';
 
 export const ASSIGN_WITH_SEED_DISCRIMINATOR = 10;
@@ -99,31 +105,35 @@ export function getAssignWithSeedInstructionDataCodec(): Codec<
 }
 
 export type AssignWithSeedInput<
-    TAccountAccount extends string = string,
-    TAccountBaseAccount extends string = string,
+    TAccountAccount extends InstructionAccountInput = InstructionAccountInput,
+    TAccountBaseAccount extends InstructionSignerInput = InstructionSignerInput,
 > = {
-    account: Address<TAccountAccount>;
-    baseAccount: TransactionSigner<TAccountBaseAccount>;
+    account: TAccountAccount;
+    baseAccount: TAccountBaseAccount;
     base: AssignWithSeedInstructionDataArgs['base'];
     seed: AssignWithSeedInstructionDataArgs['seed'];
     programAddress: AssignWithSeedInstructionDataArgs['programAddress'];
 };
 
 export function getAssignWithSeedInstruction<
-    TAccountAccount extends string,
-    TAccountBaseAccount extends string,
+    TAccountAccount extends InstructionAccountInput,
+    TAccountBaseAccount extends InstructionSignerInput,
     TProgramAddress extends Address = typeof SYSTEM_PROGRAM_ADDRESS,
 >(
     input: AssignWithSeedInput<TAccountAccount, TAccountBaseAccount>,
     config?: { programAddress?: TProgramAddress },
-): AssignWithSeedInstruction<TProgramAddress, TAccountAccount, TAccountBaseAccount> {
+): AssignWithSeedInstruction<
+    TProgramAddress,
+    ResolvedInstructionAccountMeta<TAccountAccount, InstructionAccountInputAddress<TAccountAccount>>,
+    ResolvedInstructionAccountMeta<TAccountBaseAccount, InstructionAccountInputAddress<TAccountBaseAccount>>
+> {
     // Program address.
     const programAddress = config?.programAddress ?? SYSTEM_PROGRAM_ADDRESS;
 
     // Original accounts.
     const originalAccounts = {
-        account: { value: input.account ?? null, isWritable: true },
-        baseAccount: { value: input.baseAccount ?? null, isWritable: false },
+        account: { value: input.account ?? null, isSigner: false, isWritable: true },
+        baseAccount: { value: input.baseAccount ?? null, isSigner: true, isWritable: false },
     };
     const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
@@ -135,7 +145,11 @@ export function getAssignWithSeedInstruction<
         accounts: [getAccountMeta('account', accounts.account), getAccountMeta('baseAccount', accounts.baseAccount)],
         data: getAssignWithSeedInstructionDataEncoder().encode(args as AssignWithSeedInstructionDataArgs),
         programAddress,
-    } as AssignWithSeedInstruction<TProgramAddress, TAccountAccount, TAccountBaseAccount>);
+    } as AssignWithSeedInstruction<
+        TProgramAddress,
+        ResolvedInstructionAccountMeta<TAccountAccount, InstructionAccountInputAddress<TAccountAccount>>,
+        ResolvedInstructionAccountMeta<TAccountBaseAccount, InstructionAccountInputAddress<TAccountBaseAccount>>
+    >);
 }
 
 export type ParsedAssignWithSeedInstruction<

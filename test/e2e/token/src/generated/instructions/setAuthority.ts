@@ -37,7 +37,14 @@ import {
     type TransactionSigner,
     type WritableAccount,
 } from '@solana/kit';
-import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
+import {
+    getAccountMetaFactory,
+    type InstructionAccountInput,
+    type InstructionAccountInputAddress,
+    type InstructionSignerInput,
+    type ResolvedInstructionAccount,
+    type ResolvedInstructionAccountMeta,
+} from '@solana/kit/program-client-core';
 import { TOKEN_PROGRAM_ADDRESS } from '../programs';
 import { getAuthorityTypeDecoder, getAuthorityTypeEncoder, type AuthorityType, type AuthorityTypeArgs } from '../types';
 
@@ -103,37 +110,44 @@ export function getSetAuthorityInstructionDataCodec(): Codec<
     return combineCodec(getSetAuthorityInstructionDataEncoder(), getSetAuthorityInstructionDataDecoder());
 }
 
-export type SetAuthorityInput<TAccountOwned extends string = string, TAccountOwner extends string = string> = {
+export type SetAuthorityInput<
+    TAccountOwned extends InstructionAccountInput = InstructionAccountInput,
+    TAccountOwner extends InstructionAccountInput | InstructionSignerInput =
+        InstructionAccountInput | InstructionSignerInput,
+> = {
     /** The mint or account to change the authority of. */
-    owned: Address<TAccountOwned>;
+    owned: TAccountOwned;
     /** The current authority or the multisignature account of the mint or account to update. */
-    owner: Address<TAccountOwner> | TransactionSigner<TAccountOwner>;
+    owner: TAccountOwner;
     authorityType: SetAuthorityInstructionDataArgs['authorityType'];
     newAuthority: SetAuthorityInstructionDataArgs['newAuthority'];
     multiSigners?: Array<TransactionSigner>;
 };
 
 export function getSetAuthorityInstruction<
-    TAccountOwned extends string,
-    TAccountOwner extends string,
+    TAccountOwned extends InstructionAccountInput,
+    TAccountOwner extends InstructionAccountInput | InstructionSignerInput,
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,
 >(
     input: SetAuthorityInput<TAccountOwned, TAccountOwner>,
     config?: { programAddress?: TProgramAddress },
 ): SetAuthorityInstruction<
     TProgramAddress,
-    TAccountOwned,
-    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
-        ? ReadonlySignerAccount<TAccountOwner> & AccountSignerMeta<TAccountOwner>
-        : TAccountOwner
+    ResolvedInstructionAccountMeta<TAccountOwned, InstructionAccountInputAddress<TAccountOwned>>,
+    ResolvedInstructionAccountMeta<
+        TAccountOwner,
+        InstructionAccountInputAddress<TAccountOwner>,
+        ReadonlySignerAccount<InstructionAccountInputAddress<TAccountOwner>> &
+            AccountSignerMeta<InstructionAccountInputAddress<TAccountOwner>>
+    >
 > {
     // Program address.
     const programAddress = config?.programAddress ?? TOKEN_PROGRAM_ADDRESS;
 
     // Original accounts.
     const originalAccounts = {
-        owned: { value: input.owned ?? null, isWritable: true },
-        owner: { value: input.owner ?? null, isWritable: false },
+        owned: { value: input.owned ?? null, isSigner: false, isWritable: true },
+        owner: { value: input.owner ?? null, isSigner: 'either', isWritable: false },
     };
     const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
@@ -158,10 +172,13 @@ export function getSetAuthorityInstruction<
         programAddress,
     } as SetAuthorityInstruction<
         TProgramAddress,
-        TAccountOwned,
-        (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
-            ? ReadonlySignerAccount<TAccountOwner> & AccountSignerMeta<TAccountOwner>
-            : TAccountOwner
+        ResolvedInstructionAccountMeta<TAccountOwned, InstructionAccountInputAddress<TAccountOwned>>,
+        ResolvedInstructionAccountMeta<
+            TAccountOwner,
+            InstructionAccountInputAddress<TAccountOwner>,
+            ReadonlySignerAccount<InstructionAccountInputAddress<TAccountOwner>> &
+                AccountSignerMeta<InstructionAccountInputAddress<TAccountOwner>>
+        >
     >);
 }
 

@@ -27,7 +27,13 @@ import {
     type ReadonlyUint8Array,
     type WritableAccount,
 } from '@solana/kit';
-import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
+import {
+    getAccountMetaFactory,
+    type InstructionAccountInput,
+    type InstructionAccountInputAddress,
+    type ResolvedInstructionAccount,
+    type ResolvedInstructionAccountMeta,
+} from '@solana/kit/program-client-core';
 import { TOKEN_PROGRAM_ADDRESS } from '../programs';
 
 export const INITIALIZE_MULTISIG2_DISCRIMINATOR = 19;
@@ -81,25 +87,28 @@ export function getInitializeMultisig2InstructionDataCodec(): FixedSizeCodec<
     return combineCodec(getInitializeMultisig2InstructionDataEncoder(), getInitializeMultisig2InstructionDataDecoder());
 }
 
-export type InitializeMultisig2Input<TAccountMultisig extends string = string> = {
+export type InitializeMultisig2Input<TAccountMultisig extends InstructionAccountInput = InstructionAccountInput> = {
     /** The multisignature account to initialize. */
-    multisig: Address<TAccountMultisig>;
+    multisig: TAccountMultisig;
     m: InitializeMultisig2InstructionDataArgs['m'];
     signers: Array<Address>;
 };
 
 export function getInitializeMultisig2Instruction<
-    TAccountMultisig extends string,
+    TAccountMultisig extends InstructionAccountInput,
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,
 >(
     input: InitializeMultisig2Input<TAccountMultisig>,
     config?: { programAddress?: TProgramAddress },
-): InitializeMultisig2Instruction<TProgramAddress, TAccountMultisig> {
+): InitializeMultisig2Instruction<
+    TProgramAddress,
+    ResolvedInstructionAccountMeta<TAccountMultisig, InstructionAccountInputAddress<TAccountMultisig>>
+> {
     // Program address.
     const programAddress = config?.programAddress ?? TOKEN_PROGRAM_ADDRESS;
 
     // Original accounts.
-    const originalAccounts = { multisig: { value: input.multisig ?? null, isWritable: true } };
+    const originalAccounts = { multisig: { value: input.multisig ?? null, isSigner: false, isWritable: true } };
     const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
@@ -113,7 +122,10 @@ export function getInitializeMultisig2Instruction<
         accounts: [getAccountMeta('multisig', accounts.multisig), ...remainingAccounts],
         data: getInitializeMultisig2InstructionDataEncoder().encode(args as InitializeMultisig2InstructionDataArgs),
         programAddress,
-    } as InitializeMultisig2Instruction<TProgramAddress, TAccountMultisig>);
+    } as InitializeMultisig2Instruction<
+        TProgramAddress,
+        ResolvedInstructionAccountMeta<TAccountMultisig, InstructionAccountInputAddress<TAccountMultisig>>
+    >);
 }
 
 export type ParsedInitializeMultisig2Instruction<

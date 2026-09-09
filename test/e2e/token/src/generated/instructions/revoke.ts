@@ -31,7 +31,14 @@ import {
     type TransactionSigner,
     type WritableAccount,
 } from '@solana/kit';
-import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
+import {
+    getAccountMetaFactory,
+    type InstructionAccountInput,
+    type InstructionAccountInputAddress,
+    type InstructionSignerInput,
+    type ResolvedInstructionAccount,
+    type ResolvedInstructionAccountMeta,
+} from '@solana/kit/program-client-core';
 import { TOKEN_PROGRAM_ADDRESS } from '../programs';
 
 export const REVOKE_DISCRIMINATOR = 5;
@@ -74,35 +81,42 @@ export function getRevokeInstructionDataCodec(): FixedSizeCodec<RevokeInstructio
     return combineCodec(getRevokeInstructionDataEncoder(), getRevokeInstructionDataDecoder());
 }
 
-export type RevokeInput<TAccountSource extends string = string, TAccountOwner extends string = string> = {
+export type RevokeInput<
+    TAccountSource extends InstructionAccountInput = InstructionAccountInput,
+    TAccountOwner extends InstructionAccountInput | InstructionSignerInput =
+        InstructionAccountInput | InstructionSignerInput,
+> = {
     /** The source account. */
-    source: Address<TAccountSource>;
+    source: TAccountSource;
     /** The source account owner or its multisignature. */
-    owner: Address<TAccountOwner> | TransactionSigner<TAccountOwner>;
+    owner: TAccountOwner;
     multiSigners?: Array<TransactionSigner>;
 };
 
 export function getRevokeInstruction<
-    TAccountSource extends string,
-    TAccountOwner extends string,
+    TAccountSource extends InstructionAccountInput,
+    TAccountOwner extends InstructionAccountInput | InstructionSignerInput,
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,
 >(
     input: RevokeInput<TAccountSource, TAccountOwner>,
     config?: { programAddress?: TProgramAddress },
 ): RevokeInstruction<
     TProgramAddress,
-    TAccountSource,
-    (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
-        ? ReadonlySignerAccount<TAccountOwner> & AccountSignerMeta<TAccountOwner>
-        : TAccountOwner
+    ResolvedInstructionAccountMeta<TAccountSource, InstructionAccountInputAddress<TAccountSource>>,
+    ResolvedInstructionAccountMeta<
+        TAccountOwner,
+        InstructionAccountInputAddress<TAccountOwner>,
+        ReadonlySignerAccount<InstructionAccountInputAddress<TAccountOwner>> &
+            AccountSignerMeta<InstructionAccountInputAddress<TAccountOwner>>
+    >
 > {
     // Program address.
     const programAddress = config?.programAddress ?? TOKEN_PROGRAM_ADDRESS;
 
     // Original accounts.
     const originalAccounts = {
-        source: { value: input.source ?? null, isWritable: true },
-        owner: { value: input.owner ?? null, isWritable: false },
+        source: { value: input.source ?? null, isSigner: false, isWritable: true },
+        owner: { value: input.owner ?? null, isSigner: 'either', isWritable: false },
     };
     const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
@@ -127,10 +141,13 @@ export function getRevokeInstruction<
         programAddress,
     } as RevokeInstruction<
         TProgramAddress,
-        TAccountSource,
-        (typeof input)['owner'] extends TransactionSigner<TAccountOwner>
-            ? ReadonlySignerAccount<TAccountOwner> & AccountSignerMeta<TAccountOwner>
-            : TAccountOwner
+        ResolvedInstructionAccountMeta<TAccountSource, InstructionAccountInputAddress<TAccountSource>>,
+        ResolvedInstructionAccountMeta<
+            TAccountOwner,
+            InstructionAccountInputAddress<TAccountOwner>,
+            ReadonlySignerAccount<InstructionAccountInputAddress<TAccountOwner>> &
+                AccountSignerMeta<InstructionAccountInputAddress<TAccountOwner>>
+        >
     >);
 }
 

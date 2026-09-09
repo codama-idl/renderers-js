@@ -24,20 +24,20 @@ type PackageJson = {
 };
 
 export const DEFAULT_DEPENDENCY_VERSIONS: DependencyVersions = {
-    '@solana/accounts': '^6.10.0',
-    '@solana/addresses': '^6.10.0',
-    '@solana/codecs': '^6.10.0',
-    '@solana/errors': '^6.10.0',
-    '@solana/instruction-plans': '^6.10.0',
-    '@solana/instructions': '^6.10.0',
-    '@solana/kit': '^6.10.0',
-    '@solana/plugin-core': '^6.10.0',
-    '@solana/plugin-interfaces': '^6.10.0',
-    '@solana/program-client-core': '^6.10.0',
-    '@solana/programs': '^6.10.0',
-    '@solana/rpc-api': '^6.10.0',
-    '@solana/rpc-types': '^6.10.0',
-    '@solana/signers': '^6.10.0',
+    '@solana/accounts': '^8.3.0',
+    '@solana/addresses': '^8.3.0',
+    '@solana/codecs': '^8.3.0',
+    '@solana/errors': '^8.3.0',
+    '@solana/instruction-plans': '^8.3.0',
+    '@solana/instructions': '^8.3.0',
+    '@solana/kit': '^8.3.0',
+    '@solana/plugin-core': '^8.3.0',
+    '@solana/plugin-interfaces': '^8.3.0',
+    '@solana/program-client-core': '^8.3.0',
+    '@solana/programs': '^8.3.0',
+    '@solana/rpc-api': '^8.3.0',
+    '@solana/rpc-types': '^8.3.0',
+    '@solana/signers': '^8.3.0',
 };
 
 export async function syncPackageJson(

@@ -16,7 +16,13 @@ import {
     type ReadonlyAccount,
     type WritableAccount,
 } from '@solana/kit';
-import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
+import {
+    getAccountMetaFactory,
+    type InstructionAccountInput,
+    type InstructionAccountInputAddress,
+    type ResolvedInstructionAccount,
+    type ResolvedInstructionAccountMeta,
+} from '@solana/kit/program-client-core';
 import { DUMMY_PROGRAM_ADDRESS } from '../programs';
 
 export type Instruction11Instruction<
@@ -34,28 +40,32 @@ export type Instruction11Instruction<
     >;
 
 export type Instruction11Input<
-    TAccountOptionalAccount extends string = string,
-    TAccountRequiredAccount extends string = string,
+    TAccountOptionalAccount extends InstructionAccountInput = InstructionAccountInput,
+    TAccountRequiredAccount extends InstructionAccountInput = InstructionAccountInput,
 > = {
-    optionalAccount?: Address<TAccountOptionalAccount>;
-    requiredAccount: Address<TAccountRequiredAccount>;
+    optionalAccount?: TAccountOptionalAccount;
+    requiredAccount: TAccountRequiredAccount;
 };
 
 export function getInstruction11Instruction<
-    TAccountOptionalAccount extends string,
-    TAccountRequiredAccount extends string,
+    TAccountOptionalAccount extends InstructionAccountInput,
+    TAccountRequiredAccount extends InstructionAccountInput,
     TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS,
 >(
     input: Instruction11Input<TAccountOptionalAccount, TAccountRequiredAccount>,
     config?: { programAddress?: TProgramAddress },
-): Instruction11Instruction<TProgramAddress, TAccountOptionalAccount, TAccountRequiredAccount> {
+): Instruction11Instruction<
+    TProgramAddress,
+    ResolvedInstructionAccountMeta<TAccountOptionalAccount, InstructionAccountInputAddress<TAccountOptionalAccount>>,
+    ResolvedInstructionAccountMeta<TAccountRequiredAccount, InstructionAccountInputAddress<TAccountRequiredAccount>>
+> {
     // Program address.
     const programAddress = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
 
     // Original accounts.
     const originalAccounts = {
-        optionalAccount: { value: input.optionalAccount ?? null, isWritable: false },
-        requiredAccount: { value: input.requiredAccount ?? null, isWritable: true },
+        optionalAccount: { value: input.optionalAccount ?? null, isSigner: false, isWritable: false },
+        requiredAccount: { value: input.requiredAccount ?? null, isSigner: false, isWritable: true },
     };
     const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
@@ -66,7 +76,14 @@ export function getInstruction11Instruction<
             getAccountMeta('requiredAccount', accounts.requiredAccount),
         ],
         programAddress,
-    } as Instruction11Instruction<TProgramAddress, TAccountOptionalAccount, TAccountRequiredAccount>);
+    } as Instruction11Instruction<
+        TProgramAddress,
+        ResolvedInstructionAccountMeta<
+            TAccountOptionalAccount,
+            InstructionAccountInputAddress<TAccountOptionalAccount>
+        >,
+        ResolvedInstructionAccountMeta<TAccountRequiredAccount, InstructionAccountInputAddress<TAccountRequiredAccount>>
+    >);
 }
 
 export type ParsedInstruction11Instruction<

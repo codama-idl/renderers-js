@@ -1,6 +1,7 @@
 import {
     camelCase,
     getAllInstructionArguments,
+    InstructionAccountNode,
     InstructionArgumentNode,
     InstructionNode,
     isNode,
@@ -44,13 +45,15 @@ export function getInstructionInputTypeFragment(
         : nameApi.instructionSyncInputType(instructionNode.name);
     const [dataArgumentsFragment, customDataArgumentsFragment] = getDataArgumentsFragments(scope);
 
-    let accountTypeParams = '';
-    if ((instructionNode.accounts ?? []).length > 0) {
-        accountTypeParams = (instructionNode.accounts ?? [])
-            .map(account => `TAccount${pascalCase(account.name)} extends string = string`)
-            .join(', ');
-        accountTypeParams = `<${accountTypeParams}>`;
-    }
+    // One type parameter per account, holding the input value provided for that account
+    // and defaulting to every input the account accepts.
+    const accountTypeParams = mergeFragments(
+        (instructionNode.accounts ?? []).map(account => {
+            const constraint = getInstructionAccountInputConstraintFragment(account);
+            return fragment`TAccount${pascalCase(account.name)} extends ${constraint} = ${constraint}`;
+        }),
+        cs => (cs.length > 0 ? `<${cs.join(', ')}>` : ''),
+    );
 
     const typeBodyFragment = mergeFragments(
         [
@@ -65,6 +68,22 @@ export function getInstructionInputTypeFragment(
     return fragment`export type ${instructionInputType}${accountTypeParams} = ${customDataArgumentsFragment} {
   ${typeBodyFragment}
 }`;
+}
+
+/**
+ * Renders the type of the inputs accepted by an instruction account, based on its signer flag:
+ * `InstructionSignerInput` for signer accounts, `InstructionAccountInput` for non-signer
+ * accounts and the union of both for accounts that may or may not be signers.
+ */
+export function getInstructionAccountInputConstraintFragment(
+    account: Pick<InstructionAccountNode, 'isSigner'>,
+): Fragment {
+    const accountInput = use('type InstructionAccountInput', 'solanaProgramClientCore');
+    const signerInput = use('type InstructionSignerInput', 'solanaProgramClientCore');
+
+    if (account.isSigner === 'either') return fragment`${accountInput} | ${signerInput}`;
+    if (account.isSigner) return signerInput;
+    return accountInput;
 }
 
 function getAccountsFragment(
@@ -87,23 +106,10 @@ function getAccountsFragment(
             (useAsync || !isAsyncDefaultValue(resolvedAccount.defaultValue, asyncResolvers));
         const docs = getDocblockFragment(account.docs ?? [], true);
         const optionalSign = hasDefaultValue || resolvedAccount.isOptional ? '?' : '';
-        return fragment`${docs}${camelCase(account.name)}${optionalSign}: ${getAccountTypeFragment(resolvedAccount)};`;
+        return fragment`${docs}${camelCase(account.name)}${optionalSign}: TAccount${pascalCase(account.name)};`;
     });
 
     return mergeFragments(fragments, c => c.join('\n'));
-}
-
-function getAccountTypeFragment(account: Pick<ResolvedInstructionAccount, 'isPda' | 'isSigner' | 'name'>): Fragment {
-    const typeParam = `TAccount${pascalCase(account.name)}`;
-    const address = use('type Address', 'solanaAddresses');
-    const signer = use('type TransactionSigner', 'solanaSigners');
-    const pda = use('type ProgramDerivedAddress', 'solanaAddresses');
-
-    if (account.isPda && account.isSigner === false) return fragment`${pda}<${typeParam}>`;
-    if (account.isPda && account.isSigner === 'either') return fragment`${pda}<${typeParam}> | ${signer}<${typeParam}>`;
-    if (account.isSigner === 'either') return fragment`${address}<${typeParam}> | ${signer}<${typeParam}>`;
-    if (account.isSigner) return fragment`${signer}<${typeParam}>`;
-    return fragment`${address}<${typeParam}>`;
 }
 
 function getDataArgumentsFragments(

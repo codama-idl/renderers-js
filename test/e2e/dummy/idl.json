@@ -233,6 +233,55 @@
           }
         ],
         "arguments": []
+      },
+      {
+        "kind": "instructionNode",
+        "name": "instruction12",
+        "optionalAccountStrategy": "programId",
+        "docs": ["Testing the inputs accepted by instruction accounts, including a PDA whose bump seed is consumed by an argument"],
+        "accounts": [
+          {
+            "kind": "instructionAccountNode",
+            "name": "authority",
+            "isWritable": false,
+            "isSigner": true,
+            "isOptional": false,
+            "docs": []
+          },
+          {
+            "kind": "instructionAccountNode",
+            "name": "delegate",
+            "isWritable": false,
+            "isSigner": "either",
+            "isOptional": false,
+            "docs": []
+          },
+          {
+            "kind": "instructionAccountNode",
+            "name": "target",
+            "isWritable": true,
+            "isSigner": false,
+            "isOptional": false,
+            "docs": []
+          },
+          {
+            "kind": "instructionAccountNode",
+            "name": "metadata",
+            "isWritable": false,
+            "isSigner": false,
+            "isOptional": false,
+            "docs": []
+          }
+        ],
+        "arguments": [
+          {
+            "kind": "instructionArgumentNode",
+            "name": "bump",
+            "defaultValue": { "kind": "accountBumpValueNode", "name": "metadata" },
+            "type": { "kind": "numberTypeNode", "format": "u8", "endian": "le" }
+          }
+        ],
+        "remainingAccounts": []
       }
     ],
     "definedTypes": [

@@ -15,7 +15,13 @@ import {
     type InstructionWithAccounts,
     type WritableAccount,
 } from '@solana/kit';
-import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
+import {
+    getAccountMetaFactory,
+    type InstructionAccountInput,
+    type InstructionAccountInputAddress,
+    type ResolvedInstructionAccount,
+    type ResolvedInstructionAccountMeta,
+} from '@solana/kit/program-client-core';
 import { DUMMY_PROGRAM_ADDRESS } from '../programs';
 
 export type Instruction7Instruction<
@@ -30,29 +36,35 @@ export type Instruction7Instruction<
         ]
     >;
 
-export type Instruction7Input<TAccountMyAccount extends string = string> = {
-    myAccount?: Address<TAccountMyAccount>;
+export type Instruction7Input<TAccountMyAccount extends InstructionAccountInput = InstructionAccountInput> = {
+    myAccount?: TAccountMyAccount;
 };
 
 export function getInstruction7Instruction<
-    TAccountMyAccount extends string,
+    TAccountMyAccount extends InstructionAccountInput,
     TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS,
 >(
     input: Instruction7Input<TAccountMyAccount>,
     config?: { programAddress?: TProgramAddress },
-): Instruction7Instruction<TProgramAddress, TAccountMyAccount> {
+): Instruction7Instruction<
+    TProgramAddress,
+    ResolvedInstructionAccountMeta<TAccountMyAccount, InstructionAccountInputAddress<TAccountMyAccount>>
+> {
     // Program address.
     const programAddress = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
 
     // Original accounts.
-    const originalAccounts = { myAccount: { value: input.myAccount ?? null, isWritable: true } };
+    const originalAccounts = { myAccount: { value: input.myAccount ?? null, isSigner: false, isWritable: true } };
     const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [getAccountMeta('myAccount', accounts.myAccount)],
         programAddress,
-    } as Instruction7Instruction<TProgramAddress, TAccountMyAccount>);
+    } as Instruction7Instruction<
+        TProgramAddress,
+        ResolvedInstructionAccountMeta<TAccountMyAccount, InstructionAccountInputAddress<TAccountMyAccount>>
+    >);
 }
 
 export type ParsedInstruction7Instruction<
