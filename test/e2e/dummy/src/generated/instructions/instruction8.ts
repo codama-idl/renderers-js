@@ -6,14 +6,13 @@
  * @see https://github.com/codama-idl/codama
  */
 
+import type { AccountMeta, Address, Instruction, InstructionWithAccounts } from '@solana/kit';
 import {
-    AccountRole,
-    type AccountMeta,
-    type Address,
-    type Instruction,
-    type InstructionWithAccounts,
-    type TransactionSigner,
-} from '@solana/kit';
+    getAccountMetaFactory,
+    getNonNullResolvedInstructionInput,
+    type InstructionAccountInput,
+    type InstructionSignerInput,
+} from '@solana/kit/program-client-core';
 import { DUMMY_PROGRAM_ADDRESS } from '../programs';
 
 export type Instruction8Instruction<
@@ -22,7 +21,7 @@ export type Instruction8Instruction<
 > = Instruction<TProgram> & InstructionWithAccounts<TRemainingAccounts>;
 
 export type Instruction8Input = {
-    remainingAccounts?: Array<TransactionSigner | Address>;
+    remainingAccounts?: Array<InstructionAccountInput | InstructionSignerInput>;
 };
 
 export function getInstruction8Instruction<TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS>(
@@ -32,14 +31,18 @@ export function getInstruction8Instruction<TProgramAddress extends Address = typ
     // Program address.
     const programAddress = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
 
+    // Account meta helper.
+    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+
     // Original args.
     const args = { ...input };
 
     // Remaining accounts.
-    const remainingAccounts: AccountMeta[] = (args.remainingAccounts ?? []).map(addressOrSigner =>
-        typeof addressOrSigner === 'string'
-            ? { address: addressOrSigner, role: AccountRole.READONLY }
-            : { address: addressOrSigner.address, role: AccountRole.READONLY, signer: addressOrSigner },
+    const remainingAccounts: AccountMeta[] = (args.remainingAccounts ?? []).map(value =>
+        getNonNullResolvedInstructionInput(
+            'remainingAccounts',
+            getAccountMeta('remainingAccounts', { value, isSigner: 'either', isWritable: false }),
+        ),
     );
 
     return Object.freeze({ accounts: remainingAccounts, programAddress } as Instruction8Instruction<TProgramAddress>);

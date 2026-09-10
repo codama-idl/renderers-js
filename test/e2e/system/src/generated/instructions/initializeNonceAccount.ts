@@ -126,6 +126,9 @@ export function getInitializeNonceAccountInstruction<
     // Program address.
     const programAddress = config?.programAddress ?? SYSTEM_PROGRAM_ADDRESS;
 
+    // Account meta helper.
+    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+
     // Original accounts.
     const originalAccounts = {
         nonceAccount: { value: input.nonceAccount ?? null, isSigner: false, isWritable: true },
@@ -147,7 +150,6 @@ export function getInitializeNonceAccountInstruction<
             'SysvarRent111111111111111111111111111111111' as Address<'SysvarRent111111111111111111111111111111111'>;
     }
 
-    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
             getAccountMeta('nonceAccount', accounts.nonceAccount),

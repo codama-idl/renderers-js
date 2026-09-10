@@ -141,6 +141,9 @@ export function getAllocateWithSeedInstruction<
     // Program address.
     const programAddress = config?.programAddress ?? SYSTEM_PROGRAM_ADDRESS;
 
+    // Account meta helper.
+    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+
     // Original accounts.
     const originalAccounts = {
         newAccount: { value: input.newAccount ?? null, isSigner: false, isWritable: true },
@@ -151,7 +154,6 @@ export function getAllocateWithSeedInstruction<
     // Original args.
     const args = { ...input };
 
-    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
             getAccountMeta('newAccount', accounts.newAccount),

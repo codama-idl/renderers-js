@@ -1,6 +1,5 @@
 import {
     camelCase,
-    getAllInstructionArguments,
     InstructionAccountNode,
     InstructionArgumentNode,
     InstructionNode,
@@ -22,6 +21,7 @@ import {
     fragment,
     getDocblockFragment,
     isAsyncDefaultValue,
+    isRemainingAccountsBackedByArgument,
     mergeFragmentImports,
     mergeFragments,
     RenderScope,
@@ -185,20 +185,12 @@ function getArgumentFragment(
 function getRemainingAccountsFragment(instructionNode: InstructionNode): Fragment | undefined {
     const fragments = (instructionNode.remainingAccounts ?? []).flatMap(remainingAccountsNode => {
         if (isNode(remainingAccountsNode.value, 'resolverValueNode')) return [];
+        if (isRemainingAccountsBackedByArgument(instructionNode, remainingAccountsNode)) return [];
 
         const { name } = remainingAccountsNode.value;
-        const allArguments = getAllInstructionArguments(instructionNode);
-        const argumentExists = allArguments.some(arg => arg.name === name);
-        if (argumentExists) return [];
-
         const isSigner = remainingAccountsNode.isSigner ?? false;
         const optionalSign = (remainingAccountsNode.isOptional ?? false) ? '?' : '';
-        const signerFragment = use('type TransactionSigner', 'solanaSigners');
-        const addressFragment = use('type Address', 'solanaAddresses');
-        const typeFragment = (() => {
-            if (isSigner === 'either') return fragment`${signerFragment} | ${addressFragment}`;
-            return isSigner ? signerFragment : addressFragment;
-        })();
+        const typeFragment = getInstructionAccountInputConstraintFragment({ isSigner });
 
         return fragment`${camelCase(name)}${optionalSign}: Array<${typeFragment}>;`;
     });

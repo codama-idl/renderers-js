@@ -10,6 +10,7 @@ export * from './instruction1';
 export * from './instruction10';
 export * from './instruction11';
 export * from './instruction12';
+export * from './instruction13';
 export * from './instruction2';
 export * from './instruction3';
 export * from './instruction4';

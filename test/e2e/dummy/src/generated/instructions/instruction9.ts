@@ -84,6 +84,9 @@ export function getInstruction9Instruction<
     // Program address.
     const programAddress = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
 
+    // Account meta helper.
+    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+
     // Original accounts.
     const originalAccounts = { authority: { value: input.authority ?? null, isSigner: false, isWritable: false } };
     const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
@@ -91,7 +94,6 @@ export function getInstruction9Instruction<
     // Original args.
     const args = { ...input, authority: input.authorityArg };
 
-    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [getAccountMeta('authority', accounts.authority)],
         data: getInstruction9InstructionDataEncoder().encode(args as Instruction9InstructionDataArgs),

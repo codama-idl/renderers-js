@@ -6,13 +6,12 @@
  * @see https://github.com/codama-idl/codama
  */
 
+import type { AccountMeta, Address, Instruction, InstructionWithAccounts } from '@solana/kit';
 import {
-    AccountRole,
-    type AccountMeta,
-    type Address,
-    type Instruction,
-    type InstructionWithAccounts,
-} from '@solana/kit';
+    getAccountMetaFactory,
+    getNonNullResolvedInstructionInput,
+    type InstructionAccountInput,
+} from '@solana/kit/program-client-core';
 import { DUMMY_PROGRAM_ADDRESS } from '../programs';
 
 export type Instruction2Instruction<
@@ -21,7 +20,7 @@ export type Instruction2Instruction<
 > = Instruction<TProgram> & InstructionWithAccounts<TRemainingAccounts>;
 
 export type Instruction2Input = {
-    remainingAccounts?: Array<Address>;
+    remainingAccounts?: Array<InstructionAccountInput>;
 };
 
 export function getInstruction2Instruction<TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS>(
@@ -31,14 +30,19 @@ export function getInstruction2Instruction<TProgramAddress extends Address = typ
     // Program address.
     const programAddress = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
 
+    // Account meta helper.
+    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+
     // Original args.
     const args = { ...input };
 
     // Remaining accounts.
-    const remainingAccounts: AccountMeta[] = (args.remainingAccounts ?? []).map(address => ({
-        address,
-        role: AccountRole.READONLY,
-    }));
+    const remainingAccounts: AccountMeta[] = (args.remainingAccounts ?? []).map(value =>
+        getNonNullResolvedInstructionInput(
+            'remainingAccounts',
+            getAccountMeta('remainingAccounts', { value, isSigner: false, isWritable: false }),
+        ),
+    );
 
     return Object.freeze({ accounts: remainingAccounts, programAddress } as Instruction2Instruction<TProgramAddress>);
 }

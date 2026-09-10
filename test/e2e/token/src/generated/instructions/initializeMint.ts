@@ -143,6 +143,9 @@ export function getInitializeMintInstruction<
     // Program address.
     const programAddress = config?.programAddress ?? TOKEN_PROGRAM_ADDRESS;
 
+    // Account meta helper.
+    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+
     // Original accounts.
     const originalAccounts = {
         mint: { value: input.mint ?? null, isSigner: false, isWritable: true },
@@ -159,7 +162,6 @@ export function getInitializeMintInstruction<
             'SysvarRent111111111111111111111111111111111' as Address<'SysvarRent111111111111111111111111111111111'>;
     }
 
-    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [getAccountMeta('mint', accounts.mint), getAccountMeta('rent', accounts.rent)],
         data: getInitializeMintInstructionDataEncoder().encode(args as InitializeMintInstructionDataArgs),

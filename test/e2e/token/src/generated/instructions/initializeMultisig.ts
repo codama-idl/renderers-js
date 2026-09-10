@@ -7,7 +7,6 @@
  */
 
 import {
-    AccountRole,
     combineCodec,
     getStructDecoder,
     getStructEncoder,
@@ -30,6 +29,7 @@ import {
 } from '@solana/kit';
 import {
     getAccountMetaFactory,
+    getNonNullResolvedInstructionInput,
     type InstructionAccountInput,
     type InstructionAccountInputAddress,
     type ResolvedInstructionAccount,
@@ -102,7 +102,7 @@ export type InitializeMultisigInput<
     /** Rent sysvar. */
     rent?: TAccountRent;
     m: InitializeMultisigInstructionDataArgs['m'];
-    signers: Array<Address>;
+    signers: Array<InstructionAccountInput>;
 };
 
 export function getInitializeMultisigInstruction<
@@ -119,6 +119,9 @@ export function getInitializeMultisigInstruction<
 > {
     // Program address.
     const programAddress = config?.programAddress ?? TOKEN_PROGRAM_ADDRESS;
+
+    // Account meta helper.
+    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
 
     // Original accounts.
     const originalAccounts = {
@@ -137,9 +140,13 @@ export function getInitializeMultisigInstruction<
     }
 
     // Remaining accounts.
-    const remainingAccounts: AccountMeta[] = args.signers.map(address => ({ address, role: AccountRole.READONLY }));
+    const remainingAccounts: AccountMeta[] = args.signers.map(value =>
+        getNonNullResolvedInstructionInput(
+            'signers',
+            getAccountMeta('signers', { value, isSigner: false, isWritable: false }),
+        ),
+    );
 
-    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
             getAccountMeta('multisig', accounts.multisig),

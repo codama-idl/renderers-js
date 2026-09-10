@@ -118,6 +118,9 @@ export function getAuthorizeNonceAccountInstruction<
     // Program address.
     const programAddress = config?.programAddress ?? SYSTEM_PROGRAM_ADDRESS;
 
+    // Account meta helper.
+    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+
     // Original accounts.
     const originalAccounts = {
         nonceAccount: { value: input.nonceAccount ?? null, isSigner: false, isWritable: true },
@@ -128,7 +131,6 @@ export function getAuthorizeNonceAccountInstruction<
     // Original args.
     const args = { ...input };
 
-    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
             getAccountMeta('nonceAccount', accounts.nonceAccount),

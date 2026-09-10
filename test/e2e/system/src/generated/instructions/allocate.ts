@@ -105,6 +105,9 @@ export function getAllocateInstruction<
     // Program address.
     const programAddress = config?.programAddress ?? SYSTEM_PROGRAM_ADDRESS;
 
+    // Account meta helper.
+    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+
     // Original accounts.
     const originalAccounts = { newAccount: { value: input.newAccount ?? null, isSigner: true, isWritable: true } };
     const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
@@ -112,7 +115,6 @@ export function getAllocateInstruction<
     // Original args.
     const args = { ...input };
 
-    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [getAccountMeta('newAccount', accounts.newAccount)],
         data: getAllocateInstructionDataEncoder().encode(args as AllocateInstructionDataArgs),
