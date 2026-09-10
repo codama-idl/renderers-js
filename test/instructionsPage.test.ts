@@ -1,6 +1,7 @@
 import {
     accountValueNode,
     argumentValueNode,
+    arrayTypeNode,
     booleanTypeNode,
     booleanValueNode,
     constantDiscriminatorNode,
@@ -17,12 +18,14 @@ import {
     instructionAccountNode,
     instructionArgumentNode,
     instructionNode,
+    instructionRemainingAccountsNode,
     numberTypeNode,
     numberValueNode,
     pdaLinkNode,
     pdaNode,
     pdaSeedValueNode,
     pdaValueNode,
+    prefixedCountNode,
     programNode,
     publicKeyTypeNode,
     resolverValueNode,
@@ -1155,4 +1158,114 @@ test("it drops an unset optional account under the legacy 'omitted' strategy", a
         'TAccountGroup extends string | AccountMeta<string> | undefined = undefined',
         /\.filter\(<T,?>\(x: T \| undefined\): x is T => x !== undefined\)/,
     ]);
+});
+
+test('it renders remaining accounts that accept the same inputs as instruction accounts', async () => {
+    // Given an instruction with non-signer remaining accounts provided as an input argument.
+    const node = programNode({
+        instructions: [
+            instructionNode({
+                name: 'myInstruction',
+                remainingAccounts: [
+                    instructionRemainingAccountsNode(argumentValueNode('extraAccounts'), { isWritable: true }),
+                ],
+            }),
+        ],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then we expect the input to accept any instruction account input.
+    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+        'extraAccounts: Array<InstructionAccountInput>;',
+    ]);
+
+    // And we expect the remaining accounts to go through the account meta helper.
+    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+        "const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');",
+        `const remainingAccounts: AccountMeta[] = args.extraAccounts.map( (value) =>
+            getNonNullResolvedInstructionInput(
+                'extraAccounts',
+                getAccountMeta('extraAccounts', { value, isSigner: false, isWritable: true } )
+            )
+        );`,
+    ]);
+});
+
+test('it renders optional remaining accounts that may be signers', async () => {
+    // Given an instruction with optional remaining accounts that may or may not be signers.
+    const node = programNode({
+        instructions: [
+            instructionNode({
+                name: 'myInstruction',
+                remainingAccounts: [
+                    instructionRemainingAccountsNode(argumentValueNode('extraAccounts'), {
+                        isOptional: true,
+                        isSigner: 'either',
+                    }),
+                ],
+            }),
+        ],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then we expect the input to accept both signer and non-signer inputs.
+    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+        'extraAccounts?: Array<InstructionAccountInput | InstructionSignerInput>;',
+    ]);
+
+    // And we expect the signer flag to be forwarded to the account meta helper.
+    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+        `(args.extraAccounts ?? []).map( (value) =>
+            getNonNullResolvedInstructionInput(
+                'extraAccounts',
+                getAccountMeta('extraAccounts', { value, isSigner: 'either', isWritable: false } )
+            )
+        );`,
+    ]);
+});
+
+test('it renders remaining accounts backed by an instruction argument as plain addresses', async () => {
+    // Given an instruction whose remaining accounts are backed by an
+    // existing argument — i.e. an array of addresses encoded in the instruction data.
+    const node = programNode({
+        instructions: [
+            instructionNode({
+                arguments: [
+                    instructionArgumentNode({
+                        name: 'extraAccounts',
+                        type: arrayTypeNode(publicKeyTypeNode(), prefixedCountNode(numberTypeNode('u8'))),
+                    }),
+                ],
+                name: 'myInstruction',
+                remainingAccounts: [
+                    instructionRemainingAccountsNode(argumentValueNode('extraAccounts'), { isSigner: true }),
+                ],
+            }),
+        ],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then we expect the argument to keep its data type in the input.
+    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+        "extraAccounts: MyInstructionInstructionDataArgs['extraAccounts'];",
+    ]);
+
+    // And we expect the remaining accounts to be derived from the IDL flags alone.
+    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+        'const remainingAccounts: AccountMeta[] = args.extraAccounts.map( (address) => ({ address, role: AccountRole.READONLY_SIGNER }) );',
+    ]);
+    // And we expect the account meta helper to not be declared nor imported since it is not used.
+    await renderMapDoesNotContain(renderMap, 'instructions/myInstruction.ts', ['getAccountMeta']);
 });

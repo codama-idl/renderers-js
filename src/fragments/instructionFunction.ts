@@ -22,6 +22,7 @@ import {
     fragment,
     getInstructionDependencies,
     hasAsyncFunction,
+    hasRemainingAccountInputs,
     isAsyncDefaultValue,
     mergeFragments,
     RenderScope,
@@ -101,6 +102,7 @@ export function getInstructionFunctionFragment(
     const functionBody = mergeFragments(
         [
             getProgramAddressInitializationFragment(programAddressConstant),
+            getAccountMetaHelperFragment(instructionNode, hasAccounts || hasRemainingAccountInputs(instructionNode)),
             getAccountsInitializationFragment(instructionNode, resolvedInputs),
             getArgumentsInitializationFragment(hasAnyArgs, renamedArgs),
             getResolverScopeInitializationFragment(hasResolver, hasAccounts, hasAnyArgs),
@@ -126,6 +128,20 @@ export function getInstructionFunctionFragment(
 function getProgramAddressInitializationFragment(programAddressConstant: Fragment): Fragment {
     return fragment`// Program address.
 const programAddress = config?.programAddress ?? ${programAddressConstant};`;
+}
+
+/**
+ * Renders the `getAccountMeta` helper used to convert both the instruction's accounts and
+ * its remaining accounts into account metas, so that they share the same semantics.
+ */
+function getAccountMetaHelperFragment(
+    instructionNode: InstructionNode,
+    hasAccountMetas: boolean,
+): Fragment | undefined {
+    if (!hasAccountMetas) return;
+    const optionalAccountStrategy = instructionNode.optionalAccountStrategy ?? 'programId';
+    return fragment`// Account meta helper.
+const getAccountMeta = ${use('getAccountMetaFactory', 'solanaProgramClientCore')}(programAddress, '${optionalAccountStrategy}');`;
 }
 
 function getAccountsInitializationFragment(
@@ -210,16 +226,10 @@ function getReturnStatementFragment(
     },
 ): Fragment {
     const { instructionNode, hasByteDeltas, hasData, hasDataArgs, hasRemainingAccounts, nameApi } = scope;
-    const optionalAccountStrategy = instructionNode.optionalAccountStrategy ?? 'programId';
     const hasAccounts = (instructionNode.accounts ?? []).length > 0;
     const hasLegacyOptionalAccounts =
         instructionNode.optionalAccountStrategy === 'omitted' &&
         (instructionNode.accounts ?? []).some(account => account.isOptional);
-
-    // Account meta helper.
-    const getAccountMeta = hasAccounts
-        ? fragment`const getAccountMeta = ${use('getAccountMetaFactory', 'solanaProgramClientCore')}(programAddress, '${optionalAccountStrategy}');`
-        : '';
 
     // Accounts.
     const accountItems = [
@@ -257,7 +267,7 @@ function getReturnStatementFragment(
         fs => mergeFragments(fs, cs => cs.join(', ')),
     );
 
-    return fragment`${getAccountMeta}\nreturn Object.freeze({ ${instructionAttributes} } as ${scope.syncReturnTypeFragment});`;
+    return fragment`return Object.freeze({ ${instructionAttributes} } as ${scope.syncReturnTypeFragment});`;
 }
 
 function getReturnTypeFragment(instructionTypeFragment: Fragment, hasByteDeltas: boolean, useAsync: boolean): Fragment {

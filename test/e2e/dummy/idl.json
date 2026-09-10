@@ -282,6 +282,31 @@
           }
         ],
         "remainingAccounts": []
+      },
+      {
+        "kind": "instructionNode",
+        "name": "instruction13",
+        "optionalAccountStrategy": "programId",
+        "docs": ["Testing remaining accounts backed by an instruction argument, without any other account"],
+        "accounts": [],
+        "arguments": [
+          {
+            "kind": "instructionArgumentNode",
+            "name": "addresses",
+            "type": {
+              "kind": "arrayTypeNode",
+              "item": { "kind": "publicKeyTypeNode" },
+              "count": { "kind": "prefixedCountNode", "prefix": { "kind": "numberTypeNode", "format": "u8", "endian": "le" } }
+            }
+          }
+        ],
+        "remainingAccounts": [
+          {
+            "kind": "instructionRemainingAccountsNode",
+            "value": { "kind": "argumentValueNode", "name": "addresses" },
+            "isWritable": true
+          }
+        ]
       }
     ],
     "definedTypes": [

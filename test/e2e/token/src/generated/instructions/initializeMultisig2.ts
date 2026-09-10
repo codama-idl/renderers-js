@@ -7,7 +7,6 @@
  */
 
 import {
-    AccountRole,
     combineCodec,
     getStructDecoder,
     getStructEncoder,
@@ -29,6 +28,7 @@ import {
 } from '@solana/kit';
 import {
     getAccountMetaFactory,
+    getNonNullResolvedInstructionInput,
     type InstructionAccountInput,
     type InstructionAccountInputAddress,
     type ResolvedInstructionAccount,
@@ -91,7 +91,7 @@ export type InitializeMultisig2Input<TAccountMultisig extends InstructionAccount
     /** The multisignature account to initialize. */
     multisig: TAccountMultisig;
     m: InitializeMultisig2InstructionDataArgs['m'];
-    signers: Array<Address>;
+    signers: Array<InstructionAccountInput>;
 };
 
 export function getInitializeMultisig2Instruction<
@@ -107,6 +107,9 @@ export function getInitializeMultisig2Instruction<
     // Program address.
     const programAddress = config?.programAddress ?? TOKEN_PROGRAM_ADDRESS;
 
+    // Account meta helper.
+    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+
     // Original accounts.
     const originalAccounts = { multisig: { value: input.multisig ?? null, isSigner: false, isWritable: true } };
     const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
@@ -115,9 +118,13 @@ export function getInitializeMultisig2Instruction<
     const args = { ...input };
 
     // Remaining accounts.
-    const remainingAccounts: AccountMeta[] = args.signers.map(address => ({ address, role: AccountRole.READONLY }));
+    const remainingAccounts: AccountMeta[] = args.signers.map(value =>
+        getNonNullResolvedInstructionInput(
+            'signers',
+            getAccountMeta('signers', { value, isSigner: false, isWritable: false }),
+        ),
+    );
 
-    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [getAccountMeta('multisig', accounts.multisig), ...remainingAccounts],
         data: getInitializeMultisig2InstructionDataEncoder().encode(args as InitializeMultisig2InstructionDataArgs),

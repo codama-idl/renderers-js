@@ -134,6 +134,9 @@ export function getCreateAccountInstruction<
     // Program address.
     const programAddress = config?.programAddress ?? SYSTEM_PROGRAM_ADDRESS;
 
+    // Account meta helper.
+    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+
     // Original accounts.
     const originalAccounts = {
         payer: { value: input.payer ?? null, isSigner: true, isWritable: true },
@@ -147,7 +150,6 @@ export function getCreateAccountInstruction<
     // Bytes created or reallocated by the instruction.
     const byteDelta: number = [Number(args.space) + BASE_ACCOUNT_SIZE].reduce((a, b) => a + b, 0);
 
-    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [getAccountMeta('payer', accounts.payer), getAccountMeta('newAccount', accounts.newAccount)],
         byteDelta,

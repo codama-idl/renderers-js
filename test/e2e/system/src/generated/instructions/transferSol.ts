@@ -115,6 +115,9 @@ export function getTransferSolInstruction<
     // Program address.
     const programAddress = config?.programAddress ?? SYSTEM_PROGRAM_ADDRESS;
 
+    // Account meta helper.
+    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+
     // Original accounts.
     const originalAccounts = {
         source: { value: input.source ?? null, isSigner: true, isWritable: true },
@@ -125,7 +128,6 @@ export function getTransferSolInstruction<
     // Original args.
     const args = { ...input };
 
-    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [getAccountMeta('source', accounts.source), getAccountMeta('destination', accounts.destination)],
         data: getTransferSolInstructionDataEncoder().encode(args as TransferSolInstructionDataArgs),

@@ -167,6 +167,9 @@ export async function getExecuteInstructionAsync<
     // Program address.
     const programAddress = config?.programAddress ?? WEN_TRANSFER_GUARD_PROGRAM_ADDRESS;
 
+    // Account meta helper.
+    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+
     // Original accounts.
     const originalAccounts = {
         sourceAccount: { value: input.sourceAccount ?? null, isSigner: false, isWritable: false },
@@ -194,7 +197,6 @@ export async function getExecuteInstructionAsync<
             'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
     }
 
-    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
             getAccountMeta('sourceAccount', accounts.sourceAccount),
@@ -289,6 +291,9 @@ export function getExecuteInstruction<
     // Program address.
     const programAddress = config?.programAddress ?? WEN_TRANSFER_GUARD_PROGRAM_ADDRESS;
 
+    // Account meta helper.
+    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+
     // Original accounts.
     const originalAccounts = {
         sourceAccount: { value: input.sourceAccount ?? null, isSigner: false, isWritable: false },
@@ -310,7 +315,6 @@ export function getExecuteInstruction<
             'Sysvar1nstructions1111111111111111111111111' as Address<'Sysvar1nstructions1111111111111111111111111'>;
     }
 
-    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
             getAccountMeta('sourceAccount', accounts.sourceAccount),

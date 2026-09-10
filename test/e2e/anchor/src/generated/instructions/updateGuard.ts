@@ -188,6 +188,9 @@ export async function getUpdateGuardInstructionAsync<
     // Program address.
     const programAddress = config?.programAddress ?? WEN_TRANSFER_GUARD_PROGRAM_ADDRESS;
 
+    // Account meta helper.
+    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+
     // Original accounts.
     const originalAccounts = {
         guard: { value: input.guard ?? null, isSigner: false, isWritable: true },
@@ -233,7 +236,6 @@ export async function getUpdateGuardInstructionAsync<
             '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
     }
 
-    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
             getAccountMeta('guard', accounts.guard),
@@ -305,6 +307,9 @@ export function getUpdateGuardInstruction<
     // Program address.
     const programAddress = config?.programAddress ?? WEN_TRANSFER_GUARD_PROGRAM_ADDRESS;
 
+    // Account meta helper.
+    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+
     // Original accounts.
     const originalAccounts = {
         guard: { value: input.guard ?? null, isSigner: false, isWritable: true },
@@ -329,7 +334,6 @@ export function getUpdateGuardInstruction<
             '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
     }
 
-    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
             getAccountMeta('guard', accounts.guard),

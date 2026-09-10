@@ -7,7 +7,6 @@
  */
 
 import {
-    AccountRole,
     combineCodec,
     getStructDecoder,
     getStructEncoder,
@@ -30,11 +29,11 @@ import {
     type ReadonlyAccount,
     type ReadonlySignerAccount,
     type ReadonlyUint8Array,
-    type TransactionSigner,
     type WritableAccount,
 } from '@solana/kit';
 import {
     getAccountMetaFactory,
+    getNonNullResolvedInstructionInput,
     type InstructionAccountInput,
     type InstructionAccountInputAddress,
     type InstructionSignerInput,
@@ -121,7 +120,7 @@ export type BurnCheckedInput<
     authority: TAccountAuthority;
     amount: BurnCheckedInstructionDataArgs['amount'];
     decimals: BurnCheckedInstructionDataArgs['decimals'];
-    multiSigners?: Array<TransactionSigner>;
+    multiSigners?: Array<InstructionSignerInput>;
 };
 
 export function getBurnCheckedInstruction<
@@ -146,6 +145,9 @@ export function getBurnCheckedInstruction<
     // Program address.
     const programAddress = config?.programAddress ?? TOKEN_PROGRAM_ADDRESS;
 
+    // Account meta helper.
+    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+
     // Original accounts.
     const originalAccounts = {
         account: { value: input.account ?? null, isSigner: false, isWritable: true },
@@ -158,13 +160,13 @@ export function getBurnCheckedInstruction<
     const args = { ...input };
 
     // Remaining accounts.
-    const remainingAccounts: AccountMeta[] = (args.multiSigners ?? []).map(signer => ({
-        address: signer.address,
-        role: AccountRole.READONLY_SIGNER,
-        signer,
-    }));
+    const remainingAccounts: AccountMeta[] = (args.multiSigners ?? []).map(value =>
+        getNonNullResolvedInstructionInput(
+            'multiSigners',
+            getAccountMeta('multiSigners', { value, isSigner: true, isWritable: false }),
+        ),
+    );
 
-    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
             getAccountMeta('account', accounts.account),

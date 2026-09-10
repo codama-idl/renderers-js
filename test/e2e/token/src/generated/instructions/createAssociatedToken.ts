@@ -151,6 +151,9 @@ export async function getCreateAssociatedTokenInstructionAsync<
     // Program address.
     const programAddress = config?.programAddress ?? ASSOCIATED_TOKEN_PROGRAM_ADDRESS;
 
+    // Account meta helper.
+    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+
     // Original accounts.
     const originalAccounts = {
         payer: { value: input.payer ?? null, isSigner: true, isWritable: true },
@@ -182,7 +185,6 @@ export async function getCreateAssociatedTokenInstructionAsync<
             '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
     }
 
-    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
             getAccountMeta('payer', accounts.payer),
@@ -257,6 +259,9 @@ export function getCreateAssociatedTokenInstruction<
     // Program address.
     const programAddress = config?.programAddress ?? ASSOCIATED_TOKEN_PROGRAM_ADDRESS;
 
+    // Account meta helper.
+    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+
     // Original accounts.
     const originalAccounts = {
         payer: { value: input.payer ?? null, isSigner: true, isWritable: true },
@@ -278,7 +283,6 @@ export function getCreateAssociatedTokenInstruction<
             '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
     }
 
-    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
             getAccountMeta('payer', accounts.payer),

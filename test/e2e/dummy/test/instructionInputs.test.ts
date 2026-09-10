@@ -17,8 +17,11 @@ import { expect, expectTypeOf, test } from 'vitest';
 import {
     DUMMY_PROGRAM_ADDRESS,
     dummyProgram,
+    getInstruction2Instruction,
+    getInstruction8Instruction,
     getInstruction11Instruction,
     getInstruction12Instruction,
+    getInstruction13Instruction,
     type DummyPluginRequirements,
 } from '../src/index.js';
 
@@ -233,4 +236,57 @@ test('an account whose bump seed is consumed by an argument must be a PDA unless
     });
     expect(instruction.accounts[3]).toStrictEqual({ address: metadataAddress, role: AccountRole.READONLY });
     expect(instruction.data).toStrictEqual(new Uint8Array([42]));
+});
+
+test('remaining accounts accept the same inputs as instruction accounts', () => {
+    // Given remaining accounts provided as an address, an address wrapper, a PDA,
+    // a role override and a signer, for an instruction whose remaining accounts are not signers.
+    const signer = createNoopSigner(delegateAddress);
+    const instruction = getInstruction2Instruction({
+        remainingAccounts: [
+            authorityAddress,
+            new AddressWrapper(targetAddress),
+            metadata,
+            { address: metadataAddress, role: AccountRole.WRITABLE },
+            signer,
+        ],
+    });
+
+    // Then every input resolves to an account meta following the same rules as
+    // instruction accounts: addresses are extracted from any input, explicit roles
+    // take precedence and signers merely carry their address for non-signer accounts.
+    expect(instruction.accounts).toStrictEqual([
+        { address: authorityAddress, role: AccountRole.READONLY },
+        { address: targetAddress, role: AccountRole.READONLY },
+        { address: metadataAddress, role: AccountRole.READONLY },
+        { address: metadataAddress, role: AccountRole.WRITABLE },
+        { address: delegateAddress, role: AccountRole.READONLY },
+    ]);
+});
+
+test('remaining accounts that may be signers are upgraded when a signer is provided', () => {
+    // Given remaining accounts provided as an address and a signer, for an instruction
+    // whose remaining accounts may or may not be signers.
+    const signer = createNoopSigner(delegateAddress);
+    const instruction = getInstruction8Instruction({ remainingAccounts: [authorityAddress, signer] });
+
+    // Then only the signer is upgraded to a signer meta.
+    expect(instruction.accounts).toStrictEqual([
+        { address: authorityAddress, role: AccountRole.READONLY },
+        { address: delegateAddress, role: AccountRole.READONLY_SIGNER, signer },
+    ]);
+});
+
+test('remaining accounts backed by an instruction argument are derived from that argument', () => {
+    // Given an instruction whose remaining accounts are backed by an array of addresses
+    // encoded in the instruction data, and which has no other account.
+    const instruction = getInstruction13Instruction({ addresses: [authorityAddress, targetAddress] });
+
+    // Then the addresses are both encoded in the data and appended as remaining accounts
+    // with the role declared by the IDL.
+    expect(instruction.accounts).toStrictEqual([
+        { address: authorityAddress, role: AccountRole.WRITABLE },
+        { address: targetAddress, role: AccountRole.WRITABLE },
+    ]);
+    expect(instruction.data[0]).toBe(2);
 });

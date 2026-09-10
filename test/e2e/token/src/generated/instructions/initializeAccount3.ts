@@ -120,6 +120,9 @@ export function getInitializeAccount3Instruction<
     // Program address.
     const programAddress = config?.programAddress ?? TOKEN_PROGRAM_ADDRESS;
 
+    // Account meta helper.
+    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+
     // Original accounts.
     const originalAccounts = {
         account: { value: input.account ?? null, isSigner: false, isWritable: true },
@@ -130,7 +133,6 @@ export function getInitializeAccount3Instruction<
     // Original args.
     const args = { ...input };
 
-    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [getAccountMeta('account', accounts.account), getAccountMeta('mint', accounts.mint)],
         data: getInitializeAccount3InstructionDataEncoder().encode(args as InitializeAccount3InstructionDataArgs),

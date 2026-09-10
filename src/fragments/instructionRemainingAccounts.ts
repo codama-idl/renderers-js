@@ -1,11 +1,4 @@
-import {
-    assertIsNode,
-    camelCase,
-    getAllInstructionArguments,
-    InstructionNode,
-    InstructionRemainingAccountsNode,
-    isNode,
-} from '@codama/nodes';
+import { assertIsNode, camelCase, InstructionNode, InstructionRemainingAccountsNode, isNode } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
 import {
@@ -13,6 +6,7 @@ import {
     addFragmentImports,
     Fragment,
     fragment,
+    isRemainingAccountsBackedByArgument,
     mergeFragments,
     RenderScope,
     use,
@@ -69,26 +63,25 @@ function getArgumentValueNodeFragment(
     const isOptional = remainingAccounts.isOptional ?? false;
     const isSigner = remainingAccounts.isSigner ?? false;
     const isWritable = remainingAccounts.isWritable ?? false;
-    const accountRole = use('AccountRole', 'solanaInstructions');
-    const nonSignerRole = isWritable ? fragment`${accountRole}.WRITABLE` : fragment`${accountRole}.READONLY`;
-    const signerRole = isWritable ? fragment`${accountRole}.WRITABLE_SIGNER` : fragment`${accountRole}.READONLY_SIGNER`;
-    const role = isSigner === true ? signerRole : nonSignerRole;
     const argumentArray = isOptional ? `(args.${argumentName} ?? [])` : `args.${argumentName}`;
 
-    // The argument already exists or was added as `Array<Address>`.
-    const allArguments = getAllInstructionArguments(instructionNode);
-    const argumentExists = allArguments.some(arg => arg.name === remainingAccounts.value.name);
-    if (argumentExists || isSigner === false) {
-        return fragment`${argumentArray}.map((address) => ({ address, role: ${role} }))`;
+    // The argument already exists as an instruction argument — i.e. an `Array<Address>`
+    // encoded in the instruction data — so its role is derived from the IDL flags alone.
+    if (isRemainingAccountsBackedByArgument(instructionNode, remainingAccounts)) {
+        const accountRole = use('AccountRole', 'solanaInstructions');
+        const role = (() => {
+            if (isSigner === true) return isWritable ? 'WRITABLE_SIGNER' : 'READONLY_SIGNER';
+            return isWritable ? 'WRITABLE' : 'READONLY';
+        })();
+        return fragment`${argumentArray}.map((address) => ({ address, role: ${accountRole}.${role} }))`;
     }
 
-    // The argument was added as `Array<TransactionSigner | Address>`.
-    if (isSigner === 'either') {
-        return fragment`${argumentArray}.map((addressOrSigner) => (typeof addressOrSigner === "string" ? { address: addressOrSigner, role: ${role} } : { address: addressOrSigner.address, role: ${role}, signer: addressOrSigner }))`;
-    }
-
-    // The argument was added as `Array<TransactionSigner>`.
-    return fragment`${argumentArray}.map((signer) => ({ address: signer.address, role: ${signerRole}, signer }))`;
+    // Otherwise, the argument was added to the instruction input and accepts the same inputs
+    // as instruction accounts, so it goes through the same account meta helper. The helper
+    // only yields `undefined` for missing optional accounts, which array items cannot be.
+    const getNonNullResolvedInstructionInput = use('getNonNullResolvedInstructionInput', 'solanaProgramClientCore');
+    const isSignerFlag = isSigner === 'either' ? "'either'" : String(isSigner);
+    return fragment`${argumentArray}.map((value) => ${getNonNullResolvedInstructionInput}("${argumentName}", getAccountMeta("${argumentName}", { value, isSigner: ${isSignerFlag}, isWritable: ${isWritable} })))`;
 }
 
 function getResolverValueNodeFragment(

@@ -117,6 +117,9 @@ export function getInstruction12Instruction<
     // Program address.
     const programAddress = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
 
+    // Account meta helper.
+    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+
     // Original accounts.
     const originalAccounts = {
         authority: { value: input.authority ?? null, isSigner: true, isWritable: false },
@@ -134,7 +137,6 @@ export function getInstruction12Instruction<
         args.bump = getResolvedInstructionAccountAsProgramDerivedAddress('metadata', accounts.metadata.value)[1];
     }
 
-    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
             getAccountMeta('authority', accounts.authority),

@@ -184,6 +184,9 @@ export async function getRecoverNestedAssociatedTokenInstructionAsync<
     // Program address.
     const programAddress = config?.programAddress ?? ASSOCIATED_TOKEN_PROGRAM_ADDRESS;
 
+    // Account meta helper.
+    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+
     // Original accounts.
     const originalAccounts = {
         nestedAssociatedAccountAddress: {
@@ -256,7 +259,6 @@ export async function getRecoverNestedAssociatedTokenInstructionAsync<
         );
     }
 
-    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
             getAccountMeta('nestedAssociatedAccountAddress', accounts.nestedAssociatedAccountAddress),
@@ -369,6 +371,9 @@ export function getRecoverNestedAssociatedTokenInstruction<
     // Program address.
     const programAddress = config?.programAddress ?? ASSOCIATED_TOKEN_PROGRAM_ADDRESS;
 
+    // Account meta helper.
+    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+
     // Original accounts.
     const originalAccounts = {
         nestedAssociatedAccountAddress: {
@@ -399,7 +404,6 @@ export function getRecoverNestedAssociatedTokenInstruction<
             'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;
     }
 
-    const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
     return Object.freeze({
         accounts: [
             getAccountMeta('nestedAssociatedAccountAddress', accounts.nestedAssociatedAccountAddress),
