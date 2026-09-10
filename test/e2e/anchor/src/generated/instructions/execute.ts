@@ -33,7 +33,10 @@ import {
 import {
     getAccountMetaFactory,
     getAddressFromResolvedInstructionAccount,
+    type InstructionAccountInput,
+    type InstructionAccountInputAddress,
     type ResolvedInstructionAccount,
+    type ResolvedInstructionAccountMeta,
 } from '@solana/kit/program-client-core';
 import { findExtraMetasAccountPda } from '../pdas';
 import { WEN_TRANSFER_GUARD_PROGRAM_ADDRESS } from '../programs';
@@ -102,32 +105,32 @@ export function getExecuteInstructionDataCodec(): FixedSizeCodec<ExecuteInstruct
 }
 
 export type ExecuteAsyncInput<
-    TAccountSourceAccount extends string = string,
-    TAccountMint extends string = string,
-    TAccountDestinationAccount extends string = string,
-    TAccountOwnerDelegate extends string = string,
-    TAccountExtraMetasAccount extends string = string,
-    TAccountGuard extends string = string,
-    TAccountInstructionSysvarAccount extends string = string,
+    TAccountSourceAccount extends InstructionAccountInput = InstructionAccountInput,
+    TAccountMint extends InstructionAccountInput = InstructionAccountInput,
+    TAccountDestinationAccount extends InstructionAccountInput = InstructionAccountInput,
+    TAccountOwnerDelegate extends InstructionAccountInput = InstructionAccountInput,
+    TAccountExtraMetasAccount extends InstructionAccountInput = InstructionAccountInput,
+    TAccountGuard extends InstructionAccountInput = InstructionAccountInput,
+    TAccountInstructionSysvarAccount extends InstructionAccountInput = InstructionAccountInput,
 > = {
-    sourceAccount: Address<TAccountSourceAccount>;
-    mint: Address<TAccountMint>;
-    destinationAccount: Address<TAccountDestinationAccount>;
-    ownerDelegate: Address<TAccountOwnerDelegate>;
-    extraMetasAccount?: Address<TAccountExtraMetasAccount>;
-    guard: Address<TAccountGuard>;
-    instructionSysvarAccount?: Address<TAccountInstructionSysvarAccount>;
+    sourceAccount: TAccountSourceAccount;
+    mint: TAccountMint;
+    destinationAccount: TAccountDestinationAccount;
+    ownerDelegate: TAccountOwnerDelegate;
+    extraMetasAccount?: TAccountExtraMetasAccount;
+    guard: TAccountGuard;
+    instructionSysvarAccount?: TAccountInstructionSysvarAccount;
     amount: ExecuteInstructionDataArgs['amount'];
 };
 
 export async function getExecuteInstructionAsync<
-    TAccountSourceAccount extends string,
-    TAccountMint extends string,
-    TAccountDestinationAccount extends string,
-    TAccountOwnerDelegate extends string,
-    TAccountExtraMetasAccount extends string,
-    TAccountGuard extends string,
-    TAccountInstructionSysvarAccount extends string,
+    TAccountSourceAccount extends InstructionAccountInput,
+    TAccountMint extends InstructionAccountInput,
+    TAccountDestinationAccount extends InstructionAccountInput,
+    TAccountOwnerDelegate extends InstructionAccountInput,
+    TAccountExtraMetasAccount extends InstructionAccountInput,
+    TAccountGuard extends InstructionAccountInput,
+    TAccountInstructionSysvarAccount extends InstructionAccountInput,
     TProgramAddress extends Address = typeof WEN_TRANSFER_GUARD_PROGRAM_ADDRESS,
 >(
     input: ExecuteAsyncInput<
@@ -143,13 +146,22 @@ export async function getExecuteInstructionAsync<
 ): Promise<
     ExecuteInstruction<
         TProgramAddress,
-        TAccountSourceAccount,
-        TAccountMint,
-        TAccountDestinationAccount,
-        TAccountOwnerDelegate,
-        TAccountExtraMetasAccount,
-        TAccountGuard,
-        TAccountInstructionSysvarAccount
+        ResolvedInstructionAccountMeta<TAccountSourceAccount, InstructionAccountInputAddress<TAccountSourceAccount>>,
+        ResolvedInstructionAccountMeta<TAccountMint, InstructionAccountInputAddress<TAccountMint>>,
+        ResolvedInstructionAccountMeta<
+            TAccountDestinationAccount,
+            InstructionAccountInputAddress<TAccountDestinationAccount>
+        >,
+        ResolvedInstructionAccountMeta<TAccountOwnerDelegate, InstructionAccountInputAddress<TAccountOwnerDelegate>>,
+        ResolvedInstructionAccountMeta<
+            TAccountExtraMetasAccount,
+            InstructionAccountInputAddress<TAccountExtraMetasAccount>
+        >,
+        ResolvedInstructionAccountMeta<TAccountGuard, InstructionAccountInputAddress<TAccountGuard>>,
+        ResolvedInstructionAccountMeta<
+            TAccountInstructionSysvarAccount,
+            InstructionAccountInputAddress<TAccountInstructionSysvarAccount>
+        >
     >
 > {
     // Program address.
@@ -157,13 +169,13 @@ export async function getExecuteInstructionAsync<
 
     // Original accounts.
     const originalAccounts = {
-        sourceAccount: { value: input.sourceAccount ?? null, isWritable: false },
-        mint: { value: input.mint ?? null, isWritable: false },
-        destinationAccount: { value: input.destinationAccount ?? null, isWritable: false },
-        ownerDelegate: { value: input.ownerDelegate ?? null, isWritable: false },
-        extraMetasAccount: { value: input.extraMetasAccount ?? null, isWritable: false },
-        guard: { value: input.guard ?? null, isWritable: false },
-        instructionSysvarAccount: { value: input.instructionSysvarAccount ?? null, isWritable: false },
+        sourceAccount: { value: input.sourceAccount ?? null, isSigner: false, isWritable: false },
+        mint: { value: input.mint ?? null, isSigner: false, isWritable: false },
+        destinationAccount: { value: input.destinationAccount ?? null, isSigner: false, isWritable: false },
+        ownerDelegate: { value: input.ownerDelegate ?? null, isSigner: false, isWritable: false },
+        extraMetasAccount: { value: input.extraMetasAccount ?? null, isSigner: false, isWritable: false },
+        guard: { value: input.guard ?? null, isSigner: false, isWritable: false },
+        instructionSysvarAccount: { value: input.instructionSysvarAccount ?? null, isSigner: false, isWritable: false },
     };
     const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
@@ -197,43 +209,52 @@ export async function getExecuteInstructionAsync<
         programAddress,
     } as ExecuteInstruction<
         TProgramAddress,
-        TAccountSourceAccount,
-        TAccountMint,
-        TAccountDestinationAccount,
-        TAccountOwnerDelegate,
-        TAccountExtraMetasAccount,
-        TAccountGuard,
-        TAccountInstructionSysvarAccount
+        ResolvedInstructionAccountMeta<TAccountSourceAccount, InstructionAccountInputAddress<TAccountSourceAccount>>,
+        ResolvedInstructionAccountMeta<TAccountMint, InstructionAccountInputAddress<TAccountMint>>,
+        ResolvedInstructionAccountMeta<
+            TAccountDestinationAccount,
+            InstructionAccountInputAddress<TAccountDestinationAccount>
+        >,
+        ResolvedInstructionAccountMeta<TAccountOwnerDelegate, InstructionAccountInputAddress<TAccountOwnerDelegate>>,
+        ResolvedInstructionAccountMeta<
+            TAccountExtraMetasAccount,
+            InstructionAccountInputAddress<TAccountExtraMetasAccount>
+        >,
+        ResolvedInstructionAccountMeta<TAccountGuard, InstructionAccountInputAddress<TAccountGuard>>,
+        ResolvedInstructionAccountMeta<
+            TAccountInstructionSysvarAccount,
+            InstructionAccountInputAddress<TAccountInstructionSysvarAccount>
+        >
     >);
 }
 
 export type ExecuteInput<
-    TAccountSourceAccount extends string = string,
-    TAccountMint extends string = string,
-    TAccountDestinationAccount extends string = string,
-    TAccountOwnerDelegate extends string = string,
-    TAccountExtraMetasAccount extends string = string,
-    TAccountGuard extends string = string,
-    TAccountInstructionSysvarAccount extends string = string,
+    TAccountSourceAccount extends InstructionAccountInput = InstructionAccountInput,
+    TAccountMint extends InstructionAccountInput = InstructionAccountInput,
+    TAccountDestinationAccount extends InstructionAccountInput = InstructionAccountInput,
+    TAccountOwnerDelegate extends InstructionAccountInput = InstructionAccountInput,
+    TAccountExtraMetasAccount extends InstructionAccountInput = InstructionAccountInput,
+    TAccountGuard extends InstructionAccountInput = InstructionAccountInput,
+    TAccountInstructionSysvarAccount extends InstructionAccountInput = InstructionAccountInput,
 > = {
-    sourceAccount: Address<TAccountSourceAccount>;
-    mint: Address<TAccountMint>;
-    destinationAccount: Address<TAccountDestinationAccount>;
-    ownerDelegate: Address<TAccountOwnerDelegate>;
-    extraMetasAccount: Address<TAccountExtraMetasAccount>;
-    guard: Address<TAccountGuard>;
-    instructionSysvarAccount?: Address<TAccountInstructionSysvarAccount>;
+    sourceAccount: TAccountSourceAccount;
+    mint: TAccountMint;
+    destinationAccount: TAccountDestinationAccount;
+    ownerDelegate: TAccountOwnerDelegate;
+    extraMetasAccount: TAccountExtraMetasAccount;
+    guard: TAccountGuard;
+    instructionSysvarAccount?: TAccountInstructionSysvarAccount;
     amount: ExecuteInstructionDataArgs['amount'];
 };
 
 export function getExecuteInstruction<
-    TAccountSourceAccount extends string,
-    TAccountMint extends string,
-    TAccountDestinationAccount extends string,
-    TAccountOwnerDelegate extends string,
-    TAccountExtraMetasAccount extends string,
-    TAccountGuard extends string,
-    TAccountInstructionSysvarAccount extends string,
+    TAccountSourceAccount extends InstructionAccountInput,
+    TAccountMint extends InstructionAccountInput,
+    TAccountDestinationAccount extends InstructionAccountInput,
+    TAccountOwnerDelegate extends InstructionAccountInput,
+    TAccountExtraMetasAccount extends InstructionAccountInput,
+    TAccountGuard extends InstructionAccountInput,
+    TAccountInstructionSysvarAccount extends InstructionAccountInput,
     TProgramAddress extends Address = typeof WEN_TRANSFER_GUARD_PROGRAM_ADDRESS,
 >(
     input: ExecuteInput<
@@ -248,26 +269,35 @@ export function getExecuteInstruction<
     config?: { programAddress?: TProgramAddress },
 ): ExecuteInstruction<
     TProgramAddress,
-    TAccountSourceAccount,
-    TAccountMint,
-    TAccountDestinationAccount,
-    TAccountOwnerDelegate,
-    TAccountExtraMetasAccount,
-    TAccountGuard,
-    TAccountInstructionSysvarAccount
+    ResolvedInstructionAccountMeta<TAccountSourceAccount, InstructionAccountInputAddress<TAccountSourceAccount>>,
+    ResolvedInstructionAccountMeta<TAccountMint, InstructionAccountInputAddress<TAccountMint>>,
+    ResolvedInstructionAccountMeta<
+        TAccountDestinationAccount,
+        InstructionAccountInputAddress<TAccountDestinationAccount>
+    >,
+    ResolvedInstructionAccountMeta<TAccountOwnerDelegate, InstructionAccountInputAddress<TAccountOwnerDelegate>>,
+    ResolvedInstructionAccountMeta<
+        TAccountExtraMetasAccount,
+        InstructionAccountInputAddress<TAccountExtraMetasAccount>
+    >,
+    ResolvedInstructionAccountMeta<TAccountGuard, InstructionAccountInputAddress<TAccountGuard>>,
+    ResolvedInstructionAccountMeta<
+        TAccountInstructionSysvarAccount,
+        InstructionAccountInputAddress<TAccountInstructionSysvarAccount>
+    >
 > {
     // Program address.
     const programAddress = config?.programAddress ?? WEN_TRANSFER_GUARD_PROGRAM_ADDRESS;
 
     // Original accounts.
     const originalAccounts = {
-        sourceAccount: { value: input.sourceAccount ?? null, isWritable: false },
-        mint: { value: input.mint ?? null, isWritable: false },
-        destinationAccount: { value: input.destinationAccount ?? null, isWritable: false },
-        ownerDelegate: { value: input.ownerDelegate ?? null, isWritable: false },
-        extraMetasAccount: { value: input.extraMetasAccount ?? null, isWritable: false },
-        guard: { value: input.guard ?? null, isWritable: false },
-        instructionSysvarAccount: { value: input.instructionSysvarAccount ?? null, isWritable: false },
+        sourceAccount: { value: input.sourceAccount ?? null, isSigner: false, isWritable: false },
+        mint: { value: input.mint ?? null, isSigner: false, isWritable: false },
+        destinationAccount: { value: input.destinationAccount ?? null, isSigner: false, isWritable: false },
+        ownerDelegate: { value: input.ownerDelegate ?? null, isSigner: false, isWritable: false },
+        extraMetasAccount: { value: input.extraMetasAccount ?? null, isSigner: false, isWritable: false },
+        guard: { value: input.guard ?? null, isSigner: false, isWritable: false },
+        instructionSysvarAccount: { value: input.instructionSysvarAccount ?? null, isSigner: false, isWritable: false },
     };
     const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
@@ -295,13 +325,22 @@ export function getExecuteInstruction<
         programAddress,
     } as ExecuteInstruction<
         TProgramAddress,
-        TAccountSourceAccount,
-        TAccountMint,
-        TAccountDestinationAccount,
-        TAccountOwnerDelegate,
-        TAccountExtraMetasAccount,
-        TAccountGuard,
-        TAccountInstructionSysvarAccount
+        ResolvedInstructionAccountMeta<TAccountSourceAccount, InstructionAccountInputAddress<TAccountSourceAccount>>,
+        ResolvedInstructionAccountMeta<TAccountMint, InstructionAccountInputAddress<TAccountMint>>,
+        ResolvedInstructionAccountMeta<
+            TAccountDestinationAccount,
+            InstructionAccountInputAddress<TAccountDestinationAccount>
+        >,
+        ResolvedInstructionAccountMeta<TAccountOwnerDelegate, InstructionAccountInputAddress<TAccountOwnerDelegate>>,
+        ResolvedInstructionAccountMeta<
+            TAccountExtraMetasAccount,
+            InstructionAccountInputAddress<TAccountExtraMetasAccount>
+        >,
+        ResolvedInstructionAccountMeta<TAccountGuard, InstructionAccountInputAddress<TAccountGuard>>,
+        ResolvedInstructionAccountMeta<
+            TAccountInstructionSysvarAccount,
+            InstructionAccountInputAddress<TAccountInstructionSysvarAccount>
+        >
     >);
 }
 

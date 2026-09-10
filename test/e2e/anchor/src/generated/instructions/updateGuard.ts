@@ -37,13 +37,16 @@ import {
     type ReadonlyAccount,
     type ReadonlySignerAccount,
     type ReadonlyUint8Array,
-    type TransactionSigner,
     type WritableAccount,
 } from '@solana/kit';
 import {
     getAccountMetaFactory,
     getAddressFromResolvedInstructionAccount,
+    type InstructionAccountInput,
+    type InstructionAccountInputAddress,
+    type InstructionSignerInput,
     type ResolvedInstructionAccount,
+    type ResolvedInstructionAccountMeta,
 } from '@solana/kit/program-client-core';
 import { findGuardPda } from '../pdas';
 import { WEN_TRANSFER_GUARD_PROGRAM_ADDRESS } from '../programs';
@@ -135,31 +138,31 @@ export function getUpdateGuardInstructionDataCodec(): Codec<
 }
 
 export type UpdateGuardAsyncInput<
-    TAccountGuard extends string = string,
-    TAccountMint extends string = string,
-    TAccountTokenAccount extends string = string,
-    TAccountGuardAuthority extends string = string,
-    TAccountTokenProgram extends string = string,
-    TAccountSystemProgram extends string = string,
+    TAccountGuard extends InstructionAccountInput = InstructionAccountInput,
+    TAccountMint extends InstructionAccountInput = InstructionAccountInput,
+    TAccountTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+    TAccountGuardAuthority extends InstructionSignerInput = InstructionSignerInput,
+    TAccountTokenProgram extends InstructionAccountInput = InstructionAccountInput,
+    TAccountSystemProgram extends InstructionAccountInput = InstructionAccountInput,
 > = {
-    guard?: Address<TAccountGuard>;
-    mint: Address<TAccountMint>;
-    tokenAccount?: Address<TAccountTokenAccount>;
-    guardAuthority: TransactionSigner<TAccountGuardAuthority>;
-    tokenProgram?: Address<TAccountTokenProgram>;
-    systemProgram?: Address<TAccountSystemProgram>;
+    guard?: TAccountGuard;
+    mint: TAccountMint;
+    tokenAccount?: TAccountTokenAccount;
+    guardAuthority: TAccountGuardAuthority;
+    tokenProgram?: TAccountTokenProgram;
+    systemProgram?: TAccountSystemProgram;
     cpiRule: UpdateGuardInstructionDataArgs['cpiRule'];
     transferAmountRule: UpdateGuardInstructionDataArgs['transferAmountRule'];
     additionalFieldsRule: UpdateGuardInstructionDataArgs['additionalFieldsRule'];
 };
 
 export async function getUpdateGuardInstructionAsync<
-    TAccountGuard extends string,
-    TAccountMint extends string,
-    TAccountTokenAccount extends string,
-    TAccountGuardAuthority extends string,
-    TAccountTokenProgram extends string,
-    TAccountSystemProgram extends string,
+    TAccountGuard extends InstructionAccountInput,
+    TAccountMint extends InstructionAccountInput,
+    TAccountTokenAccount extends InstructionAccountInput,
+    TAccountGuardAuthority extends InstructionSignerInput,
+    TAccountTokenProgram extends InstructionAccountInput,
+    TAccountSystemProgram extends InstructionAccountInput,
     TProgramAddress extends Address = typeof WEN_TRANSFER_GUARD_PROGRAM_ADDRESS,
 >(
     input: UpdateGuardAsyncInput<
@@ -174,12 +177,12 @@ export async function getUpdateGuardInstructionAsync<
 ): Promise<
     UpdateGuardInstruction<
         TProgramAddress,
-        TAccountGuard,
-        TAccountMint,
-        TAccountTokenAccount,
-        TAccountGuardAuthority,
-        TAccountTokenProgram,
-        TAccountSystemProgram
+        ResolvedInstructionAccountMeta<TAccountGuard, InstructionAccountInputAddress<TAccountGuard>>,
+        ResolvedInstructionAccountMeta<TAccountMint, InstructionAccountInputAddress<TAccountMint>>,
+        ResolvedInstructionAccountMeta<TAccountTokenAccount, InstructionAccountInputAddress<TAccountTokenAccount>>,
+        ResolvedInstructionAccountMeta<TAccountGuardAuthority, InstructionAccountInputAddress<TAccountGuardAuthority>>,
+        ResolvedInstructionAccountMeta<TAccountTokenProgram, InstructionAccountInputAddress<TAccountTokenProgram>>,
+        ResolvedInstructionAccountMeta<TAccountSystemProgram, InstructionAccountInputAddress<TAccountSystemProgram>>
     >
 > {
     // Program address.
@@ -187,12 +190,12 @@ export async function getUpdateGuardInstructionAsync<
 
     // Original accounts.
     const originalAccounts = {
-        guard: { value: input.guard ?? null, isWritable: true },
-        mint: { value: input.mint ?? null, isWritable: false },
-        tokenAccount: { value: input.tokenAccount ?? null, isWritable: false },
-        guardAuthority: { value: input.guardAuthority ?? null, isWritable: false },
-        tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
-        systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+        guard: { value: input.guard ?? null, isSigner: false, isWritable: true },
+        mint: { value: input.mint ?? null, isSigner: false, isWritable: false },
+        tokenAccount: { value: input.tokenAccount ?? null, isSigner: false, isWritable: false },
+        guardAuthority: { value: input.guardAuthority ?? null, isSigner: true, isWritable: false },
+        tokenProgram: { value: input.tokenProgram ?? null, isSigner: false, isWritable: false },
+        systemProgram: { value: input.systemProgram ?? null, isSigner: false, isWritable: false },
     };
     const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
@@ -244,41 +247,41 @@ export async function getUpdateGuardInstructionAsync<
         programAddress,
     } as UpdateGuardInstruction<
         TProgramAddress,
-        TAccountGuard,
-        TAccountMint,
-        TAccountTokenAccount,
-        TAccountGuardAuthority,
-        TAccountTokenProgram,
-        TAccountSystemProgram
+        ResolvedInstructionAccountMeta<TAccountGuard, InstructionAccountInputAddress<TAccountGuard>>,
+        ResolvedInstructionAccountMeta<TAccountMint, InstructionAccountInputAddress<TAccountMint>>,
+        ResolvedInstructionAccountMeta<TAccountTokenAccount, InstructionAccountInputAddress<TAccountTokenAccount>>,
+        ResolvedInstructionAccountMeta<TAccountGuardAuthority, InstructionAccountInputAddress<TAccountGuardAuthority>>,
+        ResolvedInstructionAccountMeta<TAccountTokenProgram, InstructionAccountInputAddress<TAccountTokenProgram>>,
+        ResolvedInstructionAccountMeta<TAccountSystemProgram, InstructionAccountInputAddress<TAccountSystemProgram>>
     >);
 }
 
 export type UpdateGuardInput<
-    TAccountGuard extends string = string,
-    TAccountMint extends string = string,
-    TAccountTokenAccount extends string = string,
-    TAccountGuardAuthority extends string = string,
-    TAccountTokenProgram extends string = string,
-    TAccountSystemProgram extends string = string,
+    TAccountGuard extends InstructionAccountInput = InstructionAccountInput,
+    TAccountMint extends InstructionAccountInput = InstructionAccountInput,
+    TAccountTokenAccount extends InstructionAccountInput = InstructionAccountInput,
+    TAccountGuardAuthority extends InstructionSignerInput = InstructionSignerInput,
+    TAccountTokenProgram extends InstructionAccountInput = InstructionAccountInput,
+    TAccountSystemProgram extends InstructionAccountInput = InstructionAccountInput,
 > = {
-    guard: Address<TAccountGuard>;
-    mint: Address<TAccountMint>;
-    tokenAccount: Address<TAccountTokenAccount>;
-    guardAuthority: TransactionSigner<TAccountGuardAuthority>;
-    tokenProgram?: Address<TAccountTokenProgram>;
-    systemProgram?: Address<TAccountSystemProgram>;
+    guard: TAccountGuard;
+    mint: TAccountMint;
+    tokenAccount: TAccountTokenAccount;
+    guardAuthority: TAccountGuardAuthority;
+    tokenProgram?: TAccountTokenProgram;
+    systemProgram?: TAccountSystemProgram;
     cpiRule: UpdateGuardInstructionDataArgs['cpiRule'];
     transferAmountRule: UpdateGuardInstructionDataArgs['transferAmountRule'];
     additionalFieldsRule: UpdateGuardInstructionDataArgs['additionalFieldsRule'];
 };
 
 export function getUpdateGuardInstruction<
-    TAccountGuard extends string,
-    TAccountMint extends string,
-    TAccountTokenAccount extends string,
-    TAccountGuardAuthority extends string,
-    TAccountTokenProgram extends string,
-    TAccountSystemProgram extends string,
+    TAccountGuard extends InstructionAccountInput,
+    TAccountMint extends InstructionAccountInput,
+    TAccountTokenAccount extends InstructionAccountInput,
+    TAccountGuardAuthority extends InstructionSignerInput,
+    TAccountTokenProgram extends InstructionAccountInput,
+    TAccountSystemProgram extends InstructionAccountInput,
     TProgramAddress extends Address = typeof WEN_TRANSFER_GUARD_PROGRAM_ADDRESS,
 >(
     input: UpdateGuardInput<
@@ -292,24 +295,24 @@ export function getUpdateGuardInstruction<
     config?: { programAddress?: TProgramAddress },
 ): UpdateGuardInstruction<
     TProgramAddress,
-    TAccountGuard,
-    TAccountMint,
-    TAccountTokenAccount,
-    TAccountGuardAuthority,
-    TAccountTokenProgram,
-    TAccountSystemProgram
+    ResolvedInstructionAccountMeta<TAccountGuard, InstructionAccountInputAddress<TAccountGuard>>,
+    ResolvedInstructionAccountMeta<TAccountMint, InstructionAccountInputAddress<TAccountMint>>,
+    ResolvedInstructionAccountMeta<TAccountTokenAccount, InstructionAccountInputAddress<TAccountTokenAccount>>,
+    ResolvedInstructionAccountMeta<TAccountGuardAuthority, InstructionAccountInputAddress<TAccountGuardAuthority>>,
+    ResolvedInstructionAccountMeta<TAccountTokenProgram, InstructionAccountInputAddress<TAccountTokenProgram>>,
+    ResolvedInstructionAccountMeta<TAccountSystemProgram, InstructionAccountInputAddress<TAccountSystemProgram>>
 > {
     // Program address.
     const programAddress = config?.programAddress ?? WEN_TRANSFER_GUARD_PROGRAM_ADDRESS;
 
     // Original accounts.
     const originalAccounts = {
-        guard: { value: input.guard ?? null, isWritable: true },
-        mint: { value: input.mint ?? null, isWritable: false },
-        tokenAccount: { value: input.tokenAccount ?? null, isWritable: false },
-        guardAuthority: { value: input.guardAuthority ?? null, isWritable: false },
-        tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
-        systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+        guard: { value: input.guard ?? null, isSigner: false, isWritable: true },
+        mint: { value: input.mint ?? null, isSigner: false, isWritable: false },
+        tokenAccount: { value: input.tokenAccount ?? null, isSigner: false, isWritable: false },
+        guardAuthority: { value: input.guardAuthority ?? null, isSigner: true, isWritable: false },
+        tokenProgram: { value: input.tokenProgram ?? null, isSigner: false, isWritable: false },
+        systemProgram: { value: input.systemProgram ?? null, isSigner: false, isWritable: false },
     };
     const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
@@ -340,12 +343,12 @@ export function getUpdateGuardInstruction<
         programAddress,
     } as UpdateGuardInstruction<
         TProgramAddress,
-        TAccountGuard,
-        TAccountMint,
-        TAccountTokenAccount,
-        TAccountGuardAuthority,
-        TAccountTokenProgram,
-        TAccountSystemProgram
+        ResolvedInstructionAccountMeta<TAccountGuard, InstructionAccountInputAddress<TAccountGuard>>,
+        ResolvedInstructionAccountMeta<TAccountMint, InstructionAccountInputAddress<TAccountMint>>,
+        ResolvedInstructionAccountMeta<TAccountTokenAccount, InstructionAccountInputAddress<TAccountTokenAccount>>,
+        ResolvedInstructionAccountMeta<TAccountGuardAuthority, InstructionAccountInputAddress<TAccountGuardAuthority>>,
+        ResolvedInstructionAccountMeta<TAccountTokenProgram, InstructionAccountInputAddress<TAccountTokenProgram>>,
+        ResolvedInstructionAccountMeta<TAccountSystemProgram, InstructionAccountInputAddress<TAccountSystemProgram>>
     >);
 }
 

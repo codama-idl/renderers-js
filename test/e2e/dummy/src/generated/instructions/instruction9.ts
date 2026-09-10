@@ -25,7 +25,13 @@ import {
     type ReadonlyAccount,
     type ReadonlyUint8Array,
 } from '@solana/kit';
-import { getAccountMetaFactory, type ResolvedInstructionAccount } from '@solana/kit/program-client-core';
+import {
+    getAccountMetaFactory,
+    type InstructionAccountInput,
+    type InstructionAccountInputAddress,
+    type ResolvedInstructionAccount,
+    type ResolvedInstructionAccountMeta,
+} from '@solana/kit/program-client-core';
 import { DUMMY_PROGRAM_ADDRESS } from '../programs';
 
 export type Instruction9Instruction<
@@ -60,23 +66,26 @@ export function getInstruction9InstructionDataCodec(): FixedSizeCodec<
     return combineCodec(getInstruction9InstructionDataEncoder(), getInstruction9InstructionDataDecoder());
 }
 
-export type Instruction9Input<TAccountAuthority extends string = string> = {
-    authority: Address<TAccountAuthority>;
+export type Instruction9Input<TAccountAuthority extends InstructionAccountInput = InstructionAccountInput> = {
+    authority: TAccountAuthority;
     authorityArg?: Instruction9InstructionDataArgs['authority'];
 };
 
 export function getInstruction9Instruction<
-    TAccountAuthority extends string,
+    TAccountAuthority extends InstructionAccountInput,
     TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS,
 >(
     input: Instruction9Input<TAccountAuthority>,
     config?: { programAddress?: TProgramAddress },
-): Instruction9Instruction<TProgramAddress, TAccountAuthority> {
+): Instruction9Instruction<
+    TProgramAddress,
+    ResolvedInstructionAccountMeta<TAccountAuthority, InstructionAccountInputAddress<TAccountAuthority>>
+> {
     // Program address.
     const programAddress = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
 
     // Original accounts.
-    const originalAccounts = { authority: { value: input.authority ?? null, isWritable: false } };
+    const originalAccounts = { authority: { value: input.authority ?? null, isSigner: false, isWritable: false } };
     const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
@@ -87,7 +96,10 @@ export function getInstruction9Instruction<
         accounts: [getAccountMeta('authority', accounts.authority)],
         data: getInstruction9InstructionDataEncoder().encode(args as Instruction9InstructionDataArgs),
         programAddress,
-    } as Instruction9Instruction<TProgramAddress, TAccountAuthority>);
+    } as Instruction9Instruction<
+        TProgramAddress,
+        ResolvedInstructionAccountMeta<TAccountAuthority, InstructionAccountInputAddress<TAccountAuthority>>
+    >);
 }
 
 export type ParsedInstruction9Instruction<

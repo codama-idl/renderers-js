@@ -27,6 +27,7 @@ import { addSelfPlanAndSendFunctions, type SelfPlanAndSendFunctions } from '@sol
 import {
     getInstruction10Instruction,
     getInstruction11Instruction,
+    getInstruction12Instruction,
     getInstruction1Instruction,
     getInstruction2Instruction,
     getInstruction3Instruction,
@@ -38,6 +39,7 @@ import {
     getInstruction9Instruction,
     parseInstruction10Instruction,
     parseInstruction11Instruction,
+    parseInstruction12Instruction,
     parseInstruction1Instruction,
     parseInstruction2Instruction,
     parseInstruction3Instruction,
@@ -49,6 +51,7 @@ import {
     parseInstruction9Instruction,
     type Instruction10Input,
     type Instruction11Input,
+    type Instruction12Input,
     type Instruction1Input,
     type Instruction2Input,
     type Instruction3Input,
@@ -60,6 +63,7 @@ import {
     type Instruction9Input,
     type ParsedInstruction10Instruction,
     type ParsedInstruction11Instruction,
+    type ParsedInstruction12Instruction,
     type ParsedInstruction1Instruction,
     type ParsedInstruction2Instruction,
     type ParsedInstruction3Instruction,
@@ -87,6 +91,7 @@ export enum DummyInstruction {
     Instruction9,
     Instruction10,
     Instruction11,
+    Instruction12,
 }
 
 export function identifyDummyInstruction(
@@ -116,7 +121,8 @@ export type ParsedDummyInstruction<TProgram extends string = 'Dummy1111111111111
     | ({ instructionType: DummyInstruction.Instruction8 } & ParsedInstruction8Instruction<TProgram>)
     | ({ instructionType: DummyInstruction.Instruction9 } & ParsedInstruction9Instruction<TProgram>)
     | ({ instructionType: DummyInstruction.Instruction10 } & ParsedInstruction10Instruction<TProgram>)
-    | ({ instructionType: DummyInstruction.Instruction11 } & ParsedInstruction11Instruction<TProgram>);
+    | ({ instructionType: DummyInstruction.Instruction11 } & ParsedInstruction11Instruction<TProgram>)
+    | ({ instructionType: DummyInstruction.Instruction12 } & ParsedInstruction12Instruction<TProgram>);
 
 export function parseDummyInstruction<TProgram extends string>(
     instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
@@ -159,6 +165,10 @@ export function parseDummyInstruction<TProgram extends string>(
         case DummyInstruction.Instruction11: {
             assertIsInstructionWithAccounts(instruction);
             return { instructionType: DummyInstruction.Instruction11, ...parseInstruction11Instruction(instruction) };
+        }
+        case DummyInstruction.Instruction12: {
+            assertIsInstructionWithAccounts(instruction);
+            return { instructionType: DummyInstruction.Instruction12, ...parseInstruction12Instruction(instruction) };
         }
         default:
             throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE, {
@@ -208,6 +218,9 @@ export type DummyPluginInstructions = {
     instruction11: (
         input: Instruction11Input,
     ) => ReturnType<typeof getInstruction11Instruction> & SelfPlanAndSendFunctions;
+    instruction12: (
+        input: Instruction12Input,
+    ) => ReturnType<typeof getInstruction12Instruction> & SelfPlanAndSendFunctions;
 };
 
 export type DummyPluginRequirements = ClientWithPayer & ClientWithTransactionPlanning & ClientWithTransactionSending;
@@ -236,6 +249,7 @@ export function dummyProgram() {
                         ),
                     instruction10: input => addSelfPlanAndSendFunctions(client, getInstruction10Instruction(input)),
                     instruction11: input => addSelfPlanAndSendFunctions(client, getInstruction11Instruction(input)),
+                    instruction12: input => addSelfPlanAndSendFunctions(client, getInstruction12Instruction(input)),
                 },
                 identifyInstruction: identifyDummyInstruction,
                 parseInstruction: parseDummyInstruction,

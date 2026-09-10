@@ -28,14 +28,17 @@ import {
     type InstructionWithData,
     type ReadonlyAccount,
     type ReadonlyUint8Array,
-    type TransactionSigner,
     type WritableAccount,
     type WritableSignerAccount,
 } from '@solana/kit';
 import {
     getAccountMetaFactory,
     getAddressFromResolvedInstructionAccount,
+    type InstructionAccountInput,
+    type InstructionAccountInputAddress,
+    type InstructionSignerInput,
     type ResolvedInstructionAccount,
+    type ResolvedInstructionAccountMeta,
 } from '@solana/kit/program-client-core';
 import { findExtraMetasAccountPda } from '../pdas';
 import { WEN_TRANSFER_GUARD_PROGRAM_ADDRESS } from '../programs';
@@ -99,28 +102,28 @@ export function getInitializeInstructionDataCodec(): FixedSizeCodec<
 }
 
 export type InitializeAsyncInput<
-    TAccountExtraMetasAccount extends string = string,
-    TAccountGuard extends string = string,
-    TAccountMint extends string = string,
-    TAccountTransferHookAuthority extends string = string,
-    TAccountSystemProgram extends string = string,
-    TAccountPayer extends string = string,
+    TAccountExtraMetasAccount extends InstructionAccountInput = InstructionAccountInput,
+    TAccountGuard extends InstructionAccountInput = InstructionAccountInput,
+    TAccountMint extends InstructionAccountInput = InstructionAccountInput,
+    TAccountTransferHookAuthority extends InstructionSignerInput = InstructionSignerInput,
+    TAccountSystemProgram extends InstructionAccountInput = InstructionAccountInput,
+    TAccountPayer extends InstructionSignerInput = InstructionSignerInput,
 > = {
-    extraMetasAccount?: Address<TAccountExtraMetasAccount>;
-    guard: Address<TAccountGuard>;
-    mint: Address<TAccountMint>;
-    transferHookAuthority: TransactionSigner<TAccountTransferHookAuthority>;
-    systemProgram?: Address<TAccountSystemProgram>;
-    payer: TransactionSigner<TAccountPayer>;
+    extraMetasAccount?: TAccountExtraMetasAccount;
+    guard: TAccountGuard;
+    mint: TAccountMint;
+    transferHookAuthority: TAccountTransferHookAuthority;
+    systemProgram?: TAccountSystemProgram;
+    payer: TAccountPayer;
 };
 
 export async function getInitializeInstructionAsync<
-    TAccountExtraMetasAccount extends string,
-    TAccountGuard extends string,
-    TAccountMint extends string,
-    TAccountTransferHookAuthority extends string,
-    TAccountSystemProgram extends string,
-    TAccountPayer extends string,
+    TAccountExtraMetasAccount extends InstructionAccountInput,
+    TAccountGuard extends InstructionAccountInput,
+    TAccountMint extends InstructionAccountInput,
+    TAccountTransferHookAuthority extends InstructionSignerInput,
+    TAccountSystemProgram extends InstructionAccountInput,
+    TAccountPayer extends InstructionSignerInput,
     TProgramAddress extends Address = typeof WEN_TRANSFER_GUARD_PROGRAM_ADDRESS,
 >(
     input: InitializeAsyncInput<
@@ -135,12 +138,18 @@ export async function getInitializeInstructionAsync<
 ): Promise<
     InitializeInstruction<
         TProgramAddress,
-        TAccountExtraMetasAccount,
-        TAccountGuard,
-        TAccountMint,
-        TAccountTransferHookAuthority,
-        TAccountSystemProgram,
-        TAccountPayer
+        ResolvedInstructionAccountMeta<
+            TAccountExtraMetasAccount,
+            InstructionAccountInputAddress<TAccountExtraMetasAccount>
+        >,
+        ResolvedInstructionAccountMeta<TAccountGuard, InstructionAccountInputAddress<TAccountGuard>>,
+        ResolvedInstructionAccountMeta<TAccountMint, InstructionAccountInputAddress<TAccountMint>>,
+        ResolvedInstructionAccountMeta<
+            TAccountTransferHookAuthority,
+            InstructionAccountInputAddress<TAccountTransferHookAuthority>
+        >,
+        ResolvedInstructionAccountMeta<TAccountSystemProgram, InstructionAccountInputAddress<TAccountSystemProgram>>,
+        ResolvedInstructionAccountMeta<TAccountPayer, InstructionAccountInputAddress<TAccountPayer>>
     >
 > {
     // Program address.
@@ -148,12 +157,12 @@ export async function getInitializeInstructionAsync<
 
     // Original accounts.
     const originalAccounts = {
-        extraMetasAccount: { value: input.extraMetasAccount ?? null, isWritable: true },
-        guard: { value: input.guard ?? null, isWritable: false },
-        mint: { value: input.mint ?? null, isWritable: false },
-        transferHookAuthority: { value: input.transferHookAuthority ?? null, isWritable: true },
-        systemProgram: { value: input.systemProgram ?? null, isWritable: false },
-        payer: { value: input.payer ?? null, isWritable: true },
+        extraMetasAccount: { value: input.extraMetasAccount ?? null, isSigner: false, isWritable: true },
+        guard: { value: input.guard ?? null, isSigner: false, isWritable: false },
+        mint: { value: input.mint ?? null, isSigner: false, isWritable: false },
+        transferHookAuthority: { value: input.transferHookAuthority ?? null, isSigner: true, isWritable: true },
+        systemProgram: { value: input.systemProgram ?? null, isSigner: false, isWritable: false },
+        payer: { value: input.payer ?? null, isSigner: true, isWritable: true },
     };
     const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
@@ -183,38 +192,44 @@ export async function getInitializeInstructionAsync<
         programAddress,
     } as InitializeInstruction<
         TProgramAddress,
-        TAccountExtraMetasAccount,
-        TAccountGuard,
-        TAccountMint,
-        TAccountTransferHookAuthority,
-        TAccountSystemProgram,
-        TAccountPayer
+        ResolvedInstructionAccountMeta<
+            TAccountExtraMetasAccount,
+            InstructionAccountInputAddress<TAccountExtraMetasAccount>
+        >,
+        ResolvedInstructionAccountMeta<TAccountGuard, InstructionAccountInputAddress<TAccountGuard>>,
+        ResolvedInstructionAccountMeta<TAccountMint, InstructionAccountInputAddress<TAccountMint>>,
+        ResolvedInstructionAccountMeta<
+            TAccountTransferHookAuthority,
+            InstructionAccountInputAddress<TAccountTransferHookAuthority>
+        >,
+        ResolvedInstructionAccountMeta<TAccountSystemProgram, InstructionAccountInputAddress<TAccountSystemProgram>>,
+        ResolvedInstructionAccountMeta<TAccountPayer, InstructionAccountInputAddress<TAccountPayer>>
     >);
 }
 
 export type InitializeInput<
-    TAccountExtraMetasAccount extends string = string,
-    TAccountGuard extends string = string,
-    TAccountMint extends string = string,
-    TAccountTransferHookAuthority extends string = string,
-    TAccountSystemProgram extends string = string,
-    TAccountPayer extends string = string,
+    TAccountExtraMetasAccount extends InstructionAccountInput = InstructionAccountInput,
+    TAccountGuard extends InstructionAccountInput = InstructionAccountInput,
+    TAccountMint extends InstructionAccountInput = InstructionAccountInput,
+    TAccountTransferHookAuthority extends InstructionSignerInput = InstructionSignerInput,
+    TAccountSystemProgram extends InstructionAccountInput = InstructionAccountInput,
+    TAccountPayer extends InstructionSignerInput = InstructionSignerInput,
 > = {
-    extraMetasAccount: Address<TAccountExtraMetasAccount>;
-    guard: Address<TAccountGuard>;
-    mint: Address<TAccountMint>;
-    transferHookAuthority: TransactionSigner<TAccountTransferHookAuthority>;
-    systemProgram?: Address<TAccountSystemProgram>;
-    payer: TransactionSigner<TAccountPayer>;
+    extraMetasAccount: TAccountExtraMetasAccount;
+    guard: TAccountGuard;
+    mint: TAccountMint;
+    transferHookAuthority: TAccountTransferHookAuthority;
+    systemProgram?: TAccountSystemProgram;
+    payer: TAccountPayer;
 };
 
 export function getInitializeInstruction<
-    TAccountExtraMetasAccount extends string,
-    TAccountGuard extends string,
-    TAccountMint extends string,
-    TAccountTransferHookAuthority extends string,
-    TAccountSystemProgram extends string,
-    TAccountPayer extends string,
+    TAccountExtraMetasAccount extends InstructionAccountInput,
+    TAccountGuard extends InstructionAccountInput,
+    TAccountMint extends InstructionAccountInput,
+    TAccountTransferHookAuthority extends InstructionSignerInput,
+    TAccountSystemProgram extends InstructionAccountInput,
+    TAccountPayer extends InstructionSignerInput,
     TProgramAddress extends Address = typeof WEN_TRANSFER_GUARD_PROGRAM_ADDRESS,
 >(
     input: InitializeInput<
@@ -228,24 +243,30 @@ export function getInitializeInstruction<
     config?: { programAddress?: TProgramAddress },
 ): InitializeInstruction<
     TProgramAddress,
-    TAccountExtraMetasAccount,
-    TAccountGuard,
-    TAccountMint,
-    TAccountTransferHookAuthority,
-    TAccountSystemProgram,
-    TAccountPayer
+    ResolvedInstructionAccountMeta<
+        TAccountExtraMetasAccount,
+        InstructionAccountInputAddress<TAccountExtraMetasAccount>
+    >,
+    ResolvedInstructionAccountMeta<TAccountGuard, InstructionAccountInputAddress<TAccountGuard>>,
+    ResolvedInstructionAccountMeta<TAccountMint, InstructionAccountInputAddress<TAccountMint>>,
+    ResolvedInstructionAccountMeta<
+        TAccountTransferHookAuthority,
+        InstructionAccountInputAddress<TAccountTransferHookAuthority>
+    >,
+    ResolvedInstructionAccountMeta<TAccountSystemProgram, InstructionAccountInputAddress<TAccountSystemProgram>>,
+    ResolvedInstructionAccountMeta<TAccountPayer, InstructionAccountInputAddress<TAccountPayer>>
 > {
     // Program address.
     const programAddress = config?.programAddress ?? WEN_TRANSFER_GUARD_PROGRAM_ADDRESS;
 
     // Original accounts.
     const originalAccounts = {
-        extraMetasAccount: { value: input.extraMetasAccount ?? null, isWritable: true },
-        guard: { value: input.guard ?? null, isWritable: false },
-        mint: { value: input.mint ?? null, isWritable: false },
-        transferHookAuthority: { value: input.transferHookAuthority ?? null, isWritable: true },
-        systemProgram: { value: input.systemProgram ?? null, isWritable: false },
-        payer: { value: input.payer ?? null, isWritable: true },
+        extraMetasAccount: { value: input.extraMetasAccount ?? null, isSigner: false, isWritable: true },
+        guard: { value: input.guard ?? null, isSigner: false, isWritable: false },
+        mint: { value: input.mint ?? null, isSigner: false, isWritable: false },
+        transferHookAuthority: { value: input.transferHookAuthority ?? null, isSigner: true, isWritable: true },
+        systemProgram: { value: input.systemProgram ?? null, isSigner: false, isWritable: false },
+        payer: { value: input.payer ?? null, isSigner: true, isWritable: true },
     };
     const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
@@ -269,12 +290,18 @@ export function getInitializeInstruction<
         programAddress,
     } as InitializeInstruction<
         TProgramAddress,
-        TAccountExtraMetasAccount,
-        TAccountGuard,
-        TAccountMint,
-        TAccountTransferHookAuthority,
-        TAccountSystemProgram,
-        TAccountPayer
+        ResolvedInstructionAccountMeta<
+            TAccountExtraMetasAccount,
+            InstructionAccountInputAddress<TAccountExtraMetasAccount>
+        >,
+        ResolvedInstructionAccountMeta<TAccountGuard, InstructionAccountInputAddress<TAccountGuard>>,
+        ResolvedInstructionAccountMeta<TAccountMint, InstructionAccountInputAddress<TAccountMint>>,
+        ResolvedInstructionAccountMeta<
+            TAccountTransferHookAuthority,
+            InstructionAccountInputAddress<TAccountTransferHookAuthority>
+        >,
+        ResolvedInstructionAccountMeta<TAccountSystemProgram, InstructionAccountInputAddress<TAccountSystemProgram>>,
+        ResolvedInstructionAccountMeta<TAccountPayer, InstructionAccountInputAddress<TAccountPayer>>
     >);
 }
 

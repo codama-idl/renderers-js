@@ -49,7 +49,13 @@ test('it renders instruction accounts that can either be signer or non-signer', 
     const node = programNode({
         instructions: [
             instructionNode({
-                accounts: [instructionAccountNode({ isSigner: 'either', isWritable: false, name: 'myAccount' })],
+                accounts: [
+                    instructionAccountNode({
+                        isSigner: 'either',
+                        isWritable: false,
+                        name: 'myAccount',
+                    }),
+                ],
                 name: 'myInstruction',
             }),
         ],
@@ -60,9 +66,99 @@ test('it renders instruction accounts that can either be signer or non-signer', 
     // When we render it.
     const renderMap = visit(node, getRenderMapVisitor());
 
-    // Then we expect the input to be rendered as either a signer or non-signer.
+    // Then we expect the input to accept either a signer or non-signer input.
     await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
-        'myAccount: Address<TAccountMyAccount> | TransactionSigner<TAccountMyAccount>;',
+        `export type MyInstructionInput<
+            TAccountMyAccount extends InstructionAccountInput | InstructionSignerInput =
+                InstructionAccountInput | InstructionSignerInput
+        > = { myAccount: TAccountMyAccount; };`,
+    ]);
+
+    // And we expect the account to be resolved as a signer meta when a signer is provided.
+    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+        `ResolvedInstructionAccountMeta<
+            TAccountMyAccount,
+            InstructionAccountInputAddress<TAccountMyAccount>,
+            ReadonlySignerAccount<InstructionAccountInputAddress<TAccountMyAccount>> &
+                AccountSignerMeta<InstructionAccountInputAddress<TAccountMyAccount>>
+        >`,
+    ]);
+
+    // And we expect the runtime signer flag to be forwarded to the account meta factory.
+    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+        "myAccount: { value: input.myAccount ?? null, isSigner: 'either', isWritable: false }",
+    ]);
+});
+
+test('it downgrades the runtime signer flag of signer accounts whose default value may not be a signer', async () => {
+    // Given a signer account defaulting to a PDA.
+    const node = programNode({
+        instructions: [
+            instructionNode({
+                accounts: [
+                    instructionAccountNode({
+                        defaultValue: pdaValueNode(pdaLinkNode('myPda')),
+                        isSigner: true,
+                        isWritable: false,
+                        name: 'myAccount',
+                    }),
+                ],
+                name: 'myInstruction',
+            }),
+        ],
+        name: 'myProgram',
+        pdas: [pdaNode({ name: 'myPda', seeds: [] })],
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then we expect the input type to still require a signer.
+    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+        'TAccountMyAccount extends InstructionSignerInput = InstructionSignerInput',
+    ]);
+
+    // But we expect the runtime signer flag to be downgraded to 'either' so that
+    // the default value does not fail the signer requirement.
+    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+        "myAccount: { value: input.myAccount ?? null, isSigner: 'either', isWritable: false }",
+    ]);
+});
+
+test('it never upgrades the runtime signer flag of non-signer accounts', async () => {
+    // Given a non-signer account defaulting to a signer account.
+    const node = programNode({
+        instructions: [
+            instructionNode({
+                accounts: [
+                    instructionAccountNode({
+                        isSigner: true,
+                        isWritable: true,
+                        name: 'payer',
+                    }),
+                    instructionAccountNode({
+                        defaultValue: accountValueNode('payer'),
+                        isSigner: false,
+                        isWritable: false,
+                        name: 'owner',
+                    }),
+                ],
+                name: 'myInstruction',
+            }),
+        ],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then we expect the runtime signer flag of the non-signer account to remain false,
+    // so that any signer provided for it merely carries its address.
+    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+        'payer: { value: input.payer ?? null, isSigner: true, isWritable: true }',
+        'owner: { value: input.owner ?? null, isSigner: false, isWritable: false }',
     ]);
 });
 
@@ -140,7 +236,9 @@ test('it only renders the args variable on the async function if the extra argum
             instructionNode({
                 accounts: [
                     instructionAccountNode({
-                        defaultValue: resolverValueNode('myAsyncResolver', { dependsOn: [argumentValueNode('bar')] }),
+                        defaultValue: resolverValueNode('myAsyncResolver', {
+                            dependsOn: [argumentValueNode('bar')],
+                        }),
                         isSigner: false,
                         isWritable: false,
                         name: 'foo',
@@ -178,7 +276,11 @@ test('it renders instruction accounts with linked PDAs as default value', async 
         instructions: [
             instructionNode({
                 accounts: [
-                    instructionAccountNode({ isSigner: true, isWritable: false, name: 'authority' }),
+                    instructionAccountNode({
+                        isSigner: true,
+                        isWritable: false,
+                        name: 'authority',
+                    }),
                     instructionAccountNode({
                         defaultValue: pdaValueNode('counter', [
                             pdaSeedValueNode('authority', accountValueNode('authority')),
@@ -213,7 +315,9 @@ test('it renders instruction accounts with linked PDAs as default value', async 
             "accounts.counter.value = await findCounterPda( { authority: getAddressFromResolvedInstructionAccount ( 'authority', accounts.authority.value ) }, { programAddress } ); " +
             '}',
     ]);
-    await renderMapContainsImports(renderMap, 'instructions/increment.ts', { '../pdas': ['findCounterPda'] });
+    await renderMapContainsImports(renderMap, 'instructions/increment.ts', {
+        '../pdas': ['findCounterPda'],
+    });
 });
 
 test('it renders instruction accounts with linked PDA default values that point to another account as the program', async () => {
@@ -223,8 +327,16 @@ test('it renders instruction accounts with linked PDA default values that point 
         instructions: [
             instructionNode({
                 accounts: [
-                    instructionAccountNode({ isSigner: true, isWritable: false, name: 'authority' }),
-                    instructionAccountNode({ isSigner: false, isWritable: false, name: 'myProgram' }),
+                    instructionAccountNode({
+                        isSigner: true,
+                        isWritable: false,
+                        name: 'authority',
+                    }),
+                    instructionAccountNode({
+                        isSigner: false,
+                        isWritable: false,
+                        name: 'myProgram',
+                    }),
                     instructionAccountNode({
                         defaultValue: pdaValueNode(
                             'counter',
@@ -261,7 +373,9 @@ test('it renders instruction accounts with linked PDA default values that point 
             "accounts.counter.value = await findCounterPda( { authority: getAddressFromResolvedInstructionAccount ( 'authority', accounts.authority.value ) }, { programAddress: getAddressFromResolvedInstructionAccount ( 'myProgram', accounts.myProgram.value ) } ); " +
             '}',
     ]);
-    await renderMapContainsImports(renderMap, 'instructions/increment.ts', { '../pdas': ['findCounterPda'] });
+    await renderMapContainsImports(renderMap, 'instructions/increment.ts', {
+        '../pdas': ['findCounterPda'],
+    });
 });
 
 test('it does not render the program address for linked PDA default values that belong to another program', async () => {
@@ -402,7 +516,11 @@ test('it renders instruction accounts with inlined PDAs as default value', async
         instructions: [
             instructionNode({
                 accounts: [
-                    instructionAccountNode({ isSigner: true, isWritable: false, name: 'authority' }),
+                    instructionAccountNode({
+                        isSigner: true,
+                        isWritable: false,
+                        name: 'authority',
+                    }),
                     instructionAccountNode({
                         defaultValue: pdaValueNode(
                             pdaNode({
@@ -453,8 +571,16 @@ test('it renders instruction accounts with inlined PDA default values that point
         instructions: [
             instructionNode({
                 accounts: [
-                    instructionAccountNode({ isSigner: true, isWritable: false, name: 'authority' }),
-                    instructionAccountNode({ isSigner: false, isWritable: false, name: 'myProgram' }),
+                    instructionAccountNode({
+                        isSigner: true,
+                        isWritable: false,
+                        name: 'authority',
+                    }),
+                    instructionAccountNode({
+                        isSigner: false,
+                        isWritable: false,
+                        name: 'myProgram',
+                    }),
                     instructionAccountNode({
                         defaultValue: pdaValueNode(
                             pdaNode({
@@ -505,7 +631,11 @@ test('it renders instruction accounts with inlined PDAs from another program as 
         instructions: [
             instructionNode({
                 accounts: [
-                    instructionAccountNode({ isSigner: true, isWritable: false, name: 'authority' }),
+                    instructionAccountNode({
+                        isSigner: true,
+                        isWritable: false,
+                        name: 'authority',
+                    }),
                     instructionAccountNode({
                         defaultValue: pdaValueNode(
                             pdaNode({
@@ -882,7 +1012,12 @@ test('it renders instructions with no accounts but with some arguments', async (
     const node = programNode({
         instructions: [
             instructionNode({
-                arguments: [instructionArgumentNode({ name: 'myArgument', type: numberTypeNode('u32') })],
+                arguments: [
+                    instructionArgumentNode({
+                        name: 'myArgument',
+                        type: numberTypeNode('u32'),
+                    }),
+                ],
                 name: 'myInstruction',
             }),
         ],
@@ -906,7 +1041,13 @@ test('it renders instructions with no arguments but with some accounts', async (
     const node = programNode({
         instructions: [
             instructionNode({
-                accounts: [instructionAccountNode({ isSigner: false, isWritable: false, name: 'myAccount' })],
+                accounts: [
+                    instructionAccountNode({
+                        isSigner: false,
+                        isWritable: false,
+                        name: 'myAccount',
+                    }),
+                ],
                 name: 'myInstruction',
             }),
         ],
@@ -920,8 +1061,22 @@ test('it renders instructions with no arguments but with some accounts', async (
     // Then we expect the following input type to be rendered
     // and used as an argument of the instruction function.
     await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
-        'export type MyInstructionInput <TAccountMyAccount extends string = string> = { myAccount: Address<TAccountMyAccount>; };',
-        'input: MyInstructionInput<TAccountMyAccount>',
+        `export type MyInstructionInput<
+            TAccountMyAccount extends InstructionAccountInput = InstructionAccountInput
+        > = { myAccount: TAccountMyAccount; };`,
+        `export function getMyInstructionInstruction<
+            TAccountMyAccount extends InstructionAccountInput,
+            TProgramAddress extends Address = typeof MY_PROGRAM_PROGRAM_ADDRESS
+        >(
+            input: MyInstructionInput<TAccountMyAccount>,
+            config?: { programAddress?: TProgramAddress }
+        ): MyInstructionInstruction<
+            TProgramAddress,
+            ResolvedInstructionAccountMeta<
+                TAccountMyAccount,
+                InstructionAccountInputAddress<TAccountMyAccount>
+            >
+        > {`,
     ]);
 });
 
@@ -933,8 +1088,17 @@ test("it passes the program address for an unset optional account under the defa
         instructions: [
             instructionNode({
                 accounts: [
-                    instructionAccountNode({ isOptional: true, isSigner: false, isWritable: false, name: 'group' }),
-                    instructionAccountNode({ isSigner: false, isWritable: true, name: 'permission' }),
+                    instructionAccountNode({
+                        isOptional: true,
+                        isSigner: false,
+                        isWritable: false,
+                        name: 'group',
+                    }),
+                    instructionAccountNode({
+                        isSigner: false,
+                        isWritable: true,
+                        name: 'permission',
+                    }),
                 ],
                 name: 'myInstruction',
                 // optionalAccountStrategy left unset, defaulting to 'programId'.
@@ -963,8 +1127,17 @@ test("it drops an unset optional account under the legacy 'omitted' strategy", a
         instructions: [
             instructionNode({
                 accounts: [
-                    instructionAccountNode({ isOptional: true, isSigner: false, isWritable: false, name: 'group' }),
-                    instructionAccountNode({ isSigner: false, isWritable: true, name: 'permission' }),
+                    instructionAccountNode({
+                        isOptional: true,
+                        isSigner: false,
+                        isWritable: false,
+                        name: 'group',
+                    }),
+                    instructionAccountNode({
+                        isSigner: false,
+                        isWritable: true,
+                        name: 'permission',
+                    }),
                 ],
                 name: 'myInstruction',
                 optionalAccountStrategy: 'omitted',

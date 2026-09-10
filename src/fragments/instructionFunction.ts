@@ -1,15 +1,23 @@
-import { camelCase, InstructionArgumentNode, InstructionNode, isNode, isNodeFilter, pascalCase } from '@codama/nodes';
+import {
+    camelCase,
+    InstructionAccountNode,
+    InstructionArgumentNode,
+    InstructionNode,
+    isNode,
+    isNodeFilter,
+    pascalCase,
+} from '@codama/nodes';
 import { mapFragmentContent } from '@codama/renderers-core';
 import {
     findProgramNodeFromPath,
     getLastNodeFromPath,
     NodePath,
     pipe,
+    ResolvedInstructionAccount,
     ResolvedInstructionInput,
 } from '@codama/visitors-core';
 
 import {
-    addFragmentImports,
     Fragment,
     fragment,
     getInstructionDependencies,
@@ -23,7 +31,7 @@ import {
 import { NameApi } from '../utils/nameTransformers';
 import { getInstructionByteDeltaFragment } from './instructionByteDelta';
 import { getInstructionInputResolvedFragment } from './instructionInputResolved';
-import { getInstructionInputTypeFragment } from './instructionInputType';
+import { getInstructionAccountInputConstraintFragment, getInstructionInputTypeFragment } from './instructionInputType';
 import { getInstructionRemainingAccountsFragment } from './instructionRemainingAccounts';
 
 export function getInstructionFunctionFragment(
@@ -93,7 +101,7 @@ export function getInstructionFunctionFragment(
     const functionBody = mergeFragments(
         [
             getProgramAddressInitializationFragment(programAddressConstant),
-            getAccountsInitializationFragment(instructionNode),
+            getAccountsInitializationFragment(instructionNode, resolvedInputs),
             getArgumentsInitializationFragment(hasAnyArgs, renamedArgs),
             getResolverScopeInitializationFragment(hasResolver, hasAccounts, hasAnyArgs),
             resolvedInputFragment,
@@ -120,14 +128,18 @@ function getProgramAddressInitializationFragment(programAddressConstant: Fragmen
 const programAddress = config?.programAddress ?? ${programAddressConstant};`;
 }
 
-function getAccountsInitializationFragment(instructionNode: InstructionNode): Fragment | undefined {
+function getAccountsInitializationFragment(
+    instructionNode: InstructionNode,
+    resolvedInputs: ResolvedInstructionInput[],
+): Fragment | undefined {
     if ((instructionNode.accounts ?? []).length === 0) return;
 
     const accounts = mergeFragments(
         (instructionNode.accounts ?? []).map(account => {
             const name = camelCase(account.name);
             const isWritable = account.isWritable ? 'true' : 'false';
-            return fragment`${name}: { value: input.${name} ?? null, isWritable: ${isWritable} }`;
+            const isSigner = getRuntimeIsSignerFlag(account, resolvedInputs);
+            return fragment`${name}: { value: input.${name} ?? null, isSigner: ${isSigner}, isWritable: ${isWritable} }`;
         }),
         cs => cs.join(', '),
     );
@@ -136,6 +148,25 @@ function getAccountsInitializationFragment(instructionNode: InstructionNode): Fr
 const originalAccounts = { ${accounts} }
 const accounts = originalAccounts as Record<keyof typeof originalAccounts, ${use('type ResolvedInstructionAccount', 'solanaProgramClientCore')}>;
 `;
+}
+
+/**
+ * Renders the `isSigner` flag forwarded to `getAccountMetaFactory` for an account.
+ *
+ * The flag declared by the IDL is used, except that a signer account whose default value
+ * may not be a signer (e.g. a signer account defaulting to a PDA) is downgraded to `'either'`
+ * so that the default value does not fail the signer requirement. A non-signer account is
+ * never upgraded, even when it defaults to a signer account, so that any signer provided for
+ * it merely carries its address.
+ */
+function getRuntimeIsSignerFlag(account: InstructionAccountNode, resolvedInputs: ResolvedInstructionInput[]): string {
+    if (account.isSigner === false) return 'false';
+    const resolvedAccount = resolvedInputs.find(
+        (input): input is ResolvedInstructionAccount =>
+            input.kind === 'instructionAccountNode' && input.name === account.name,
+    );
+    const resolvedIsSigner = resolvedAccount?.resolvedIsSigner ?? account.isSigner;
+    return resolvedIsSigner === true ? 'true' : "'either'";
 }
 
 function getArgumentsInitializationFragment(
@@ -237,11 +268,20 @@ function getReturnTypeFragment(instructionTypeFragment: Fragment, hasByteDeltas:
     );
 }
 
+/**
+ * Instruction builders declare one type parameter per account, holding the input value
+ * provided for that account, so that the account metas of the returned instruction can be
+ * derived from the exact values provided (see {@link getInstructionTypeFragment}). Since the
+ * `input` parameter remains a concrete object type once these are inferred, TypeScript keeps
+ * performing excess property checks on it — e.g. a misspelled optional account is a compile
+ * error rather than silently falling back to its default value.
+ */
 function getTypeParamsFragment(instructionNode: InstructionNode, programAddressConstant: Fragment): Fragment {
     return mergeFragments(
         [
             ...(instructionNode.accounts ?? []).map(
-                account => fragment`TAccount${pascalCase(account.name)} extends string`,
+                account =>
+                    fragment`TAccount${pascalCase(account.name)} extends ${getInstructionAccountInputConstraintFragment(account)}`,
             ),
             fragment`TProgramAddress extends ${use('type Address', 'solanaAddresses')} = typeof ${programAddressConstant}`,
         ],
@@ -249,26 +289,34 @@ function getTypeParamsFragment(instructionNode: InstructionNode, programAddressC
     );
 }
 
+/**
+ * Renders the instruction type returned by an instruction builder. Each account's type
+ * parameter is resolved from the provided input using the `ResolvedInstructionAccountMeta`
+ * helper: explicit role overrides are preserved, signers provided for optional signer
+ * accounts upgrade the account to a signer meta, and any other input resolves to the
+ * account's address type parameter — which the instruction type then maps to the account
+ * meta declared by the program's IDL.
+ */
 function getInstructionTypeFragment(scope: { instructionPath: NodePath<InstructionNode>; nameApi: NameApi }): Fragment {
     const { instructionPath, nameApi } = scope;
     const instructionNode = getLastNodeFromPath(instructionPath);
     const instructionTypeName = nameApi.instructionType(instructionNode.name);
     const accountTypeParamsFragments = (instructionNode.accounts ?? []).map(account => {
-        const typeParam = fragment`TAccount${pascalCase(account.name)}`;
-        const camelName = camelCase(account.name);
+        const resolvedMeta = use('type ResolvedInstructionAccountMeta', 'solanaProgramClientCore');
+        const inputAddress = use('type InstructionAccountInputAddress', 'solanaProgramClientCore');
+        const input = `TAccount${pascalCase(account.name)}`;
+        const address = fragment`${inputAddress}<${input}>`;
 
         if (account.isSigner === 'either') {
             const signerRole = use(
                 account.isWritable ? 'type WritableSignerAccount' : 'type ReadonlySignerAccount',
                 'solanaInstructions',
             );
-            return pipe(
-                fragment`typeof input["${camelName}"] extends TransactionSigner<${typeParam}> ? ${signerRole}<${typeParam}> & AccountSignerMeta<${typeParam}> : ${typeParam}`,
-                f => addFragmentImports(f, 'solanaSigners', ['type AccountSignerMeta', 'type TransactionSigner']),
-            );
+            const signerMeta = use('type AccountSignerMeta', 'solanaSigners');
+            return fragment`${resolvedMeta}<${input}, ${address}, ${signerRole}<${address}> & ${signerMeta}<${address}>>`;
         }
 
-        return typeParam;
+        return fragment`${resolvedMeta}<${input}, ${address}>`;
     });
 
     return pipe(
