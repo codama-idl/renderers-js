@@ -370,6 +370,30 @@ describe('importMapToString', () => {
         expect(importMapToString(importMap, {}, 'granular')).toBe("import type { Address } from '@solana/addresses';");
     });
 
+    test('it resolves the program client core package for each kit import strategy', () => {
+        const importMap = addToImportMap(createImportMap(), 'solanaProgramClientCore', ['getAccountMetaFactory']);
+        expect(importMapToString(importMap, {}, 'rootOnly')).toBe(
+            "import { getAccountMetaFactory } from '@solana/kit/program-client-core';",
+        );
+        expect(importMapToString(importMap, {}, 'preferRoot')).toBe(
+            "import { getAccountMetaFactory } from '@solana/program-client-core';",
+        );
+        expect(importMapToString(importMap, {}, 'granular')).toBe(
+            "import { getAccountMetaFactory } from '@solana/program-client-core';",
+        );
+    });
+
+    test('it does not leak the kit import strategy of a previous resolution into the next one', () => {
+        // Given an import map resolved using the `preferRoot` strategy first.
+        const importMap = addToImportMap(createImportMap(), 'solanaProgramClientCore', ['getAccountMetaFactory']);
+        importMapToString(importMap, {}, 'preferRoot');
+
+        // Then resolving it again using the `rootOnly` strategy must not be affected.
+        expect(importMapToString(importMap, {}, 'rootOnly')).toBe(
+            "import { getAccountMetaFactory } from '@solana/kit/program-client-core';",
+        );
+    });
+
     test('it can override the module of placeholder kit packages', () => {
         const importMap = addToImportMap(createImportMap(), 'solanaAddresses', ['type Address']);
         expect(importMapToString(importMap, { solanaAddresses: '@acme/solana-addresses' })).toBe(
