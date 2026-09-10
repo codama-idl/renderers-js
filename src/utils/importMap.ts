@@ -6,7 +6,7 @@ import {
     KitImportStrategy,
 } from '.';
 
-const DEFAULT_EXTERNAL_MODULE_MAP: Record<string, string> = {
+const DEFAULT_EXTERNAL_MODULE_MAP: Readonly<Record<string, string>> = Object.freeze({
     solanaAccounts: '@solana/kit',
     solanaAddresses: '@solana/kit',
     solanaCodecsCore: '@solana/kit',
@@ -24,9 +24,9 @@ const DEFAULT_EXTERNAL_MODULE_MAP: Record<string, string> = {
     solanaRpcApi: '@solana/kit',
     solanaRpcTypes: '@solana/kit',
     solanaSigners: '@solana/kit',
-};
+});
 
-const DEFAULT_GRANULAR_EXTERNAL_MODULE_MAP: Record<string, string> = {
+const DEFAULT_GRANULAR_EXTERNAL_MODULE_MAP: Readonly<Record<string, string>> = Object.freeze({
     solanaAccounts: '@solana/accounts',
     solanaAddresses: '@solana/addresses',
     solanaCodecsCore: '@solana/codecs',
@@ -44,7 +44,7 @@ const DEFAULT_GRANULAR_EXTERNAL_MODULE_MAP: Record<string, string> = {
     solanaRpcApi: '@solana/rpc-api',
     solanaRpcTypes: '@solana/rpc-types',
     solanaSigners: '@solana/signers',
-};
+});
 
 const RECOGNIZED_EXTENSION_REGEX = /\.(?:[mc]?[jt]sx?|json)$/;
 
@@ -180,14 +180,8 @@ function resolveImportMapModules(
     kitImportStrategy: KitImportStrategy,
     getImportPath: GetImportPathFunction = getImportPathFactory(),
 ): ImportMap {
-    const defaultExternalModuleMap =
-        kitImportStrategy === 'granular' ? DEFAULT_GRANULAR_EXTERNAL_MODULE_MAP : DEFAULT_EXTERNAL_MODULE_MAP;
-    if (kitImportStrategy === 'preferRoot') {
-        defaultExternalModuleMap['solanaProgramClientCore'] = '@solana/program-client-core';
-    }
-
     const dependencyMapWithDefaults = {
-        ...defaultExternalModuleMap,
+        ...getDefaultExternalModuleMap(kitImportStrategy),
         ...getDefaultInternalModuleMap(getImportPath),
         ...dependencyMap,
     };
@@ -198,6 +192,22 @@ function resolveImportMapModules(
             return new Map([[resolvedModule, imports]]);
         }),
     );
+}
+
+/**
+ * Returns the default module of each placeholder Kit package for the given import strategy.
+ * A new object is returned on every call so that strategies can be mixed within the same
+ * process without leaking into one another.
+ */
+function getDefaultExternalModuleMap(kitImportStrategy: KitImportStrategy): Record<string, string> {
+    switch (kitImportStrategy) {
+        case 'granular':
+            return { ...DEFAULT_GRANULAR_EXTERNAL_MODULE_MAP };
+        case 'preferRoot':
+            return { ...DEFAULT_EXTERNAL_MODULE_MAP, solanaProgramClientCore: '@solana/program-client-core' };
+        case 'rootOnly':
+            return { ...DEFAULT_EXTERNAL_MODULE_MAP };
+    }
 }
 
 function getDefaultInternalModuleMap(getImportPath: GetImportPathFunction): Record<string, string> {
