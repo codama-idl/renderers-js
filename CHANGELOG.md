@@ -1,5 +1,19 @@
 # @codama/renderers-js
 
+## 2.5.0
+
+### Minor Changes
+
+- [#215](https://github.com/codama-idl/renderers-js/pull/215) [`96acbc7`](https://github.com/codama-idl/renderers-js/commit/96acbc7bf0c3ec6d590235452ae6d38db0671cec) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Widen the inputs accepted by generated instruction builders. Non-signer accounts now accept any `InstructionAccountInput` — i.e. an `Address`, a `ProgramDerivedAddress`, any object exposing an `address` property (see `HasAddress`, which lets third-party wrappers such as web3.js's `PublicKey` be passed directly), or an account meta such as `{ address, role: AccountRole.WRITABLE }` to override the role declared by the IDL. Signer accounts accept any `InstructionSignerInput` — i.e. a `TransactionSigner` or an `AccountSignerMeta`. The type parameters of instruction builders and of their input types now capture the input value provided for each account, rather than its address, so that the account metas of the returned instruction reflect the exact values provided (e.g. an inline `role: AccountRole.READONLY` override resolves to a `ReadonlyAccount`). Instruction builders also forward each account's signer flag to `getAccountMetaFactory`. As a result, signers provided for non-signer accounts now merely carry their address instead of being attached as signers, and a value that cannot sign provided for a signer account fails with a dedicated error. Accounts whose bump seed is consumed by an argument no longer require a `ProgramDerivedAddress` at the type level; at runtime, providing a plain address for such an account throws unless the dependent argument is provided explicitly.
+  
+  Note that call sites providing explicit type arguments to instruction builders or their input types (e.g. `getTransferInstruction<'1111', '2222'>(...)` or `TransferInput<'1111'>`) need updating since these type parameters now expect input types rather than address strings (e.g. `Address<'1111'>`). Generated code now requires `@solana/kit` `^8.3.0`, and the default `@solana/*` dependency versions written to `package.json` have been bumped accordingly.
+
+- [#216](https://github.com/codama-idl/renderers-js/pull/216) [`369f05d`](https://github.com/codama-idl/renderers-js/commit/369f05d4afe23becd637092a897bd970b60133ea) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Remaining accounts provided via the instruction input now accept the same inputs as instruction accounts — i.e. `InstructionAccountInput` for non-signer remaining accounts, `InstructionSignerInput` for signer remaining accounts, and the union of both for remaining accounts that may or may not be signers — and are converted to account metas by the same `getAccountMeta` helper. As a result, addresses are extracted from any address-carrying value (including third-party wrappers such as web3.js's `PublicKey`), explicit account metas override the role derived from the IDL, signers merely carry their address for non-signer remaining accounts, and values that cannot sign are rejected for signer remaining accounts. Remaining accounts backed by an existing instruction argument remain typed by that argument.
+
+### Patch Changes
+
+- [#217](https://github.com/codama-idl/renderers-js/pull/217) [`eab516f`](https://github.com/codama-idl/renderers-js/commit/eab516fa917c78dc6349de05272d762fa6a03f70) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Fix the `preferRoot` kit import strategy leaking into subsequent renders within the same process. Resolving imports with that strategy used to mutate the shared default module map, so that any later render using the `rootOnly` strategy would import program client helpers from `@solana/program-client-core` instead of `@solana/kit/program-client-core`.
+
 ## 2.4.0
 
 ### Minor Changes
