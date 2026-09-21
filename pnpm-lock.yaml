@@ -59,7 +59,7 @@ importers:
         version: 0.19.0(@solana/kit@8.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@7.0.2))
       '@types/node':
         specifier: ^26
-        version: 26.5.1
+        version: 26.6.1
       '@types/semver':
         specifier: ^7.7.1
         version: 7.8.0
@@ -89,7 +89,7 @@ importers:
         version: 7.0.2
       vitest:
         specifier: ^4.0.1
-        version: 4.1.11(@types/node@26.5.1)(happy-dom@20.14.5)(vite@7.1.5(@types/node@26.5.1)(yaml@2.9.1))
+        version: 4.1.11(@types/node@26.6.1)(happy-dom@20.14.5)(vite@7.1.5(@types/node@26.6.1)(yaml@2.9.1))
 
 packages:
 
@@ -1512,8 +1512,8 @@ packages:
   '@types/estree@1.0.9':
     resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
 
-  '@types/node@26.5.1':
-    resolution: {integrity: sha512-CzNm2FezW4VR/LjG6yUdiEgLE/rAQ9Slj5gCu/C2VrdcW7I0ahNZ8DRbHT7zOZ6r3ONgd/bsQIeSaoDGrd1C6g==}
+  '@types/node@26.6.1':
+    resolution: {integrity: sha512-VqGJBMCtdhqkBUCcBLvywI0NJ+KLuVzgNnlBUNFOQjqVxzo2lxLUNg1DSey8+u2u6ktswSAxg+s68QLzWHNOuA==}
 
   '@types/semver@7.8.0':
     resolution: {integrity: sha512-1mAINjtQCXXeLkJ9ehXkwOcBpqtLxiVtKhpUf83DdRNdQKV0iXZpaHYqRr7nj+wvxuJzoAmAwXI+sCNMv1CzLQ==}
@@ -3549,7 +3549,7 @@ snapshots:
 
   '@types/estree@1.0.9': {}
 
-  '@types/node@26.5.1':
+  '@types/node@26.6.1':
     dependencies:
       undici-types: 8.9.0
 
@@ -3559,7 +3559,7 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 26.5.1
+      '@types/node': 26.6.1
 
   '@typescript/typescript-aix-ppc64@7.0.2':
     optional: true
@@ -3630,13 +3630,13 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.1
 
-  '@vitest/mocker@4.1.11(vite@7.1.5(@types/node@26.5.1)(yaml@2.9.1))':
+  '@vitest/mocker@4.1.11(vite@7.1.5(@types/node@26.6.1)(yaml@2.9.1))':
     dependencies:
       '@vitest/spy': 4.1.11
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 7.1.5(@types/node@26.5.1)(yaml@2.9.1)
+      vite: 7.1.5(@types/node@26.6.1)(yaml@2.9.1)
 
   '@vitest/pretty-format@4.1.11':
     dependencies:
@@ -3684,7 +3684,7 @@ snapshots:
 
   buffer-image-size@0.6.4:
     dependencies:
-      '@types/node': 26.5.1
+      '@types/node': 26.6.1
 
   bundle-require@5.1.0(esbuild@0.27.7):
     dependencies:
@@ -3884,7 +3884,7 @@ snapshots:
 
   happy-dom@20.14.5:
     dependencies:
-      '@types/node': 26.5.1
+      '@types/node': 26.6.1
       '@types/whatwg-mimetype': 3.0.2
       '@types/ws': 8.18.1
       buffer-image-size: 0.6.4
@@ -4311,7 +4311,7 @@ snapshots:
 
   undici-types@8.9.0: {}
 
-  vite@7.1.5(@types/node@26.5.1)(yaml@2.9.1):
+  vite@7.1.5(@types/node@26.6.1)(yaml@2.9.1):
     dependencies:
       esbuild: 0.25.12
       fdir: 6.5.0(picomatch@4.0.7)
@@ -4320,14 +4320,14 @@ snapshots:
       rollup: 4.63.4
       tinyglobby: 0.2.17
     optionalDependencies:
-      '@types/node': 26.5.1
+      '@types/node': 26.6.1
       fsevents: 2.3.3
       yaml: 2.9.1
 
-  vitest@4.1.11(@types/node@26.5.1)(happy-dom@20.14.5)(vite@7.1.5(@types/node@26.5.1)(yaml@2.9.1)):
+  vitest@4.1.11(@types/node@26.6.1)(happy-dom@20.14.5)(vite@7.1.5(@types/node@26.6.1)(yaml@2.9.1)):
     dependencies:
       '@vitest/expect': 4.1.11
-      '@vitest/mocker': 4.1.11(vite@7.1.5(@types/node@26.5.1)(yaml@2.9.1))
+      '@vitest/mocker': 4.1.11(vite@7.1.5(@types/node@26.6.1)(yaml@2.9.1))
       '@vitest/pretty-format': 4.1.11
       '@vitest/runner': 4.1.11
       '@vitest/snapshot': 4.1.11
@@ -4344,10 +4344,10 @@ snapshots:
       tinyexec: 1.3.0
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.1
-      vite: 7.1.5(@types/node@26.5.1)(yaml@2.9.1)
+      vite: 7.1.5(@types/node@26.6.1)(yaml@2.9.1)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@types/node': 26.5.1
+      '@types/node': 26.6.1
       happy-dom: 20.14.5
     transitivePeerDependencies:
       - msw
