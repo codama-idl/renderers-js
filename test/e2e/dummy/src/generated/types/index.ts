@@ -6,4 +6,6 @@
  * @see https://github.com/codama-idl/codama
  */
 
+export * from './command';
 export * from './key';
+export * from './priority';
