@@ -1123,6 +1123,49 @@ test("it passes the program address for an unset optional account under the defa
     await renderMapDoesNotContain(renderMap, 'instructions/myInstruction.ts', [/\.filter\(<T>/]);
 });
 
+test("it parses an unset optional account against the instruction's own program address under the default 'programId' strategy", async () => {
+    // Given an instruction with an optional account under the default 'programId' strategy,
+    // whose builder fills an unset optional account with its effective program address —
+    // the canonical one or the `programAddress` override it was called with.
+    const node = programNode({
+        instructions: [
+            instructionNode({
+                accounts: [
+                    instructionAccountNode({
+                        isOptional: true,
+                        isSigner: false,
+                        isWritable: false,
+                        name: 'group',
+                    }),
+                    instructionAccountNode({
+                        isSigner: false,
+                        isWritable: true,
+                        name: 'permission',
+                    }),
+                ],
+                name: 'myInstruction',
+            }),
+        ],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the parse helper recognises the placeholder by comparing against the parsed
+    // instruction's program address, so an instruction built against another deployment
+    // of the program round-trips its unset optional account back to undefined.
+    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+        `const getNextOptionalAccount = () => {
+            const accountMeta = getNextAccount();
+            return accountMeta.address === instruction.programAddress ? undefined : accountMeta;
+        };`,
+    ]);
+    // And it no longer hard-codes the canonical program address as the sentinel.
+    await renderMapDoesNotContain(renderMap, 'instructions/myInstruction.ts', [
+        'accountMeta.address === MY_PROGRAM_PROGRAM_ADDRESS',
+    ]);
+});
+
 test("it drops an unset optional account under the legacy 'omitted' strategy", async () => {
     // Given the same instruction but with the legacy 'omitted' strategy, which models
     // Anchor's legacyOptionalAccountsStrategy where unset optional accounts are removed.

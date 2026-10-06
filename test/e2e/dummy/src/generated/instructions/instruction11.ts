@@ -116,7 +116,7 @@ export function parseInstruction11Instruction<TProgram extends string, TAccountM
     };
     const getNextOptionalAccount = () => {
         const accountMeta = getNextAccount();
-        return accountMeta.address === DUMMY_PROGRAM_ADDRESS ? undefined : accountMeta;
+        return accountMeta.address === instruction.programAddress ? undefined : accountMeta;
     };
     return {
         programAddress: instruction.programAddress,

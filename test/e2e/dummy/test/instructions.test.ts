@@ -91,6 +91,42 @@ test('a set optional account is passed through and round-trips on parse', () => 
     expect(parsed.accounts.requiredAccount.address).toBe(requiredAccount);
 });
 
+test('an unset optional account round-trips back to undefined under a custom program address', () => {
+    // Given an instruction aimed at another deployment of the program, built with
+    // the optional account left unset.
+    const programAddress = address('9ZzVNhg7fTCFpLbeRXZaPvHtKjHqEBbiyNVY7Jvf1yJc');
+    const requiredAccount = address('So11111111111111111111111111111111111111112');
+    const instruction = getInstruction11Instruction({ requiredAccount }, { programAddress });
+
+    // Then the placeholder is that deployment's address, not the canonical one.
+    expect(instruction.programAddress).toBe(programAddress);
+    expect(instruction.accounts[0].address).toBe(programAddress);
+
+    // And parsing compares against the instruction's own program address, so the
+    // placeholder is still recognised as an unset optional account.
+    const parsed = parseInstruction11Instruction(instruction);
+    expect(parsed.programAddress).toBe(programAddress);
+    expect(parsed.accounts.optionalAccount).toBeUndefined();
+    expect(parsed.accounts.requiredAccount.address).toBe(requiredAccount);
+});
+
+test('the canonical program address is a real optional account when parsed under a custom program address', () => {
+    // Given an instruction aimed at another deployment of the program whose optional
+    // account is set to the canonical program address.
+    const programAddress = address('9ZzVNhg7fTCFpLbeRXZaPvHtKjHqEBbiyNVY7Jvf1yJc');
+    const requiredAccount = address('So11111111111111111111111111111111111111112');
+    const instruction = getInstruction11Instruction(
+        { optionalAccount: DUMMY_PROGRAM_ADDRESS, requiredAccount },
+        { programAddress },
+    );
+
+    // Then only the instruction's own program address is the unset-account placeholder,
+    // so parsing keeps the canonical address as a set optional account.
+    const parsed = parseInstruction11Instruction(instruction);
+    expect(parsed.accounts.optionalAccount?.address).toBe(DUMMY_PROGRAM_ADDRESS);
+    expect(parsed.accounts.requiredAccount.address).toBe(requiredAccount);
+});
+
 test('the dummy program plugin re-exposes identifyInstruction and parseInstruction', () => {
     // Given the plugin applied to a stub client. The new identify/parse fields
     // are bare references that don't read from the client, so a stub is fine.

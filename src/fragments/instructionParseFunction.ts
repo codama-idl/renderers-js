@@ -71,7 +71,6 @@ function getFunctionFragment(
     scope: Pick<RenderScope, 'customInstructionData' | 'nameApi'> & {
         dataArgsManifest: TypeManifest;
         instructionNode: InstructionNode;
-        programAddressConstant: Fragment;
     },
 ): Fragment {
     const customData = scope.customInstructionData.get(scope.instructionNode.name);
@@ -144,7 +143,7 @@ const getNextOptionalAccount = () => {
         accountHelpers = fragment`${accountHelpers}
 const getNextOptionalAccount = () => {
   const accountMeta = getNextAccount();
-  return accountMeta.address === ${scope.programAddressConstant} ? undefined : accountMeta;
+  return accountMeta.address === instruction.programAddress ? undefined : accountMeta;
 };`;
     }
 
