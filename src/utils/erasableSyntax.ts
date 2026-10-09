@@ -14,12 +14,20 @@
  * ```ts
  * getEnumBody(['Uninitialized', 'Asset'], true);
  * // "0: 'Uninitialized', 1: 'Asset', Uninitialized: 0, Asset: 1"
+ *
+ * getEnumBody(['First', 'Fifth'], false, [1, 5]);
+ * // "First = 1, Fifth = 5"
+ * // "0: 'Uninitialized', 1: 'Asset', Uninitialized: 0, Asset: 1"
  * ```
  */
-export function getEnumBody(variantNames: string[], erasableSyntax: boolean): string {
-    if (!erasableSyntax) return variantNames.join(', ');
+export function getEnumBody(variantNames: string[], erasableSyntax: boolean, values?: number[]): string {
+    if (!erasableSyntax) {
+        if (!values) return variantNames.join(', ');
+        return variantNames.map((name, index) => `${name} = ${values[index]}`).join(', ');
+    }
 
-    const reverseEntries = variantNames.map((name, index) => `${index}: '${name}'`);
-    const forwardEntries = variantNames.map((name, index) => `${name}: ${index}`);
+    const resolvedValues = values ?? variantNames.map((_, index) => index);
+    const reverseEntries = variantNames.map((name, index) => `${resolvedValues[index]}: '${name}'`);
+    const forwardEntries = variantNames.map((name, index) => `${name}: ${resolvedValues[index]}`);
     return [...reverseEntries, ...forwardEntries].join(', ');
 }
