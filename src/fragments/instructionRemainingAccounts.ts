@@ -65,15 +65,20 @@ function getArgumentValueNodeFragment(
     const isWritable = remainingAccounts.isWritable ?? false;
     const argumentArray = isOptional ? `(args.${argumentName} ?? [])` : `args.${argumentName}`;
 
-    // The argument already exists as an instruction argument — i.e. an `Array<Address>`
-    // encoded in the instruction data — so its role is derived from the IDL flags alone.
+    // The argument already exists as an instruction argument — i.e. an `Array<Address | HasAddress>`
+    // encoded in the instruction data — so its role is derived from the IDL flags alone and
+    // each item is unwrapped to its address.
     if (isRemainingAccountsBackedByArgument(instructionNode, remainingAccounts)) {
         const accountRole = use('AccountRole', 'solanaInstructions');
+        const getAddressFromResolvedInstructionAccount = use(
+            'getAddressFromResolvedInstructionAccount',
+            'solanaProgramClientCore',
+        );
         const role = (() => {
             if (isSigner === true) return isWritable ? 'WRITABLE_SIGNER' : 'READONLY_SIGNER';
             return isWritable ? 'WRITABLE' : 'READONLY';
         })();
-        return fragment`${argumentArray}.map((address) => ({ address, role: ${accountRole}.${role} }))`;
+        return fragment`${argumentArray}.map((value) => ({ address: ${getAddressFromResolvedInstructionAccount}("${argumentName}", value), role: ${accountRole}.${role} }))`;
     }
 
     // Otherwise, the argument was added to the instruction input and accepts the same inputs

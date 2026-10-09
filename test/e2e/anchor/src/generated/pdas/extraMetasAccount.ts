@@ -10,12 +10,14 @@ import {
     getAddressEncoder,
     getBytesEncoder,
     getProgramDerivedAddress,
+    transformEncoder,
     type Address,
+    type HasAddress,
     type ProgramDerivedAddress,
 } from '@solana/kit';
 
 export type ExtraMetasAccountSeeds = {
-    mint: Address;
+    mint: Address | HasAddress;
 };
 
 export async function findExtraMetasAccountPda(
@@ -33,7 +35,9 @@ export async function findExtraMetasAccountPda(
                     101, 120, 116, 114, 97, 45, 97, 99, 99, 111, 117, 110, 116, 45, 109, 101, 116, 97, 115,
                 ]),
             ),
-            getAddressEncoder().encode(seeds.mint),
+            transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
+                typeof value === 'string' ? value : value.address,
+            ).encode(seeds.mint),
         ],
     });
 }

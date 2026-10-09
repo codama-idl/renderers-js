@@ -35,10 +35,10 @@ test('it renders a PDA helper function and its input type', async () => {
 
     // Then we expect the following PDA function using an empty seeds array to derive the address.
     await renderMapContains(renderMap, 'pdas/foo.ts', [
-        'export type FooSeeds = { myAccount: Address; myArg: number | bigint; }',
+        'export type FooSeeds = { myAccount: Address | HasAddress; myArg: number | bigint; }',
         'export async function findFooPda',
         "const { programAddress = '1111' as Address<'1111'> } = config;",
-        "[ getUtf8Encoder().encode('myPrefix'), getAddressEncoder().encode(seeds.myAccount), getU64Encoder().encode(seeds.myArg) ]",
+        "[ getUtf8Encoder().encode('myPrefix'), transformEncoder( getAddressEncoder(), (value: Address | HasAddress) => typeof value === 'string' ? value : value.address ).encode(seeds.myAccount), getU64Encoder().encode(seeds.myArg) ]",
     ]);
 });
 

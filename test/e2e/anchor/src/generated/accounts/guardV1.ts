@@ -36,6 +36,7 @@ import {
     type Encoder,
     type FetchAccountConfig,
     type FetchAccountsConfig,
+    type HasAddress,
     type MaybeAccount,
     type MaybeEncodedAccount,
     type Option,
@@ -79,7 +80,7 @@ export type GuardV1 = {
 
 export type GuardV1Args = {
     /** Mint token representing the guard, do not confuse with the mint of the token being transferred. */
-    mint: Address;
+    mint: Address | HasAddress;
     /** Bump seed for the guard account. */
     bump: number;
     /** CPI ruleset for the guard. */
@@ -95,7 +96,12 @@ export function getGuardV1Encoder(): Encoder<GuardV1Args> {
     return transformEncoder(
         getStructEncoder([
             ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
-            ['mint', getAddressEncoder()],
+            [
+                'mint',
+                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
+                    typeof value === 'string' ? value : value.address,
+                ),
+            ],
             ['bump', getU8Encoder()],
             ['cpiRule', getOptionEncoder(getCpiRuleEncoder())],
             ['transferAmountRule', getOptionEncoder(getTransferAmountRuleEncoder())],

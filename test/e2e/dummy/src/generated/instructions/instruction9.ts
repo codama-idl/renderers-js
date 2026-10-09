@@ -14,11 +14,13 @@ import {
     getStructEncoder,
     SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
     SolanaError,
+    transformEncoder,
     type AccountMeta,
     type Address,
     type FixedSizeCodec,
     type FixedSizeDecoder,
     type FixedSizeEncoder,
+    type HasAddress,
     type Instruction,
     type InstructionWithAccounts,
     type InstructionWithData,
@@ -49,10 +51,17 @@ export type Instruction9Instruction<
 
 export type Instruction9InstructionData = { authority: Address };
 
-export type Instruction9InstructionDataArgs = Instruction9InstructionData;
+export type Instruction9InstructionDataArgs = { authority: Address | HasAddress };
 
 export function getInstruction9InstructionDataEncoder(): FixedSizeEncoder<Instruction9InstructionDataArgs> {
-    return getStructEncoder([['authority', getAddressEncoder()]]);
+    return getStructEncoder([
+        [
+            'authority',
+            transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
+                typeof value === 'string' ? value : value.address,
+            ),
+        ],
+    ]);
 }
 
 export function getInstruction9InstructionDataDecoder(): FixedSizeDecoder<Instruction9InstructionData> {

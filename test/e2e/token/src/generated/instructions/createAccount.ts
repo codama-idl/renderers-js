@@ -28,6 +28,7 @@ import {
     type FixedSizeCodec,
     type FixedSizeDecoder,
     type FixedSizeEncoder,
+    type HasAddress,
     type Instruction,
     type InstructionWithAccounts,
     type InstructionWithData,
@@ -77,7 +78,11 @@ export type CreateAccountInstructionData = {
     programAddress: Address;
 };
 
-export type CreateAccountInstructionDataArgs = { lamports: Lamports; space: number | bigint; programAddress: Address };
+export type CreateAccountInstructionDataArgs = {
+    lamports: Lamports;
+    space: number | bigint;
+    programAddress: Address | HasAddress;
+};
 
 export function getCreateAccountInstructionDataEncoder(): FixedSizeEncoder<CreateAccountInstructionDataArgs> {
     return transformEncoder(
@@ -85,7 +90,12 @@ export function getCreateAccountInstructionDataEncoder(): FixedSizeEncoder<Creat
             ['discriminator', getU32Encoder()],
             ['lamports', getLamportsEncoder(getU64Encoder())],
             ['space', getU64Encoder()],
-            ['programAddress', getAddressEncoder()],
+            [
+                'programAddress',
+                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
+                    typeof value === 'string' ? value : value.address,
+                ),
+            ],
         ]),
         value => ({ ...value, discriminator: CREATE_ACCOUNT_DISCRIMINATOR }),
     );

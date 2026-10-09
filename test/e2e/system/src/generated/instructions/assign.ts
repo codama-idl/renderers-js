@@ -23,6 +23,7 @@ import {
     type FixedSizeCodec,
     type FixedSizeDecoder,
     type FixedSizeEncoder,
+    type HasAddress,
     type Instruction,
     type InstructionWithAccounts,
     type InstructionWithData,
@@ -61,13 +62,18 @@ export type AssignInstruction<
 
 export type AssignInstructionData = { discriminator: number; programAddress: Address };
 
-export type AssignInstructionDataArgs = { programAddress: Address };
+export type AssignInstructionDataArgs = { programAddress: Address | HasAddress };
 
 export function getAssignInstructionDataEncoder(): FixedSizeEncoder<AssignInstructionDataArgs> {
     return transformEncoder(
         getStructEncoder([
             ['discriminator', getU32Encoder()],
-            ['programAddress', getAddressEncoder()],
+            [
+                'programAddress',
+                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
+                    typeof value === 'string' ? value : value.address,
+                ),
+            ],
         ]),
         value => ({ ...value, discriminator: ASSIGN_DISCRIMINATOR }),
     );
