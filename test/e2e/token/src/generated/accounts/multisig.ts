@@ -23,6 +23,7 @@ import {
     getStructEncoder,
     getU8Decoder,
     getU8Encoder,
+    transformEncoder,
     type Account,
     type Address,
     type EncodedAccount,
@@ -31,6 +32,7 @@ import {
     type FixedSizeCodec,
     type FixedSizeDecoder,
     type FixedSizeEncoder,
+    type HasAddress,
     type MaybeAccount,
     type MaybeEncodedAccount,
 } from '@solana/kit';
@@ -46,7 +48,16 @@ export type Multisig = {
     signers: Array<Address>;
 };
 
-export type MultisigArgs = Multisig;
+export type MultisigArgs = {
+    /** Number of signers required. */
+    m: number;
+    /** Number of valid signers. */
+    n: number;
+    /** Is `true` if this structure has been initialized. */
+    isInitialized: boolean;
+    /** Signer public keys. */
+    signers: Array<Address | HasAddress>;
+};
 
 /** Gets the encoder for {@link MultisigArgs} account data. */
 export function getMultisigEncoder(): FixedSizeEncoder<MultisigArgs> {
@@ -54,7 +65,15 @@ export function getMultisigEncoder(): FixedSizeEncoder<MultisigArgs> {
         ['m', getU8Encoder()],
         ['n', getU8Encoder()],
         ['isInitialized', getBooleanEncoder()],
-        ['signers', getArrayEncoder(getAddressEncoder(), { size: 11 })],
+        [
+            'signers',
+            getArrayEncoder(
+                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
+                    typeof value === 'string' ? value : value.address,
+                ),
+                { size: 11 },
+            ),
+        ],
     ]);
 }
 

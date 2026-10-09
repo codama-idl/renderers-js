@@ -23,6 +23,7 @@ import {
     type FixedSizeCodec,
     type FixedSizeDecoder,
     type FixedSizeEncoder,
+    type HasAddress,
     type Instruction,
     type InstructionWithAccounts,
     type InstructionWithData,
@@ -65,13 +66,18 @@ export type AuthorizeNonceAccountInstruction<
 
 export type AuthorizeNonceAccountInstructionData = { discriminator: number; newNonceAuthority: Address };
 
-export type AuthorizeNonceAccountInstructionDataArgs = { newNonceAuthority: Address };
+export type AuthorizeNonceAccountInstructionDataArgs = { newNonceAuthority: Address | HasAddress };
 
 export function getAuthorizeNonceAccountInstructionDataEncoder(): FixedSizeEncoder<AuthorizeNonceAccountInstructionDataArgs> {
     return transformEncoder(
         getStructEncoder([
             ['discriminator', getU32Encoder()],
-            ['newNonceAuthority', getAddressEncoder()],
+            [
+                'newNonceAuthority',
+                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
+                    typeof value === 'string' ? value : value.address,
+                ),
+            ],
         ]),
         value => ({ ...value, discriminator: AUTHORIZE_NONCE_ACCOUNT_DISCRIMINATOR }),
     );

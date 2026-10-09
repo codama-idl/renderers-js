@@ -29,6 +29,7 @@ import {
     type Codec,
     type Decoder,
     type Encoder,
+    type HasAddress,
     type Instruction,
     type InstructionWithAccounts,
     type InstructionWithData,
@@ -84,22 +85,32 @@ export type CreateAccountWithSeedInstructionData = {
 };
 
 export type CreateAccountWithSeedInstructionDataArgs = {
-    base: Address;
+    base: Address | HasAddress;
     seed: string;
     amount: number | bigint;
     space: number | bigint;
-    programAddress: Address;
+    programAddress: Address | HasAddress;
 };
 
 export function getCreateAccountWithSeedInstructionDataEncoder(): Encoder<CreateAccountWithSeedInstructionDataArgs> {
     return transformEncoder(
         getStructEncoder([
             ['discriminator', getU32Encoder()],
-            ['base', getAddressEncoder()],
+            [
+                'base',
+                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
+                    typeof value === 'string' ? value : value.address,
+                ),
+            ],
             ['seed', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
             ['amount', getU64Encoder()],
             ['space', getU64Encoder()],
-            ['programAddress', getAddressEncoder()],
+            [
+                'programAddress',
+                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
+                    typeof value === 'string' ? value : value.address,
+                ),
+            ],
         ]),
         value => ({ ...value, discriminator: CREATE_ACCOUNT_WITH_SEED_DISCRIMINATOR }),
     );

@@ -22,6 +22,7 @@ import {
     type FixedSizeCodec,
     type FixedSizeDecoder,
     type FixedSizeEncoder,
+    type HasAddress,
     type Instruction,
     type InstructionWithAccounts,
     type InstructionWithData,
@@ -66,13 +67,18 @@ export type InitializeNonceAccountInstruction<
 
 export type InitializeNonceAccountInstructionData = { discriminator: number; nonceAuthority: Address };
 
-export type InitializeNonceAccountInstructionDataArgs = { nonceAuthority: Address };
+export type InitializeNonceAccountInstructionDataArgs = { nonceAuthority: Address | HasAddress };
 
 export function getInitializeNonceAccountInstructionDataEncoder(): FixedSizeEncoder<InitializeNonceAccountInstructionDataArgs> {
     return transformEncoder(
         getStructEncoder([
             ['discriminator', getU32Encoder()],
-            ['nonceAuthority', getAddressEncoder()],
+            [
+                'nonceAuthority',
+                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
+                    typeof value === 'string' ? value : value.address,
+                ),
+            ],
         ]),
         value => ({ ...value, discriminator: INITIALIZE_NONCE_ACCOUNT_DISCRIMINATOR }),
     );

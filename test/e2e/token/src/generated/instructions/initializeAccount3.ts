@@ -22,6 +22,7 @@ import {
     type FixedSizeCodec,
     type FixedSizeDecoder,
     type FixedSizeEncoder,
+    type HasAddress,
     type Instruction,
     type InstructionWithAccounts,
     type InstructionWithData,
@@ -67,14 +68,19 @@ export type InitializeAccount3InstructionData = {
 
 export type InitializeAccount3InstructionDataArgs = {
     /** The new account's owner/multisignature. */
-    owner: Address;
+    owner: Address | HasAddress;
 };
 
 export function getInitializeAccount3InstructionDataEncoder(): FixedSizeEncoder<InitializeAccount3InstructionDataArgs> {
     return transformEncoder(
         getStructEncoder([
             ['discriminator', getU8Encoder()],
-            ['owner', getAddressEncoder()],
+            [
+                'owner',
+                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
+                    typeof value === 'string' ? value : value.address,
+                ),
+            ],
         ]),
         value => ({ ...value, discriminator: INITIALIZE_ACCOUNT3_DISCRIMINATOR }),
     );

@@ -19,10 +19,12 @@ import {
     getHiddenPrefixEncoder,
     getStructDecoder,
     getStructEncoder,
+    transformEncoder,
     type Address,
     type FixedSizeCodec,
     type FixedSizeDecoder,
     type FixedSizeEncoder,
+    type HasAddress,
     type ReadonlyUint8Array,
 } from '@solana/kit';
 
@@ -41,14 +43,29 @@ export type GuardCreatedEvent = {
     mint: Address;
 };
 
-export type GuardCreatedEventArgs = GuardCreatedEvent;
+export type GuardCreatedEventArgs = {
+    /** The guard account that was created. */
+    guard: Address | HasAddress;
+    /** The mint the guard was created for. */
+    mint: Address | HasAddress;
+};
 
 /** Gets the encoder for {@link GuardCreatedEventArgs} event data. */
 export function getGuardCreatedEventEncoder(): FixedSizeEncoder<GuardCreatedEventArgs> {
     return getHiddenPrefixEncoder(
         getStructEncoder([
-            ['guard', getAddressEncoder()],
-            ['mint', getAddressEncoder()],
+            [
+                'guard',
+                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
+                    typeof value === 'string' ? value : value.address,
+                ),
+            ],
+            [
+                'mint',
+                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
+                    typeof value === 'string' ? value : value.address,
+                ),
+            ],
         ]),
         [getConstantEncoder(GUARD_CREATED_EVENT_DISCRIMINATOR)],
     );

@@ -27,6 +27,7 @@ import {
     type Codec,
     type Decoder,
     type Encoder,
+    type HasAddress,
     type Instruction,
     type InstructionWithAccounts,
     type InstructionWithData,
@@ -74,15 +75,29 @@ export type AssignWithSeedInstructionData = {
     programAddress: Address;
 };
 
-export type AssignWithSeedInstructionDataArgs = { base: Address; seed: string; programAddress: Address };
+export type AssignWithSeedInstructionDataArgs = {
+    base: Address | HasAddress;
+    seed: string;
+    programAddress: Address | HasAddress;
+};
 
 export function getAssignWithSeedInstructionDataEncoder(): Encoder<AssignWithSeedInstructionDataArgs> {
     return transformEncoder(
         getStructEncoder([
             ['discriminator', getU32Encoder()],
-            ['base', getAddressEncoder()],
+            [
+                'base',
+                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
+                    typeof value === 'string' ? value : value.address,
+                ),
+            ],
             ['seed', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
-            ['programAddress', getAddressEncoder()],
+            [
+                'programAddress',
+                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
+                    typeof value === 'string' ? value : value.address,
+                ),
+            ],
         ]),
         value => ({ ...value, discriminator: ASSIGN_WITH_SEED_DISCRIMINATOR }),
     );
