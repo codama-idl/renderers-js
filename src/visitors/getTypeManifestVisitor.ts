@@ -640,11 +640,13 @@ export function getTypeManifestVisitor(input: {
                 },
 
                 visitPublicKeyType() {
+                    const addressType = use('type Address', 'solanaAddresses');
+                    const looseType = fragment`${addressType} | ${use('type HasAddress', 'solanaAddresses')}`;
                     return typeManifest({
                         decoder: fragment`${use('getAddressDecoder', 'solanaAddresses')}()`,
-                        encoder: fragment`${use('getAddressEncoder', 'solanaAddresses')}()`,
-                        looseType: use('type Address', 'solanaAddresses'),
-                        strictType: use('type Address', 'solanaAddresses'),
+                        encoder: fragment`${use('transformEncoder', 'solanaCodecsCore')}(${use('getAddressEncoder', 'solanaAddresses')}(), (value: ${looseType}) => typeof value === 'string' ? value : value.address)`,
+                        looseType,
+                        strictType: addressType,
                     });
                 },
 

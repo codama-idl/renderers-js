@@ -557,7 +557,7 @@ test('it renders instruction accounts with inlined PDAs as default value', async
             '  programAddress, ' +
             '  seeds: [ ' +
             "    getUtf8Encoder().encode('counter'), " +
-            "    getAddressEncoder().encode( getAddressFromResolvedInstructionAccount ( 'authority', accounts.authority.value ) ) " +
+            "    transformEncoder( getAddressEncoder(), (value: Address | HasAddress) => typeof value === 'string' ? value : value.address ).encode( getAddressFromResolvedInstructionAccount ( 'authority', accounts.authority.value ) ) " +
             '  ] ' +
             '} ); ' +
             '}',
@@ -618,7 +618,7 @@ test('it renders instruction accounts with inlined PDA default values that point
             "  programAddress: getAddressFromResolvedInstructionAccount ( 'myProgram', accounts.myProgram.value ), " +
             '  seeds: [ ' +
             "    getUtf8Encoder().encode('counter'), " +
-            "    getAddressEncoder().encode( getAddressFromResolvedInstructionAccount ( 'authority', accounts.authority.value ) ) " +
+            "    transformEncoder( getAddressEncoder(), (value: Address | HasAddress) => typeof value === 'string' ? value : value.address ).encode( getAddressFromResolvedInstructionAccount ( 'authority', accounts.authority.value ) ) " +
             '  ] ' +
             '} ); ' +
             '}',
@@ -673,7 +673,7 @@ test('it renders instruction accounts with inlined PDAs from another program as 
             "  programAddress: '2222' as Address<'2222'>, " +
             '  seeds: [ ' +
             "    getUtf8Encoder().encode('counter'), " +
-            "    getAddressEncoder().encode( getAddressFromResolvedInstructionAccount ( 'authority', accounts.authority.value ) ) " +
+            "    transformEncoder( getAddressEncoder(), (value: Address | HasAddress) => typeof value === 'string' ? value : value.address ).encode( getAddressFromResolvedInstructionAccount ( 'authority', accounts.authority.value ) ) " +
             '  ] ' +
             '} ); ' +
             '}',
@@ -1264,7 +1264,7 @@ test('it renders remaining accounts backed by an instruction argument as plain a
 
     // And we expect the remaining accounts to be derived from the IDL flags alone.
     await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
-        'const remainingAccounts: AccountMeta[] = args.extraAccounts.map( (address) => ({ address, role: AccountRole.READONLY_SIGNER }) );',
+        "const remainingAccounts: AccountMeta[] = args.extraAccounts.map( (value) => ({ address: getAddressFromResolvedInstructionAccount('extraAccounts', value), role: AccountRole.READONLY_SIGNER }) );",
     ]);
     // And we expect the account meta helper to not be declared nor imported since it is not used.
     await renderMapDoesNotContain(renderMap, 'instructions/myInstruction.ts', ['getAccountMeta']);
