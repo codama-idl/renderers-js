@@ -290,3 +290,20 @@ test('remaining accounts backed by an instruction argument are derived from that
     ]);
     expect(instruction.data[0]).toBe(2);
 });
+
+test('remaining accounts backed by an instruction argument accept address wrappers', () => {
+    // Given an array argument mixing a plain address and an address wrapper.
+    const addresses = [authorityAddress, new AddressWrapper(targetAddress)];
+
+    // When we build an instruction whose remaining accounts are backed by that argument.
+    const instruction = getInstruction13Instruction({ addresses });
+
+    // Then the wrapper is unwrapped both in the remaining accounts and in the encoded data.
+    expect(instruction.accounts).toStrictEqual([
+        { address: authorityAddress, role: AccountRole.WRITABLE },
+        { address: targetAddress, role: AccountRole.WRITABLE },
+    ]);
+    expect(instruction.data).toStrictEqual(
+        getInstruction13Instruction({ addresses: [authorityAddress, targetAddress] }).data,
+    );
+});
