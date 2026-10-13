@@ -557,7 +557,7 @@ test('it renders instruction accounts with inlined PDAs as default value', async
             '  programAddress, ' +
             '  seeds: [ ' +
             "    getUtf8Encoder().encode('counter'), " +
-            "    transformEncoder( getAddressEncoder(), (value: Address | HasAddress) => typeof value === 'string' ? value : value.address ).encode( getAddressFromResolvedInstructionAccount ( 'authority', accounts.authority.value ) ) " +
+            "    getAddressEncoder().encode( getAddressFromResolvedInstructionAccount ( 'authority', accounts.authority.value ) ) " +
             '  ] ' +
             '} ); ' +
             '}',
@@ -618,7 +618,7 @@ test('it renders instruction accounts with inlined PDA default values that point
             "  programAddress: getAddressFromResolvedInstructionAccount ( 'myProgram', accounts.myProgram.value ), " +
             '  seeds: [ ' +
             "    getUtf8Encoder().encode('counter'), " +
-            "    transformEncoder( getAddressEncoder(), (value: Address | HasAddress) => typeof value === 'string' ? value : value.address ).encode( getAddressFromResolvedInstructionAccount ( 'authority', accounts.authority.value ) ) " +
+            "    getAddressEncoder().encode( getAddressFromResolvedInstructionAccount ( 'authority', accounts.authority.value ) ) " +
             '  ] ' +
             '} ); ' +
             '}',
@@ -673,7 +673,7 @@ test('it renders instruction accounts with inlined PDAs from another program as 
             "  programAddress: '2222' as Address<'2222'>, " +
             '  seeds: [ ' +
             "    getUtf8Encoder().encode('counter'), " +
-            "    transformEncoder( getAddressEncoder(), (value: Address | HasAddress) => typeof value === 'string' ? value : value.address ).encode( getAddressFromResolvedInstructionAccount ( 'authority', accounts.authority.value ) ) " +
+            "    getAddressEncoder().encode( getAddressFromResolvedInstructionAccount ( 'authority', accounts.authority.value ) ) " +
             '  ] ' +
             '} ); ' +
             '}',

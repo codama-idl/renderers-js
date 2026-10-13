@@ -644,7 +644,7 @@ export function getTypeManifestVisitor(input: {
                     const looseType = fragment`${addressType} | ${use('type HasAddress', 'solanaAddresses')}`;
                     return typeManifest({
                         decoder: fragment`${use('getAddressDecoder', 'solanaAddresses')}()`,
-                        encoder: fragment`${use('transformEncoder', 'solanaCodecsCore')}(${use('getAddressEncoder', 'solanaAddresses')}(), (value: ${looseType}) => typeof value === 'string' ? value : value.address)`,
+                        encoder: fragment`${use('getAddressEncoder', 'solanaAddresses')}()`,
                         looseType,
                         strictType: addressType,
                     });

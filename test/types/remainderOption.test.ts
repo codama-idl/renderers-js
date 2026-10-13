@@ -19,7 +19,7 @@ test('it renders remainder option codecs', async () => {
     await renderMapContains(renderMap, 'types/myType.ts', [
         'export type MyType = Option<Address>',
         'export type MyTypeArgs = OptionOrNullable<Address | HasAddress>',
-        "getOptionEncoder( transformEncoder( getAddressEncoder(), (value: Address | HasAddress) => typeof value === 'string' ? value : value.address ), { prefix: null } )",
+        'getOptionEncoder( getAddressEncoder(), { prefix: null } )',
         'getOptionDecoder( getAddressDecoder(), { prefix: null } )',
     ]);
 
@@ -30,7 +30,6 @@ test('it renders remainder option codecs', async () => {
             'getOptionDecoder',
             'getAddressEncoder',
             'getAddressDecoder',
-            'transformEncoder',
             'type Address',
             'type HasAddress',
             'type Option',

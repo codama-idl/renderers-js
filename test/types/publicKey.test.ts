@@ -19,20 +19,14 @@ test('it renders public key codecs that accept address-bearing objects', async (
     await renderMapContains(renderMap, 'types/myType.ts', [
         'export type MyType = Address',
         'export type MyTypeArgs = Address | HasAddress',
-        "export function getMyTypeEncoder(): FixedSizeEncoder<MyTypeArgs> { return transformEncoder( getAddressEncoder(), (value: Address | HasAddress) => typeof value === 'string' ? value : value.address ); }",
+        'export function getMyTypeEncoder(): FixedSizeEncoder<MyTypeArgs> { return getAddressEncoder(); }',
         'export function getMyTypeDecoder(): FixedSizeDecoder<MyType> { return getAddressDecoder(); }',
         'export function getMyTypeCodec(): FixedSizeCodec<MyTypeArgs, MyType> { return combineCodec(getMyTypeEncoder(), getMyTypeDecoder()); }',
     ]);
 
     // And we expect the following type and codec imports.
     await renderMapContainsImports(renderMap, 'types/myType.ts', {
-        '@solana/kit': [
-            'getAddressEncoder',
-            'getAddressDecoder',
-            'transformEncoder',
-            'type Address',
-            'type HasAddress',
-        ],
+        '@solana/kit': ['getAddressEncoder', 'getAddressDecoder', 'type Address', 'type HasAddress'],
     });
 });
 

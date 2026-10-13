@@ -25,7 +25,7 @@ test('it renders zeroable option codecs', async () => {
     await renderMapContains(renderMap, 'types/myType.ts', [
         'export type MyType = Option<Address>',
         'export type MyTypeArgs = OptionOrNullable<Address | HasAddress>',
-        "getOptionEncoder( transformEncoder( getAddressEncoder(), (value: Address | HasAddress) => typeof value === 'string' ? value : value.address ), { prefix: null, noneValue: 'zeroes' } )",
+        "getOptionEncoder( getAddressEncoder(), { prefix: null, noneValue: 'zeroes' } )",
         "getOptionDecoder( getAddressDecoder(), { prefix: null, noneValue: 'zeroes' } )",
     ]);
 
@@ -36,7 +36,6 @@ test('it renders zeroable option codecs', async () => {
             'getOptionDecoder',
             'getAddressEncoder',
             'getAddressDecoder',
-            'transformEncoder',
             'type Address',
             'type HasAddress',
             'type Option',
