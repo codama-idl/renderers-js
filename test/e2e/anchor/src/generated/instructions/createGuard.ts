@@ -35,7 +35,6 @@ import {
     type Codec,
     type Decoder,
     type Encoder,
-    type HasAddress,
     type Instruction,
     type InstructionWithAccounts,
     type InstructionWithData,
@@ -275,15 +274,13 @@ export async function getCreateGuardInstructionAsync<
             programAddress:
                 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>,
             seeds: [
-                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                    typeof value === 'string' ? value : value.address,
-                ).encode(getAddressFromResolvedInstructionAccount('guardAuthority', accounts.guardAuthority.value)),
-                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                    typeof value === 'string' ? value : value.address,
-                ).encode(getAddressFromResolvedInstructionAccount('tokenProgram', accounts.tokenProgram.value)),
-                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                    typeof value === 'string' ? value : value.address,
-                ).encode(getAddressFromResolvedInstructionAccount('mint', accounts.mint.value)),
+                getAddressEncoder().encode(
+                    getAddressFromResolvedInstructionAccount('guardAuthority', accounts.guardAuthority.value),
+                ),
+                getAddressEncoder().encode(
+                    getAddressFromResolvedInstructionAccount('tokenProgram', accounts.tokenProgram.value),
+                ),
+                getAddressEncoder().encode(getAddressFromResolvedInstructionAccount('mint', accounts.mint.value)),
             ],
         });
     }

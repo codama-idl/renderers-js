@@ -18,7 +18,6 @@ import {
     getStructEncoder,
     getTupleDecoder,
     getTupleEncoder,
-    transformEncoder,
     type Address,
     type Codec,
     type Decoder,
@@ -41,36 +40,8 @@ export type CpiRuleArgs =
 
 export function getCpiRuleEncoder(): Encoder<CpiRuleArgs> {
     return getDiscriminatedUnionEncoder([
-        [
-            'Allow',
-            getStructEncoder([
-                [
-                    'fields',
-                    getTupleEncoder([
-                        getArrayEncoder(
-                            transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                                typeof value === 'string' ? value : value.address,
-                            ),
-                        ),
-                    ]),
-                ],
-            ]),
-        ],
-        [
-            'Deny',
-            getStructEncoder([
-                [
-                    'fields',
-                    getTupleEncoder([
-                        getArrayEncoder(
-                            transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                                typeof value === 'string' ? value : value.address,
-                            ),
-                        ),
-                    ]),
-                ],
-            ]),
-        ],
+        ['Allow', getStructEncoder([['fields', getTupleEncoder([getArrayEncoder(getAddressEncoder())])]])],
+        ['Deny', getStructEncoder([['fields', getTupleEncoder([getArrayEncoder(getAddressEncoder())])]])],
     ]);
 }
 

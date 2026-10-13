@@ -17,7 +17,6 @@ import {
     getStructEncoder,
     getU8Decoder,
     getU8Encoder,
-    transformEncoder,
     type AccountMeta,
     type Address,
     type Codec,
@@ -42,17 +41,7 @@ export type Instruction13InstructionData = { addresses: Array<Address> };
 export type Instruction13InstructionDataArgs = { addresses: Array<Address | HasAddress> };
 
 export function getInstruction13InstructionDataEncoder(): Encoder<Instruction13InstructionDataArgs> {
-    return getStructEncoder([
-        [
-            'addresses',
-            getArrayEncoder(
-                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                    typeof value === 'string' ? value : value.address,
-                ),
-                { size: getU8Encoder() },
-            ),
-        ],
-    ]);
+    return getStructEncoder([['addresses', getArrayEncoder(getAddressEncoder(), { size: getU8Encoder() })]]);
 }
 
 export function getInstruction13InstructionDataDecoder(): Decoder<Instruction13InstructionData> {

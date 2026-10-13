@@ -73,12 +73,7 @@ export function getInitializeNonceAccountInstructionDataEncoder(): FixedSizeEnco
     return transformEncoder(
         getStructEncoder([
             ['discriminator', getU32Encoder()],
-            [
-                'nonceAuthority',
-                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                    typeof value === 'string' ? value : value.address,
-                ),
-            ],
+            ['nonceAuthority', getAddressEncoder()],
         ]),
         value => ({ ...value, discriminator: INITIALIZE_NONCE_ACCOUNT_DISCRIMINATOR }),
     );

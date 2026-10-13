@@ -9,7 +9,6 @@
 import {
     getAddressEncoder,
     getProgramDerivedAddress,
-    transformEncoder,
     type Address,
     type HasAddress,
     type ProgramDerivedAddress,
@@ -35,15 +34,9 @@ export async function findAssociatedTokenPda(
     return await getProgramDerivedAddress({
         programAddress,
         seeds: [
-            transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                typeof value === 'string' ? value : value.address,
-            ).encode(seeds.owner),
-            transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                typeof value === 'string' ? value : value.address,
-            ).encode(seeds.tokenProgram),
-            transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                typeof value === 'string' ? value : value.address,
-            ).encode(seeds.mint),
+            getAddressEncoder().encode(seeds.owner),
+            getAddressEncoder().encode(seeds.tokenProgram),
+            getAddressEncoder().encode(seeds.mint),
         ],
     });
 }

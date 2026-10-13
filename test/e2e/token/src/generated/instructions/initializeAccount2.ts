@@ -77,12 +77,7 @@ export function getInitializeAccount2InstructionDataEncoder(): FixedSizeEncoder<
     return transformEncoder(
         getStructEncoder([
             ['discriminator', getU8Encoder()],
-            [
-                'owner',
-                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                    typeof value === 'string' ? value : value.address,
-                ),
-            ],
+            ['owner', getAddressEncoder()],
         ]),
         value => ({ ...value, discriminator: INITIALIZE_ACCOUNT2_DISCRIMINATOR }),
     );

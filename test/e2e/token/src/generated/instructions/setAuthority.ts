@@ -89,14 +89,7 @@ export function getSetAuthorityInstructionDataEncoder(): Encoder<SetAuthorityIns
         getStructEncoder([
             ['discriminator', getU8Encoder()],
             ['authorityType', getAuthorityTypeEncoder()],
-            [
-                'newAuthority',
-                getOptionEncoder(
-                    transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                        typeof value === 'string' ? value : value.address,
-                    ),
-                ),
-            ],
+            ['newAuthority', getOptionEncoder(getAddressEncoder())],
         ]),
         value => ({ ...value, discriminator: SET_AUTHORITY_DISCRIMINATOR }),
     );

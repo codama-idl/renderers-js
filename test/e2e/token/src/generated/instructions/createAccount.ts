@@ -90,12 +90,7 @@ export function getCreateAccountInstructionDataEncoder(): FixedSizeEncoder<Creat
             ['discriminator', getU32Encoder()],
             ['lamports', getLamportsEncoder(getU64Encoder())],
             ['space', getU64Encoder()],
-            [
-                'programAddress',
-                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                    typeof value === 'string' ? value : value.address,
-                ),
-            ],
+            ['programAddress', getAddressEncoder()],
         ]),
         value => ({ ...value, discriminator: CREATE_ACCOUNT_DISCRIMINATOR }),
     );

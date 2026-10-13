@@ -83,20 +83,8 @@ export function getInitializeMint2InstructionDataEncoder(): Encoder<InitializeMi
         getStructEncoder([
             ['discriminator', getU8Encoder()],
             ['decimals', getU8Encoder()],
-            [
-                'mintAuthority',
-                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                    typeof value === 'string' ? value : value.address,
-                ),
-            ],
-            [
-                'freezeAuthority',
-                getOptionEncoder(
-                    transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                        typeof value === 'string' ? value : value.address,
-                    ),
-                ),
-            ],
+            ['mintAuthority', getAddressEncoder()],
+            ['freezeAuthority', getOptionEncoder(getAddressEncoder())],
         ]),
         value => ({
             ...value,

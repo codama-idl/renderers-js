@@ -10,7 +10,6 @@ import {
     getAddressEncoder,
     getBytesEncoder,
     getProgramDerivedAddress,
-    transformEncoder,
     type Address,
     type HasAddress,
     type ProgramDerivedAddress,
@@ -37,9 +36,7 @@ export async function findGuardPda(
                 ]),
             ),
             getBytesEncoder().encode(new Uint8Array([103, 117, 97, 114, 100, 95, 118, 49])),
-            transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                typeof value === 'string' ? value : value.address,
-            ).encode(seeds.mint),
+            getAddressEncoder().encode(seeds.mint),
         ],
     });
 }

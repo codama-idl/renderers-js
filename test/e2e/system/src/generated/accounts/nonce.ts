@@ -21,7 +21,6 @@ import {
     getStructEncoder,
     getU64Decoder,
     getU64Encoder,
-    transformEncoder,
     type Account,
     type Address,
     type EncodedAccount,
@@ -67,18 +66,8 @@ export function getNonceEncoder(): FixedSizeEncoder<NonceArgs> {
     return getStructEncoder([
         ['version', getNonceVersionEncoder()],
         ['state', getNonceStateEncoder()],
-        [
-            'authority',
-            transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                typeof value === 'string' ? value : value.address,
-            ),
-        ],
-        [
-            'blockhash',
-            transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                typeof value === 'string' ? value : value.address,
-            ),
-        ],
+        ['authority', getAddressEncoder()],
+        ['blockhash', getAddressEncoder()],
         ['lamportsPerSignature', getLamportsEncoder(getU64Encoder())],
     ]);
 }

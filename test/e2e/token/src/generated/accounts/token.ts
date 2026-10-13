@@ -23,7 +23,6 @@ import {
     getU32Encoder,
     getU64Decoder,
     getU64Encoder,
-    transformEncoder,
     type Account,
     type Address,
     type EncodedAccount,
@@ -98,40 +97,14 @@ export type TokenArgs = {
 /** Gets the encoder for {@link TokenArgs} account data. */
 export function getTokenEncoder(): FixedSizeEncoder<TokenArgs> {
     return getStructEncoder([
-        [
-            'mint',
-            transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                typeof value === 'string' ? value : value.address,
-            ),
-        ],
-        [
-            'owner',
-            transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                typeof value === 'string' ? value : value.address,
-            ),
-        ],
+        ['mint', getAddressEncoder()],
+        ['owner', getAddressEncoder()],
         ['amount', getU64Encoder()],
-        [
-            'delegate',
-            getOptionEncoder(
-                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                    typeof value === 'string' ? value : value.address,
-                ),
-                { prefix: getU32Encoder(), noneValue: 'zeroes' },
-            ),
-        ],
+        ['delegate', getOptionEncoder(getAddressEncoder(), { prefix: getU32Encoder(), noneValue: 'zeroes' })],
         ['state', getAccountStateEncoder()],
         ['isNative', getOptionEncoder(getU64Encoder(), { prefix: getU32Encoder(), noneValue: 'zeroes' })],
         ['delegatedAmount', getU64Encoder()],
-        [
-            'closeAuthority',
-            getOptionEncoder(
-                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                    typeof value === 'string' ? value : value.address,
-                ),
-                { prefix: getU32Encoder(), noneValue: 'zeroes' },
-            ),
-        ],
+        ['closeAuthority', getOptionEncoder(getAddressEncoder(), { prefix: getU32Encoder(), noneValue: 'zeroes' })],
     ]);
 }
 

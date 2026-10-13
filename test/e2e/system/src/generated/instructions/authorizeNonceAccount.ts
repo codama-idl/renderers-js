@@ -72,12 +72,7 @@ export function getAuthorizeNonceAccountInstructionDataEncoder(): FixedSizeEncod
     return transformEncoder(
         getStructEncoder([
             ['discriminator', getU32Encoder()],
-            [
-                'newNonceAuthority',
-                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                    typeof value === 'string' ? value : value.address,
-                ),
-            ],
+            ['newNonceAuthority', getAddressEncoder()],
         ]),
         value => ({ ...value, discriminator: AUTHORIZE_NONCE_ACCOUNT_DISCRIMINATOR }),
     );

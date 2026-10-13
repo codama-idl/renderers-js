@@ -23,7 +23,6 @@ import {
     getStructEncoder,
     getU8Decoder,
     getU8Encoder,
-    transformEncoder,
     type Account,
     type Address,
     type EncodedAccount,
@@ -65,15 +64,7 @@ export function getMultisigEncoder(): FixedSizeEncoder<MultisigArgs> {
         ['m', getU8Encoder()],
         ['n', getU8Encoder()],
         ['isInitialized', getBooleanEncoder()],
-        [
-            'signers',
-            getArrayEncoder(
-                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                    typeof value === 'string' ? value : value.address,
-                ),
-                { size: 11 },
-            ),
-        ],
+        ['signers', getArrayEncoder(getAddressEncoder(), { size: 11 })],
     ]);
 }
 

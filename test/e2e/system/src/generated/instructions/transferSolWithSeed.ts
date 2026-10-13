@@ -91,12 +91,7 @@ export function getTransferSolWithSeedInstructionDataEncoder(): Encoder<Transfer
             ['discriminator', getU32Encoder()],
             ['amount', getU64Encoder()],
             ['fromSeed', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
-            [
-                'fromOwner',
-                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                    typeof value === 'string' ? value : value.address,
-                ),
-            ],
+            ['fromOwner', getAddressEncoder()],
         ]),
         value => ({ ...value, discriminator: TRANSFER_SOL_WITH_SEED_DISCRIMINATOR }),
     );

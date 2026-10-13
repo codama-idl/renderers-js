@@ -10,7 +10,6 @@ import {
     getAddressEncoder,
     getBytesEncoder,
     getProgramDerivedAddress,
-    transformEncoder,
     type Address,
     type HasAddress,
     type ProgramDerivedAddress,
@@ -35,9 +34,7 @@ export async function findExtraMetasAccountPda(
                     101, 120, 116, 114, 97, 45, 97, 99, 99, 111, 117, 110, 116, 45, 109, 101, 116, 97, 115,
                 ]),
             ),
-            transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                typeof value === 'string' ? value : value.address,
-            ).encode(seeds.mint),
+            getAddressEncoder().encode(seeds.mint),
         ],
     });
 }

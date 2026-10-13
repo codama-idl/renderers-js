@@ -89,20 +89,10 @@ export function getAllocateWithSeedInstructionDataEncoder(): Encoder<AllocateWit
     return transformEncoder(
         getStructEncoder([
             ['discriminator', getU32Encoder()],
-            [
-                'base',
-                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                    typeof value === 'string' ? value : value.address,
-                ),
-            ],
+            ['base', getAddressEncoder()],
             ['seed', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
             ['space', getU64Encoder()],
-            [
-                'programAddress',
-                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                    typeof value === 'string' ? value : value.address,
-                ),
-            ],
+            ['programAddress', getAddressEncoder()],
         ]),
         value => ({ ...value, discriminator: ALLOCATE_WITH_SEED_DISCRIMINATOR }),
     );

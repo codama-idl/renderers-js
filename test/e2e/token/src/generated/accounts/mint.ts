@@ -27,7 +27,6 @@ import {
     getU64Encoder,
     getU8Decoder,
     getU8Encoder,
-    transformEncoder,
     type Account,
     type Address,
     type EncodedAccount,
@@ -81,27 +80,11 @@ export type MintArgs = {
 /** Gets the encoder for {@link MintArgs} account data. */
 export function getMintEncoder(): FixedSizeEncoder<MintArgs> {
     return getStructEncoder([
-        [
-            'mintAuthority',
-            getOptionEncoder(
-                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                    typeof value === 'string' ? value : value.address,
-                ),
-                { prefix: getU32Encoder(), noneValue: 'zeroes' },
-            ),
-        ],
+        ['mintAuthority', getOptionEncoder(getAddressEncoder(), { prefix: getU32Encoder(), noneValue: 'zeroes' })],
         ['supply', getU64Encoder()],
         ['decimals', getU8Encoder()],
         ['isInitialized', getBooleanEncoder()],
-        [
-            'freezeAuthority',
-            getOptionEncoder(
-                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                    typeof value === 'string' ? value : value.address,
-                ),
-                { prefix: getU32Encoder(), noneValue: 'zeroes' },
-            ),
-        ],
+        ['freezeAuthority', getOptionEncoder(getAddressEncoder(), { prefix: getU32Encoder(), noneValue: 'zeroes' })],
     ]);
 }
 

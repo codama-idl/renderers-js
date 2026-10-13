@@ -96,21 +96,11 @@ export function getCreateAccountWithSeedInstructionDataEncoder(): Encoder<Create
     return transformEncoder(
         getStructEncoder([
             ['discriminator', getU32Encoder()],
-            [
-                'base',
-                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                    typeof value === 'string' ? value : value.address,
-                ),
-            ],
+            ['base', getAddressEncoder()],
             ['seed', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
             ['amount', getU64Encoder()],
             ['space', getU64Encoder()],
-            [
-                'programAddress',
-                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                    typeof value === 'string' ? value : value.address,
-                ),
-            ],
+            ['programAddress', getAddressEncoder()],
         ]),
         value => ({ ...value, discriminator: CREATE_ACCOUNT_WITH_SEED_DISCRIMINATOR }),
     );

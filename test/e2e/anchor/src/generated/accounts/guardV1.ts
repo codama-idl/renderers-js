@@ -96,12 +96,7 @@ export function getGuardV1Encoder(): Encoder<GuardV1Args> {
     return transformEncoder(
         getStructEncoder([
             ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
-            [
-                'mint',
-                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                    typeof value === 'string' ? value : value.address,
-                ),
-            ],
+            ['mint', getAddressEncoder()],
             ['bump', getU8Encoder()],
             ['cpiRule', getOptionEncoder(getCpiRuleEncoder())],
             ['transferAmountRule', getOptionEncoder(getTransferAmountRuleEncoder())],

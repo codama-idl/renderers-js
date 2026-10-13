@@ -68,12 +68,7 @@ export function getAssignInstructionDataEncoder(): FixedSizeEncoder<AssignInstru
     return transformEncoder(
         getStructEncoder([
             ['discriminator', getU32Encoder()],
-            [
-                'programAddress',
-                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                    typeof value === 'string' ? value : value.address,
-                ),
-            ],
+            ['programAddress', getAddressEncoder()],
         ]),
         value => ({ ...value, discriminator: ASSIGN_DISCRIMINATOR }),
     );

@@ -19,7 +19,6 @@ import {
     getHiddenPrefixEncoder,
     getStructDecoder,
     getStructEncoder,
-    transformEncoder,
     type Address,
     type FixedSizeCodec,
     type FixedSizeDecoder,
@@ -54,18 +53,8 @@ export type GuardCreatedEventArgs = {
 export function getGuardCreatedEventEncoder(): FixedSizeEncoder<GuardCreatedEventArgs> {
     return getHiddenPrefixEncoder(
         getStructEncoder([
-            [
-                'guard',
-                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                    typeof value === 'string' ? value : value.address,
-                ),
-            ],
-            [
-                'mint',
-                transformEncoder(getAddressEncoder(), (value: Address | HasAddress) =>
-                    typeof value === 'string' ? value : value.address,
-                ),
-            ],
+            ['guard', getAddressEncoder()],
+            ['mint', getAddressEncoder()],
         ]),
         [getConstantEncoder(GUARD_CREATED_EVENT_DISCRIMINATOR)],
     );
