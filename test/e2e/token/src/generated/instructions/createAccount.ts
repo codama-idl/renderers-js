@@ -28,6 +28,7 @@ import {
     type FixedSizeCodec,
     type FixedSizeDecoder,
     type FixedSizeEncoder,
+    type HasAddress,
     type Instruction,
     type InstructionWithAccounts,
     type InstructionWithData,
@@ -77,7 +78,11 @@ export type CreateAccountInstructionData = {
     programAddress: Address;
 };
 
-export type CreateAccountInstructionDataArgs = { lamports: Lamports; space: number | bigint; programAddress: Address };
+export type CreateAccountInstructionDataArgs = {
+    lamports: Lamports;
+    space: number | bigint;
+    programAddress: Address | HasAddress;
+};
 
 export function getCreateAccountInstructionDataEncoder(): FixedSizeEncoder<CreateAccountInstructionDataArgs> {
     return transformEncoder(

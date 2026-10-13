@@ -22,6 +22,7 @@ import {
     type FixedSizeCodec,
     type FixedSizeDecoder,
     type FixedSizeEncoder,
+    type HasAddress,
     type Instruction,
     type InstructionWithAccounts,
     type InstructionWithData,
@@ -66,7 +67,7 @@ export type InitializeNonceAccountInstruction<
 
 export type InitializeNonceAccountInstructionData = { discriminator: number; nonceAuthority: Address };
 
-export type InitializeNonceAccountInstructionDataArgs = { nonceAuthority: Address };
+export type InitializeNonceAccountInstructionDataArgs = { nonceAuthority: Address | HasAddress };
 
 export function getInitializeNonceAccountInstructionDataEncoder(): FixedSizeEncoder<InitializeNonceAccountInstructionDataArgs> {
     return transformEncoder(

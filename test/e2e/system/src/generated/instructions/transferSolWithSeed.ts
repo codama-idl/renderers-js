@@ -29,6 +29,7 @@ import {
     type Codec,
     type Decoder,
     type Encoder,
+    type HasAddress,
     type Instruction,
     type InstructionWithAccounts,
     type InstructionWithData,
@@ -78,7 +79,11 @@ export type TransferSolWithSeedInstructionData = {
     fromOwner: Address;
 };
 
-export type TransferSolWithSeedInstructionDataArgs = { amount: number | bigint; fromSeed: string; fromOwner: Address };
+export type TransferSolWithSeedInstructionDataArgs = {
+    amount: number | bigint;
+    fromSeed: string;
+    fromOwner: Address | HasAddress;
+};
 
 export function getTransferSolWithSeedInstructionDataEncoder(): Encoder<TransferSolWithSeedInstructionDataArgs> {
     return transformEncoder(

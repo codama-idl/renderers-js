@@ -1264,7 +1264,7 @@ test('it renders remaining accounts backed by an instruction argument as plain a
 
     // And we expect the remaining accounts to be derived from the IDL flags alone.
     await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
-        'const remainingAccounts: AccountMeta[] = args.extraAccounts.map( (address) => ({ address, role: AccountRole.READONLY_SIGNER }) );',
+        "const remainingAccounts: AccountMeta[] = args.extraAccounts.map( (value) => ({ address: getAddressFromResolvedInstructionAccount('extraAccounts', value), role: AccountRole.READONLY_SIGNER }) );",
     ]);
     // And we expect the account meta helper to not be declared nor imported since it is not used.
     await renderMapDoesNotContain(renderMap, 'instructions/myInstruction.ts', ['getAccountMeta']);

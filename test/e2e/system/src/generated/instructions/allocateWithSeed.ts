@@ -29,6 +29,7 @@ import {
     type Codec,
     type Decoder,
     type Encoder,
+    type HasAddress,
     type Instruction,
     type InstructionWithAccounts,
     type InstructionWithData,
@@ -78,10 +79,10 @@ export type AllocateWithSeedInstructionData = {
 };
 
 export type AllocateWithSeedInstructionDataArgs = {
-    base: Address;
+    base: Address | HasAddress;
     seed: string;
     space: number | bigint;
-    programAddress: Address;
+    programAddress: Address | HasAddress;
 };
 
 export function getAllocateWithSeedInstructionDataEncoder(): Encoder<AllocateWithSeedInstructionDataArgs> {

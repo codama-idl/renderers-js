@@ -24,6 +24,7 @@ import {
     type Encoder,
     type GetDiscriminatedUnionVariant,
     type GetDiscriminatedUnionVariantContent,
+    type HasAddress,
 } from '@solana/kit';
 
 /**
@@ -33,7 +34,9 @@ import {
 export type CpiRule =
     { __kind: 'Allow'; fields: readonly [Array<Address>] } | { __kind: 'Deny'; fields: readonly [Array<Address>] };
 
-export type CpiRuleArgs = CpiRule;
+export type CpiRuleArgs =
+    | { __kind: 'Allow'; fields: readonly [Array<Address | HasAddress>] }
+    | { __kind: 'Deny'; fields: readonly [Array<Address | HasAddress>] };
 
 export function getCpiRuleEncoder(): Encoder<CpiRuleArgs> {
     return getDiscriminatedUnionEncoder([

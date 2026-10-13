@@ -11,11 +11,12 @@ import {
     getBytesEncoder,
     getProgramDerivedAddress,
     type Address,
+    type HasAddress,
     type ProgramDerivedAddress,
 } from '@solana/kit';
 
 export type ExtraMetasAccountSeeds = {
-    mint: Address;
+    mint: Address | HasAddress;
 };
 
 export async function findExtraMetasAccountPda(

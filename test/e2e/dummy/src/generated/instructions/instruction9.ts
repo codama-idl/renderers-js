@@ -19,6 +19,7 @@ import {
     type FixedSizeCodec,
     type FixedSizeDecoder,
     type FixedSizeEncoder,
+    type HasAddress,
     type Instruction,
     type InstructionWithAccounts,
     type InstructionWithData,
@@ -49,7 +50,7 @@ export type Instruction9Instruction<
 
 export type Instruction9InstructionData = { authority: Address };
 
-export type Instruction9InstructionDataArgs = Instruction9InstructionData;
+export type Instruction9InstructionDataArgs = { authority: Address | HasAddress };
 
 export function getInstruction9InstructionDataEncoder(): FixedSizeEncoder<Instruction9InstructionDataArgs> {
     return getStructEncoder([['authority', getAddressEncoder()]]);

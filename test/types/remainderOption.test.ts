@@ -18,7 +18,7 @@ test('it renders remainder option codecs', async () => {
     // Then we expect the following types and codecs to be exported.
     await renderMapContains(renderMap, 'types/myType.ts', [
         'export type MyType = Option<Address>',
-        'export type MyTypeArgs = OptionOrNullable<Address>',
+        'export type MyTypeArgs = OptionOrNullable<Address | HasAddress>',
         'getOptionEncoder( getAddressEncoder(), { prefix: null } )',
         'getOptionDecoder( getAddressDecoder(), { prefix: null } )',
     ]);
@@ -30,6 +30,8 @@ test('it renders remainder option codecs', async () => {
             'getOptionDecoder',
             'getAddressEncoder',
             'getAddressDecoder',
+            'type Address',
+            'type HasAddress',
             'type Option',
             'type OptionOrNullable',
         ],

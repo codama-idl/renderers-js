@@ -36,6 +36,7 @@ import {
     type Encoder,
     type FetchAccountConfig,
     type FetchAccountsConfig,
+    type HasAddress,
     type MaybeAccount,
     type MaybeEncodedAccount,
     type Option,
@@ -79,7 +80,7 @@ export type GuardV1 = {
 
 export type GuardV1Args = {
     /** Mint token representing the guard, do not confuse with the mint of the token being transferred. */
-    mint: Address;
+    mint: Address | HasAddress;
     /** Bump seed for the guard account. */
     bump: number;
     /** CPI ruleset for the guard. */

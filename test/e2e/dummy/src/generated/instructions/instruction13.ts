@@ -22,11 +22,13 @@ import {
     type Codec,
     type Decoder,
     type Encoder,
+    type HasAddress,
     type Instruction,
     type InstructionWithAccounts,
     type InstructionWithData,
     type ReadonlyUint8Array,
 } from '@solana/kit';
+import { getAddressFromResolvedInstructionAccount } from '@solana/kit/program-client-core';
 import { DUMMY_PROGRAM_ADDRESS } from '../programs';
 
 export type Instruction13Instruction<
@@ -36,7 +38,7 @@ export type Instruction13Instruction<
 
 export type Instruction13InstructionData = { addresses: Array<Address> };
 
-export type Instruction13InstructionDataArgs = Instruction13InstructionData;
+export type Instruction13InstructionDataArgs = { addresses: Array<Address | HasAddress> };
 
 export function getInstruction13InstructionDataEncoder(): Encoder<Instruction13InstructionDataArgs> {
     return getStructEncoder([['addresses', getArrayEncoder(getAddressEncoder(), { size: getU8Encoder() })]]);
@@ -68,7 +70,10 @@ export function getInstruction13Instruction<TProgramAddress extends Address = ty
     const args = { ...input };
 
     // Remaining accounts.
-    const remainingAccounts: AccountMeta[] = args.addresses.map(address => ({ address, role: AccountRole.WRITABLE }));
+    const remainingAccounts: AccountMeta[] = args.addresses.map(value => ({
+        address: getAddressFromResolvedInstructionAccount('addresses', value),
+        role: AccountRole.WRITABLE,
+    }));
 
     return Object.freeze({
         accounts: remainingAccounts,

@@ -27,6 +27,7 @@ import {
     type Codec,
     type Decoder,
     type Encoder,
+    type HasAddress,
     type Instruction,
     type InstructionWithAccounts,
     type InstructionWithData,
@@ -74,7 +75,11 @@ export type AssignWithSeedInstructionData = {
     programAddress: Address;
 };
 
-export type AssignWithSeedInstructionDataArgs = { base: Address; seed: string; programAddress: Address };
+export type AssignWithSeedInstructionDataArgs = {
+    base: Address | HasAddress;
+    seed: string;
+    programAddress: Address | HasAddress;
+};
 
 export function getAssignWithSeedInstructionDataEncoder(): Encoder<AssignWithSeedInstructionDataArgs> {
     return transformEncoder(

@@ -29,6 +29,7 @@ import {
     type Codec,
     type Decoder,
     type Encoder,
+    type HasAddress,
     type Instruction,
     type InstructionWithAccounts,
     type InstructionWithData,
@@ -84,11 +85,11 @@ export type CreateAccountWithSeedInstructionData = {
 };
 
 export type CreateAccountWithSeedInstructionDataArgs = {
-    base: Address;
+    base: Address | HasAddress;
     seed: string;
     amount: number | bigint;
     space: number | bigint;
-    programAddress: Address;
+    programAddress: Address | HasAddress;
 };
 
 export function getCreateAccountWithSeedInstructionDataEncoder(): Encoder<CreateAccountWithSeedInstructionDataArgs> {

@@ -29,6 +29,7 @@ import {
     type FixedSizeCodec,
     type FixedSizeDecoder,
     type FixedSizeEncoder,
+    type HasAddress,
     type Lamports,
     type MaybeAccount,
     type MaybeEncodedAccount,
@@ -55,8 +56,8 @@ export type Nonce = {
 export type NonceArgs = {
     version: NonceVersionArgs;
     state: NonceStateArgs;
-    authority: Address;
-    blockhash: Address;
+    authority: Address | HasAddress;
+    blockhash: Address | HasAddress;
     lamportsPerSignature: Lamports;
 };
 
