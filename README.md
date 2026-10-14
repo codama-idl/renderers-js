@@ -34,6 +34,20 @@ The first argument is the package folder — i.e. where the `package.json` lives
 
 The generated client contains typed helpers for the accounts, instructions, PDAs, defined types, errors, events and program of each program in the Codama tree. For instance, program events are each rendered into a dedicated `events/` page exposing their discriminator constants, payload type, codec functions and a `parseMyEvent` helper, whilst the program page offers an `identifyMyProgramEvent` function to recognise raw event data.
 
+Each program page also exports a Kit plugin — e.g. `myProgramProgram()` — that adds the program's accounts, instructions and PDAs to a Kit client. The plugin and the `isMyProgramError` helper target the program address from the IDL by default, but both accept a custom one, which is useful when the program is deployed at a different address on another cluster or in tests. Per-call configs take precedence over the plugin config.
+
+```ts
+const client = createClient().use(myProgramProgram({ programAddress: customProgramAddress }));
+
+await client.myProgram.instructions.initialize(input).sendTransaction();
+await client.myProgram.instructions.initialize(input, { programAddress: otherProgramAddress }).sendTransaction();
+const [pda] = await client.myProgram.pdas.counter({ authority });
+
+isMyProgramError(error, transactionMessage, MY_PROGRAM_ERROR__INVALID_AUTHORITY, {
+    programAddress: customProgramAddress,
+});
+```
+
 An object can be passed as a second argument to further configure the renderer. See the [Options](#options) section below for more details.
 
 ## Options

@@ -56,26 +56,8 @@ export function getInstructionFunctionFragment(
 
     const customData = customInstructionData.get(instructionNode.name);
     const hasAccounts = (instructionNode.accounts ?? []).length > 0;
-    const instructionDependencies = getInstructionDependencies(instructionNode, asyncResolvers, useAsync);
-    const argDependencies = instructionDependencies.filter(isNodeFilter('argumentValueNode')).map(node => node.name);
     const hasData = !!customData || (instructionNode.arguments ?? []).length > 0;
-    const argIsNotOmitted = (arg: InstructionArgumentNode) =>
-        !(arg.defaultValue && arg.defaultValueStrategy === 'omitted');
-    const argIsDependent = (arg: InstructionArgumentNode) => argDependencies.includes(arg.name);
-    const argHasDefaultValue = (arg: InstructionArgumentNode) => {
-        if (!arg.defaultValue) return false;
-        if (useAsync) return true;
-        return !isAsyncDefaultValue(arg.defaultValue, asyncResolvers);
-    };
-    const hasDataArgs = !!customData || (instructionNode.arguments ?? []).filter(argIsNotOmitted).length > 0;
-    const hasExtraArgs =
-        (instructionNode.extraArguments ?? []).filter(
-            field => argIsNotOmitted(field) && (argIsDependent(field) || argHasDefaultValue(field)),
-        ).length > 0;
-    const hasRemainingAccountArgs =
-        (instructionNode.remainingAccounts ?? []).filter(({ value }) => isNode(value, 'argumentValueNode')).length > 0;
-    const hasAnyArgs = hasDataArgs || hasExtraArgs || hasRemainingAccountArgs;
-    const hasInput = hasAccounts || hasAnyArgs;
+    const { hasAnyArgs, hasDataArgs, hasInput } = getInstructionFunctionInputFlags(instructionNode, scope);
     const programAddressConstant = use(nameApi.programAddressConstant(programNode.name), 'generatedPrograms');
 
     const functionName = useAsync
@@ -123,6 +105,38 @@ export function getInstructionFunctionFragment(
     return fragment`${inputType}\n\nexport ${useAsync ? 'async ' : ''}function ${functionName}${typeParams}(${inputArg}config?: { programAddress?: TProgramAddress | { readonly address: TProgramAddress } } ): ${returnType} {
   ${functionBody}
 }`;
+}
+
+/**
+ * Determines which inputs the sync or async builder of an instruction accepts, so that
+ * callers such as the program plugin can invoke it with the same arguments it declares.
+ */
+export function getInstructionFunctionInputFlags(
+    instructionNode: InstructionNode,
+    scope: Pick<RenderScope, 'asyncResolvers' | 'customInstructionData'> & { useAsync: boolean },
+): { hasAnyArgs: boolean; hasDataArgs: boolean; hasInput: boolean } {
+    const { asyncResolvers, customInstructionData, useAsync } = scope;
+    const customData = customInstructionData.get(instructionNode.name);
+    const hasAccounts = (instructionNode.accounts ?? []).length > 0;
+    const instructionDependencies = getInstructionDependencies(instructionNode, asyncResolvers, useAsync);
+    const argDependencies = instructionDependencies.filter(isNodeFilter('argumentValueNode')).map(node => node.name);
+    const argIsNotOmitted = (arg: InstructionArgumentNode) =>
+        !(arg.defaultValue && arg.defaultValueStrategy === 'omitted');
+    const argIsDependent = (arg: InstructionArgumentNode) => argDependencies.includes(arg.name);
+    const argHasDefaultValue = (arg: InstructionArgumentNode) => {
+        if (!arg.defaultValue) return false;
+        if (useAsync) return true;
+        return !isAsyncDefaultValue(arg.defaultValue, asyncResolvers);
+    };
+    const hasDataArgs = !!customData || (instructionNode.arguments ?? []).filter(argIsNotOmitted).length > 0;
+    const hasExtraArgs =
+        (instructionNode.extraArguments ?? []).filter(
+            field => argIsNotOmitted(field) && (argIsDependent(field) || argHasDefaultValue(field)),
+        ).length > 0;
+    const hasRemainingAccountArgs =
+        (instructionNode.remainingAccounts ?? []).filter(({ value }) => isNode(value, 'argumentValueNode')).length > 0;
+    const hasAnyArgs = hasDataArgs || hasExtraArgs || hasRemainingAccountArgs;
+    return { hasAnyArgs, hasDataArgs, hasInput: hasAccounts || hasAnyArgs };
 }
 
 function getProgramAddressInitializationFragment(programAddressConstant: Fragment): Fragment {

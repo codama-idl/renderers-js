@@ -10,7 +10,12 @@ import { getProgramPluginFragment } from './programPlugin';
 export function getProgramPageFragment(
     scope: Pick<
         RenderScope,
-        'asyncResolvers' | 'erasableSyntax' | 'nameApi' | 'renderParentInstructions' | 'typeManifestVisitor'
+        | 'asyncResolvers'
+        | 'customInstructionData'
+        | 'erasableSyntax'
+        | 'nameApi'
+        | 'renderParentInstructions'
+        | 'typeManifestVisitor'
     > & {
         programNode: ProgramNode;
     },

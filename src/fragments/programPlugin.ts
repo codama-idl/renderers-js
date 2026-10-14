@@ -5,15 +5,21 @@ import {
     InstructionArgumentNode,
     InstructionNode,
     isNode,
+    isNodeFilter,
+    PdaNode,
     ProgramNode,
 } from '@codama/nodes';
 import { getResolvedInstructionInputsVisitor, visit } from '@codama/visitors-core';
 
 import { Fragment, fragment, hasAsyncFunction, mergeFragments, RenderScope, use } from '../utils';
+import { getInstructionFunctionInputFlags } from './instructionFunction';
 import { getRenamedArgsMap } from './instructionPage';
 
 export function getProgramPluginFragment(
-    scope: Pick<RenderScope, 'asyncResolvers' | 'erasableSyntax' | 'nameApi' | 'renderParentInstructions'> & {
+    scope: Pick<
+        RenderScope,
+        'asyncResolvers' | 'customInstructionData' | 'erasableSyntax' | 'nameApi' | 'renderParentInstructions'
+    > & {
         programNode: ProgramNode;
     },
 ): Fragment | undefined {
@@ -121,6 +127,7 @@ function getProgramPluginInstructionsTypeFragment(
     if ((programNode.instructions ?? []).length === 0) return;
     const programPluginInstructionsType = nameApi.programPluginInstructionsType(programNode.name);
     const selfPlanAndSendFunctions = use('type SelfPlanAndSendFunctions', 'solanaProgramClientCore');
+    const programAddressType = fragment`${use('type Address', 'solanaAddresses')} | ${use('type HasAddress', 'solanaAddresses')}`;
 
     const fields = mergeFragments(
         (programNode.instructions ?? []).map(instruction => {
@@ -139,7 +146,7 @@ function getProgramPluginInstructionsTypeFragment(
                 instructionInputType = fragment`MakeOptional<${instructionInputType}, ${fieldStringUnion}>`;
             }
 
-            return fragment`${name}: (input: ${instructionInputType}) => ReturnType<typeof ${instructionFunction}> & ${selfPlanAndSendFunctions};`;
+            return fragment`${name}: (input: ${instructionInputType}, config?: { programAddress?: ${programAddressType} }) => ReturnType<typeof ${instructionFunction}> & ${selfPlanAndSendFunctions};`;
         }),
         c => c.join(' '),
     );
@@ -176,7 +183,10 @@ function getProgramPluginPdasObjectFragment(
         (programNode.pdas ?? []).map(pda => {
             const name = nameApi.programPluginPdaKey(pda.name);
             const pdaFindFunction = use(nameApi.pdaFindFunction(pda.name), 'generatedPdas');
-            return fragment`${name}: ${pdaFindFunction}`;
+            if (!isPdaDerivedFromProgram(pda, programNode)) return fragment`${name}: ${pdaFindFunction}`;
+            return hasVariableSeeds(pda)
+                ? fragment`${name}: (seeds, pdaConfig) => ${pdaFindFunction}(seeds, { ...config, ...pdaConfig })`
+                : fragment`${name}: pdaConfig => ${pdaFindFunction}({ ...config, ...pdaConfig })`;
         }),
         c => c.join(', '),
     );
@@ -213,7 +223,10 @@ function getProgramPluginRequirementsTypeFragment(
 }
 
 function getProgramPluginFunctionFragment(
-    scope: Pick<RenderScope, 'erasableSyntax' | 'nameApi' | 'renderParentInstructions'> & {
+    scope: Pick<
+        RenderScope,
+        'asyncResolvers' | 'customInstructionData' | 'erasableSyntax' | 'nameApi' | 'renderParentInstructions'
+    > & {
         asyncInstructions: CamelCaseString[];
         programNode: ProgramNode;
     },
@@ -225,6 +238,7 @@ function getProgramPluginFunctionFragment(
     const programPluginKey = nameApi.programPluginKey(programNode.name);
     const extendClient = use('extendClient', 'solanaPluginCore');
     const extendedClient = use('type ExtendedClient', 'solanaPluginCore');
+    const programAddressType = fragment`${use('type Address', 'solanaAddresses')} | ${use('type HasAddress', 'solanaAddresses')}`;
 
     const accountsIdentifierFunction = nameApi.programAccountsIdentifierFunction(programNode.name);
     const instructionsIdentifierFunction = nameApi.programInstructionsIdentifierFunction(programNode.name);
@@ -249,7 +263,14 @@ function getProgramPluginFunctionFragment(
         ? fragment`{ ${fields} } as ${programPluginType}`
         : fragment`<${programPluginType}>{ ${fields} }`;
 
-    return fragment`export function ${programPluginFunction}() {
+    const hasProgramAddressConfig =
+        (programNode.instructions ?? []).length > 0 ||
+        (programNode.pdas ?? []).some(pda => isPdaDerivedFromProgram(pda, programNode));
+    const configParameter = hasProgramAddressConfig
+        ? fragment`config: { programAddress?: ${programAddressType} } = {}`
+        : '';
+
+    return fragment`export function ${programPluginFunction}(${configParameter}) {
     return <T extends ${programPluginRequirementsType}>(client: T): ${extendedClient}<T, { ${programPluginKey}: ${programPluginType} }> => {
         return ${extendClient}(client, { ${programPluginKey}: ${pluginObject} });
     };
@@ -276,7 +297,10 @@ function getProgramPluginAccountsObjectFragment(
 }
 
 function getProgramPluginInstructionsObjectFragment(
-    scope: Pick<RenderScope, 'nameApi'> & { asyncInstructions: CamelCaseString[]; programNode: ProgramNode },
+    scope: Pick<RenderScope, 'asyncResolvers' | 'customInstructionData' | 'nameApi'> & {
+        asyncInstructions: CamelCaseString[];
+        programNode: ProgramNode;
+    },
 ): Fragment | undefined {
     const { programNode, nameApi, asyncInstructions } = scope;
     if ((programNode.instructions ?? []).length === 0) return;
@@ -303,12 +327,26 @@ function getProgramPluginInstructionsObjectFragment(
                 input = fragment`{ ...input, ${fieldOverrides} }`;
             }
 
-            return fragment`${name}: input => ${addSelfPlanAndSendFunctions}(client, ${instructionFunction}(${input}))`;
+            const mergedConfig = fragment`{ ...config, ...instructionConfig }`;
+            const { hasInput } = getInstructionFunctionInputFlags(instruction, { ...scope, useAsync: isAsync });
+            if (!hasInput) {
+                return fragment`${name}: (_input, instructionConfig) => ${addSelfPlanAndSendFunctions}(client, ${instructionFunction}(${mergedConfig}))`;
+            }
+
+            return fragment`${name}: (input, instructionConfig) => ${addSelfPlanAndSendFunctions}(client, ${instructionFunction}(${input}, ${mergedConfig}))`;
         }),
         c => c.join(', '),
     );
 
     return fragment`instructions: { ${fields} }`;
+}
+
+function isPdaDerivedFromProgram(pdaNode: PdaNode, programNode: ProgramNode): boolean {
+    return pdaNode.programId === undefined || pdaNode.programId === programNode.publicKey;
+}
+
+function hasVariableSeeds(pdaNode: PdaNode): boolean {
+    return (pdaNode.seeds ?? []).some(isNodeFilter('variablePdaSeedNode'));
 }
 
 function getMakeOptionalHelperTypeFragment(scope: { programNode: ProgramNode }): Fragment | undefined {
