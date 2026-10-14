@@ -30,7 +30,7 @@ export function ${decodeFunction}<TAddress extends string = string>(encodedAccou
 
 export async function ${fetchFunction}<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
-  address: Address<TAddress>,
+  address: Address<TAddress> | HasAddress<TAddress>,
   config?: FetchAccountConfig,
 ): Promise<Account<${accountType}, TAddress>> {
   const maybeAccount = await ${fetchMaybeFunction}(rpc, address, config);
@@ -40,16 +40,16 @@ export async function ${fetchFunction}<TAddress extends string = string>(
 
 export async function ${fetchMaybeFunction}<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
-  address: Address<TAddress>,
+  address: Address<TAddress> | HasAddress<TAddress>,
   config?: FetchAccountConfig,
 ): Promise<MaybeAccount<${accountType}, TAddress>> {
-  const maybeAccount = await fetchEncodedAccount(rpc, address, config);
+  const maybeAccount = await fetchEncodedAccount(rpc, typeof address === 'string' ? address : address.address, config);
   return ${decodeFunction}(maybeAccount);
 }
 
 export async function ${fetchAllFunction}(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
-  addresses: Array<Address>,
+  addresses: Array<Address | HasAddress>,
   config?: FetchAccountsConfig,
 ): Promise<Account<${accountType}>[]> {
   const maybeAccounts = await ${fetchAllMaybeFunction}(rpc, addresses, config);
@@ -59,13 +59,13 @@ export async function ${fetchAllFunction}(
 
 export async function ${fetchAllMaybeFunction}(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
-  addresses: Array<Address>,
+  addresses: Array<Address | HasAddress>,
   config?: FetchAccountsConfig,
 ): Promise<MaybeAccount<${accountType}>[]> {
-  const maybeAccounts = await fetchEncodedAccounts(rpc, addresses, config);
+  const maybeAccounts = await fetchEncodedAccounts(rpc, addresses.map((a) => (typeof a === 'string' ? a : a.address)), config);
   return maybeAccounts.map((maybeAccount) => ${decodeFunction}(maybeAccount));
 }`,
-        f => addFragmentImports(f, 'solanaAddresses', ['type Address']),
+        f => addFragmentImports(f, 'solanaAddresses', ['type Address', 'type HasAddress']),
         f =>
             addFragmentImports(f, 'solanaAccounts', [
                 'type Account',
