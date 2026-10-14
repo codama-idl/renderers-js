@@ -142,7 +142,7 @@ export async function getExecuteInstructionAsync<
         TAccountGuard,
         TAccountInstructionSysvarAccount
     >,
-    config?: { programAddress?: TProgramAddress },
+    config?: { programAddress?: TProgramAddress | { readonly address: TProgramAddress } },
 ): Promise<
     ExecuteInstruction<
         TProgramAddress,
@@ -165,7 +165,8 @@ export async function getExecuteInstructionAsync<
     >
 > {
     // Program address.
-    const programAddress = config?.programAddress ?? WEN_TRANSFER_GUARD_PROGRAM_ADDRESS;
+    const programAddressInput = config?.programAddress ?? WEN_TRANSFER_GUARD_PROGRAM_ADDRESS;
+    const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;
 
     // Account meta helper.
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
@@ -268,7 +269,7 @@ export function getExecuteInstruction<
         TAccountGuard,
         TAccountInstructionSysvarAccount
     >,
-    config?: { programAddress?: TProgramAddress },
+    config?: { programAddress?: TProgramAddress | { readonly address: TProgramAddress } },
 ): ExecuteInstruction<
     TProgramAddress,
     ResolvedInstructionAccountMeta<TAccountSourceAccount, InstructionAccountInputAddress<TAccountSourceAccount>>,
@@ -289,7 +290,8 @@ export function getExecuteInstruction<
     >
 > {
     // Program address.
-    const programAddress = config?.programAddress ?? WEN_TRANSFER_GUARD_PROGRAM_ADDRESS;
+    const programAddressInput = config?.programAddress ?? WEN_TRANSFER_GUARD_PROGRAM_ADDRESS;
+    const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;
 
     // Account meta helper.
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');

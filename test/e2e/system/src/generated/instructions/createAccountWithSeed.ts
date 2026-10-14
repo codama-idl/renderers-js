@@ -149,7 +149,7 @@ export function getCreateAccountWithSeedInstruction<
     TProgramAddress extends Address = typeof SYSTEM_PROGRAM_ADDRESS,
 >(
     input: CreateAccountWithSeedInput<TAccountPayer, TAccountNewAccount, TAccountBaseAccount>,
-    config?: { programAddress?: TProgramAddress },
+    config?: { programAddress?: TProgramAddress | { readonly address: TProgramAddress } },
 ): CreateAccountWithSeedInstruction<
     TProgramAddress,
     ResolvedInstructionAccountMeta<TAccountPayer, InstructionAccountInputAddress<TAccountPayer>>,
@@ -157,7 +157,8 @@ export function getCreateAccountWithSeedInstruction<
     ResolvedInstructionAccountMeta<TAccountBaseAccount, InstructionAccountInputAddress<TAccountBaseAccount>>
 > {
     // Program address.
-    const programAddress = config?.programAddress ?? SYSTEM_PROGRAM_ADDRESS;
+    const programAddressInput = config?.programAddress ?? SYSTEM_PROGRAM_ADDRESS;
+    const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;
 
     // Account meta helper.
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');

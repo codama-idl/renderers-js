@@ -53,14 +53,15 @@ export function getInstruction11Instruction<
     TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS,
 >(
     input: Instruction11Input<TAccountOptionalAccount, TAccountRequiredAccount>,
-    config?: { programAddress?: TProgramAddress },
+    config?: { programAddress?: TProgramAddress | { readonly address: TProgramAddress } },
 ): Instruction11Instruction<
     TProgramAddress,
     ResolvedInstructionAccountMeta<TAccountOptionalAccount, InstructionAccountInputAddress<TAccountOptionalAccount>>,
     ResolvedInstructionAccountMeta<TAccountRequiredAccount, InstructionAccountInputAddress<TAccountRequiredAccount>>
 > {
     // Program address.
-    const programAddress = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
+    const programAddressInput = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
+    const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;
 
     // Account meta helper.
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');

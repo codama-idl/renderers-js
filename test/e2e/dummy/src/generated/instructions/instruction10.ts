@@ -60,10 +60,11 @@ export function getInstruction10InstructionDataCodec(): FixedSizeCodec<
 export type Instruction10Input = {};
 
 export function getInstruction10Instruction<TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS>(config?: {
-    programAddress?: TProgramAddress;
+    programAddress?: TProgramAddress | { readonly address: TProgramAddress };
 }): Instruction10Instruction<TProgramAddress> {
     // Program address.
-    const programAddress = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
+    const programAddressInput = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
+    const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;
 
     return Object.freeze({
         data: getInstruction10InstructionDataEncoder().encode({}),

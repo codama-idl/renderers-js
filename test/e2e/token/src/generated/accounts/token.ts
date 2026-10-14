@@ -37,6 +37,7 @@ import {
     type Option,
     type OptionOrNullable,
 } from '@solana/kit';
+import { findAssociatedTokenPda, type AssociatedTokenSeeds } from '../pdas';
 import { getAccountStateDecoder, getAccountStateEncoder, type AccountState, type AccountStateArgs } from '../types';
 
 /** Stores information about an individual's ownership of a specific token (mint). Each token account is associated with a single mint and tracks details like the token balance and owner. */
@@ -179,4 +180,24 @@ export async function fetchAllMaybeToken(
 
 export function getTokenSize(): number {
     return 165;
+}
+
+export async function fetchTokenFromSeeds(
+    rpc: Parameters<typeof fetchEncodedAccount>[0],
+    seeds: AssociatedTokenSeeds,
+    config: FetchAccountConfig & { programAddress?: Address | HasAddress } = {},
+): Promise<Account<Token>> {
+    const maybeAccount = await fetchMaybeTokenFromSeeds(rpc, seeds, config);
+    assertAccountExists(maybeAccount);
+    return maybeAccount;
+}
+
+export async function fetchMaybeTokenFromSeeds(
+    rpc: Parameters<typeof fetchEncodedAccount>[0],
+    seeds: AssociatedTokenSeeds,
+    config: FetchAccountConfig & { programAddress?: Address | HasAddress } = {},
+): Promise<MaybeAccount<Token>> {
+    const { programAddress, ...fetchConfig } = config;
+    const [address] = await findAssociatedTokenPda(seeds, { programAddress });
+    return await fetchMaybeToken(rpc, address, fetchConfig);
 }

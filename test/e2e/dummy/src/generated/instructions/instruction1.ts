@@ -17,10 +17,11 @@ export type Instruction1Instruction<
 export type Instruction1Input = {};
 
 export function getInstruction1Instruction<TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS>(config?: {
-    programAddress?: TProgramAddress;
+    programAddress?: TProgramAddress | { readonly address: TProgramAddress };
 }): Instruction1Instruction<TProgramAddress> {
     // Program address.
-    const programAddress = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
+    const programAddressInput = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
+    const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;
 
     return Object.freeze({ programAddress } as Instruction1Instruction<TProgramAddress>);
 }

@@ -83,13 +83,14 @@ export function getSyncNativeInstruction<
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,
 >(
     input: SyncNativeInput<TAccountAccount>,
-    config?: { programAddress?: TProgramAddress },
+    config?: { programAddress?: TProgramAddress | { readonly address: TProgramAddress } },
 ): SyncNativeInstruction<
     TProgramAddress,
     ResolvedInstructionAccountMeta<TAccountAccount, InstructionAccountInputAddress<TAccountAccount>>
 > {
     // Program address.
-    const programAddress = config?.programAddress ?? TOKEN_PROGRAM_ADDRESS;
+    const programAddressInput = config?.programAddress ?? TOKEN_PROGRAM_ADDRESS;
+    const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;
 
     // Account meta helper.
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
