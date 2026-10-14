@@ -22,6 +22,7 @@ import {
     type ExtendedClient,
     type GetAccountInfoApi,
     type GetMultipleAccountsApi,
+    type HasAddress,
     type Instruction,
     type InstructionWithData,
     type ReadonlyUint8Array,
@@ -477,62 +478,103 @@ export type TokenPluginAccounts = {
 export type TokenPluginInstructions = {
     initializeMint: (
         input: InitializeMintInput,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInitializeMintInstruction> & SelfPlanAndSendFunctions;
     initializeAccount: (
         input: InitializeAccountInput,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInitializeAccountInstruction> & SelfPlanAndSendFunctions;
     initializeMultisig: (
         input: InitializeMultisigInput,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInitializeMultisigInstruction> & SelfPlanAndSendFunctions;
-    transfer: (input: TransferInput) => ReturnType<typeof getTransferInstruction> & SelfPlanAndSendFunctions;
-    approve: (input: ApproveInput) => ReturnType<typeof getApproveInstruction> & SelfPlanAndSendFunctions;
-    revoke: (input: RevokeInput) => ReturnType<typeof getRevokeInstruction> & SelfPlanAndSendFunctions;
+    transfer: (
+        input: TransferInput,
+        config?: { programAddress?: Address | HasAddress },
+    ) => ReturnType<typeof getTransferInstruction> & SelfPlanAndSendFunctions;
+    approve: (
+        input: ApproveInput,
+        config?: { programAddress?: Address | HasAddress },
+    ) => ReturnType<typeof getApproveInstruction> & SelfPlanAndSendFunctions;
+    revoke: (
+        input: RevokeInput,
+        config?: { programAddress?: Address | HasAddress },
+    ) => ReturnType<typeof getRevokeInstruction> & SelfPlanAndSendFunctions;
     setAuthority: (
         input: SetAuthorityInput,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getSetAuthorityInstruction> & SelfPlanAndSendFunctions;
-    mintTo: (input: MintToInput) => ReturnType<typeof getMintToInstruction> & SelfPlanAndSendFunctions;
-    burn: (input: BurnInput) => ReturnType<typeof getBurnInstruction> & SelfPlanAndSendFunctions;
+    mintTo: (
+        input: MintToInput,
+        config?: { programAddress?: Address | HasAddress },
+    ) => ReturnType<typeof getMintToInstruction> & SelfPlanAndSendFunctions;
+    burn: (
+        input: BurnInput,
+        config?: { programAddress?: Address | HasAddress },
+    ) => ReturnType<typeof getBurnInstruction> & SelfPlanAndSendFunctions;
     closeAccount: (
         input: CloseAccountInput,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getCloseAccountInstruction> & SelfPlanAndSendFunctions;
     freezeAccount: (
         input: FreezeAccountInput,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getFreezeAccountInstruction> & SelfPlanAndSendFunctions;
-    thawAccount: (input: ThawAccountInput) => ReturnType<typeof getThawAccountInstruction> & SelfPlanAndSendFunctions;
+    thawAccount: (
+        input: ThawAccountInput,
+        config?: { programAddress?: Address | HasAddress },
+    ) => ReturnType<typeof getThawAccountInstruction> & SelfPlanAndSendFunctions;
     transferChecked: (
         input: TransferCheckedInput,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getTransferCheckedInstruction> & SelfPlanAndSendFunctions;
     approveChecked: (
         input: ApproveCheckedInput,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getApproveCheckedInstruction> & SelfPlanAndSendFunctions;
     mintToChecked: (
         input: MintToCheckedInput,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getMintToCheckedInstruction> & SelfPlanAndSendFunctions;
-    burnChecked: (input: BurnCheckedInput) => ReturnType<typeof getBurnCheckedInstruction> & SelfPlanAndSendFunctions;
+    burnChecked: (
+        input: BurnCheckedInput,
+        config?: { programAddress?: Address | HasAddress },
+    ) => ReturnType<typeof getBurnCheckedInstruction> & SelfPlanAndSendFunctions;
     initializeAccount2: (
         input: InitializeAccount2Input,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInitializeAccount2Instruction> & SelfPlanAndSendFunctions;
-    syncNative: (input: SyncNativeInput) => ReturnType<typeof getSyncNativeInstruction> & SelfPlanAndSendFunctions;
+    syncNative: (
+        input: SyncNativeInput,
+        config?: { programAddress?: Address | HasAddress },
+    ) => ReturnType<typeof getSyncNativeInstruction> & SelfPlanAndSendFunctions;
     initializeAccount3: (
         input: InitializeAccount3Input,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInitializeAccount3Instruction> & SelfPlanAndSendFunctions;
     initializeMultisig2: (
         input: InitializeMultisig2Input,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInitializeMultisig2Instruction> & SelfPlanAndSendFunctions;
     initializeMint2: (
         input: InitializeMint2Input,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInitializeMint2Instruction> & SelfPlanAndSendFunctions;
     getAccountDataSize: (
         input: GetAccountDataSizeInput,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getGetAccountDataSizeInstruction> & SelfPlanAndSendFunctions;
     initializeImmutableOwner: (
         input: InitializeImmutableOwnerInput,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInitializeImmutableOwnerInstruction> & SelfPlanAndSendFunctions;
     amountToUiAmount: (
         input: AmountToUiAmountInput,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getAmountToUiAmountInstruction> & SelfPlanAndSendFunctions;
     uiAmountToAmount: (
         input: UiAmountToAmountInput,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getUiAmountToAmountInstruction> & SelfPlanAndSendFunctions;
 };
 
@@ -540,7 +582,7 @@ export type TokenPluginRequirements = ClientWithRpc<GetAccountInfoApi & GetMulti
     ClientWithTransactionPlanning &
     ClientWithTransactionSending;
 
-export function tokenProgram() {
+export function tokenProgram(config: { programAddress?: Address | HasAddress } = {}) {
     return <T extends TokenPluginRequirements>(client: T): ExtendedClient<T, { token: TokenPlugin }> => {
         return extendClient(client, {
             token: <TokenPlugin>{
@@ -550,40 +592,131 @@ export function tokenProgram() {
                     multisig: addSelfFetchFunctions(client, getMultisigCodec()),
                 },
                 instructions: {
-                    initializeMint: input => addSelfPlanAndSendFunctions(client, getInitializeMintInstruction(input)),
-                    initializeAccount: input =>
-                        addSelfPlanAndSendFunctions(client, getInitializeAccountInstruction(input)),
-                    initializeMultisig: input =>
-                        addSelfPlanAndSendFunctions(client, getInitializeMultisigInstruction(input)),
-                    transfer: input => addSelfPlanAndSendFunctions(client, getTransferInstruction(input)),
-                    approve: input => addSelfPlanAndSendFunctions(client, getApproveInstruction(input)),
-                    revoke: input => addSelfPlanAndSendFunctions(client, getRevokeInstruction(input)),
-                    setAuthority: input => addSelfPlanAndSendFunctions(client, getSetAuthorityInstruction(input)),
-                    mintTo: input => addSelfPlanAndSendFunctions(client, getMintToInstruction(input)),
-                    burn: input => addSelfPlanAndSendFunctions(client, getBurnInstruction(input)),
-                    closeAccount: input => addSelfPlanAndSendFunctions(client, getCloseAccountInstruction(input)),
-                    freezeAccount: input => addSelfPlanAndSendFunctions(client, getFreezeAccountInstruction(input)),
-                    thawAccount: input => addSelfPlanAndSendFunctions(client, getThawAccountInstruction(input)),
-                    transferChecked: input => addSelfPlanAndSendFunctions(client, getTransferCheckedInstruction(input)),
-                    approveChecked: input => addSelfPlanAndSendFunctions(client, getApproveCheckedInstruction(input)),
-                    mintToChecked: input => addSelfPlanAndSendFunctions(client, getMintToCheckedInstruction(input)),
-                    burnChecked: input => addSelfPlanAndSendFunctions(client, getBurnCheckedInstruction(input)),
-                    initializeAccount2: input =>
-                        addSelfPlanAndSendFunctions(client, getInitializeAccount2Instruction(input)),
-                    syncNative: input => addSelfPlanAndSendFunctions(client, getSyncNativeInstruction(input)),
-                    initializeAccount3: input =>
-                        addSelfPlanAndSendFunctions(client, getInitializeAccount3Instruction(input)),
-                    initializeMultisig2: input =>
-                        addSelfPlanAndSendFunctions(client, getInitializeMultisig2Instruction(input)),
-                    initializeMint2: input => addSelfPlanAndSendFunctions(client, getInitializeMint2Instruction(input)),
-                    getAccountDataSize: input =>
-                        addSelfPlanAndSendFunctions(client, getGetAccountDataSizeInstruction(input)),
-                    initializeImmutableOwner: input =>
-                        addSelfPlanAndSendFunctions(client, getInitializeImmutableOwnerInstruction(input)),
-                    amountToUiAmount: input =>
-                        addSelfPlanAndSendFunctions(client, getAmountToUiAmountInstruction(input)),
-                    uiAmountToAmount: input =>
-                        addSelfPlanAndSendFunctions(client, getUiAmountToAmountInstruction(input)),
+                    initializeMint: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getInitializeMintInstruction(input, { ...config, ...instructionConfig }),
+                        ),
+                    initializeAccount: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getInitializeAccountInstruction(input, { ...config, ...instructionConfig }),
+                        ),
+                    initializeMultisig: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getInitializeMultisigInstruction(input, { ...config, ...instructionConfig }),
+                        ),
+                    transfer: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getTransferInstruction(input, { ...config, ...instructionConfig }),
+                        ),
+                    approve: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getApproveInstruction(input, { ...config, ...instructionConfig }),
+                        ),
+                    revoke: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getRevokeInstruction(input, { ...config, ...instructionConfig }),
+                        ),
+                    setAuthority: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getSetAuthorityInstruction(input, { ...config, ...instructionConfig }),
+                        ),
+                    mintTo: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getMintToInstruction(input, { ...config, ...instructionConfig }),
+                        ),
+                    burn: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getBurnInstruction(input, { ...config, ...instructionConfig }),
+                        ),
+                    closeAccount: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getCloseAccountInstruction(input, { ...config, ...instructionConfig }),
+                        ),
+                    freezeAccount: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getFreezeAccountInstruction(input, { ...config, ...instructionConfig }),
+                        ),
+                    thawAccount: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getThawAccountInstruction(input, { ...config, ...instructionConfig }),
+                        ),
+                    transferChecked: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getTransferCheckedInstruction(input, { ...config, ...instructionConfig }),
+                        ),
+                    approveChecked: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getApproveCheckedInstruction(input, { ...config, ...instructionConfig }),
+                        ),
+                    mintToChecked: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getMintToCheckedInstruction(input, { ...config, ...instructionConfig }),
+                        ),
+                    burnChecked: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getBurnCheckedInstruction(input, { ...config, ...instructionConfig }),
+                        ),
+                    initializeAccount2: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getInitializeAccount2Instruction(input, { ...config, ...instructionConfig }),
+                        ),
+                    syncNative: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getSyncNativeInstruction(input, { ...config, ...instructionConfig }),
+                        ),
+                    initializeAccount3: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getInitializeAccount3Instruction(input, { ...config, ...instructionConfig }),
+                        ),
+                    initializeMultisig2: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getInitializeMultisig2Instruction(input, { ...config, ...instructionConfig }),
+                        ),
+                    initializeMint2: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getInitializeMint2Instruction(input, { ...config, ...instructionConfig }),
+                        ),
+                    getAccountDataSize: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getGetAccountDataSizeInstruction(input, { ...config, ...instructionConfig }),
+                        ),
+                    initializeImmutableOwner: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getInitializeImmutableOwnerInstruction(input, { ...config, ...instructionConfig }),
+                        ),
+                    amountToUiAmount: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getAmountToUiAmountInstruction(input, { ...config, ...instructionConfig }),
+                        ),
+                    uiAmountToAmount: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getUiAmountToAmountInstruction(input, { ...config, ...instructionConfig }),
+                        ),
                 },
                 identifyAccount: identifyTokenAccount,
                 identifyInstruction: identifyTokenInstruction,

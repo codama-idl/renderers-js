@@ -19,6 +19,7 @@ import {
     type ClientWithTransactionPlanning,
     type ClientWithTransactionSending,
     type ExtendedClient,
+    type HasAddress,
     type Instruction,
     type InstructionWithData,
     type ReadonlyUint8Array,
@@ -80,20 +81,24 @@ export type SystemPlugin = {
 export type SystemPluginInstructions = {
     createAccount: (
         input: MakeOptional<CreateAccountInput, 'payer'>,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getCreateAccountInstruction> & SelfPlanAndSendFunctions;
 };
 
 export type SystemPluginRequirements = ClientWithPayer & ClientWithTransactionPlanning & ClientWithTransactionSending;
 
-export function systemProgram() {
+export function systemProgram(config: { programAddress?: Address | HasAddress } = {}) {
     return <T extends SystemPluginRequirements>(client: T): ExtendedClient<T, { system: SystemPlugin }> => {
         return extendClient(client, {
             system: <SystemPlugin>{
                 instructions: {
-                    createAccount: input =>
+                    createAccount: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getCreateAccountInstruction({ ...input, payer: input.payer ?? client.payer }),
+                            getCreateAccountInstruction(
+                                { ...input, payer: input.payer ?? client.payer },
+                                { ...config, ...instructionConfig },
+                            ),
                         ),
                 },
                 identifyInstruction: identifySystemInstruction,

@@ -16,6 +16,7 @@ import {
     type ClientWithTransactionPlanning,
     type ClientWithTransactionSending,
     type ExtendedClient,
+    type HasAddress,
     type Instruction,
     type InstructionWithData,
     type ReadonlyUint8Array,
@@ -76,16 +77,22 @@ export type NodeEsmPlugin = {
 };
 
 export type NodeEsmPluginInstructions = {
-    useKey: (input: UseKeyInput) => ReturnType<typeof getUseKeyInstruction> & SelfPlanAndSendFunctions;
+    useKey: (
+        input: UseKeyInput,
+        config?: { programAddress?: Address | HasAddress },
+    ) => ReturnType<typeof getUseKeyInstruction> & SelfPlanAndSendFunctions;
 };
 
 export type NodeEsmPluginRequirements = ClientWithTransactionPlanning & ClientWithTransactionSending;
 
-export function nodeEsmProgram() {
+export function nodeEsmProgram(config: { programAddress?: Address | HasAddress } = {}) {
     return <T extends NodeEsmPluginRequirements>(client: T): ExtendedClient<T, { nodeEsm: NodeEsmPlugin }> => {
         return extendClient(client, {
             nodeEsm: {
-                instructions: { useKey: input => addSelfPlanAndSendFunctions(client, getUseKeyInstruction(input)) },
+                instructions: {
+                    useKey: (_input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(client, getUseKeyInstruction({ ...config, ...instructionConfig })),
+                },
                 identifyInstruction: identifyNodeEsmInstruction,
                 parseInstruction: parseNodeEsmInstruction,
             } as NodeEsmPlugin,
