@@ -45,6 +45,7 @@ function getFunctionFragment(
     const programNode = findProgramNodeFromPath(scope.pdaPath)!;
 
     const addressType = use('type Address', 'solanaAddresses');
+    const hasAddressType = use('type HasAddress', 'solanaAddresses');
     const pdaType = use('type ProgramDerivedAddress', 'solanaAddresses');
     const getPdaFunction = use('getProgramDerivedAddress', 'solanaAddresses');
 
@@ -60,8 +61,9 @@ function getFunctionFragment(
         cs => cs.join(', '),
     );
 
-    return fragment`${docs}export async function ${findPdaFunction}(${seedArgument}config: { programAddress?: ${addressType} | undefined } = {}): Promise<${pdaType}> {
-  const { programAddress = '${programAddress}' as ${addressType}<'${programAddress}'> } = config;
+    return fragment`${docs}export async function ${findPdaFunction}(${seedArgument}config: { programAddress?: ${addressType} | ${hasAddressType} | undefined } = {}): Promise<${pdaType}> {
+  const { programAddress: programAddressInput = '${programAddress}' as ${addressType}<'${programAddress}'> } = config;
+  const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;
   return await ${getPdaFunction}({ programAddress, seeds: [${encodedSeeds}]});
 }`;
 }

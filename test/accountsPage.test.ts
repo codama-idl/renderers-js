@@ -41,8 +41,12 @@ test('it renders PDA helpers for PDA with no seeds', async () => {
     await renderMapContains(renderMap, 'accounts/foo.ts', [
         'export async function fetchFooFromSeeds',
         'export async function fetchMaybeFooFromSeeds',
+        'config: FetchAccountConfig & { programAddress?: Address | HasAddress } = {}',
         'await findBarPda({ programAddress })',
     ]);
+    await renderMapContainsImports(renderMap, 'accounts/foo.ts', {
+        '@solana/kit': ['type Address', 'type HasAddress'],
+    });
 });
 
 test('it renders PDA helpers for PDA with variable seeds', async () => {

@@ -34,7 +34,7 @@ export function getAccountPdaHelpersFragment(
         fragment`export async function ${fetchFromSeedsFunction}(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   ${hasVariableSeeds ? `seeds: ${pdaSeedsType},` : ''}
-  config: FetchAccountConfig & { programAddress?: Address } = {},
+  config: FetchAccountConfig & { programAddress?: Address | HasAddress } = {},
 ): Promise<Account<${accountType}>> {
   const maybeAccount = await ${fetchMaybeFromSeedsFunction}(rpc, ${hasVariableSeeds ? 'seeds, ' : ''}config);
   assertAccountExists(maybeAccount);
@@ -44,7 +44,7 @@ export function getAccountPdaHelpersFragment(
 export async function ${fetchMaybeFromSeedsFunction}(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   ${hasVariableSeeds ? `seeds: ${pdaSeedsType},` : ''}
-  config: FetchAccountConfig & { programAddress?: Address } = {},
+  config: FetchAccountConfig & { programAddress?: Address | HasAddress } = {},
 ): Promise<MaybeAccount<${accountType}>> {
   const { programAddress, ...fetchConfig } = config;
   const [address] = await ${findPdaFunction}(${hasVariableSeeds ? 'seeds, ' : ''}{ programAddress });
@@ -56,7 +56,7 @@ export async function ${fetchMaybeFromSeedsFunction}(
                 importFrom,
                 hasVariableSeeds ? [`type ${pdaSeedsType}`, findPdaFunction] : [findPdaFunction],
             ),
-        f => addFragmentImports(f, 'solanaAddresses', ['type Address']),
+        f => addFragmentImports(f, 'solanaAddresses', ['type Address', 'type HasAddress']),
         f =>
             addFragmentImports(f, 'solanaAccounts', [
                 'type Account',
