@@ -26,10 +26,11 @@ export type Instruction8Input = {
 
 export function getInstruction8Instruction<TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS>(
     input: Instruction8Input,
-    config?: { programAddress?: TProgramAddress },
+    config?: { programAddress?: TProgramAddress | { readonly address: TProgramAddress } },
 ): Instruction8Instruction<TProgramAddress> {
     // Program address.
-    const programAddress = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
+    const programAddressInput = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
+    const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;
 
     // Account meta helper.
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');

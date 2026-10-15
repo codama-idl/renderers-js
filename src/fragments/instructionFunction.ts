@@ -120,14 +120,15 @@ export function getInstructionFunctionFragment(
         cs => cs.join('\n\n'),
     );
 
-    return fragment`${inputType}\n\nexport ${useAsync ? 'async ' : ''}function ${functionName}${typeParams}(${inputArg}config?: { programAddress?: TProgramAddress } ): ${returnType} {
+    return fragment`${inputType}\n\nexport ${useAsync ? 'async ' : ''}function ${functionName}${typeParams}(${inputArg}config?: { programAddress?: TProgramAddress | { readonly address: TProgramAddress } } ): ${returnType} {
   ${functionBody}
 }`;
 }
 
 function getProgramAddressInitializationFragment(programAddressConstant: Fragment): Fragment {
     return fragment`// Program address.
-const programAddress = config?.programAddress ?? ${programAddressConstant};`;
+const programAddressInput = config?.programAddress ?? ${programAddressConstant};
+const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;`;
 }
 
 /**

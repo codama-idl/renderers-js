@@ -133,14 +133,15 @@ export function getAllocateWithSeedInstruction<
     TProgramAddress extends Address = typeof SYSTEM_PROGRAM_ADDRESS,
 >(
     input: AllocateWithSeedInput<TAccountNewAccount, TAccountBaseAccount>,
-    config?: { programAddress?: TProgramAddress },
+    config?: { programAddress?: TProgramAddress | { readonly address: TProgramAddress } },
 ): AllocateWithSeedInstruction<
     TProgramAddress,
     ResolvedInstructionAccountMeta<TAccountNewAccount, InstructionAccountInputAddress<TAccountNewAccount>>,
     ResolvedInstructionAccountMeta<TAccountBaseAccount, InstructionAccountInputAddress<TAccountBaseAccount>>
 > {
     // Program address.
-    const programAddress = config?.programAddress ?? SYSTEM_PROGRAM_ADDRESS;
+    const programAddressInput = config?.programAddress ?? SYSTEM_PROGRAM_ADDRESS;
+    const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;
 
     // Account meta helper.
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');

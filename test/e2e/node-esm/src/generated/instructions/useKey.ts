@@ -57,10 +57,11 @@ export function getUseKeyInstructionDataCodec(): FixedSizeCodec<UseKeyInstructio
 export type UseKeyInput = {};
 
 export function getUseKeyInstruction<TProgramAddress extends Address = typeof NODE_ESM_PROGRAM_ADDRESS>(config?: {
-    programAddress?: TProgramAddress;
+    programAddress?: TProgramAddress | { readonly address: TProgramAddress };
 }): UseKeyInstruction<TProgramAddress> {
     // Program address.
-    const programAddress = config?.programAddress ?? NODE_ESM_PROGRAM_ADDRESS;
+    const programAddressInput = config?.programAddress ?? NODE_ESM_PROGRAM_ADDRESS;
+    const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;
 
     return Object.freeze({
         data: getUseKeyInstructionDataEncoder().encode({}),

@@ -200,7 +200,12 @@
         ],
         "name": "token",
         "docs": ["Stores information about an individual's ownership of a specific token (mint). Each token account is associated with a single mint and tracks details like the token balance and owner."],
-        "size": 165
+        "size": 165,
+        "pda": {
+          "kind": "pdaLinkNode",
+          "name": "associatedToken",
+          "program": { "kind": "programLinkNode", "name": "associatedToken" }
+        }
       },
       {
         "kind": "accountNode",

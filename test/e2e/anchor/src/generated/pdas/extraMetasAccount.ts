@@ -21,11 +21,13 @@ export type ExtraMetasAccountSeeds = {
 
 export async function findExtraMetasAccountPda(
     seeds: ExtraMetasAccountSeeds,
-    config: { programAddress?: Address | undefined } = {},
+    config: { programAddress?: Address | HasAddress | undefined } = {},
 ): Promise<ProgramDerivedAddress> {
     const {
-        programAddress = 'LockdqYQ9X2kwtWB99ioSbxubAmEi8o9jqYwbXgrrRw' as Address<'LockdqYQ9X2kwtWB99ioSbxubAmEi8o9jqYwbXgrrRw'>,
+        programAddress:
+            programAddressInput = 'LockdqYQ9X2kwtWB99ioSbxubAmEi8o9jqYwbXgrrRw' as Address<'LockdqYQ9X2kwtWB99ioSbxubAmEi8o9jqYwbXgrrRw'>,
     } = config;
+    const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;
     return await getProgramDerivedAddress({
         programAddress,
         seeds: [

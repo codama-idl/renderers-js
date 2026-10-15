@@ -37,7 +37,9 @@ test('it renders a PDA helper function and its input type', async () => {
     await renderMapContains(renderMap, 'pdas/foo.ts', [
         'export type FooSeeds = { myAccount: Address | HasAddress; myArg: number | bigint; }',
         'export async function findFooPda',
-        "const { programAddress = '1111' as Address<'1111'> } = config;",
+        'config: { programAddress?: Address | HasAddress | undefined } = {}',
+        "const { programAddress: programAddressInput = '1111' as Address<'1111'> } = config;",
+        "const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;",
         "[ getUtf8Encoder().encode('myPrefix'), getAddressEncoder().encode(seeds.myAccount), getU64Encoder().encode(seeds.myArg) ]",
     ]);
 });
@@ -62,7 +64,9 @@ test('it renders a PDA helper function with a default program address', async ()
     // Then we expect the following PDA function using the programId as the default program address.
     await renderMapContains(renderMap, 'pdas/foo.ts', [
         'export async function findFooPda',
-        "const { programAddress = 'myProgramId' as Address<'myProgramId'> } = config;",
+        'config: { programAddress?: Address | HasAddress | undefined } = {}',
+        "const { programAddress: programAddressInput = 'myProgramId' as Address<'myProgramId'> } = config;",
+        "const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;",
     ]);
 });
 

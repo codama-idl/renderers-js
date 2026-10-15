@@ -953,11 +953,12 @@ test('it renders optional config that can override the program address', async (
     // When we render it.
     const renderMap = visit(node, getRenderMapVisitor());
 
-    // Then we expect an optional config parameter with an optional programAddress field
-    // And we expect this to be used to override programAddress if it is set
+    // Then we expect an optional config parameter with an optional programAddress field accepting address-bearing objects
+    // And we expect this to be unwrapped and used to override programAddress if it is set
     await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
-        'config?: { programAddress?: TProgramAddress; }',
-        'programAddress = config?.programAddress ?? MY_PROGRAM_PROGRAM_ADDRESS',
+        'config?: { programAddress?: TProgramAddress | { readonly address: TProgramAddress }; }',
+        'const programAddressInput = config?.programAddress ?? MY_PROGRAM_PROGRAM_ADDRESS;',
+        "const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;",
     ]);
 });
 
@@ -1072,7 +1073,7 @@ test('it renders instructions with no arguments but with some accounts', async (
             TProgramAddress extends Address = typeof MY_PROGRAM_PROGRAM_ADDRESS
         >(
             input: MyInstructionInput<TAccountMyAccount>,
-            config?: { programAddress?: TProgramAddress }
+            config?: { programAddress?: TProgramAddress | { readonly address: TProgramAddress }; }
         ): MyInstructionInstruction<
             TProgramAddress,
             ResolvedInstructionAccountMeta<

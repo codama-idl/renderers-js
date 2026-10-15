@@ -54,10 +54,11 @@ export type Instruction4Input = {
 
 export function getInstruction4Instruction<TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS>(
     input: Instruction4Input,
-    config?: { programAddress?: TProgramAddress },
+    config?: { programAddress?: TProgramAddress | { readonly address: TProgramAddress } },
 ): Instruction4Instruction<TProgramAddress> {
     // Program address.
-    const programAddress = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
+    const programAddressInput = config?.programAddress ?? DUMMY_PROGRAM_ADDRESS;
+    const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;
 
     // Original args.
     const args = { ...input };

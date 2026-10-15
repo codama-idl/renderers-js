@@ -114,7 +114,7 @@ export function getInitializeNonceAccountInstruction<
     TProgramAddress extends Address = typeof SYSTEM_PROGRAM_ADDRESS,
 >(
     input: InitializeNonceAccountInput<TAccountNonceAccount, TAccountRecentBlockhashesSysvar, TAccountRentSysvar>,
-    config?: { programAddress?: TProgramAddress },
+    config?: { programAddress?: TProgramAddress | { readonly address: TProgramAddress } },
 ): InitializeNonceAccountInstruction<
     TProgramAddress,
     ResolvedInstructionAccountMeta<TAccountNonceAccount, InstructionAccountInputAddress<TAccountNonceAccount>>,
@@ -125,7 +125,8 @@ export function getInitializeNonceAccountInstruction<
     ResolvedInstructionAccountMeta<TAccountRentSysvar, InstructionAccountInputAddress<TAccountRentSysvar>>
 > {
     // Program address.
-    const programAddress = config?.programAddress ?? SYSTEM_PROGRAM_ADDRESS;
+    const programAddressInput = config?.programAddress ?? SYSTEM_PROGRAM_ADDRESS;
+    const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;
 
     // Account meta helper.
     const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
