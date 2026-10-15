@@ -82,12 +82,17 @@ function getIsErrorFunctionFragment(scope: Pick<RenderScope, 'nameApi'> & { prog
     const programAddressConstant = use(nameApi.programAddressConstant(programNode.name), 'generatedPrograms');
     const functionName = nameApi.programIsErrorFunction(programNode.name);
     const programErrorUnion = nameApi.programErrorUnion(programNode.name);
+    const addressType = use('type Address', 'solanaAddresses');
+    const hasAddressType = use('type HasAddress', 'solanaAddresses');
 
     return fragment`export function ${functionName}<TProgramErrorCode extends ${programErrorUnion}>(
     error: unknown,
-    transactionMessage: { instructions: Record<number, { programAddress: ${use('type Address', 'solanaAddresses')} }> },
+    transactionMessage: { instructions: Record<number, { programAddress: ${addressType} }> },
     code?: TProgramErrorCode,
+    config: { programAddress?: ${addressType} | ${hasAddressType} } = {},
 ): error is ${use('type SolanaError', 'solanaErrors')}<typeof ${use('type SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM', 'solanaErrors')}> & Readonly<{ context: Readonly<{ code: TProgramErrorCode }> }> {
-  return ${use('isProgramError', 'solanaPrograms')}<TProgramErrorCode>(error, transactionMessage, ${programAddressConstant}, code);
+  const programAddressInput = config.programAddress ?? ${programAddressConstant};
+  const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;
+  return ${use('isProgramError', 'solanaPrograms')}<TProgramErrorCode>(error, transactionMessage, programAddress, code);
 }`;
 }

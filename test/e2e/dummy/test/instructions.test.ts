@@ -104,3 +104,35 @@ test('the dummy program plugin re-exposes identifyInstruction and parseInstructi
     expect(client.dummy.identifyInstruction(instruction)).toBe(identifyDummyInstruction(instruction));
     expect(client.dummy.parseInstruction(instruction)).toStrictEqual(parseDummyInstruction(instruction));
 });
+
+test('the dummy program plugin builds instructions for a custom program address', () => {
+    // Given the plugin configured with a custom program address on a stub client.
+    const customProgram = address('GyhGAqjokLwF9UXdQ2dR5Zwiup242j4mX4J1tSMKyAmD');
+    const client = dummyProgram({ programAddress: customProgram })({} as DummyPluginRequirements);
+
+    // Then instructions with and without inputs target the custom program address.
+    expect(client.dummy.instructions.instruction3({}).programAddress).toBe(customProgram);
+    expect(client.dummy.instructions.instruction4({ myArgument: 42 }).programAddress).toBe(customProgram);
+
+    // And a per-call program address, including an address-bearing object, takes precedence.
+    const overrideProgram = address('SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf');
+    expect(
+        client.dummy.instructions.instruction4({ myArgument: 42 }, { programAddress: overrideProgram }).programAddress,
+    ).toBe(overrideProgram);
+    expect(
+        client.dummy.instructions.instruction3({}, { programAddress: { address: overrideProgram } }).programAddress,
+    ).toBe(overrideProgram);
+
+    // And an undefined per-call program address keeps the plugin's custom program address.
+    expect(
+        client.dummy.instructions.instruction4({ myArgument: 42 }, { programAddress: undefined }).programAddress,
+    ).toBe(customProgram);
+});
+
+test('the dummy program plugin defaults to the program address', () => {
+    // Given the plugin applied without a config.
+    const client = dummyProgram()({} as DummyPluginRequirements);
+
+    // Then instructions target the default program address.
+    expect(client.dummy.instructions.instruction4({ myArgument: 42 }).programAddress).toBe(DUMMY_PROGRAM_ADDRESS);
+});

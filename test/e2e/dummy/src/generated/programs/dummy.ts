@@ -19,6 +19,7 @@ import {
     type ClientWithTransactionPlanning,
     type ClientWithTransactionSending,
     type ExtendedClient,
+    type HasAddress,
     type Instruction,
     type InstructionWithData,
     type ReadonlyUint8Array,
@@ -196,73 +197,161 @@ export type DummyPlugin = {
 export type DummyPluginInstructions = {
     instruction1: (
         input: Instruction1Input,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInstruction1Instruction> & SelfPlanAndSendFunctions;
     instruction2: (
         input: Instruction2Input,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInstruction2Instruction> & SelfPlanAndSendFunctions;
     instruction3: (
         input: Instruction3Input,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInstruction3Instruction> & SelfPlanAndSendFunctions;
     instruction4: (
         input: Instruction4Input,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInstruction4Instruction> & SelfPlanAndSendFunctions;
     instruction5: (
         input: Instruction5Input,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInstruction5Instruction> & SelfPlanAndSendFunctions;
     instruction6: (
         input: Instruction6Input,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInstruction6Instruction> & SelfPlanAndSendFunctions;
     instruction7: (
         input: Instruction7Input,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInstruction7Instruction> & SelfPlanAndSendFunctions;
     instruction8: (
         input: Instruction8Input,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInstruction8Instruction> & SelfPlanAndSendFunctions;
     instruction9: (
         input: MakeOptional<Instruction9Input, 'authority' | 'authorityArg'>,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInstruction9Instruction> & SelfPlanAndSendFunctions;
     instruction10: (
         input: Instruction10Input,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInstruction10Instruction> & SelfPlanAndSendFunctions;
     instruction11: (
         input: Instruction11Input,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInstruction11Instruction> & SelfPlanAndSendFunctions;
     instruction12: (
         input: Instruction12Input,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInstruction12Instruction> & SelfPlanAndSendFunctions;
     instruction13: (
         input: Instruction13Input,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInstruction13Instruction> & SelfPlanAndSendFunctions;
 };
 
 export type DummyPluginRequirements = ClientWithPayer & ClientWithTransactionPlanning & ClientWithTransactionSending;
 
-export function dummyProgram() {
+export function dummyProgram(config: { programAddress?: Address | HasAddress } = {}) {
     return <T extends DummyPluginRequirements>(client: T): ExtendedClient<T, { dummy: DummyPlugin }> => {
         return extendClient(client, {
             dummy: <DummyPlugin>{
                 instructions: {
-                    instruction1: input => addSelfPlanAndSendFunctions(client, getInstruction1Instruction(input)),
-                    instruction2: input => addSelfPlanAndSendFunctions(client, getInstruction2Instruction(input)),
-                    instruction3: input => addSelfPlanAndSendFunctions(client, getInstruction3Instruction(input)),
-                    instruction4: input => addSelfPlanAndSendFunctions(client, getInstruction4Instruction(input)),
-                    instruction5: input => addSelfPlanAndSendFunctions(client, getInstruction5Instruction(input)),
-                    instruction6: input => addSelfPlanAndSendFunctions(client, getInstruction6Instruction(input)),
-                    instruction7: input => addSelfPlanAndSendFunctions(client, getInstruction7Instruction(input)),
-                    instruction8: input => addSelfPlanAndSendFunctions(client, getInstruction8Instruction(input)),
-                    instruction9: input =>
+                    instruction1: (_input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getInstruction9Instruction({
-                                ...input,
-                                authority: input.authority ?? client.payer.address,
-                                authorityArg: input.authorityArg ?? client.payer.address,
+                            getInstruction1Instruction({
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
                             }),
                         ),
-                    instruction10: input => addSelfPlanAndSendFunctions(client, getInstruction10Instruction(input)),
-                    instruction11: input => addSelfPlanAndSendFunctions(client, getInstruction11Instruction(input)),
-                    instruction12: input => addSelfPlanAndSendFunctions(client, getInstruction12Instruction(input)),
-                    instruction13: input => addSelfPlanAndSendFunctions(client, getInstruction13Instruction(input)),
+                    instruction2: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getInstruction2Instruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
+                        ),
+                    instruction3: (_input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getInstruction3Instruction({
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
+                        ),
+                    instruction4: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getInstruction4Instruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
+                        ),
+                    instruction5: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getInstruction5Instruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
+                        ),
+                    instruction6: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getInstruction6Instruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
+                        ),
+                    instruction7: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getInstruction7Instruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
+                        ),
+                    instruction8: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getInstruction8Instruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
+                        ),
+                    instruction9: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getInstruction9Instruction(
+                                {
+                                    ...input,
+                                    authority: input.authority ?? client.payer.address,
+                                    authorityArg: input.authorityArg ?? client.payer.address,
+                                },
+                                { programAddress: instructionConfig?.programAddress ?? config.programAddress },
+                            ),
+                        ),
+                    instruction10: (_input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getInstruction10Instruction({
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
+                        ),
+                    instruction11: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getInstruction11Instruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
+                        ),
+                    instruction12: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getInstruction12Instruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
+                        ),
+                    instruction13: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getInstruction13Instruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
+                        ),
                 },
                 identifyInstruction: identifyDummyInstruction,
                 parseInstruction: parseDummyInstruction,

@@ -24,6 +24,7 @@ import {
     type ExtendedClient,
     type GetAccountInfoApi,
     type GetMultipleAccountsApi,
+    type HasAddress,
     type Instruction,
     type InstructionWithData,
     type ReadonlyUint8Array,
@@ -214,13 +215,19 @@ export type WenTransferGuardPluginAccounts = {
 export type WenTransferGuardPluginInstructions = {
     createGuard: (
         input: MakeOptional<CreateGuardAsyncInput, 'payer'>,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getCreateGuardInstructionAsync> & SelfPlanAndSendFunctions;
-    execute: (input: ExecuteAsyncInput) => ReturnType<typeof getExecuteInstructionAsync> & SelfPlanAndSendFunctions;
+    execute: (
+        input: ExecuteAsyncInput,
+        config?: { programAddress?: Address | HasAddress },
+    ) => ReturnType<typeof getExecuteInstructionAsync> & SelfPlanAndSendFunctions;
     initialize: (
         input: MakeOptional<InitializeAsyncInput, 'payer'>,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInitializeInstructionAsync> & SelfPlanAndSendFunctions;
     updateGuard: (
         input: UpdateGuardAsyncInput,
+        config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getUpdateGuardInstructionAsync> & SelfPlanAndSendFunctions;
 };
 
@@ -234,7 +241,7 @@ export type WenTransferGuardPluginRequirements = ClientWithRpc<GetAccountInfoApi
     ClientWithTransactionPlanning &
     ClientWithTransactionSending;
 
-export function wenTransferGuardProgram() {
+export function wenTransferGuardProgram(config: { programAddress?: Address | HasAddress } = {}) {
     return <T extends WenTransferGuardPluginRequirements>(
         client: T,
     ): ExtendedClient<T, { wenTransferGuard: WenTransferGuardPlugin }> => {
@@ -242,20 +249,45 @@ export function wenTransferGuardProgram() {
             wenTransferGuard: <WenTransferGuardPlugin>{
                 accounts: { guardV1: addSelfFetchFunctions(client, getGuardV1Codec()) },
                 instructions: {
-                    createGuard: input =>
+                    createGuard: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getCreateGuardInstructionAsync({ ...input, payer: input.payer ?? client.payer }),
+                            getCreateGuardInstructionAsync(
+                                { ...input, payer: input.payer ?? client.payer },
+                                { programAddress: instructionConfig?.programAddress ?? config.programAddress },
+                            ),
                         ),
-                    execute: input => addSelfPlanAndSendFunctions(client, getExecuteInstructionAsync(input)),
-                    initialize: input =>
+                    execute: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getInitializeInstructionAsync({ ...input, payer: input.payer ?? client.payer }),
+                            getExecuteInstructionAsync(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
-                    updateGuard: input => addSelfPlanAndSendFunctions(client, getUpdateGuardInstructionAsync(input)),
+                    initialize: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getInitializeInstructionAsync(
+                                { ...input, payer: input.payer ?? client.payer },
+                                { programAddress: instructionConfig?.programAddress ?? config.programAddress },
+                            ),
+                        ),
+                    updateGuard: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getUpdateGuardInstructionAsync(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
+                        ),
                 },
-                pdas: { guard: findGuardPda, extraMetasAccount: findExtraMetasAccountPda },
+                pdas: {
+                    guard: (seeds, pdaConfig) =>
+                        findGuardPda(seeds, { programAddress: pdaConfig?.programAddress ?? config.programAddress }),
+                    extraMetasAccount: (seeds, pdaConfig) =>
+                        findExtraMetasAccountPda(seeds, {
+                            programAddress: pdaConfig?.programAddress ?? config.programAddress,
+                        }),
+                },
                 identifyAccount: identifyWenTransferGuardAccount,
                 identifyInstruction: identifyWenTransferGuardInstruction,
                 parseInstruction: parseWenTransferGuardInstruction,

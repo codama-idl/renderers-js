@@ -1,4 +1,4 @@
-import { generateKeyPairSigner, none, type Address, type HasAddress } from '@solana/kit';
+import { address, generateKeyPairSigner, none, type Address, type HasAddress } from '@solana/kit';
 import { expect, expectTypeOf, test } from 'vitest';
 
 import { createMint, createTestClient } from '../../_setup.js';
@@ -6,9 +6,11 @@ import {
     ASSOCIATED_TOKEN_PROGRAM_ADDRESS,
     AccountState,
     TOKEN_PROGRAM_ADDRESS,
+    associatedTokenProgram,
     fetchMaybeTokenFromSeeds,
     fetchTokenFromSeeds,
     findAssociatedTokenPda,
+    type AssociatedTokenPluginRequirements,
     type AssociatedTokenSeeds,
 } from '../src/index.js';
 
@@ -118,4 +120,29 @@ test('it accepts address-bearing objects as program address overrides when fetch
     expectTypeOf<NonNullable<Parameters<typeof fetchMaybeTokenFromSeeds>[2]>['programAddress']>().toEqualTypeOf<
         Address | HasAddress | undefined
     >();
+});
+
+test('the associated token program plugin derives PDAs from a custom program address', async () => {
+    // Given the plugin configured with a custom program address on a stub client.
+    const customProgram = address('GyhGAqjokLwF9UXdQ2dR5Zwiup242j4mX4J1tSMKyAmD');
+    const client = associatedTokenProgram({ programAddress: customProgram })({} as AssociatedTokenPluginRequirements);
+    const [mint, owner] = await Promise.all([generateKeyPairSigner(), generateKeyPairSigner()]);
+    const seeds = { mint: mint.address, owner: owner.address, tokenProgram: TOKEN_PROGRAM_ADDRESS };
+
+    // When we derive the associated token PDA through the plugin.
+    const [ataFromPlugin] = await client.associatedToken.pdas.associatedToken(seeds);
+    const [ataFromUndefinedOverride] = await client.associatedToken.pdas.associatedToken(seeds, {
+        programAddress: undefined,
+    });
+    const [ataFromOverride] = await client.associatedToken.pdas.associatedToken(seeds, {
+        programAddress: ASSOCIATED_TOKEN_PROGRAM_ADDRESS,
+    });
+
+    // Then it uses the plugin's program address unless a per-call program address is provided.
+    const [ataFromCustomProgram] = await findAssociatedTokenPda(seeds, { programAddress: customProgram });
+    const [ataFromDefaultProgram] = await findAssociatedTokenPda(seeds);
+    expect(ataFromPlugin).toBe(ataFromCustomProgram);
+    expect(ataFromUndefinedOverride).toBe(ataFromCustomProgram);
+    expect(ataFromOverride).toBe(ataFromDefaultProgram);
+    expect(ataFromCustomProgram).not.toBe(ataFromDefaultProgram);
 });
