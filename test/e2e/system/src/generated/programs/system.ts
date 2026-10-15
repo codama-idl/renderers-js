@@ -349,71 +349,93 @@ export function systemProgram(config: { programAddress?: Address | HasAddress } 
                             client,
                             getCreateAccountInstruction(
                                 { ...input, payer: input.payer ?? client.payer },
-                                { ...config, ...instructionConfig },
+                                { programAddress: instructionConfig?.programAddress ?? config.programAddress },
                             ),
                         ),
                     assign: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getAssignInstruction(input, { ...config, ...instructionConfig }),
+                            getAssignInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     transferSol: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getTransferSolInstruction(input, { ...config, ...instructionConfig }),
+                            getTransferSolInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     createAccountWithSeed: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
                             getCreateAccountWithSeedInstruction(
                                 { ...input, payer: input.payer ?? client.payer },
-                                { ...config, ...instructionConfig },
+                                { programAddress: instructionConfig?.programAddress ?? config.programAddress },
                             ),
                         ),
                     advanceNonceAccount: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getAdvanceNonceAccountInstruction(input, { ...config, ...instructionConfig }),
+                            getAdvanceNonceAccountInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     withdrawNonceAccount: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getWithdrawNonceAccountInstruction(input, { ...config, ...instructionConfig }),
+                            getWithdrawNonceAccountInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     initializeNonceAccount: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getInitializeNonceAccountInstruction(input, { ...config, ...instructionConfig }),
+                            getInitializeNonceAccountInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     authorizeNonceAccount: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getAuthorizeNonceAccountInstruction(input, { ...config, ...instructionConfig }),
+                            getAuthorizeNonceAccountInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     allocate: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getAllocateInstruction(input, { ...config, ...instructionConfig }),
+                            getAllocateInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     allocateWithSeed: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getAllocateWithSeedInstruction(input, { ...config, ...instructionConfig }),
+                            getAllocateWithSeedInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     assignWithSeed: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getAssignWithSeedInstruction(input, { ...config, ...instructionConfig }),
+                            getAssignWithSeedInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     transferSolWithSeed: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getTransferSolWithSeedInstruction(input, { ...config, ...instructionConfig }),
+                            getTransferSolWithSeedInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     upgradeNonceAccount: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getUpgradeNonceAccountInstruction(input, { ...config, ...instructionConfig }),
+                            getUpgradeNonceAccountInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                 },
                 identifyInstruction: identifySystemInstruction,

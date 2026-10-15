@@ -254,32 +254,39 @@ export function wenTransferGuardProgram(config: { programAddress?: Address | Has
                             client,
                             getCreateGuardInstructionAsync(
                                 { ...input, payer: input.payer ?? client.payer },
-                                { ...config, ...instructionConfig },
+                                { programAddress: instructionConfig?.programAddress ?? config.programAddress },
                             ),
                         ),
                     execute: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getExecuteInstructionAsync(input, { ...config, ...instructionConfig }),
+                            getExecuteInstructionAsync(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     initialize: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
                             getInitializeInstructionAsync(
                                 { ...input, payer: input.payer ?? client.payer },
-                                { ...config, ...instructionConfig },
+                                { programAddress: instructionConfig?.programAddress ?? config.programAddress },
                             ),
                         ),
                     updateGuard: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getUpdateGuardInstructionAsync(input, { ...config, ...instructionConfig }),
+                            getUpdateGuardInstructionAsync(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                 },
                 pdas: {
-                    guard: (seeds, pdaConfig) => findGuardPda(seeds, { ...config, ...pdaConfig }),
+                    guard: (seeds, pdaConfig) =>
+                        findGuardPda(seeds, { programAddress: pdaConfig?.programAddress ?? config.programAddress }),
                     extraMetasAccount: (seeds, pdaConfig) =>
-                        findExtraMetasAccountPda(seeds, { ...config, ...pdaConfig }),
+                        findExtraMetasAccountPda(seeds, {
+                            programAddress: pdaConfig?.programAddress ?? config.programAddress,
+                        }),
                 },
                 identifyAccount: identifyWenTransferGuardAccount,
                 identifyInstruction: identifyWenTransferGuardInstruction,

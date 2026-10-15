@@ -47,7 +47,9 @@ export function memoProgram(config: { programAddress?: Address | HasAddress } = 
                     addMemo: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getAddMemoInstruction(input, { ...config, ...instructionConfig }),
+                            getAddMemoInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                 },
             },

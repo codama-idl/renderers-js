@@ -595,127 +595,177 @@ export function tokenProgram(config: { programAddress?: Address | HasAddress } =
                     initializeMint: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getInitializeMintInstruction(input, { ...config, ...instructionConfig }),
+                            getInitializeMintInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     initializeAccount: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getInitializeAccountInstruction(input, { ...config, ...instructionConfig }),
+                            getInitializeAccountInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     initializeMultisig: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getInitializeMultisigInstruction(input, { ...config, ...instructionConfig }),
+                            getInitializeMultisigInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     transfer: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getTransferInstruction(input, { ...config, ...instructionConfig }),
+                            getTransferInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     approve: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getApproveInstruction(input, { ...config, ...instructionConfig }),
+                            getApproveInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     revoke: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getRevokeInstruction(input, { ...config, ...instructionConfig }),
+                            getRevokeInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     setAuthority: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getSetAuthorityInstruction(input, { ...config, ...instructionConfig }),
+                            getSetAuthorityInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     mintTo: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getMintToInstruction(input, { ...config, ...instructionConfig }),
+                            getMintToInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     burn: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getBurnInstruction(input, { ...config, ...instructionConfig }),
+                            getBurnInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     closeAccount: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getCloseAccountInstruction(input, { ...config, ...instructionConfig }),
+                            getCloseAccountInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     freezeAccount: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getFreezeAccountInstruction(input, { ...config, ...instructionConfig }),
+                            getFreezeAccountInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     thawAccount: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getThawAccountInstruction(input, { ...config, ...instructionConfig }),
+                            getThawAccountInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     transferChecked: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getTransferCheckedInstruction(input, { ...config, ...instructionConfig }),
+                            getTransferCheckedInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     approveChecked: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getApproveCheckedInstruction(input, { ...config, ...instructionConfig }),
+                            getApproveCheckedInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     mintToChecked: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getMintToCheckedInstruction(input, { ...config, ...instructionConfig }),
+                            getMintToCheckedInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     burnChecked: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getBurnCheckedInstruction(input, { ...config, ...instructionConfig }),
+                            getBurnCheckedInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     initializeAccount2: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getInitializeAccount2Instruction(input, { ...config, ...instructionConfig }),
+                            getInitializeAccount2Instruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     syncNative: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getSyncNativeInstruction(input, { ...config, ...instructionConfig }),
+                            getSyncNativeInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     initializeAccount3: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getInitializeAccount3Instruction(input, { ...config, ...instructionConfig }),
+                            getInitializeAccount3Instruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     initializeMultisig2: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getInitializeMultisig2Instruction(input, { ...config, ...instructionConfig }),
+                            getInitializeMultisig2Instruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     initializeMint2: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getInitializeMint2Instruction(input, { ...config, ...instructionConfig }),
+                            getInitializeMint2Instruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     getAccountDataSize: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getGetAccountDataSizeInstruction(input, { ...config, ...instructionConfig }),
+                            getGetAccountDataSizeInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     initializeImmutableOwner: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getInitializeImmutableOwnerInstruction(input, { ...config, ...instructionConfig }),
+                            getInitializeImmutableOwnerInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     amountToUiAmount: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getAmountToUiAmountInstruction(input, { ...config, ...instructionConfig }),
+                            getAmountToUiAmountInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     uiAmountToAmount: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getUiAmountToAmountInstruction(input, { ...config, ...instructionConfig }),
+                            getUiAmountToAmountInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                 },
                 identifyAccount: identifyTokenAccount,

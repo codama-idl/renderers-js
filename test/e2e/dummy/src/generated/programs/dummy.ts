@@ -259,42 +259,58 @@ export function dummyProgram(config: { programAddress?: Address | HasAddress } =
                     instruction1: (_input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getInstruction1Instruction({ ...config, ...instructionConfig }),
+                            getInstruction1Instruction({
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     instruction2: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getInstruction2Instruction(input, { ...config, ...instructionConfig }),
+                            getInstruction2Instruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     instruction3: (_input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getInstruction3Instruction({ ...config, ...instructionConfig }),
+                            getInstruction3Instruction({
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     instruction4: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getInstruction4Instruction(input, { ...config, ...instructionConfig }),
+                            getInstruction4Instruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     instruction5: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getInstruction5Instruction(input, { ...config, ...instructionConfig }),
+                            getInstruction5Instruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     instruction6: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getInstruction6Instruction(input, { ...config, ...instructionConfig }),
+                            getInstruction6Instruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     instruction7: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getInstruction7Instruction(input, { ...config, ...instructionConfig }),
+                            getInstruction7Instruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     instruction8: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getInstruction8Instruction(input, { ...config, ...instructionConfig }),
+                            getInstruction8Instruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     instruction9: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
@@ -305,28 +321,36 @@ export function dummyProgram(config: { programAddress?: Address | HasAddress } =
                                     authority: input.authority ?? client.payer.address,
                                     authorityArg: input.authorityArg ?? client.payer.address,
                                 },
-                                { ...config, ...instructionConfig },
+                                { programAddress: instructionConfig?.programAddress ?? config.programAddress },
                             ),
                         ),
                     instruction10: (_input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getInstruction10Instruction({ ...config, ...instructionConfig }),
+                            getInstruction10Instruction({
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     instruction11: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getInstruction11Instruction(input, { ...config, ...instructionConfig }),
+                            getInstruction11Instruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     instruction12: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getInstruction12Instruction(input, { ...config, ...instructionConfig }),
+                            getInstruction12Instruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     instruction13: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getInstruction13Instruction(input, { ...config, ...instructionConfig }),
+                            getInstruction13Instruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                 },
                 identifyInstruction: identifyDummyInstruction,

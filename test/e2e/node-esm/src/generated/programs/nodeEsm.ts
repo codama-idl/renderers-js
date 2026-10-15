@@ -91,7 +91,12 @@ export function nodeEsmProgram(config: { programAddress?: Address | HasAddress }
             nodeEsm: {
                 instructions: {
                     useKey: (_input, instructionConfig) =>
-                        addSelfPlanAndSendFunctions(client, getUseKeyInstruction({ ...config, ...instructionConfig })),
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getUseKeyInstruction({
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
+                        ),
                 },
                 identifyInstruction: identifyNodeEsmInstruction,
                 parseInstruction: parseNodeEsmInstruction,

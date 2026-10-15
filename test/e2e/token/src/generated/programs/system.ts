@@ -97,7 +97,7 @@ export function systemProgram(config: { programAddress?: Address | HasAddress } 
                             client,
                             getCreateAccountInstruction(
                                 { ...input, payer: input.payer ?? client.payer },
-                                { ...config, ...instructionConfig },
+                                { programAddress: instructionConfig?.programAddress ?? config.programAddress },
                             ),
                         ),
                 },

@@ -154,7 +154,7 @@ export function associatedTokenProgram(config: { programAddress?: Address | HasA
                             client,
                             getCreateAssociatedTokenInstructionAsync(
                                 { ...input, payer: input.payer ?? client.payer },
-                                { ...config, ...instructionConfig },
+                                { programAddress: instructionConfig?.programAddress ?? config.programAddress },
                             ),
                         ),
                     createAssociatedTokenIdempotent: (input, instructionConfig) =>
@@ -162,17 +162,22 @@ export function associatedTokenProgram(config: { programAddress?: Address | HasA
                             client,
                             getCreateAssociatedTokenIdempotentInstructionAsync(
                                 { ...input, payer: input.payer ?? client.payer },
-                                { ...config, ...instructionConfig },
+                                { programAddress: instructionConfig?.programAddress ?? config.programAddress },
                             ),
                         ),
                     recoverNestedAssociatedToken: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
-                            getRecoverNestedAssociatedTokenInstructionAsync(input, { ...config, ...instructionConfig }),
+                            getRecoverNestedAssociatedTokenInstructionAsync(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                 },
                 pdas: {
-                    associatedToken: (seeds, pdaConfig) => findAssociatedTokenPda(seeds, { ...config, ...pdaConfig }),
+                    associatedToken: (seeds, pdaConfig) =>
+                        findAssociatedTokenPda(seeds, {
+                            programAddress: pdaConfig?.programAddress ?? config.programAddress,
+                        }),
                 },
                 identifyInstruction: identifyAssociatedTokenInstruction,
                 parseInstruction: parseAssociatedTokenInstruction,
