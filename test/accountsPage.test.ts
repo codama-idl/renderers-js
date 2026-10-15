@@ -70,6 +70,32 @@ test('it renders PDA helpers for PDA with variable seeds', async () => {
     ]);
 });
 
+test('it renders fetch helpers accepting address-bearing objects', async () => {
+    // Given the following program with 1 account.
+    const node = programNode({
+        accounts: [accountNode({ name: 'foo' })],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then we expect the fetch helpers to accept addresses or address-bearing objects
+    // and to unwrap them before fetching the encoded accounts.
+    await renderMapContains(renderMap, 'accounts/foo.ts', [
+        'export async function fetchFoo<TAddress extends string = string>( rpc: Parameters<typeof fetchEncodedAccount>[0], address: Address<TAddress> | HasAddress<TAddress>, config?: FetchAccountConfig ): Promise<Account<Foo, TAddress>>',
+        'export async function fetchMaybeFoo<TAddress extends string = string>( rpc: Parameters<typeof fetchEncodedAccount>[0], address: Address<TAddress> | HasAddress<TAddress>, config?: FetchAccountConfig ): Promise<MaybeAccount<Foo, TAddress>>',
+        "fetchEncodedAccount( rpc, typeof address === 'string' ? address : address.address, config )",
+        'export async function fetchAllFoo( rpc: Parameters<typeof fetchEncodedAccounts>[0], addresses: Array<Address | HasAddress>, config?: FetchAccountsConfig ): Promise<Account<Foo>[]>',
+        'export async function fetchAllMaybeFoo( rpc: Parameters<typeof fetchEncodedAccounts>[0], addresses: Array<Address | HasAddress>, config?: FetchAccountsConfig ): Promise<MaybeAccount<Foo>[]>',
+        "fetchEncodedAccounts( rpc, addresses.map((a) => (typeof a === 'string' ? a : a.address)), config )",
+    ]);
+    await renderMapContainsImports(renderMap, 'accounts/foo.ts', {
+        '@solana/kit': ['type Address', 'type HasAddress'],
+    });
+});
+
 test('it renders an account with a defined type link as discriminator', async () => {
     // Given the following program with 1 account with a discriminator.
     const node = programNode({

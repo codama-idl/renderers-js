@@ -1,12 +1,15 @@
-import { generateKeyPairSigner, none, some, type Address, type HasAddress } from '@solana/kit';
+import { generateKeyPairSigner, none, some, type Account, type Address, type HasAddress } from '@solana/kit';
 import { expect, expectTypeOf, test } from 'vitest';
 
 import { createTestClient } from '../../_setup.js';
 import {
     TOKEN_PROGRAM_ADDRESS,
+    fetchAllMint,
+    fetchMint,
     getMintSize,
     type InitializeMintInstructionData,
     type InitializeMintInstructionDataArgs,
+    type Mint,
 } from '../src/index.js';
 
 test('it creates and initialises a new mint account', async () => {
@@ -117,4 +120,41 @@ test('it accepts address-bearing objects as authority arguments', async () => {
     // And only the loose data type accepts address-bearing objects.
     expectTypeOf<InitializeMintInstructionDataArgs['mintAuthority']>().toEqualTypeOf<Address | HasAddress>();
     expectTypeOf<InitializeMintInstructionData['mintAuthority']>().toEqualTypeOf<Address>();
+});
+
+test('it fetches mint accounts from address-bearing objects', async () => {
+    // Given an initialised mint account.
+    const client = await createTestClient();
+    const [authority, mint] = await Promise.all([generateKeyPairSigner(), generateKeyPairSigner()]);
+    const space = BigInt(getMintSize());
+    const rent = await client.rpc.getMinimumBalanceForRentExemption(space).send();
+    await client.sendTransaction([
+        client.system.instructions.createAccount({
+            newAccount: mint,
+            lamports: rent,
+            space,
+            programAddress: TOKEN_PROGRAM_ADDRESS,
+        }),
+        client.token.instructions.initializeMint({
+            mint: mint.address,
+            decimals: 2,
+            mintAuthority: authority.address,
+        }),
+    ]);
+
+    // When we fetch it by passing an object exposing its address.
+    const wrapper: HasAddress = { address: mint.address };
+    const mintAccount = await fetchMint(client.rpc, wrapper);
+    const [mintAccountFromAll] = await fetchAllMint(client.rpc, [wrapper]);
+
+    // Then the account is fetched and exposes its plain address.
+    expect(mintAccount).toMatchObject({ address: mint.address, data: { decimals: 2 } });
+    expect(mintAccountFromAll).toMatchObject({ address: mint.address, data: { decimals: 2 } });
+
+    // And the address type is inferred from the object whilst objects without an address are rejected.
+    const fetchFromLiteral = () => fetchMint(client.rpc, wrapper as HasAddress<'1111'>);
+    expectTypeOf(fetchFromLiteral).returns.toEqualTypeOf<Promise<Account<Mint, '1111'>>>();
+    // @ts-expect-error Objects without an address property are rejected.
+    const fetchFromInvalid = () => fetchMint(client.rpc, { publicKey: mint.address });
+    expectTypeOf(fetchFromInvalid).toBeFunction();
 });

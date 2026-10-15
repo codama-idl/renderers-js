@@ -137,7 +137,7 @@ export function decodeGuardV1<TAddress extends string = string>(
 
 export async function fetchGuardV1<TAddress extends string = string>(
     rpc: Parameters<typeof fetchEncodedAccount>[0],
-    address: Address<TAddress>,
+    address: Address<TAddress> | HasAddress<TAddress>,
     config?: FetchAccountConfig,
 ): Promise<Account<GuardV1, TAddress>> {
     const maybeAccount = await fetchMaybeGuardV1(rpc, address, config);
@@ -147,16 +147,20 @@ export async function fetchGuardV1<TAddress extends string = string>(
 
 export async function fetchMaybeGuardV1<TAddress extends string = string>(
     rpc: Parameters<typeof fetchEncodedAccount>[0],
-    address: Address<TAddress>,
+    address: Address<TAddress> | HasAddress<TAddress>,
     config?: FetchAccountConfig,
 ): Promise<MaybeAccount<GuardV1, TAddress>> {
-    const maybeAccount = await fetchEncodedAccount(rpc, address, config);
+    const maybeAccount = await fetchEncodedAccount(
+        rpc,
+        typeof address === 'string' ? address : address.address,
+        config,
+    );
     return decodeGuardV1(maybeAccount);
 }
 
 export async function fetchAllGuardV1(
     rpc: Parameters<typeof fetchEncodedAccounts>[0],
-    addresses: Array<Address>,
+    addresses: Array<Address | HasAddress>,
     config?: FetchAccountsConfig,
 ): Promise<Account<GuardV1>[]> {
     const maybeAccounts = await fetchAllMaybeGuardV1(rpc, addresses, config);
@@ -166,9 +170,13 @@ export async function fetchAllGuardV1(
 
 export async function fetchAllMaybeGuardV1(
     rpc: Parameters<typeof fetchEncodedAccounts>[0],
-    addresses: Array<Address>,
+    addresses: Array<Address | HasAddress>,
     config?: FetchAccountsConfig,
 ): Promise<MaybeAccount<GuardV1>[]> {
-    const maybeAccounts = await fetchEncodedAccounts(rpc, addresses, config);
+    const maybeAccounts = await fetchEncodedAccounts(
+        rpc,
+        addresses.map(a => (typeof a === 'string' ? a : a.address)),
+        config,
+    );
     return maybeAccounts.map(maybeAccount => decodeGuardV1(maybeAccount));
 }
