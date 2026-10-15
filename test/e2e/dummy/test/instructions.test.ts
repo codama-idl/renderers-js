@@ -122,6 +122,11 @@ test('the dummy program plugin builds instructions for a custom program address'
     expect(
         client.dummy.instructions.instruction3({}, { programAddress: { address: overrideProgram } }).programAddress,
     ).toBe(overrideProgram);
+
+    // And an undefined per-call program address keeps the plugin's custom program address.
+    expect(
+        client.dummy.instructions.instruction4({ myArgument: 42 }, { programAddress: undefined }).programAddress,
+    ).toBe(customProgram);
 });
 
 test('the dummy program plugin defaults to the program address', () => {

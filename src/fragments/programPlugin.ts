@@ -185,8 +185,8 @@ function getProgramPluginPdasObjectFragment(
             const pdaFindFunction = use(nameApi.pdaFindFunction(pda.name), 'generatedPdas');
             if (!isPdaDerivedFromProgram(pda, programNode)) return fragment`${name}: ${pdaFindFunction}`;
             return hasVariableSeeds(pda)
-                ? fragment`${name}: (seeds, pdaConfig) => ${pdaFindFunction}(seeds, { ...config, ...pdaConfig })`
-                : fragment`${name}: pdaConfig => ${pdaFindFunction}({ ...config, ...pdaConfig })`;
+                ? fragment`${name}: (seeds, pdaConfig) => ${pdaFindFunction}(seeds, { programAddress: pdaConfig?.programAddress ?? config.programAddress })`
+                : fragment`${name}: pdaConfig => ${pdaFindFunction}({ programAddress: pdaConfig?.programAddress ?? config.programAddress })`;
         }),
         c => c.join(', '),
     );
@@ -327,7 +327,7 @@ function getProgramPluginInstructionsObjectFragment(
                 input = fragment`{ ...input, ${fieldOverrides} }`;
             }
 
-            const mergedConfig = fragment`{ ...config, ...instructionConfig }`;
+            const mergedConfig = fragment`{ programAddress: instructionConfig?.programAddress ?? config.programAddress }`;
             const { hasInput } = getInstructionFunctionInputFlags(instruction, { ...scope, useAsync: isAsync });
             if (!hasInput) {
                 return fragment`${name}: (_input, instructionConfig) => ${addSelfPlanAndSendFunctions}(client, ${instructionFunction}(${mergedConfig}))`;

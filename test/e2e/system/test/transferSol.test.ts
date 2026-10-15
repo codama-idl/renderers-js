@@ -2,6 +2,7 @@ import {
     AccountRole,
     type Address,
     SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION,
+    address,
     generateKeyPairSigner,
     isSolanaError,
     lamports,
@@ -11,6 +12,7 @@ import { expect, test } from 'vitest';
 import { createTestClient } from '../../_setup.js';
 import {
     SYSTEM_ERROR__RESULT_WITH_NEGATIVE_LAMPORTS,
+    SYSTEM_PROGRAM_ADDRESS,
     getTransferSolInstruction,
     isSystemError,
     parseTransferSolInstruction,
@@ -63,6 +65,34 @@ test('it exposes generated System Program errors', async () => {
         isSolanaError(error, SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION) &&
             isSystemError(error.cause, transactionMessage, SYSTEM_ERROR__RESULT_WITH_NEGATIVE_LAMPORTS),
     ).toBe(true);
+});
+
+test('it matches generated System Program errors against a given program address', async () => {
+    // Given a failed transfer from a source with less SOL than it attempts to transfer.
+    const client = await createTestClient();
+    const [source, destination] = await Promise.all([
+        generateKeyPairSigner(),
+        generateKeyPairSigner().then(signer => signer.address),
+    ]);
+    await client.airdrop(source.address, lamports(1_000_000_000n));
+    const transfer = client.system.instructions.transferSol({ source, destination, amount: 2_000_000_000 });
+    const transactionMessage = await transfer.planTransaction();
+    const error = await transfer.sendTransaction().then(
+        () => expect.unreachable('expected the transfer to fail'),
+        (cause: unknown) => cause,
+    );
+    if (!isSolanaError(error, SOLANA_ERROR__FAILED_TO_SEND_TRANSACTION)) expect.unreachable('expected a send error');
+
+    // Then the error helper matches the program address that failed, including as an address-bearing object.
+    const code = SYSTEM_ERROR__RESULT_WITH_NEGATIVE_LAMPORTS;
+    expect(isSystemError(error.cause, transactionMessage, code, { programAddress: SYSTEM_PROGRAM_ADDRESS })).toBe(true);
+    expect(
+        isSystemError(error.cause, transactionMessage, code, { programAddress: { address: SYSTEM_PROGRAM_ADDRESS } }),
+    ).toBe(true);
+
+    // And it rejects a different program address.
+    const otherProgram = address('GyhGAqjokLwF9UXdQ2dR5Zwiup242j4mX4J1tSMKyAmD');
+    expect(isSystemError(error.cause, transactionMessage, code, { programAddress: otherProgram })).toBe(false);
 });
 
 test('it parses the accounts and data of a transfer instruction', async () => {

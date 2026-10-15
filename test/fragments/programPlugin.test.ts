@@ -236,7 +236,7 @@ test('it renders the program plugin function', async () => {
     await fragmentContains(fragment, [
         'export function splTokenProgram( config: { programAddress?: Address | HasAddress } = {} ) { return <T extends SplTokenPluginRequirements>( client: T ): ExtendedClient< T, { splToken: SplTokenPlugin } > => { return extendClient(client, { splToken: < SplTokenPlugin > {',
         'accounts: { mint: addSelfFetchFunctions( client, getMintCodec() ) },',
-        'instructions: { initializeMint: ( _input, instructionConfig ) => addSelfPlanAndSendFunctions( client, getInitializeMintInstruction( { ...config, ...instructionConfig } ) ) }',
+        'instructions: { initializeMint: ( _input, instructionConfig ) => addSelfPlanAndSendFunctions( client, getInitializeMintInstruction( { programAddress: instructionConfig?.programAddress ?? config.programAddress } ) ) }',
     ]);
 
     // And we expect the necessary imports to be included.
@@ -273,7 +273,7 @@ test('it fills payer value nodes with the payer (signer) set on the client by de
     // Then we expect the following instruction function with a default payer to be rendered.
     await fragmentContains(fragment, [
         'type MakeOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>',
-        'instructions: { initializeMint: ( input, instructionConfig ) => addSelfPlanAndSendFunctions( client, getInitializeMintInstruction( { ...input, rentPayer: input.rentPayer ?? client.payer }, { ...config, ...instructionConfig } ) ) }',
+        'instructions: { initializeMint: ( input, instructionConfig ) => addSelfPlanAndSendFunctions( client, getInitializeMintInstruction( { ...input, rentPayer: input.rentPayer ?? client.payer }, { programAddress: instructionConfig?.programAddress ?? config.programAddress } ) ) }',
     ]);
 });
 
@@ -303,7 +303,7 @@ test('it fills payer value nodes with the payer (address) set on the client by d
     // Then we expect the following instruction function with a default payer to be rendered.
     await fragmentContains(fragment, [
         'type MakeOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>',
-        'instructions: { initializeMint: ( input, instructionConfig ) => addSelfPlanAndSendFunctions( client, getInitializeMintInstruction( { ...input, rentPayer: input.rentPayer ?? client.payer.address }, { ...config, ...instructionConfig } ) ) }',
+        'instructions: { initializeMint: ( input, instructionConfig ) => addSelfPlanAndSendFunctions( client, getInitializeMintInstruction( { ...input, rentPayer: input.rentPayer ?? client.payer.address }, { programAddress: instructionConfig?.programAddress ?? config.programAddress } ) ) }',
     ]);
 });
 
@@ -422,7 +422,7 @@ test('it renders program plugin function with pdas object', async () => {
 
     // Then we expect the plugin function to include pdas.
     await fragmentContains(fragment, [
-        'pdas: { associatedTokenAccount: ( seeds, pdaConfig ) => findAssociatedTokenAccountPda( seeds, { ...config, ...pdaConfig } ) }',
+        'pdas: { associatedTokenAccount: ( seeds, pdaConfig ) => findAssociatedTokenAccountPda( seeds, { programAddress: pdaConfig?.programAddress ?? config.programAddress } ) }',
     ]);
 
     // And we expect the necessary imports to be included.
@@ -456,7 +456,7 @@ test('it renders a plugin with only PDAs', async () => {
         'export type SplTokenPluginPdas = { associatedTokenAccount: typeof findAssociatedTokenAccountPda; }',
     ]);
     await fragmentContains(fragment, [
-        'pdas: { associatedTokenAccount: ( seeds, pdaConfig ) => findAssociatedTokenAccountPda( seeds, { ...config, ...pdaConfig } ) }',
+        'pdas: { associatedTokenAccount: ( seeds, pdaConfig ) => findAssociatedTokenAccountPda( seeds, { programAddress: pdaConfig?.programAddress ?? config.programAddress } ) }',
     ]);
 });
 
@@ -504,8 +504,8 @@ test('it renders the plugin function with instructions and PDAs but no accounts'
 
     // And we expect the plugin function to include both.
     await fragmentContains(fragment, [
-        'instructions: { initializeMint: ( _input, instructionConfig ) => addSelfPlanAndSendFunctions( client, getInitializeMintInstruction( { ...config, ...instructionConfig } ) ) }',
-        'pdas: { associatedTokenAccount: ( seeds, pdaConfig ) => findAssociatedTokenAccountPda( seeds, { ...config, ...pdaConfig } ) }',
+        'instructions: { initializeMint: ( _input, instructionConfig ) => addSelfPlanAndSendFunctions( client, getInitializeMintInstruction( { programAddress: instructionConfig?.programAddress ?? config.programAddress } ) ) }',
+        'pdas: { associatedTokenAccount: ( seeds, pdaConfig ) => findAssociatedTokenAccountPda( seeds, { programAddress: pdaConfig?.programAddress ?? config.programAddress } ) }',
     ]);
 });
 
@@ -616,8 +616,8 @@ test('it threads the plugin program address into instruction builders with per-c
     // Then both builders receive the plugin config merged with the per-call config, the latter taking precedence.
     await fragmentContains(fragment, [
         'export function splTokenProgram( config: { programAddress?: Address | HasAddress } = {} )',
-        'mintTo: ( input, instructionConfig ) => addSelfPlanAndSendFunctions( client, getMintToInstruction( input, { ...config, ...instructionConfig } ) )',
-        'createVault: ( input, instructionConfig ) => addSelfPlanAndSendFunctions( client, getCreateVaultInstructionAsync( input, { ...config, ...instructionConfig } ) )',
+        'mintTo: ( input, instructionConfig ) => addSelfPlanAndSendFunctions( client, getMintToInstruction( input, { programAddress: instructionConfig?.programAddress ?? config.programAddress } ) )',
+        'createVault: ( input, instructionConfig ) => addSelfPlanAndSendFunctions( client, getCreateVaultInstructionAsync( input, { programAddress: instructionConfig?.programAddress ?? config.programAddress } ) )',
     ]);
 });
 
@@ -642,8 +642,8 @@ test('it applies the plugin program address to PDAs derived from the program onl
 
     // Then only the PDAs derived from this program default to the plugin program address.
     await fragmentContains(fragment, [
-        'config: ( pdaConfig ) => findConfigPda( { ...config, ...pdaConfig } )',
-        'vault: ( seeds, pdaConfig ) => findVaultPda( seeds, { ...config, ...pdaConfig } )',
+        'config: ( pdaConfig ) => findConfigPda( { programAddress: pdaConfig?.programAddress ?? config.programAddress } )',
+        'vault: ( seeds, pdaConfig ) => findVaultPda( seeds, { programAddress: pdaConfig?.programAddress ?? config.programAddress } )',
         'associatedToken: findAssociatedTokenPda',
     ]);
 });
