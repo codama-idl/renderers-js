@@ -1,5 +1,15 @@
 # @codama/renderers-js
 
+## 2.7.0
+
+### Minor Changes
+
+- [#261](https://github.com/codama-idl/renderers-js/pull/261) [`13a5399`](https://github.com/codama-idl/renderers-js/commit/13a53990f2603abfe6ab7bf0e8ad7a75083cadfa) Thanks [@amilz](https://github.com/amilz)! - Program address overrides now accept address-bearing objects — i.e. the `programAddress` config of instruction builders (sync and async), `find*Pda` functions and `fetch*FromSeeds` / `fetchMaybe*FromSeeds` helpers — so that third-party wrappers such as web3.js's `PublicKey` can be passed directly instead of being converted to an `Address` first. PDA and fetch helpers widen their override to `Address | HasAddress`, whilst instruction builders widen it to `TProgramAddress | { readonly address: TProgramAddress }`. The override is unwrapped to a plain `Address` once at the top of the generated function, so account metas, PDA derivations, resolvers and the returned instruction keep receiving an `Address`. Instruction types still carry the literal program address — the program constant by default, or the overriding address whether it is passed directly or wrapped — so their inferred types are unchanged for existing callers.
+
+- [#258](https://github.com/codama-idl/renderers-js/pull/258) [`c037647`](https://github.com/codama-idl/renderers-js/commit/c037647377122d9ab1ff8e564b7fc8ba290518f3) Thanks [@amilz](https://github.com/amilz)! - Generated account fetchers now accept `Address | HasAddress` — i.e. `fetchX` and `fetchMaybeX` accept `Address<TAddress> | HasAddress<TAddress>` whilst `fetchAllX` and `fetchAllMaybeX` accept `Array<Address | HasAddress>` — so that third-party wrappers such as web3.js's `PublicKey` or a `TransactionSigner` can be passed directly instead of being converted to an `Address` first. The fetchers unwrap such objects to their address before calling `fetchEncodedAccount` and `fetchEncodedAccounts` from `@solana/kit`, and the `TAddress` type parameter is still inferred from the provided object. The returned accounts keep exposing a plain `Address`.
+
+- [#262](https://github.com/codama-idl/renderers-js/pull/262) [`06d1c59`](https://github.com/codama-idl/renderers-js/commit/06d1c593329b10c9675a304a580c822f582cfa21) Thanks [@amilz](https://github.com/amilz)! - Generated program plugins and `is<Program>Error` helpers can now target a custom program address — e.g. a program deployed at a different address on another cluster or in tests. The plugin factory accepts an optional `{ programAddress }` config, which is forwarded to every instruction builder and to the `find*Pda` functions of PDAs derived from the program, whilst each plugin instruction accepts a per-call config that takes precedence over the plugin one. `is<Program>Error` accepts an optional trailing `{ programAddress }` config that defaults to the program address constant. Both accept `Address | HasAddress`. Calling the plugin without a config behaves exactly as before.
+
 ## 2.6.0
 
 ### Minor Changes
