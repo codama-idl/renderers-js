@@ -1,5 +1,11 @@
 # @codama/renderers-js
 
+## 2.8.0
+
+### Minor Changes
+
+- [#272](https://github.com/codama-idl/renderers-js/pull/272) [`d5a4501`](https://github.com/codama-idl/renderers-js/commit/d5a45012e220070f4a0189273af89a6b1aa91355) Thanks [@amilz](https://github.com/amilz)! - Generated account fetchers now accept clients exposing an `rpc` property — such as Kit clients — alongside raw RPCs — i.e. `fetchX`, `fetchMaybeX`, `fetchXFromSeeds` and `fetchMaybeXFromSeeds` accept `ClientWithRpc<GetAccountInfoApi>` whilst `fetchAllX` and `fetchAllMaybeX` accept `ClientWithRpc<GetMultipleAccountsApi>` — so that `fetchMint(client, address)` works without reaching for `client.rpc`. The fetchers unwrap such clients to their RPC before calling `fetchEncodedAccount` and `fetchEncodedAccounts` from `@solana/kit`. Passing an RPC directly behaves exactly as before.
+
 ## 2.7.0
 
 ### Minor Changes
