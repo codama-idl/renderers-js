@@ -32,7 +32,7 @@ export function getAccountPdaHelpersFragment(
 
     return pipe(
         fragment`export async function ${fetchFromSeedsFunction}(
-  rpc: Parameters<typeof fetchEncodedAccount>[0],
+  rpc: Parameters<typeof fetchEncodedAccount>[0] | ClientWithRpc<GetAccountInfoApi>,
   ${hasVariableSeeds ? `seeds: ${pdaSeedsType},` : ''}
   config: FetchAccountConfig & { programAddress?: Address | HasAddress } = {},
 ): Promise<Account<${accountType}>> {
@@ -42,7 +42,7 @@ export function getAccountPdaHelpersFragment(
 }
 
 export async function ${fetchMaybeFromSeedsFunction}(
-  rpc: Parameters<typeof fetchEncodedAccount>[0],
+  rpc: Parameters<typeof fetchEncodedAccount>[0] | ClientWithRpc<GetAccountInfoApi>,
   ${hasVariableSeeds ? `seeds: ${pdaSeedsType},` : ''}
   config: FetchAccountConfig & { programAddress?: Address | HasAddress } = {},
 ): Promise<MaybeAccount<${accountType}>> {
@@ -57,6 +57,8 @@ export async function ${fetchMaybeFromSeedsFunction}(
                 hasVariableSeeds ? [`type ${pdaSeedsType}`, findPdaFunction] : [findPdaFunction],
             ),
         f => addFragmentImports(f, 'solanaAddresses', ['type Address', 'type HasAddress']),
+        f => addFragmentImports(f, 'solanaPluginInterfaces', ['type ClientWithRpc']),
+        f => addFragmentImports(f, 'solanaRpcApi', ['type GetAccountInfoApi']),
         f =>
             addFragmentImports(f, 'solanaAccounts', [
                 'type Account',

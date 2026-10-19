@@ -158,3 +158,37 @@ test('it fetches mint accounts from address-bearing objects', async () => {
     const fetchFromInvalid = () => fetchMint(client.rpc, { publicKey: mint.address });
     expectTypeOf(fetchFromInvalid).toBeFunction();
 });
+
+test('it fetches mint accounts from a client exposing an RPC', async () => {
+    // Given an initialised mint account.
+    const client = await createTestClient();
+    const [authority, mint] = await Promise.all([generateKeyPairSigner(), generateKeyPairSigner()]);
+    const space = BigInt(getMintSize());
+    const rent = await client.rpc.getMinimumBalanceForRentExemption(space).send();
+    await client.sendTransaction([
+        client.system.instructions.createAccount({
+            newAccount: mint,
+            lamports: rent,
+            space,
+            programAddress: TOKEN_PROGRAM_ADDRESS,
+        }),
+        client.token.instructions.initializeMint({
+            mint: mint.address,
+            decimals: 2,
+            mintAuthority: authority.address,
+        }),
+    ]);
+
+    // When we fetch it by passing the client instead of its RPC.
+    const mintAccount = await fetchMint(client, mint.address);
+    const [mintAccountFromAll] = await fetchAllMint(client, [mint.address]);
+
+    // Then the account is fetched through the client's RPC.
+    expect(mintAccount).toMatchObject({ address: mint.address, data: { decimals: 2 } });
+    expect(mintAccountFromAll).toMatchObject({ address: mint.address, data: { decimals: 2 } });
+
+    // And objects whose rpc property is not an RPC are rejected.
+    // @ts-expect-error Objects without a valid rpc property are rejected.
+    const fetchFromInvalid = () => fetchMint({ rpc: {} }, mint.address);
+    expectTypeOf(fetchFromInvalid).toBeFunction();
+});

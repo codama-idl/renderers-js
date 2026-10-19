@@ -29,12 +29,15 @@ import {
     getU8Encoder,
     type Account,
     type Address,
+    type ClientWithRpc,
     type EncodedAccount,
     type FetchAccountConfig,
     type FetchAccountsConfig,
     type FixedSizeCodec,
     type FixedSizeDecoder,
     type FixedSizeEncoder,
+    type GetAccountInfoApi,
+    type GetMultipleAccountsApi,
     type HasAddress,
     type MaybeAccount,
     type MaybeEncodedAccount,
@@ -117,7 +120,7 @@ export function decodeMint<TAddress extends string = string>(
 }
 
 export async function fetchMint<TAddress extends string = string>(
-    rpc: Parameters<typeof fetchEncodedAccount>[0],
+    rpc: Parameters<typeof fetchEncodedAccount>[0] | ClientWithRpc<GetAccountInfoApi>,
     address: Address<TAddress> | HasAddress<TAddress>,
     config?: FetchAccountConfig,
 ): Promise<Account<Mint, TAddress>> {
@@ -127,12 +130,12 @@ export async function fetchMint<TAddress extends string = string>(
 }
 
 export async function fetchMaybeMint<TAddress extends string = string>(
-    rpc: Parameters<typeof fetchEncodedAccount>[0],
+    rpc: Parameters<typeof fetchEncodedAccount>[0] | ClientWithRpc<GetAccountInfoApi>,
     address: Address<TAddress> | HasAddress<TAddress>,
     config?: FetchAccountConfig,
 ): Promise<MaybeAccount<Mint, TAddress>> {
     const maybeAccount = await fetchEncodedAccount(
-        rpc,
+        'rpc' in rpc ? rpc.rpc : rpc,
         typeof address === 'string' ? address : address.address,
         config,
     );
@@ -140,7 +143,7 @@ export async function fetchMaybeMint<TAddress extends string = string>(
 }
 
 export async function fetchAllMint(
-    rpc: Parameters<typeof fetchEncodedAccounts>[0],
+    rpc: Parameters<typeof fetchEncodedAccounts>[0] | ClientWithRpc<GetMultipleAccountsApi>,
     addresses: Array<Address | HasAddress>,
     config?: FetchAccountsConfig,
 ): Promise<Account<Mint>[]> {
@@ -150,12 +153,12 @@ export async function fetchAllMint(
 }
 
 export async function fetchAllMaybeMint(
-    rpc: Parameters<typeof fetchEncodedAccounts>[0],
+    rpc: Parameters<typeof fetchEncodedAccounts>[0] | ClientWithRpc<GetMultipleAccountsApi>,
     addresses: Array<Address | HasAddress>,
     config?: FetchAccountsConfig,
 ): Promise<MaybeAccount<Mint>[]> {
     const maybeAccounts = await fetchEncodedAccounts(
-        rpc,
+        'rpc' in rpc ? rpc.rpc : rpc,
         addresses.map(a => (typeof a === 'string' ? a : a.address)),
         config,
     );

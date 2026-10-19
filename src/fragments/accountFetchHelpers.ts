@@ -29,7 +29,7 @@ export function ${decodeFunction}<TAddress extends string = string>(encodedAccou
 }
 
 export async function ${fetchFunction}<TAddress extends string = string>(
-  rpc: Parameters<typeof fetchEncodedAccount>[0],
+  rpc: Parameters<typeof fetchEncodedAccount>[0] | ClientWithRpc<GetAccountInfoApi>,
   address: Address<TAddress> | HasAddress<TAddress>,
   config?: FetchAccountConfig,
 ): Promise<Account<${accountType}, TAddress>> {
@@ -39,16 +39,16 @@ export async function ${fetchFunction}<TAddress extends string = string>(
 }
 
 export async function ${fetchMaybeFunction}<TAddress extends string = string>(
-  rpc: Parameters<typeof fetchEncodedAccount>[0],
+  rpc: Parameters<typeof fetchEncodedAccount>[0] | ClientWithRpc<GetAccountInfoApi>,
   address: Address<TAddress> | HasAddress<TAddress>,
   config?: FetchAccountConfig,
 ): Promise<MaybeAccount<${accountType}, TAddress>> {
-  const maybeAccount = await fetchEncodedAccount(rpc, typeof address === 'string' ? address : address.address, config);
+  const maybeAccount = await fetchEncodedAccount('rpc' in rpc ? rpc.rpc : rpc, typeof address === 'string' ? address : address.address, config);
   return ${decodeFunction}(maybeAccount);
 }
 
 export async function ${fetchAllFunction}(
-  rpc: Parameters<typeof fetchEncodedAccounts>[0],
+  rpc: Parameters<typeof fetchEncodedAccounts>[0] | ClientWithRpc<GetMultipleAccountsApi>,
   addresses: Array<Address | HasAddress>,
   config?: FetchAccountsConfig,
 ): Promise<Account<${accountType}>[]> {
@@ -58,14 +58,16 @@ export async function ${fetchAllFunction}(
 }
 
 export async function ${fetchAllMaybeFunction}(
-  rpc: Parameters<typeof fetchEncodedAccounts>[0],
+  rpc: Parameters<typeof fetchEncodedAccounts>[0] | ClientWithRpc<GetMultipleAccountsApi>,
   addresses: Array<Address | HasAddress>,
   config?: FetchAccountsConfig,
 ): Promise<MaybeAccount<${accountType}>[]> {
-  const maybeAccounts = await fetchEncodedAccounts(rpc, addresses.map((a) => (typeof a === 'string' ? a : a.address)), config);
+  const maybeAccounts = await fetchEncodedAccounts('rpc' in rpc ? rpc.rpc : rpc, addresses.map((a) => (typeof a === 'string' ? a : a.address)), config);
   return maybeAccounts.map((maybeAccount) => ${decodeFunction}(maybeAccount));
 }`,
         f => addFragmentImports(f, 'solanaAddresses', ['type Address', 'type HasAddress']),
+        f => addFragmentImports(f, 'solanaPluginInterfaces', ['type ClientWithRpc']),
+        f => addFragmentImports(f, 'solanaRpcApi', ['type GetAccountInfoApi', 'type GetMultipleAccountsApi']),
         f =>
             addFragmentImports(f, 'solanaAccounts', [
                 'type Account',
