@@ -25,12 +25,15 @@ import {
     getU8Encoder,
     type Account,
     type Address,
+    type ClientWithRpc,
     type EncodedAccount,
     type FetchAccountConfig,
     type FetchAccountsConfig,
     type FixedSizeCodec,
     type FixedSizeDecoder,
     type FixedSizeEncoder,
+    type GetAccountInfoApi,
+    type GetMultipleAccountsApi,
     type HasAddress,
     type MaybeAccount,
     type MaybeEncodedAccount,
@@ -96,7 +99,7 @@ export function decodeMultisig<TAddress extends string = string>(
 }
 
 export async function fetchMultisig<TAddress extends string = string>(
-    rpc: Parameters<typeof fetchEncodedAccount>[0],
+    rpc: Parameters<typeof fetchEncodedAccount>[0] | ClientWithRpc<GetAccountInfoApi>,
     address: Address<TAddress> | HasAddress<TAddress>,
     config?: FetchAccountConfig,
 ): Promise<Account<Multisig, TAddress>> {
@@ -106,12 +109,12 @@ export async function fetchMultisig<TAddress extends string = string>(
 }
 
 export async function fetchMaybeMultisig<TAddress extends string = string>(
-    rpc: Parameters<typeof fetchEncodedAccount>[0],
+    rpc: Parameters<typeof fetchEncodedAccount>[0] | ClientWithRpc<GetAccountInfoApi>,
     address: Address<TAddress> | HasAddress<TAddress>,
     config?: FetchAccountConfig,
 ): Promise<MaybeAccount<Multisig, TAddress>> {
     const maybeAccount = await fetchEncodedAccount(
-        rpc,
+        'rpc' in rpc ? rpc.rpc : rpc,
         typeof address === 'string' ? address : address.address,
         config,
     );
@@ -119,7 +122,7 @@ export async function fetchMaybeMultisig<TAddress extends string = string>(
 }
 
 export async function fetchAllMultisig(
-    rpc: Parameters<typeof fetchEncodedAccounts>[0],
+    rpc: Parameters<typeof fetchEncodedAccounts>[0] | ClientWithRpc<GetMultipleAccountsApi>,
     addresses: Array<Address | HasAddress>,
     config?: FetchAccountsConfig,
 ): Promise<Account<Multisig>[]> {
@@ -129,12 +132,12 @@ export async function fetchAllMultisig(
 }
 
 export async function fetchAllMaybeMultisig(
-    rpc: Parameters<typeof fetchEncodedAccounts>[0],
+    rpc: Parameters<typeof fetchEncodedAccounts>[0] | ClientWithRpc<GetMultipleAccountsApi>,
     addresses: Array<Address | HasAddress>,
     config?: FetchAccountsConfig,
 ): Promise<MaybeAccount<Multisig>[]> {
     const maybeAccounts = await fetchEncodedAccounts(
-        rpc,
+        'rpc' in rpc ? rpc.rpc : rpc,
         addresses.map(a => (typeof a === 'string' ? a : a.address)),
         config,
     );

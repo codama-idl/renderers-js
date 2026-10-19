@@ -30,12 +30,15 @@ import {
     transformEncoder,
     type Account,
     type Address,
+    type ClientWithRpc,
     type Codec,
     type Decoder,
     type EncodedAccount,
     type Encoder,
     type FetchAccountConfig,
     type FetchAccountsConfig,
+    type GetAccountInfoApi,
+    type GetMultipleAccountsApi,
     type HasAddress,
     type MaybeAccount,
     type MaybeEncodedAccount,
@@ -136,7 +139,7 @@ export function decodeGuardV1<TAddress extends string = string>(
 }
 
 export async function fetchGuardV1<TAddress extends string = string>(
-    rpc: Parameters<typeof fetchEncodedAccount>[0],
+    rpc: Parameters<typeof fetchEncodedAccount>[0] | ClientWithRpc<GetAccountInfoApi>,
     address: Address<TAddress> | HasAddress<TAddress>,
     config?: FetchAccountConfig,
 ): Promise<Account<GuardV1, TAddress>> {
@@ -146,12 +149,12 @@ export async function fetchGuardV1<TAddress extends string = string>(
 }
 
 export async function fetchMaybeGuardV1<TAddress extends string = string>(
-    rpc: Parameters<typeof fetchEncodedAccount>[0],
+    rpc: Parameters<typeof fetchEncodedAccount>[0] | ClientWithRpc<GetAccountInfoApi>,
     address: Address<TAddress> | HasAddress<TAddress>,
     config?: FetchAccountConfig,
 ): Promise<MaybeAccount<GuardV1, TAddress>> {
     const maybeAccount = await fetchEncodedAccount(
-        rpc,
+        'rpc' in rpc ? rpc.rpc : rpc,
         typeof address === 'string' ? address : address.address,
         config,
     );
@@ -159,7 +162,7 @@ export async function fetchMaybeGuardV1<TAddress extends string = string>(
 }
 
 export async function fetchAllGuardV1(
-    rpc: Parameters<typeof fetchEncodedAccounts>[0],
+    rpc: Parameters<typeof fetchEncodedAccounts>[0] | ClientWithRpc<GetMultipleAccountsApi>,
     addresses: Array<Address | HasAddress>,
     config?: FetchAccountsConfig,
 ): Promise<Account<GuardV1>[]> {
@@ -169,12 +172,12 @@ export async function fetchAllGuardV1(
 }
 
 export async function fetchAllMaybeGuardV1(
-    rpc: Parameters<typeof fetchEncodedAccounts>[0],
+    rpc: Parameters<typeof fetchEncodedAccounts>[0] | ClientWithRpc<GetMultipleAccountsApi>,
     addresses: Array<Address | HasAddress>,
     config?: FetchAccountsConfig,
 ): Promise<MaybeAccount<GuardV1>[]> {
     const maybeAccounts = await fetchEncodedAccounts(
-        rpc,
+        'rpc' in rpc ? rpc.rpc : rpc,
         addresses.map(a => (typeof a === 'string' ? a : a.address)),
         config,
     );
