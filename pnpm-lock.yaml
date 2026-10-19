@@ -22,7 +22,7 @@ importers:
         version: 1.11.0
       '@solana/codecs-strings':
         specifier: ^8.0.0
-        version: 8.4.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@7.0.2)
+        version: 8.5.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@7.0.2)
       prettier:
         specifier: ^3.8.1
         version: 3.9.10
@@ -1130,15 +1130,6 @@ packages:
       typescript:
         optional: true
 
-  '@solana/codecs-core@8.4.0':
-    resolution: {integrity: sha512-HOsIB3Ic/qnlXv4V0Q5gpxFxBy5pBiINpEMtCzGtHRnj7mI3Amsh8HKR7x9nbP1SBDuDlOrP/Mds9yIqyKn8TQ==}
-    engines: {node: '>=20.18.0'}
-    peerDependencies:
-      typescript: '>=5.4.0'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-
   '@solana/codecs-core@8.5.0':
     resolution: {integrity: sha512-ou38qNrf9XOzCWsu/I4sTzRmnrKqhblwMVvpXwXPKAAUZwkSAKQXonwgZFY68I5HK6nkfq1NLWfZFmTEIZYLiw==}
     engines: {node: '>=20.18.0'}
@@ -1175,15 +1166,6 @@ packages:
       typescript:
         optional: true
 
-  '@solana/codecs-numbers@8.4.0':
-    resolution: {integrity: sha512-A9SlaBylkTFjtBiVrFUX3We5SZK4L/Q6SKpPyazZQ1MTCO0FyTuKyZwDART2Pzg+C/5xLWjSns+FSTR8FhD/Rg==}
-    engines: {node: '>=20.18.0'}
-    peerDependencies:
-      typescript: '>=5.4.0'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-
   '@solana/codecs-numbers@8.5.0':
     resolution: {integrity: sha512-6Vtf52rHzjf98ykejn9bNGMaQ2k1f4UMIa+BGMbBy4mIRQ5ggdI5oCAb3sZPfJcel2JQHwDlsLHCYdpqC+n6Mg==}
     engines: {node: '>=20.18.0'}
@@ -1195,18 +1177,6 @@ packages:
 
   '@solana/codecs-strings@8.3.0':
     resolution: {integrity: sha512-S7rZrc1B90AS0QVRlo6+6cX2t+0TGtsadsPWdfA7tXcaDKQfQn4C/6OJxJ7/n8ugw8LMgGC+Xcs81ii4nIp6aQ==}
-    engines: {node: '>=20.18.0'}
-    peerDependencies:
-      fastestsmallesttextencoderdecoder: ^1.0.22
-      typescript: '>=5.4.0'
-    peerDependenciesMeta:
-      fastestsmallesttextencoderdecoder:
-        optional: true
-      typescript:
-        optional: true
-
-  '@solana/codecs-strings@8.4.0':
-    resolution: {integrity: sha512-jQhRrJT3ZoeDoSA5DtGxPmI5ODJi3STTCrtIXIniLr1J1cXUSlPfYe8BKOurNwC+SlEJyRmKfpVze+qeLacmmw==}
     engines: {node: '>=20.18.0'}
     peerDependencies:
       fastestsmallesttextencoderdecoder: ^1.0.22
@@ -1249,16 +1219,6 @@ packages:
 
   '@solana/errors@8.3.0':
     resolution: {integrity: sha512-XsoQ5ThBOwfMz1KS7I2zZoduLxUYFe+NHuRAm/gt+uk44nnXqwzNJHo/9GEMqJqxafViqvfRZ35GF1fDkwW32Q==}
-    engines: {node: '>=20.18.0'}
-    hasBin: true
-    peerDependencies:
-      typescript: '>=5.4.0'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-
-  '@solana/errors@8.4.0':
-    resolution: {integrity: sha512-t59ageeK8xa6LrCzj93QEhYtVr5t3GdnTH3qJMGqrCFMYM6IvNFLljlz4N75X+xYktj3sRABTrNoCfekeQlckA==}
     engines: {node: '>=20.18.0'}
     hasBin: true
     peerDependencies:
@@ -3144,12 +3104,6 @@ snapshots:
     optionalDependencies:
       typescript: 7.0.2
 
-  '@solana/codecs-core@8.4.0(typescript@7.0.2)':
-    dependencies:
-      '@solana/errors': 8.4.0(typescript@7.0.2)
-    optionalDependencies:
-      typescript: 7.0.2
-
   '@solana/codecs-core@8.5.0(typescript@7.0.2)':
     dependencies:
       '@solana/errors': 8.5.0(typescript@7.0.2)
@@ -3179,13 +3133,6 @@ snapshots:
     optionalDependencies:
       typescript: 7.0.2
 
-  '@solana/codecs-numbers@8.4.0(typescript@7.0.2)':
-    dependencies:
-      '@solana/codecs-core': 8.4.0(typescript@7.0.2)
-      '@solana/errors': 8.4.0(typescript@7.0.2)
-    optionalDependencies:
-      typescript: 7.0.2
-
   '@solana/codecs-numbers@8.5.0(typescript@7.0.2)':
     dependencies:
       '@solana/codecs-core': 8.5.0(typescript@7.0.2)
@@ -3198,15 +3145,6 @@ snapshots:
       '@solana/codecs-core': 8.3.0(typescript@7.0.2)
       '@solana/codecs-numbers': 8.3.0(typescript@7.0.2)
       '@solana/errors': 8.3.0(typescript@7.0.2)
-    optionalDependencies:
-      fastestsmallesttextencoderdecoder: 1.0.22
-      typescript: 7.0.2
-
-  '@solana/codecs-strings@8.4.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@7.0.2)':
-    dependencies:
-      '@solana/codecs-core': 8.4.0(typescript@7.0.2)
-      '@solana/codecs-numbers': 8.4.0(typescript@7.0.2)
-      '@solana/errors': 8.4.0(typescript@7.0.2)
     optionalDependencies:
       fastestsmallesttextencoderdecoder: 1.0.22
       typescript: 7.0.2
@@ -3247,13 +3185,6 @@ snapshots:
       - fastestsmallesttextencoderdecoder
 
   '@solana/errors@8.3.0(typescript@7.0.2)':
-    dependencies:
-      chalk: 5.6.2
-      commander: 15.0.0
-    optionalDependencies:
-      typescript: 7.0.2
-
-  '@solana/errors@8.4.0(typescript@7.0.2)':
     dependencies:
       chalk: 5.6.2
       commander: 15.0.0
