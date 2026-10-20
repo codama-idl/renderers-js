@@ -79,7 +79,7 @@
         "@codama/release-tools": "github:codama-idl/release-tools#v1.3.1",
         "@solana-config/oxc": "^0.1.1",
         "@solana/kit": "^8.5.0",
-        "@solana/kit-plugin-litesvm": "0.19.0",
+        "@solana/kit-plugin-litesvm": "0.22.0",
         "@solana/kit-plugin-signer": "0.19.0",
         "@types/node": "^26",
         "@types/semver": "^7.7.1",
