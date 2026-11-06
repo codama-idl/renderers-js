@@ -21,6 +21,11 @@ export type CustomDataOptions =
           name: string;
       };
 
+/**
+ * The custom data options of accounts or instructions, keyed by the camelCase name of the
+ * node they apply to. Use {@link getCustomDataOptions} rather than reading the map directly,
+ * so that nodes are matched regardless of the casing of their name.
+ */
 export type ParsedCustomDataOptions = Map<
     CamelCaseString,
     {
@@ -31,6 +36,19 @@ export type ParsedCustomDataOptions = Map<
         linkNode: DefinedTypeLinkNode;
     }
 >;
+
+/**
+ * Finds the custom data options of an account or instruction node, if any.
+ *
+ * @param options - The parsed custom data options.
+ * @param node - The account or instruction node, matched by the camelCase form of its name.
+ */
+export function getCustomDataOptions(
+    options: ParsedCustomDataOptions,
+    node: Pick<AccountNode | InstructionNode, 'name'>,
+): ReturnType<ParsedCustomDataOptions['get']> {
+    return options.get(camelCase(node.name));
+}
 
 export const parseCustomDataOptions = (
     customDataOptions: CustomDataOptions[],
@@ -59,7 +77,7 @@ export const getDefinedTypeNodesToExtract = (
     parsedCustomDataOptions: ParsedCustomDataOptions,
 ): DefinedTypeNode[] =>
     nodes.flatMap(node => {
-        const options = parsedCustomDataOptions.get(node.name);
+        const options = getCustomDataOptions(parsedCustomDataOptions, node);
         if (!options || !options.extract) return [];
 
         if (isNode(node, 'accountNode')) {

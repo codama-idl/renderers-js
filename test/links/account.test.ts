@@ -63,3 +63,33 @@ test('it can override the import of a linked account', async () => {
         '../../hooked': ['getCounterSize'],
     });
 });
+
+test('it matches link overrides regardless of the casing of their keys', async () => {
+    // Given the following node.
+    const node = programNode({
+        accounts: [accountNode({ name: 'counterAccount', size: 42 })],
+        instructions: [
+            instructionNode({
+                byteDeltas: [instructionByteDeltaNode(accountLinkNode('counterAccount'))],
+                name: 'createCounter',
+            }),
+        ],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+
+    // When we render it using a custom import keyed by a differently cased name.
+    const renderMap = visit(
+        node,
+        getRenderMapVisitor({
+            linkOverrides: {
+                accounts: { counter_account: 'hooked' },
+            },
+        }),
+    );
+
+    // Then we expect the imports to be overridden.
+    await renderMapContainsImports(renderMap, 'instructions/createCounter.ts', {
+        '../../hooked': ['getCounterAccountSize'],
+    });
+});

@@ -19,6 +19,7 @@ import {
 import {
     Fragment,
     fragment,
+    getCustomDataOptions,
     getDocblockFragment,
     isAsyncDefaultValue,
     isRemainingAccountsBackedByArgument,
@@ -123,7 +124,7 @@ function getDataArgumentsFragments(
     const { instructionPath, nameApi } = scope;
     const instructionNode = getLastNodeFromPath(instructionPath);
 
-    const customData = scope.customInstructionData.get(instructionNode.name);
+    const customData = getCustomDataOptions(scope.customInstructionData, instructionNode);
     if (customData) {
         return [
             undefined,
@@ -177,9 +178,10 @@ function getArgumentFragment(
         input => isNode(input, 'instructionArgumentNode') && input.name === arg.name,
     ) as ResolvedInstructionArgument | undefined;
     if (arg.defaultValue && arg.defaultValueStrategy === 'omitted') return null;
-    const renamedName = renamedArgs.get(arg.name) ?? arg.name;
+    const argName = camelCase(arg.name);
+    const renamedName = renamedArgs.get(argName) ?? argName;
     const optionalSign = arg.defaultValue || resolvedArg?.defaultValue ? '?' : '';
-    return fragment`${camelCase(renamedName)}${optionalSign}: ${argsType}["${camelCase(arg.name)}"];`;
+    return fragment`${renamedName}${optionalSign}: ${argsType}["${argName}"];`;
 }
 
 function getRemainingAccountsFragment(instructionNode: InstructionNode): Fragment | undefined {

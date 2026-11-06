@@ -2,7 +2,7 @@ import { assertIsNode, camelCase, InstructionByteDeltaNode, InstructionNode, isN
 import { mapFragmentContent } from '@codama/renderers-core';
 import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
-import { addFragmentFeatures, Fragment, fragment, mergeFragments, RenderScope, use } from '../utils';
+import { addFragmentFeatures, Fragment, fragment, isAsyncResolver, mergeFragments, RenderScope, use } from '../utils';
 
 export function getInstructionByteDeltaFragment(
     scope: Pick<RenderScope, 'asyncResolvers' | 'getImportFrom' | 'nameApi'> & {
@@ -86,7 +86,7 @@ function getResolverValueNodeFragment(
     },
 ): Fragment | null {
     assertIsNode(byteDelta.value, 'resolverValueNode');
-    const isAsync = scope.asyncResolvers.includes(byteDelta.value.name);
+    const isAsync = isAsyncResolver(byteDelta.value.name, scope.asyncResolvers);
     if (!scope.useAsync && isAsync) return null;
 
     const awaitKeyword = scope.useAsync && isAsync ? 'await ' : '';

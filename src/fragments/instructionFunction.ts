@@ -20,6 +20,7 @@ import {
 import {
     Fragment,
     fragment,
+    getCustomDataOptions,
     getInstructionDependencies,
     hasAsyncFunction,
     hasRemainingAccountInputs,
@@ -54,7 +55,7 @@ export function getInstructionFunctionFragment(
     const programNode = findProgramNodeFromPath(instructionPath)!;
     if (useAsync && !hasAsyncFunction(instructionNode, resolvedInputs, asyncResolvers)) return;
 
-    const customData = customInstructionData.get(instructionNode.name);
+    const customData = getCustomDataOptions(customInstructionData, instructionNode);
     const hasAccounts = (instructionNode.accounts ?? []).length > 0;
     const hasData = !!customData || (instructionNode.arguments ?? []).length > 0;
     const { hasAnyArgs, hasDataArgs, hasInput } = getInstructionFunctionInputFlags(instructionNode, scope);
@@ -116,13 +117,15 @@ export function getInstructionFunctionInputFlags(
     scope: Pick<RenderScope, 'asyncResolvers' | 'customInstructionData'> & { useAsync: boolean },
 ): { hasAnyArgs: boolean; hasDataArgs: boolean; hasInput: boolean } {
     const { asyncResolvers, customInstructionData, useAsync } = scope;
-    const customData = customInstructionData.get(instructionNode.name);
+    const customData = getCustomDataOptions(customInstructionData, instructionNode);
     const hasAccounts = (instructionNode.accounts ?? []).length > 0;
     const instructionDependencies = getInstructionDependencies(instructionNode, asyncResolvers, useAsync);
-    const argDependencies = instructionDependencies.filter(isNodeFilter('argumentValueNode')).map(node => node.name);
+    const argDependencies = instructionDependencies
+        .filter(isNodeFilter('argumentValueNode'))
+        .map(node => camelCase(node.name));
     const argIsNotOmitted = (arg: InstructionArgumentNode) =>
         !(arg.defaultValue && arg.defaultValueStrategy === 'omitted');
-    const argIsDependent = (arg: InstructionArgumentNode) => argDependencies.includes(arg.name);
+    const argIsDependent = (arg: InstructionArgumentNode) => argDependencies.includes(camelCase(arg.name));
     const argHasDefaultValue = (arg: InstructionArgumentNode) => {
         if (!arg.defaultValue) return false;
         if (useAsync) return true;
@@ -263,7 +266,7 @@ function getReturnStatementFragment(
     }
 
     // Data.
-    const customData = scope.customInstructionData.get(instructionNode.name);
+    const customData = getCustomDataOptions(scope.customInstructionData, instructionNode);
     const instructionDataName = nameApi.instructionDataType(instructionNode.name);
     const encoderFunctionFragment = customData
         ? scope.dataArgsManifest.encoder

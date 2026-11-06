@@ -3,6 +3,7 @@ import {
     accountValueNode,
     ArgumentValueNode,
     argumentValueNode,
+    camelCase,
     CamelCaseString,
     InstructionAccountNode,
     InstructionArgumentNode,
@@ -12,16 +13,26 @@ import {
 } from '@codama/nodes';
 import { deduplicateInstructionDependencies, ResolvedInstructionInput } from '@codama/visitors-core';
 
+/**
+ * Whether a resolver was declared asynchronous via the `asyncResolvers` option.
+ *
+ * @param resolverName - The name of the resolver, as found in the IDL.
+ * @param asyncResolvers - The camelCase names of the asynchronous resolvers.
+ */
+export function isAsyncResolver(resolverName: string, asyncResolvers: string[]): boolean {
+    return asyncResolvers.includes(camelCase(resolverName));
+}
+
 export function hasAsyncFunction(
     instructionNode: InstructionNode,
     resolvedInputs: ResolvedInstructionInput[],
     asyncResolvers: string[],
 ): boolean {
     const hasByteDeltasAsync = (instructionNode.byteDeltas ?? []).some(
-        ({ value }) => isNode(value, 'resolverValueNode') && asyncResolvers.includes(value.name),
+        ({ value }) => isNode(value, 'resolverValueNode') && isAsyncResolver(value.name, asyncResolvers),
     );
     const hasRemainingAccountsAsync = (instructionNode.remainingAccounts ?? []).some(
-        ({ value }) => isNode(value, 'resolverValueNode') && asyncResolvers.includes(value.name),
+        ({ value }) => isNode(value, 'resolverValueNode') && isAsyncResolver(value.name, asyncResolvers),
     );
 
     return hasAsyncDefaultValues(resolvedInputs, asyncResolvers) || hasByteDeltasAsync || hasRemainingAccountsAsync;
@@ -38,7 +49,7 @@ export function isAsyncDefaultValue(defaultValue: InstructionInputValueNode, asy
         case 'pdaValueNode':
             return true;
         case 'resolverValueNode':
-            return asyncResolvers.includes(defaultValue.name);
+            return isAsyncResolver(defaultValue.name, asyncResolvers);
         case 'conditionalValueNode':
             return (
                 isAsyncDefaultValue(defaultValue.condition, asyncResolvers) ||
@@ -84,14 +95,14 @@ export function getInstructionDependencies(
         const dependencies = new Map<CamelCaseString, AccountValueNode | ArgumentValueNode>();
         (input.defaultValue.seeds ?? []).forEach(seed => {
             if (isNode(seed.value, ['accountValueNode', 'argumentValueNode'])) {
-                dependencies.set(seed.value.name, { ...seed.value });
+                dependencies.set(camelCase(seed.value.name), { ...seed.value });
             }
         });
         return [...dependencies.values()];
     }
 
     if (isNode(input.defaultValue, 'resolverValueNode')) {
-        const isSynchronousResolver = !asyncResolvers.includes(input.defaultValue.name);
+        const isSynchronousResolver = !isAsyncResolver(input.defaultValue.name, asyncResolvers);
         if (useAsync || isSynchronousResolver) {
             return input.defaultValue.dependsOn ?? [];
         }

@@ -1,4 +1,4 @@
-import { isNode, ProgramNode, resolveNestedTypeNode, structTypeNode } from '@codama/nodes';
+import { camelCase, isNode, ProgramNode, resolveNestedTypeNode, structTypeNode } from '@codama/nodes';
 
 import { Fragment, fragment, mergeFragments, RenderScope, use } from '../utils';
 import { getDiscriminatorConditionFragment } from './discriminatorCondition';
@@ -69,6 +69,6 @@ function getProgramEventsIdentifierFunctionFragment(
     return fragment`export function ${programEventsIdentifierFunction}(event: { data: ${readonlyUint8Array} } | ${readonlyUint8Array}): ${programEventsEnum} {
     const data = 'data' in event ? event.data : event;
     ${discriminatorsFragment}
-    throw new Error('The provided event could not be identified as a ${programNode.name} event.');
+    throw new Error('The provided event could not be identified as a ${camelCase(programNode.name)} event.');
 }`;
 }

@@ -1,4 +1,10 @@
-import { getAllInstructionArguments, InstructionNode, InstructionRemainingAccountsNode, isNode } from '@codama/nodes';
+import {
+    camelCase,
+    getAllInstructionArguments,
+    InstructionNode,
+    InstructionRemainingAccountsNode,
+    isNode,
+} from '@codama/nodes';
 
 /**
  * Whether the given remaining accounts are backed by an existing instruction argument — i.e.
@@ -11,7 +17,9 @@ export function isRemainingAccountsBackedByArgument(
 ): boolean {
     if (!isNode(remainingAccounts.value, 'argumentValueNode')) return false;
     const argumentName = remainingAccounts.value.name;
-    return getAllInstructionArguments(instructionNode).some(argument => argument.name === argumentName);
+    return getAllInstructionArguments(instructionNode).some(
+        argument => camelCase(argument.name) === camelCase(argumentName),
+    );
 }
 
 /**

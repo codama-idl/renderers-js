@@ -69,17 +69,23 @@ export function getInstructionPageFragment(
     );
 }
 
+/**
+ * Maps the camelCase name of each argument conflicting with an account of the
+ * instruction to the camelCase name it is renamed to in the instruction input type.
+ *
+ * Names are compared by their camelCase form since that is how they are emitted.
+ */
 export function getRenamedArgsMap(instruction: InstructionNode): Map<string, string> {
     const argNames = [
-        ...(instruction.arguments ?? []).map(a => a.name),
-        ...(instruction.extraArguments ?? []).map(a => a.name),
+        ...(instruction.arguments ?? []).map(a => camelCase(a.name)),
+        ...(instruction.extraArguments ?? []).map(a => camelCase(a.name)),
     ];
     const duplicateArgs = argNames.filter((e, i, a) => a.indexOf(e) !== i);
     if (duplicateArgs.length > 0) {
         throw new Error(`Duplicate args found: [${duplicateArgs.join(', ')}] in instruction [${instruction.name}].`);
     }
 
-    const allNames = [...(instruction.accounts ?? []).map(account => account.name), ...argNames];
+    const allNames = [...(instruction.accounts ?? []).map(account => camelCase(account.name)), ...argNames];
     const duplicates = allNames.filter((e, i, a) => a.indexOf(e) !== i);
     if (duplicates.length === 0) return new Map();
 
@@ -89,5 +95,5 @@ export function getRenamedArgsMap(instruction: InstructionNode): Map<string, str
             `Thus, the arguments have been renamed to avoid conflicts in the input type.`,
     );
 
-    return new Map(duplicates.map(name => [camelCase(name), camelCase(`${name}Arg`)]));
+    return new Map(duplicates.map(name => [name, camelCase(`${name}Arg`)]));
 }

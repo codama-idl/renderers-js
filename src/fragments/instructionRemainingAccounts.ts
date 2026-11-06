@@ -6,6 +6,7 @@ import {
     addFragmentImports,
     Fragment,
     fragment,
+    isAsyncResolver,
     isRemainingAccountsBackedByArgument,
     mergeFragments,
     RenderScope,
@@ -96,7 +97,7 @@ function getResolverValueNodeFragment(
     },
 ): Fragment | null {
     assertIsNode(remainingAccounts.value, 'resolverValueNode');
-    const isAsync = scope.asyncResolvers.includes(remainingAccounts.value.name);
+    const isAsync = isAsyncResolver(remainingAccounts.value.name, scope.asyncResolvers);
     if (!scope.useAsync && isAsync) return null;
 
     const awaitKeyword = scope.useAsync && isAsync ? 'await ' : '';

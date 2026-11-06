@@ -35,6 +35,7 @@ import {
     Fragment,
     fragment,
     getBytesFromBytesValueNode,
+    getCustomDataOptions,
     getDocblockFragment,
     getEnumBody,
     type GetImportFromFunction,
@@ -119,7 +120,7 @@ export function getTypeManifestVisitor(input: {
                         loose: nameApi.dataArgsType(account.name),
                         strict: nameApi.dataType(account.name),
                     };
-                    const link = customAccountData.get(account.name)?.linkNode;
+                    const link = getCustomDataOptions(customAccountData, account)?.linkNode;
                     const manifest = link ? visit(link, self) : visit(account.data, self);
                     parentName = null;
                     return manifest;
@@ -374,7 +375,7 @@ export function getTypeManifestVisitor(input: {
                     const isScalar =
                         enumNode && isNode(enumNode, 'enumTypeNode')
                             ? isScalarEnum(enumNode)
-                            : !nonScalarEnums.includes(node.enum.name);
+                            : !nonScalarEnums.includes(camelCase(node.enum.name));
 
                     if (!node.value && isScalar) {
                         const variantName = nameApi.enumVariant(node.variant);
@@ -474,7 +475,7 @@ export function getTypeManifestVisitor(input: {
                         loose: nameApi.dataArgsType(instructionDataName),
                         strict: nameApi.dataType(instructionDataName),
                     };
-                    const link = customInstructionData.get(instruction.name)?.linkNode;
+                    const link = getCustomDataOptions(customInstructionData, instruction)?.linkNode;
                     const struct = structTypeNodeFromInstructionArgumentNodes(instruction.arguments ?? []);
                     const manifest = link ? visit(link, self) : visit(struct, self);
                     parentName = null;
@@ -800,7 +801,7 @@ export function getTypeManifestVisitor(input: {
                 visitStructFieldValue(node, { self }) {
                     const innerValue = visit(node.value, self).value;
                     return typeManifest({
-                        value: fragment`${node.name}: ${innerValue}`,
+                        value: fragment`${camelCase(node.name)}: ${innerValue}`,
                     });
                 },
 
@@ -845,7 +846,7 @@ export function getTypeManifestVisitor(input: {
                             const key = camelCase(f.name);
 
                             // If the field has an associated discriminator node, use the constant value instead.
-                            if (fieldDiscriminators.some(d => d.name === f.name)) {
+                            if (fieldDiscriminators.some(d => camelCase(d.name) === camelCase(f.name))) {
                                 const constantName = nameApi.constant(camelCase(`${discriminatorPrefix}_${f.name}`));
                                 return f.defaultValueStrategy === 'omitted'
                                     ? fragment`${key}: ${constantName}`

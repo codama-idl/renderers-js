@@ -1,4 +1,5 @@
 import {
+    camelCase,
     type ConstantDiscriminatorNode,
     constantDiscriminatorNode,
     constantValueNode,
@@ -89,7 +90,7 @@ function getFieldConditionFragment(
         struct: StructTypeNode;
     },
 ): Fragment {
-    const field = (scope.struct.fields ?? []).find(f => f.name === discriminator.name);
+    const field = (scope.struct.fields ?? []).find(f => camelCase(f.name) === camelCase(discriminator.name));
     if (!field || !field.defaultValue) {
         throw new Error(
             `Field discriminator "${discriminator.name}" does not have a matching argument with default value.`,

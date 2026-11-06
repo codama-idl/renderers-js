@@ -5,6 +5,7 @@ import {
     addFragmentImports,
     Fragment,
     fragment,
+    getCustomDataOptions,
     getDocblockFragment,
     mergeFragments,
     RenderScope,
@@ -33,7 +34,7 @@ function getTypeFragment(
         programAddressConstant: Fragment;
     },
 ): Fragment {
-    const customData = scope.customInstructionData.get(scope.instructionNode.name);
+    const customData = getCustomDataOptions(scope.customInstructionData, scope.instructionNode);
     const instructionParsedType = scope.nameApi.instructionParsedType(scope.instructionNode.name);
     const instructionDataName = scope.nameApi.instructionDataType(scope.instructionNode.name);
 
@@ -74,7 +75,7 @@ function getFunctionFragment(
         programAddressConstant: Fragment;
     },
 ): Fragment {
-    const customData = scope.customInstructionData.get(scope.instructionNode.name);
+    const customData = getCustomDataOptions(scope.customInstructionData, scope.instructionNode);
     const instructionParsedType = scope.nameApi.instructionParsedType(scope.instructionNode.name);
     const instructionParseFunction = scope.nameApi.instructionParseFunction(scope.instructionNode.name);
     const instructionDataName = scope.nameApi.instructionDataType(scope.instructionNode.name);

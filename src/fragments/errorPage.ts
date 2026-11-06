@@ -1,4 +1,4 @@
-import { ProgramNode } from '@codama/nodes';
+import { camelCase, ProgramNode } from '@codama/nodes';
 
 import { Fragment, fragment, getDocblockFragment, mergeFragments, RenderScope, use } from '../utils';
 
@@ -34,7 +34,7 @@ function getConstantUnionTypeFragment(scope: Pick<RenderScope, 'nameApi'> & { pr
     const typeName = scope.nameApi.programErrorUnion(scope.programNode.name);
     const errorTypes = mergeFragments(
         [...(scope.programNode.errors ?? [])]
-            .sort((a, b) => a.name.localeCompare(b.name))
+            .sort((a, b) => camelCase(a.name).localeCompare(camelCase(b.name)))
             .map(error => fragment`typeof ${constantPrefix + scope.nameApi.programErrorConstant(error.name)}`),
         cs => cs.join(' | '),
     );
@@ -48,7 +48,7 @@ function getErrorMessagesFragment(scope: Pick<RenderScope, 'nameApi'> & { progra
     const constantPrefix = scope.nameApi.programErrorConstantPrefix(scope.programNode.name);
     const messageEntries = mergeFragments(
         [...(scope.programNode.errors ?? [])]
-            .sort((a, b) => a.name.localeCompare(b.name))
+            .sort((a, b) => camelCase(a.name).localeCompare(camelCase(b.name)))
             .map(error => {
                 const constantName = constantPrefix + scope.nameApi.programErrorConstant(error.name);
                 const escapedMessage = error.message.replace(/`/g, '\\`');
