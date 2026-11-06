@@ -95,7 +95,7 @@ export function getInstructionDependencies(
         const dependencies = new Map<CamelCaseString, AccountValueNode | ArgumentValueNode>();
         (input.defaultValue.seeds ?? []).forEach(seed => {
             if (isNode(seed.value, ['accountValueNode', 'argumentValueNode'])) {
-                dependencies.set(seed.value.name, { ...seed.value });
+                dependencies.set(camelCase(seed.value.name), { ...seed.value });
             }
         });
         return [...dependencies.values()];

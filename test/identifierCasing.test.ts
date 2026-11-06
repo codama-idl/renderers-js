@@ -77,6 +77,12 @@ function getProgram(): RootNode {
                             name: 'accountState',
                             type: definedTypeLinkNode('accountState'),
                         }),
+                        // Links to a type outside the tree, so its scalar-ness comes from `nonScalarEnums`.
+                        structFieldTypeNode({
+                            defaultValue: enumValueNode('externalState', 'pendingState'),
+                            name: 'externalState',
+                            type: definedTypeLinkNode('externalState'),
+                        }),
                     ]),
                     discriminators: [fieldDiscriminatorNode('accountKey')],
                     name: 'tokenAccount',
@@ -195,8 +201,8 @@ function withSnakeCaseNames<T>(value: T): T {
 const options: GetRenderMapOptions = {
     asyncResolvers: ['resolveDestination'],
     internalNodes: ['feeConfig'],
-    linkOverrides: { definedTypes: { accountState: 'hooked' } },
-    nonScalarEnums: [],
+    linkOverrides: { definedTypes: { accountState: 'hooked', externalState: 'hooked' } },
+    nonScalarEnums: ['externalState'],
 };
 
 test('it renders the same code regardless of how node names are spelled', () => {
@@ -227,7 +233,7 @@ test('it emits camelCase names for nodes whose names are not camelCase', () => {
     // Then we expect no snake_case name to leak into the generated code.
     renderMap.forEach(({ content }, key) => {
         expect(content, `File "${key}" leaks a snake_case name.`).not.toMatch(
-            /\b(token_owner|fee_config|account_state|max_fee|source_account|transfer_tokens|my_program|transfer_event)\b/,
+            /\b(token_owner|fee_config|account_state|external_state|max_fee|source_account|transfer_tokens|my_program|transfer_event)\b/,
         );
     });
 });
