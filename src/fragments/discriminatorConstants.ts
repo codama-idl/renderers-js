@@ -105,7 +105,7 @@ export function getFieldDiscriminatorConstantFragment(
 ): Fragment | null {
     const { fields, prefix, typeManifestVisitor } = scope;
 
-    const field = fields.find(f => f.name === discriminatorNode.name);
+    const field = fields.find(f => camelCase(f.name) === camelCase(discriminatorNode.name));
     if (!field || !field.defaultValue || !isNode(field.defaultValue, VALUE_NODES)) {
         return null;
     }

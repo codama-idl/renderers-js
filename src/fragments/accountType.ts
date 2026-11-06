@@ -1,7 +1,7 @@
 import { AccountNode, resolveNestedTypeNode } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath } from '@codama/visitors-core';
 
-import { Fragment, RenderScope, TypeManifest } from '../utils';
+import { Fragment, getCustomDataOptions, RenderScope, TypeManifest } from '../utils';
 import { getTypeWithCodecFragment } from './typeWithCodec';
 
 export function getAccountTypeFragment(
@@ -13,7 +13,7 @@ export function getAccountTypeFragment(
 ): Fragment | undefined {
     const { accountPath, typeManifest, nameApi, customAccountData } = scope;
     const accountNode = getLastNodeFromPath(accountPath);
-    if (customAccountData.has(accountNode.name)) return;
+    if (getCustomDataOptions(customAccountData, accountNode)) return;
 
     return getTypeWithCodecFragment({
         codecDocs: [`Gets the codec for {@link ${nameApi.dataType(accountNode.name)}} account data.`],

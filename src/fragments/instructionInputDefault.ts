@@ -23,6 +23,7 @@ import {
     Fragment,
     fragment,
     isAsyncDefaultValue,
+    isAsyncResolver,
     mergeFragments,
     RenderScope,
     use,
@@ -132,7 +133,9 @@ export function getInstructionInputDefaultFragment(
                     }
                     if (isNode(seed, 'variablePdaSeedNode')) {
                         const typeManifest = visit(seed.type, typeManifestVisitor);
-                        const valueSeed = (defaultValue.seeds ?? []).find(s => s.name === seed.name)?.value;
+                        const valueSeed = (defaultValue.seeds ?? []).find(
+                            s => camelCase(s.name) === camelCase(seed.name),
+                        )?.value;
                         if (!valueSeed) return [];
                         if (isNode(valueSeed, 'accountValueNode')) {
                             const name = camelCase(valueSeed.name);
@@ -165,16 +168,17 @@ export function getInstructionInputDefaultFragment(
             const pdaPath = linkables.getPath([...instructionPath, defaultValue.pda]);
             const pdaArgs: Fragment[] = [];
             const pdaSeeds = (defaultValue.seeds ?? []).map((seed): Fragment => {
+                const seedName = camelCase(seed.name);
                 if (isNode(seed.value, 'accountValueNode')) {
                     const name = camelCase(seed.value.name);
-                    return fragment`${seed.name}: ${getAddressFromResolvedInstructionAccount}("${name}", accounts.${name}.value)`;
+                    return fragment`${seedName}: ${getAddressFromResolvedInstructionAccount}("${name}", accounts.${name}.value)`;
                 }
                 if (isNode(seed.value, 'argumentValueNode')) {
                     const name = camelCase(seed.value.name);
-                    return fragment`${seed.name}: ${getNonNullResolvedInstructionInput}("${name}", args.${name})`;
+                    return fragment`${seedName}: ${getNonNullResolvedInstructionInput}("${name}", args.${name})`;
                 }
                 return pipe(visit(seed.value, typeManifestVisitor).value, f =>
-                    mapFragmentContent(f, c => `${seed.name}: ${c}`),
+                    mapFragmentContent(f, c => `${seedName}: ${c}`),
                 );
             });
             const pdaSeedsFragment = pipe(
@@ -226,7 +230,7 @@ export function getInstructionInputDefaultFragment(
 
         case 'resolverValueNode':
             const resolverFunction = use(nameApi.resolverFunction(defaultValue.name), getImportFrom(defaultValue));
-            const resolverAwait = useAsync && asyncResolvers.includes(defaultValue.name) ? 'await ' : '';
+            const resolverAwait = useAsync && isAsyncResolver(defaultValue.name, asyncResolvers) ? 'await ' : '';
             return pipe(defaultFragment(fragment`${resolverAwait}${resolverFunction}(resolverScope)`), f =>
                 addFragmentFeatures(f, ['instruction:resolverScopeVariable']),
             );
@@ -262,7 +266,7 @@ export function getInstructionInputDefaultFragment(
                     f => addFragmentFeatures(f, ['instruction:resolverScopeVariable']),
                 );
                 const conditionalResolverAwait =
-                    useAsync && asyncResolvers.includes(defaultValue.condition.name) ? 'await ' : '';
+                    useAsync && isAsyncResolver(defaultValue.condition.name, asyncResolvers) ? 'await ' : '';
                 condition = `${conditionalResolverAwait}${conditionalResolverFunction}(resolverScope)`;
                 condition = negatedCondition ? `!${condition}` : condition;
             } else {

@@ -1,4 +1,4 @@
-import { ProgramNode, resolveNestedTypeNode } from '@codama/nodes';
+import { camelCase, ProgramNode, resolveNestedTypeNode } from '@codama/nodes';
 
 import { Fragment, fragment, mergeFragments, RenderScope, use } from '../utils';
 import { getDiscriminatorConditionFragment } from './discriminatorCondition';
@@ -65,6 +65,6 @@ function getProgramAccountsIdentifierFunctionFragment(
     return fragment`export function ${programAccountsIdentifierFunction}(account: { data: ${readonlyUint8Array} } | ${readonlyUint8Array}): ${programAccountsEnum} {
     const data = 'data' in account ? account.data : account;
     ${discriminatorsFragment}
-    throw new ${solanaError}(${solanaErrorCode}, { accountData: data, programName: "${programNode.name}" });
+    throw new ${solanaError}(${solanaErrorCode}, { accountData: data, programName: "${camelCase(programNode.name)}" });
 }`;
 }

@@ -1,7 +1,7 @@
 import { AccountNode, isNodeFilter } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
-import { addFragmentImports, Fragment, fragment, RenderScope, TypeManifest } from '../utils';
+import { addFragmentImports, Fragment, fragment, getCustomDataOptions, RenderScope, TypeManifest } from '../utils';
 
 export function getAccountPdaHelpersFragment(
     scope: Pick<RenderScope, 'customAccountData' | 'linkables' | 'nameApi'> & {
@@ -14,7 +14,7 @@ export function getAccountPdaHelpersFragment(
     const pdaNode = accountNode.pda ? linkables.get([...accountPath, accountNode.pda]) : undefined;
     if (!pdaNode) return;
 
-    const accountType = customAccountData.has(accountNode.name)
+    const accountType = getCustomDataOptions(customAccountData, accountNode)
         ? typeManifest.strictType
         : nameApi.dataType(accountNode.name);
 

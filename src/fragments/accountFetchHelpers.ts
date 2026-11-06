@@ -1,7 +1,7 @@
 import { AccountNode } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
-import { addFragmentImports, Fragment, fragment, RenderScope, TypeManifest } from '../utils';
+import { addFragmentImports, Fragment, fragment, getCustomDataOptions, RenderScope, TypeManifest } from '../utils';
 
 export function getAccountFetchHelpersFragment(
     scope: Pick<RenderScope, 'customAccountData' | 'nameApi'> & {
@@ -17,7 +17,7 @@ export function getAccountFetchHelpersFragment(
     const fetchFunction = nameApi.accountFetchFunction(accountNode.name);
     const fetchMaybeFunction = nameApi.accountFetchMaybeFunction(accountNode.name);
 
-    const hasCustomData = customAccountData.has(accountNode.name);
+    const hasCustomData = !!getCustomDataOptions(customAccountData, accountNode);
     const accountType = hasCustomData ? typeManifest.strictType : nameApi.dataType(accountNode.name);
     const decoderFunction = hasCustomData ? typeManifest.decoder : `${nameApi.decoderFunction(accountNode.name)}()`;
 

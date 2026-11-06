@@ -1,4 +1,5 @@
 import {
+    camelCase,
     CamelCaseString,
     getAllInstructionsWithSubs,
     InstructionAccountNode,
@@ -358,12 +359,17 @@ function hasPayerDefaultValues(programNode: ProgramNode): boolean {
     return (programNode.instructions ?? []).some(instruction => getPayerDefaultValueNodes(instruction).length > 0);
 }
 
+/**
+ * Lists the inputs of an instruction defaulting to the payer, with the camelCase
+ * name under which each one is exposed in the instruction input type.
+ */
 function getPayerDefaultValues(instructionNode: InstructionNode): { name: string; signer: boolean }[] {
     const renamedArgs = getRenamedArgsMap(instructionNode);
     return getPayerDefaultValueNodes(instructionNode).map(inputNode => {
+        const name = camelCase(inputNode.name);
         return isNode(inputNode, 'instructionAccountNode')
-            ? { name: inputNode.name, signer: inputNode.isSigner !== false }
-            : { name: renamedArgs.get(inputNode.name) ?? inputNode.name, signer: false };
+            ? { name, signer: inputNode.isSigner !== false }
+            : { name: renamedArgs.get(name) ?? name, signer: false };
     });
 }
 

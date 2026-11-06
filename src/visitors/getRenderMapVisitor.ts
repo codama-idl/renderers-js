@@ -81,7 +81,7 @@ export function getRenderMapVisitor(
     const renderScope: RenderScope = { ...renderScopeWithTypeManifestVisitor, typeManifestVisitor };
 
     const internalNodes = (options.internalNodes ?? []).map(camelCase);
-    const isNotInternal = (node: { name: CamelCaseString }) => !internalNodes.includes(node.name);
+    const isNotInternal = (node: { name: CamelCaseString }) => !internalNodes.includes(camelCase(node.name));
     const resolvedInstructionInputVisitor = getResolvedInstructionInputsVisitor();
     const byteSizeVisitor = getByteSizeVisitor(linkables, { stack });
     const asPage = <TFragment extends Fragment | undefined>(

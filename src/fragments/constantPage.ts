@@ -1,4 +1,4 @@
-import { ConstantNode, isNode, ProgramNode, TypeNode } from '@codama/nodes';
+import { camelCase, ConstantNode, isNode, ProgramNode, TypeNode } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
 
 import { Fragment, fragment, getDocblockFragment, mergeFragments, RenderScope } from '../utils';
@@ -18,7 +18,9 @@ export function getConstantsPageFragment(
     if (scope.nodes.length === 0) return;
 
     return mergeFragments(
-        [...scope.nodes].sort((a, b) => a.name.localeCompare(b.name)).map(node => getConstantFragment(node, scope)),
+        [...scope.nodes]
+            .sort((a, b) => camelCase(a.name).localeCompare(camelCase(b.name)))
+            .map(node => getConstantFragment(node, scope)),
         constants => constants.join('\n\n'),
     );
 }

@@ -1,6 +1,7 @@
 import { CODAMA_ERROR__UNEXPECTED_NODE_KIND, CodamaError } from '@codama/errors';
 import {
     AccountLinkNode,
+    camelCase,
     DefinedTypeLinkNode,
     InstructionLinkNode,
     PdaLinkNode,
@@ -10,6 +11,12 @@ import {
 
 import { ParsedCustomDataOptions } from './customData';
 
+/**
+ * Maps the names of linked nodes to the module they should be imported from.
+ *
+ * Names are matched by their camelCase form, so that `my_account`, `myAccount` and
+ * `MyAccount` all refer to the same node.
+ */
 export type LinkOverrides = {
     accounts?: Record<string, string>;
     definedTypes?: Record<string, string>;
@@ -41,29 +48,30 @@ export function getImportFromFactory(
         ]),
     );
     const linkOverrides = {
-        accounts: overrides.accounts ?? {},
-        definedTypes: { ...customDataOverrides, ...overrides.definedTypes },
-        instructions: overrides.instructions ?? {},
-        pdas: overrides.pdas ?? {},
-        programs: overrides.programs ?? {},
-        resolvers: overrides.resolvers ?? {},
+        accounts: withCamelCaseKeys(overrides.accounts ?? {}),
+        definedTypes: { ...customDataOverrides, ...withCamelCaseKeys(overrides.definedTypes ?? {}) },
+        instructions: withCamelCaseKeys(overrides.instructions ?? {}),
+        pdas: withCamelCaseKeys(overrides.pdas ?? {}),
+        programs: withCamelCaseKeys(overrides.programs ?? {}),
+        resolvers: withCamelCaseKeys(overrides.resolvers ?? {}),
     };
 
     return (node: OverridableNodes) => {
         const kind = node.kind;
+        const name = camelCase(node.name);
         switch (kind) {
             case 'accountLinkNode':
-                return linkOverrides.accounts[node.name] ?? 'generatedAccounts';
+                return linkOverrides.accounts[name] ?? 'generatedAccounts';
             case 'definedTypeLinkNode':
-                return linkOverrides.definedTypes[node.name] ?? 'generatedTypes';
+                return linkOverrides.definedTypes[name] ?? 'generatedTypes';
             case 'instructionLinkNode':
-                return linkOverrides.instructions[node.name] ?? 'generatedInstructions';
+                return linkOverrides.instructions[name] ?? 'generatedInstructions';
             case 'pdaLinkNode':
-                return linkOverrides.pdas[node.name] ?? 'generatedPdas';
+                return linkOverrides.pdas[name] ?? 'generatedPdas';
             case 'programLinkNode':
-                return linkOverrides.programs[node.name] ?? 'generatedPrograms';
+                return linkOverrides.programs[name] ?? 'generatedPrograms';
             case 'resolverValueNode':
-                return linkOverrides.resolvers[node.name] ?? 'hooked';
+                return linkOverrides.resolvers[name] ?? 'hooked';
             default:
                 throw new CodamaError(CODAMA_ERROR__UNEXPECTED_NODE_KIND, {
                     expectedKinds: [
@@ -79,4 +87,8 @@ export function getImportFromFactory(
                 });
         }
     };
+}
+
+function withCamelCaseKeys(record: Record<string, string>): Record<string, string> {
+    return Object.fromEntries(Object.entries(record).map(([key, value]) => [camelCase(key), value]));
 }

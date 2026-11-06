@@ -1,4 +1,5 @@
 import {
+    camelCase,
     getAllInstructionsWithSubs,
     InstructionNode,
     ProgramNode,
@@ -82,7 +83,7 @@ function getProgramInstructionsIdentifierFunctionFragment(
     return fragment`export function ${programInstructionsIdentifierFunction}(instruction: { data: ${readonlyUint8Array} } | ${readonlyUint8Array}): ${programInstructionsEnum} {
     const data = 'data' in instruction ? instruction.data : instruction;
     ${discriminatorsFragment}
-    throw new ${solanaError}(${solanaErrorCode}, { instructionData: data, programName: "${programNode.name}" });
+    throw new ${solanaError}(${solanaErrorCode}, { instructionData: data, programName: "${camelCase(programNode.name)}" });
 }`;
 }
 
@@ -168,7 +169,7 @@ function getProgramInstructionsParseFunctionFragment(
             const instructionType = ${programInstructionsIdentifierFunction}(instruction);
             switch (instructionType) {
                 ${switchCases}
-                default: throw new ${solanaError}(${solanaErrorCode}, { instructionType: instructionType as string, programName: "${programNode.name}" });
+                default: throw new ${solanaError}(${solanaErrorCode}, { instructionType: instructionType as string, programName: "${camelCase(programNode.name)}" });
             }
         }`;
 }
