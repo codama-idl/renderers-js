@@ -1,7 +1,7 @@
-import { AccountNode, resolveNestedTypeNode } from '@codama/nodes';
+import { AccountNode } from '@codama/nodes';
 import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
 
-import { Fragment, mergeFragments, RenderScope } from '../utils';
+import { Fragment, getInnerTypeNode, mergeFragments, RenderScope } from '../utils';
 import { getAccountFetchHelpersFragment } from './accountFetchHelpers';
 import { getAccountPdaHelpersFragment } from './accountPdaHelpers';
 import { getAccountSizeHelpersFragment } from './accountSizeHelpers';
@@ -23,7 +23,7 @@ export function getAccountPageFragment(
     }
 
     const typeManifest = visit(node, scope.typeManifestVisitor);
-    const fields = resolveNestedTypeNode(node.data).fields ?? [];
+    const fields = getInnerTypeNode(node.data).fields ?? [];
     return mergeFragments(
         [
             getDiscriminatorConstantsFragment({
