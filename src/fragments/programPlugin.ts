@@ -2,8 +2,6 @@ import {
     camelCase,
     CamelCaseString,
     getAllInstructionsWithSubs,
-    InstructionAccountNode,
-    InstructionArgumentNode,
     InstructionNode,
     isNode,
     isNodeFilter,
@@ -12,7 +10,16 @@ import {
 } from '@codama/nodes';
 import { getResolvedInstructionInputsVisitor, visit } from '@codama/visitors-core';
 
-import { Fragment, fragment, hasAsyncFunction, mergeFragments, RenderScope, use } from '../utils';
+import {
+    Fragment,
+    fragment,
+    getInstructionDataFields,
+    hasAsyncFunction,
+    InstructionInput,
+    mergeFragments,
+    RenderScope,
+    use,
+} from '../utils';
 import { getInstructionFunctionInputFlags } from './instructionFunction';
 import { getRenamedArgsMap } from './instructionPage';
 
@@ -356,7 +363,7 @@ function getMakeOptionalHelperTypeFragment(scope: { programNode: ProgramNode }):
 }
 
 function hasPayerDefaultValues(programNode: ProgramNode): boolean {
-    return (programNode.instructions ?? []).some(instruction => getPayerDefaultValueNodes(instruction).length > 0);
+    return (programNode.instructions ?? []).some(instruction => getPayerDefaultValues(instruction).length > 0);
 }
 
 /**
@@ -365,19 +372,16 @@ function hasPayerDefaultValues(programNode: ProgramNode): boolean {
  */
 function getPayerDefaultValues(instructionNode: InstructionNode): { name: string; signer: boolean }[] {
     const renamedArgs = getRenamedArgsMap(instructionNode);
-    return getPayerDefaultValueNodes(instructionNode).map(inputNode => {
-        const name = camelCase(inputNode.name);
-        return isNode(inputNode, 'instructionAccountNode')
-            ? { name, signer: inputNode.isSigner !== false }
-            : { name: renamedArgs.get(name) ?? name, signer: false };
-    });
-}
-
-function getPayerDefaultValueNodes(
-    instructionNode: InstructionNode,
-): (InstructionAccountNode | InstructionArgumentNode)[] {
+    const defaultsToPayer = (input: InstructionInput) => isNode(input.defaultValue, 'payerValueNode');
     return [
-        ...(instructionNode.accounts ?? []).filter(a => !a.isOptional && isNode(a.defaultValue, 'payerValueNode')),
-        ...(instructionNode.arguments ?? []).filter(a => isNode(a.defaultValue, 'payerValueNode')),
+        ...(instructionNode.accounts ?? [])
+            .filter(account => !account.isOptional && defaultsToPayer(account))
+            .map(account => ({ name: camelCase(account.name), signer: account.isSigner !== false })),
+        ...getInstructionDataFields(instructionNode)
+            .filter(defaultsToPayer)
+            .map(field => {
+                const name = camelCase(field.name);
+                return { name: renamedArgs.get(name) ?? name, signer: false };
+            }),
     ];
 }

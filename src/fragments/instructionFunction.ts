@@ -1,12 +1,4 @@
-import {
-    camelCase,
-    InstructionAccountNode,
-    InstructionArgumentNode,
-    InstructionNode,
-    isNode,
-    isNodeFilter,
-    pascalCase,
-} from '@codama/nodes';
+import { camelCase, InstructionAccountNode, InstructionNode, isNodeFilter, pascalCase } from '@codama/nodes';
 import { mapFragmentContent } from '@codama/renderers-core';
 import {
     findProgramNodeFromPath,
@@ -21,10 +13,16 @@ import {
     Fragment,
     fragment,
     getCustomDataOptions,
+    getInstructionDataFields,
     getInstructionDependencies,
+    getInstructionExtraArguments,
+    getRemainingAccountsName,
     hasAsyncFunction,
+    hasInputDefault,
+    hasInstructionData,
     hasRemainingAccountInputs,
-    isAsyncDefaultValue,
+    InstructionDataField,
+    isAsyncInput,
     mergeFragments,
     RenderScope,
     TypeManifest,
@@ -57,7 +55,7 @@ export function getInstructionFunctionFragment(
 
     const customData = getCustomDataOptions(customInstructionData, instructionNode);
     const hasAccounts = (instructionNode.accounts ?? []).length > 0;
-    const hasData = !!customData || (instructionNode.arguments ?? []).length > 0;
+    const hasData = !!customData || hasInstructionData(instructionNode);
     const { hasAnyArgs, hasDataArgs, hasInput } = getInstructionFunctionInputFlags(instructionNode, scope);
     const programAddressConstant = use(nameApi.programAddressConstant(programNode.name), 'generatedPrograms');
 
@@ -123,21 +121,22 @@ export function getInstructionFunctionInputFlags(
     const argDependencies = instructionDependencies
         .filter(isNodeFilter('argumentValueNode'))
         .map(node => camelCase(node.name));
-    const argIsNotOmitted = (arg: InstructionArgumentNode) =>
-        !(arg.defaultValue && arg.defaultValueStrategy === 'omitted');
-    const argIsDependent = (arg: InstructionArgumentNode) => argDependencies.includes(camelCase(arg.name));
-    const argHasDefaultValue = (arg: InstructionArgumentNode) => {
-        if (!arg.defaultValue) return false;
+    const argIsNotOmitted = (arg: InstructionDataField) =>
+        !(hasInputDefault(arg) && arg.defaultValueStrategy === 'omitted');
+    const argIsDependent = (arg: InstructionDataField) => argDependencies.includes(camelCase(arg.name));
+    const argHasDefaultValue = (arg: InstructionDataField) => {
+        if (!hasInputDefault(arg)) return false;
         if (useAsync) return true;
-        return !isAsyncDefaultValue(arg.defaultValue, asyncResolvers);
+        return !isAsyncInput(arg, asyncResolvers);
     };
-    const hasDataArgs = !!customData || (instructionNode.arguments ?? []).filter(argIsNotOmitted).length > 0;
+    const hasDataArgs = !!customData || getInstructionDataFields(instructionNode).filter(argIsNotOmitted).length > 0;
     const hasExtraArgs =
-        (instructionNode.extraArguments ?? []).filter(
+        getInstructionExtraArguments(instructionNode).filter(
             field => argIsNotOmitted(field) && (argIsDependent(field) || argHasDefaultValue(field)),
         ).length > 0;
-    const hasRemainingAccountArgs =
-        (instructionNode.remainingAccounts ?? []).filter(({ value }) => isNode(value, 'argumentValueNode')).length > 0;
+    const hasRemainingAccountArgs = (instructionNode.remainingAccounts ?? []).some(
+        remainingAccounts => getRemainingAccountsName(remainingAccounts) !== undefined,
+    );
     const hasAnyArgs = hasDataArgs || hasExtraArgs || hasRemainingAccountArgs;
     return { hasAnyArgs, hasDataArgs, hasInput: hasAccounts || hasAnyArgs };
 }

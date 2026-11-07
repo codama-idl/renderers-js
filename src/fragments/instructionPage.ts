@@ -1,5 +1,5 @@
 import { logWarn } from '@codama/errors';
-import { camelCase, definedTypeNode, InstructionNode, structTypeNodeFromInstructionArgumentNodes } from '@codama/nodes';
+import { camelCase, definedTypeNode, InstructionNode } from '@codama/nodes';
 import {
     findProgramNodeFromPath,
     getLastNodeFromPath,
@@ -8,7 +8,14 @@ import {
     visit,
 } from '@codama/visitors-core';
 
-import { Fragment, mergeFragments, RenderScope } from '../utils';
+import {
+    Fragment,
+    getAllInstructionDataFields,
+    getInstructionDataFields,
+    getInstructionExtraArgumentsNode,
+    mergeFragments,
+    RenderScope,
+} from '../utils';
 import { getDiscriminatorConstantsFragment } from './discriminatorConstants';
 import { getInstructionDataFragment } from './instructionData';
 import { getInstructionExtraArgsFragment } from './instructionExtraArgs';
@@ -43,7 +50,7 @@ export function getInstructionPageFragment(
         extraArgsManifest: visit(
             definedTypeNode({
                 name: scope.nameApi.instructionExtraType(node.name),
-                type: structTypeNodeFromInstructionArgumentNodes(node.extraArguments ?? []),
+                type: getInstructionExtraArgumentsNode(node),
             }),
             scope.typeManifestVisitor,
         ),
@@ -55,7 +62,7 @@ export function getInstructionPageFragment(
             getDiscriminatorConstantsFragment({
                 ...childScope,
                 discriminatorNodes: node.discriminators ?? [],
-                fields: node.arguments ?? [],
+                fields: getInstructionDataFields(node),
                 prefix: node.name,
             }),
             getInstructionTypeFragment(childScope),
@@ -76,10 +83,7 @@ export function getInstructionPageFragment(
  * Names are compared by their camelCase form since that is how they are emitted.
  */
 export function getRenamedArgsMap(instruction: InstructionNode): Map<string, string> {
-    const argNames = [
-        ...(instruction.arguments ?? []).map(a => camelCase(a.name)),
-        ...(instruction.extraArguments ?? []).map(a => camelCase(a.name)),
-    ];
+    const argNames = getAllInstructionDataFields(instruction).map(a => camelCase(a.name));
     const duplicateArgs = argNames.filter((e, i, a) => a.indexOf(e) !== i);
     if (duplicateArgs.length > 0) {
         throw new Error(`Duplicate args found: [${duplicateArgs.join(', ')}] in instruction [${instruction.name}].`);

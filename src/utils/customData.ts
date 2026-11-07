@@ -8,8 +8,9 @@ import {
     definedTypeNode,
     InstructionNode,
     isNode,
-    structTypeNodeFromInstructionArgumentNodes,
 } from '@codama/nodes';
+
+import { getInstructionDataNode } from './instructionInputs';
 
 export type CustomDataOptions =
     | string
@@ -87,7 +88,7 @@ export const getDefinedTypeNodesToExtract = (
         return [
             definedTypeNode({
                 name: options.extractAs,
-                type: structTypeNodeFromInstructionArgumentNodes(node.arguments ?? []),
+                type: getInstructionDataNode(node),
             }),
         ];
     });

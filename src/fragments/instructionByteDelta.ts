@@ -2,7 +2,17 @@ import { assertIsNode, camelCase, InstructionByteDeltaNode, InstructionNode, isN
 import { mapFragmentContent } from '@codama/renderers-core';
 import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
-import { addFragmentFeatures, Fragment, fragment, isAsyncResolver, mergeFragments, RenderScope, use } from '../utils';
+import {
+    addFragmentFeatures,
+    Fragment,
+    fragment,
+    getByteDeltaResolver,
+    InstructionResolver,
+    isAsyncResolver,
+    mergeFragments,
+    RenderScope,
+    use,
+} from '../utils';
 
 export function getInstructionByteDeltaFragment(
     scope: Pick<RenderScope, 'asyncResolvers' | 'getImportFrom' | 'nameApi'> & {
@@ -28,6 +38,10 @@ function getByteDeltaFragment(
     },
 ): Fragment[] {
     let bytesFragment = ((): Fragment | null => {
+        const resolver = getByteDeltaResolver(byteDelta);
+        if (resolver) {
+            return getResolverFragment(resolver, scope);
+        }
         if (isNode(byteDelta.value, 'numberValueNode')) {
             return getNumberValueNodeFragment(byteDelta);
         }
@@ -36,9 +50,6 @@ function getByteDeltaFragment(
         }
         if (isNode(byteDelta.value, 'accountLinkNode')) {
             return getAccountLinkNodeFragment(byteDelta, scope);
-        }
-        if (isNode(byteDelta.value, 'resolverValueNode')) {
-            return getResolverValueNodeFragment(byteDelta, scope);
         }
         return null;
     })();
@@ -79,21 +90,17 @@ function getAccountLinkNodeFragment(
     return fragment`${functionName}()`;
 }
 
-function getResolverValueNodeFragment(
-    byteDelta: InstructionByteDeltaNode,
+function getResolverFragment(
+    resolver: InstructionResolver,
     scope: Pick<RenderScope, 'asyncResolvers' | 'getImportFrom' | 'nameApi'> & {
         useAsync: boolean;
     },
 ): Fragment | null {
-    assertIsNode(byteDelta.value, 'resolverValueNode');
-    const isAsync = isAsyncResolver(byteDelta.value.name, scope.asyncResolvers);
+    const isAsync = isAsyncResolver(resolver.name, scope.asyncResolvers);
     if (!scope.useAsync && isAsync) return null;
 
     const awaitKeyword = scope.useAsync && isAsync ? 'await ' : '';
-    const functionName = use(
-        scope.nameApi.resolverFunction(byteDelta.value.name),
-        scope.getImportFrom(byteDelta.value),
-    );
+    const functionName = use(scope.nameApi.resolverFunction(resolver.name), scope.getImportFrom(resolver));
     return pipe(fragment`${awaitKeyword}${functionName}(resolverScope)`, f =>
         addFragmentFeatures(f, ['instruction:resolverScopeVariable']),
     );

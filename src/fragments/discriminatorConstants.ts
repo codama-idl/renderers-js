@@ -3,7 +3,6 @@ import {
     ConstantDiscriminatorNode,
     DiscriminatorNode,
     FieldDiscriminatorNode,
-    InstructionArgumentNode,
     isNode,
     isNodeFilter,
     StructFieldTypeNode,
@@ -11,12 +10,12 @@ import {
 } from '@codama/nodes';
 import { visit } from '@codama/visitors-core';
 
-import { Fragment, fragment, mergeFragments, NameApi, RenderScope, use } from '../utils';
+import { Fragment, fragment, InstructionDataField, mergeFragments, NameApi, RenderScope, use } from '../utils';
 
 export function getDiscriminatorConstantsFragment(
     scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
         discriminatorNodes: DiscriminatorNode[];
-        fields: InstructionArgumentNode[] | StructFieldTypeNode[];
+        fields: InstructionDataField[] | StructFieldTypeNode[];
         prefix: string;
     },
 ): Fragment {
@@ -31,7 +30,7 @@ export function getDiscriminatorConstantFragment(
     discriminatorNode: DiscriminatorNode,
     scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
         discriminatorNodes: DiscriminatorNode[];
-        fields: InstructionArgumentNode[] | StructFieldTypeNode[];
+        fields: InstructionDataField[] | StructFieldTypeNode[];
         prefix: string;
     },
 ): Fragment | null {
@@ -99,7 +98,7 @@ export function getConstantDiscriminatorConstantFragment(
 export function getFieldDiscriminatorConstantFragment(
     discriminatorNode: FieldDiscriminatorNode,
     scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
-        fields: InstructionArgumentNode[] | StructFieldTypeNode[];
+        fields: InstructionDataField[] | StructFieldTypeNode[];
         prefix: string;
     },
 ): Fragment | null {

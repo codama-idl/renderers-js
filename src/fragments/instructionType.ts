@@ -2,7 +2,15 @@ import { InstructionNode, pascalCase } from '@codama/nodes';
 import { mapFragmentContent } from '@codama/renderers-core';
 import { findProgramNodeFromPath, getLastNodeFromPath, NodePath } from '@codama/visitors-core';
 
-import { Fragment, fragment, getCustomDataOptions, mergeFragments, RenderScope, use } from '../utils';
+import {
+    Fragment,
+    fragment,
+    getCustomDataOptions,
+    hasInstructionData,
+    mergeFragments,
+    RenderScope,
+    use,
+} from '../utils';
 import { getInstructionAccountMetaFragment } from './instructionAccountMeta';
 import { getInstructionAccountTypeParamFragment } from './instructionAccountTypeParam';
 
@@ -16,7 +24,7 @@ export function getInstructionTypeFragment(
     const programNode = findProgramNodeFromPath(instructionPath)!;
     const hasAccounts = (instructionNode.accounts ?? []).length > 0;
     const customData = getCustomDataOptions(customInstructionData, instructionNode);
-    const hasData = !!customData || (instructionNode.arguments ?? []).length > 0;
+    const hasData = !!customData || hasInstructionData(instructionNode);
 
     const instructionType = nameApi.instructionType(instructionNode.name);
     const programAddressConstant = use(nameApi.programAddressConstant(programNode.name), 'generatedPrograms');

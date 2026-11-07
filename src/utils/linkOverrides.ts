@@ -10,6 +10,7 @@ import {
 } from '@codama/nodes';
 
 import { ParsedCustomDataOptions } from './customData';
+import { InstructionResolver, isInstructionResolver } from './instructionInputs';
 
 /**
  * Maps the names of linked nodes to the module they should be imported from.
@@ -34,7 +35,8 @@ type OverridableNodes =
     | ProgramLinkNode
     | ResolverValueNode;
 
-export type GetImportFromFunction = (node: OverridableNodes, fallback?: string) => string;
+/** Resolves the module a linked node, or a resolver, is imported from. */
+export type GetImportFromFunction = (node: InstructionResolver | OverridableNodes, fallback?: string) => string;
 
 export function getImportFromFactory(
     overrides: LinkOverrides,
@@ -56,9 +58,12 @@ export function getImportFromFactory(
         resolvers: withCamelCaseKeys(overrides.resolvers ?? {}),
     };
 
-    return (node: OverridableNodes) => {
-        const kind = node.kind;
+    return (node: InstructionResolver | OverridableNodes) => {
         const name = camelCase(node.name);
+        if (isInstructionResolver(node)) {
+            return linkOverrides.resolvers[name] ?? 'hooked';
+        }
+        const kind = node.kind;
         switch (kind) {
             case 'accountLinkNode':
                 return linkOverrides.accounts[name] ?? 'generatedAccounts';

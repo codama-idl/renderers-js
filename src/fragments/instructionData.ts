@@ -1,7 +1,14 @@
-import { InstructionNode, structTypeNodeFromInstructionArgumentNodes } from '@codama/nodes';
+import { InstructionNode } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath } from '@codama/visitors-core';
 
-import { Fragment, getCustomDataOptions, RenderScope, TypeManifest } from '../utils';
+import {
+    Fragment,
+    getCustomDataOptions,
+    getInstructionDataNode,
+    hasInstructionData,
+    RenderScope,
+    TypeManifest,
+} from '../utils';
 import { getTypeWithCodecFragment } from './typeWithCodec';
 
 export function getInstructionDataFragment(
@@ -13,8 +20,7 @@ export function getInstructionDataFragment(
 ): Fragment | undefined {
     const { instructionPath, dataArgsManifest, nameApi, customInstructionData } = scope;
     const instructionNode = getLastNodeFromPath(instructionPath);
-    if ((instructionNode.arguments ?? []).length === 0 || getCustomDataOptions(customInstructionData, instructionNode))
-        return;
+    if (!hasInstructionData(instructionNode) || getCustomDataOptions(customInstructionData, instructionNode)) return;
 
     const instructionDataName = nameApi.instructionDataType(instructionNode.name);
     return getTypeWithCodecFragment({
@@ -22,7 +28,7 @@ export function getInstructionDataFragment(
         manifest: dataArgsManifest,
         name: instructionDataName,
         nameApi,
-        node: structTypeNodeFromInstructionArgumentNodes(instructionNode.arguments ?? []),
+        node: getInstructionDataNode(instructionNode),
         size: scope.size,
     });
 }
