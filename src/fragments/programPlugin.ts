@@ -2,6 +2,7 @@ import {
     camelCase,
     CamelCaseString,
     getAllInstructionsWithSubs,
+    InstructionAccountNode,
     InstructionNode,
     isNode,
     isNodeFilter,
@@ -15,6 +16,7 @@ import {
     fragment,
     getInstructionDataFields,
     hasAsyncFunction,
+    InstructionDataField,
     InstructionInput,
     mergeFragments,
     RenderScope,
@@ -363,7 +365,10 @@ function getMakeOptionalHelperTypeFragment(scope: { programNode: ProgramNode }):
 }
 
 function hasPayerDefaultValues(programNode: ProgramNode): boolean {
-    return (programNode.instructions ?? []).some(instruction => getPayerDefaultValues(instruction).length > 0);
+    return (programNode.instructions ?? []).some(instruction => {
+        const { accounts, fields } = getInputsDefaultingToPayer(instruction);
+        return accounts.length > 0 || fields.length > 0;
+    });
 }
 
 /**
@@ -372,16 +377,23 @@ function hasPayerDefaultValues(programNode: ProgramNode): boolean {
  */
 function getPayerDefaultValues(instructionNode: InstructionNode): { name: string; signer: boolean }[] {
     const renamedArgs = getRenamedArgsMap(instructionNode);
-    const defaultsToPayer = (input: InstructionInput) => isNode(input.defaultValue, 'payerValueNode');
+    const { accounts, fields } = getInputsDefaultingToPayer(instructionNode);
     return [
-        ...(instructionNode.accounts ?? [])
-            .filter(account => !account.isOptional && defaultsToPayer(account))
-            .map(account => ({ name: camelCase(account.name), signer: account.isSigner !== false })),
-        ...getInstructionDataFields(instructionNode)
-            .filter(defaultsToPayer)
-            .map(field => {
-                const name = camelCase(field.name);
-                return { name: renamedArgs.get(name) ?? name, signer: false };
-            }),
+        ...accounts.map(account => ({ name: camelCase(account.name), signer: account.isSigner !== false })),
+        ...fields.map(field => {
+            const name = camelCase(field.name);
+            return { name: renamedArgs.get(name) ?? name, signer: false };
+        }),
     ];
+}
+
+function getInputsDefaultingToPayer(instructionNode: InstructionNode): {
+    accounts: InstructionAccountNode[];
+    fields: InstructionDataField[];
+} {
+    const defaultsToPayer = (input: InstructionInput) => isNode(input.defaultValue, 'payerValueNode');
+    return {
+        accounts: (instructionNode.accounts ?? []).filter(account => !account.isOptional && defaultsToPayer(account)),
+        fields: getInstructionDataFields(instructionNode).filter(defaultsToPayer),
+    };
 }

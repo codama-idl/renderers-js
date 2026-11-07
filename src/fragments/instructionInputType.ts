@@ -175,7 +175,7 @@ function getArgumentFragment(
     const resolvedArg = resolvedInputs.find(
         input => isNode(input, 'instructionArgumentNode') && input.name === arg.name,
     ) as ResolvedInstructionArgument | undefined;
-    if (arg.defaultValue && arg.defaultValueStrategy === 'omitted') return null;
+    if (hasInputDefault(arg) && arg.defaultValueStrategy === 'omitted') return null;
     const argName = camelCase(arg.name);
     const renamedName = renamedArgs.get(argName) ?? argName;
     const optionalSign = hasInputDefault(arg) || (resolvedArg && hasInputDefault(resolvedArg)) ? '?' : '';
