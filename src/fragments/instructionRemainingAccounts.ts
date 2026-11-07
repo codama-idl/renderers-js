@@ -1,4 +1,4 @@
-import { assertIsNode, camelCase, InstructionNode, InstructionRemainingAccountsNode, isNode } from '@codama/nodes';
+import { camelCase, InstructionNode, InstructionRemainingAccountsNode } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
 import {
@@ -6,6 +6,9 @@ import {
     addFragmentImports,
     Fragment,
     fragment,
+    getRemainingAccountsName,
+    getRemainingAccountsResolver,
+    InstructionResolver,
     isAsyncResolver,
     isRemainingAccountsBackedByArgument,
     mergeFragments,
@@ -41,11 +44,13 @@ function getRemainingAccountsFragment(
     },
 ): Fragment[] {
     const remainingAccountsFragment = ((): Fragment | null => {
-        if (isNode(remainingAccounts.value, 'argumentValueNode')) {
-            return getArgumentValueNodeFragment(remainingAccounts, scope);
+        const resolver = getRemainingAccountsResolver(remainingAccounts);
+        if (resolver) {
+            return getResolverFragment(resolver, scope);
         }
-        if (isNode(remainingAccounts.value, 'resolverValueNode')) {
-            return getResolverValueNodeFragment(remainingAccounts, scope);
+        const name = getRemainingAccountsName(remainingAccounts);
+        if (name !== undefined) {
+            return getInputFragment(remainingAccounts, name, scope);
         }
         return null;
     })();
@@ -54,13 +59,13 @@ function getRemainingAccountsFragment(
     return [remainingAccountsFragment];
 }
 
-function getArgumentValueNodeFragment(
+function getInputFragment(
     remainingAccounts: InstructionRemainingAccountsNode,
+    name: string,
     scope: { instructionPath: NodePath<InstructionNode> },
 ): Fragment {
     const instructionNode = getLastNodeFromPath(scope.instructionPath);
-    assertIsNode(remainingAccounts.value, 'argumentValueNode');
-    const argumentName = camelCase(remainingAccounts.value.name);
+    const argumentName = camelCase(name);
     const isOptional = remainingAccounts.isOptional ?? false;
     const isSigner = remainingAccounts.isSigner ?? false;
     const isWritable = remainingAccounts.isWritable ?? false;
@@ -90,21 +95,17 @@ function getArgumentValueNodeFragment(
     return fragment`${argumentArray}.map((value) => ${getNonNullResolvedInstructionInput}("${argumentName}", getAccountMeta("${argumentName}", { value, isSigner: ${isSignerFlag}, isWritable: ${isWritable} })))`;
 }
 
-function getResolverValueNodeFragment(
-    remainingAccounts: InstructionRemainingAccountsNode,
+function getResolverFragment(
+    resolver: InstructionResolver,
     scope: Pick<RenderScope, 'asyncResolvers' | 'getImportFrom' | 'nameApi'> & {
         useAsync: boolean;
     },
 ): Fragment | null {
-    assertIsNode(remainingAccounts.value, 'resolverValueNode');
-    const isAsync = isAsyncResolver(remainingAccounts.value.name, scope.asyncResolvers);
+    const isAsync = isAsyncResolver(resolver.name, scope.asyncResolvers);
     if (!scope.useAsync && isAsync) return null;
 
     const awaitKeyword = scope.useAsync && isAsync ? 'await ' : '';
-    const functionName = use(
-        scope.nameApi.resolverFunction(remainingAccounts.value.name),
-        scope.getImportFrom(remainingAccounts.value),
-    );
+    const functionName = use(scope.nameApi.resolverFunction(resolver.name), scope.getImportFrom(resolver));
     return pipe(fragment`${awaitKeyword}${functionName}(resolverScope)`, f =>
         addFragmentFeatures(f, ['instruction:resolverScopeVariable']),
     );

@@ -3,7 +3,6 @@ import {
     CamelCaseString,
     getAllInstructionsWithSubs,
     InstructionAccountNode,
-    InstructionArgumentNode,
     InstructionNode,
     isNode,
     isNodeFilter,
@@ -12,7 +11,17 @@ import {
 } from '@codama/nodes';
 import { getResolvedInstructionInputsVisitor, visit } from '@codama/visitors-core';
 
-import { Fragment, fragment, hasAsyncFunction, mergeFragments, RenderScope, use } from '../utils';
+import {
+    Fragment,
+    fragment,
+    getInstructionDataFields,
+    hasAsyncFunction,
+    InstructionDataField,
+    InstructionInput,
+    mergeFragments,
+    RenderScope,
+    use,
+} from '../utils';
 import { getInstructionFunctionInputFlags } from './instructionFunction';
 import { getRenamedArgsMap } from './instructionPage';
 
@@ -356,7 +365,10 @@ function getMakeOptionalHelperTypeFragment(scope: { programNode: ProgramNode }):
 }
 
 function hasPayerDefaultValues(programNode: ProgramNode): boolean {
-    return (programNode.instructions ?? []).some(instruction => getPayerDefaultValueNodes(instruction).length > 0);
+    return (programNode.instructions ?? []).some(instruction => {
+        const { accounts, fields } = getInputsDefaultingToPayer(instruction);
+        return accounts.length > 0 || fields.length > 0;
+    });
 }
 
 /**
@@ -365,19 +377,23 @@ function hasPayerDefaultValues(programNode: ProgramNode): boolean {
  */
 function getPayerDefaultValues(instructionNode: InstructionNode): { name: string; signer: boolean }[] {
     const renamedArgs = getRenamedArgsMap(instructionNode);
-    return getPayerDefaultValueNodes(instructionNode).map(inputNode => {
-        const name = camelCase(inputNode.name);
-        return isNode(inputNode, 'instructionAccountNode')
-            ? { name, signer: inputNode.isSigner !== false }
-            : { name: renamedArgs.get(name) ?? name, signer: false };
-    });
+    const { accounts, fields } = getInputsDefaultingToPayer(instructionNode);
+    return [
+        ...accounts.map(account => ({ name: camelCase(account.name), signer: account.isSigner !== false })),
+        ...fields.map(field => {
+            const name = camelCase(field.name);
+            return { name: renamedArgs.get(name) ?? name, signer: false };
+        }),
+    ];
 }
 
-function getPayerDefaultValueNodes(
-    instructionNode: InstructionNode,
-): (InstructionAccountNode | InstructionArgumentNode)[] {
-    return [
-        ...(instructionNode.accounts ?? []).filter(a => !a.isOptional && isNode(a.defaultValue, 'payerValueNode')),
-        ...(instructionNode.arguments ?? []).filter(a => isNode(a.defaultValue, 'payerValueNode')),
-    ];
+function getInputsDefaultingToPayer(instructionNode: InstructionNode): {
+    accounts: InstructionAccountNode[];
+    fields: InstructionDataField[];
+} {
+    const defaultsToPayer = (input: InstructionInput) => isNode(input.defaultValue, 'payerValueNode');
+    return {
+        accounts: (instructionNode.accounts ?? []).filter(account => !account.isOptional && defaultsToPayer(account)),
+        fields: getInstructionDataFields(instructionNode).filter(defaultsToPayer),
+    };
 }

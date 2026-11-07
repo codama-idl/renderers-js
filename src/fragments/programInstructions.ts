@@ -1,12 +1,6 @@
-import {
-    camelCase,
-    getAllInstructionsWithSubs,
-    InstructionNode,
-    ProgramNode,
-    structTypeNodeFromInstructionArgumentNodes,
-} from '@codama/nodes';
+import { camelCase, getAllInstructionsWithSubs, InstructionNode, ProgramNode } from '@codama/nodes';
 
-import { Fragment, fragment, mergeFragments, RenderScope, use } from '../utils';
+import { Fragment, fragment, getInstructionDataNode, mergeFragments, RenderScope, use } from '../utils';
 import { getDiscriminatorConditionFragment } from './discriminatorCondition';
 import { getEnumDeclarationFragment } from './enumDeclaration';
 
@@ -70,7 +64,7 @@ function getProgramInstructionsIdentifierFunctionFragment(
                 dataName: 'data',
                 discriminators: instruction.discriminators ?? [],
                 ifTrue: `return ${programInstructionsEnum}.${variant};`,
-                struct: structTypeNodeFromInstructionArgumentNodes(instruction.arguments ?? []),
+                struct: getInstructionDataNode(instruction),
             });
         }),
         c => c.join('\n'),

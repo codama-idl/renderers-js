@@ -1,11 +1,4 @@
-import {
-    camelCase,
-    InstructionAccountNode,
-    InstructionArgumentNode,
-    InstructionNode,
-    isNode,
-    pascalCase,
-} from '@codama/nodes';
+import { camelCase, InstructionAccountNode, InstructionNode, isNode, pascalCase } from '@codama/nodes';
 import { mapFragmentContent } from '@codama/renderers-core';
 import {
     getLastNodeFromPath,
@@ -21,7 +14,12 @@ import {
     fragment,
     getCustomDataOptions,
     getDocblockFragment,
-    isAsyncDefaultValue,
+    getInstructionDataFields,
+    getInstructionExtraArguments,
+    getRemainingAccountsName,
+    hasInputDefault,
+    InstructionDataField,
+    isAsyncInput,
     isRemainingAccountsBackedByArgument,
     mergeFragmentImports,
     mergeFragments,
@@ -102,9 +100,9 @@ function getAccountsFragment(
             input => input.kind === 'instructionAccountNode' && input.name === account.name,
         ) as ResolvedInstructionAccount;
         const hasDefaultValue =
-            !!resolvedAccount.defaultValue &&
+            hasInputDefault(resolvedAccount) &&
             !isNode(resolvedAccount.defaultValue, ['identityValueNode', 'payerValueNode']) &&
-            (useAsync || !isAsyncDefaultValue(resolvedAccount.defaultValue, asyncResolvers));
+            (useAsync || !isAsyncInput(resolvedAccount, asyncResolvers));
         const docs = getDocblockFragment(account.docs ?? [], true);
         const optionalSign = hasDefaultValue || resolvedAccount.isOptional ? '?' : '';
         return fragment`${docs}${camelCase(account.name)}${optionalSign}: TAccount${pascalCase(account.name)};`;
@@ -139,7 +137,7 @@ function getDataArgumentsFragments(
     const instructionDataName = nameApi.instructionDataType(instructionNode.name);
     const dataArgsType = nameApi.dataArgsType(instructionDataName);
 
-    const fragments = (instructionNode.arguments ?? []).flatMap(arg => {
+    const fragments = getInstructionDataFields(instructionNode).flatMap(arg => {
         const argFragment = getArgumentFragment(arg, dataArgsType, scope.resolvedInputs, scope.renamedArgs);
         return argFragment ? [argFragment] : [];
     });
@@ -159,7 +157,7 @@ function getExtraArgumentsFragment(
     const instructionExtraName = nameApi.instructionExtraType(instructionNode.name);
     const extraArgsType = nameApi.dataArgsType(instructionExtraName);
 
-    const fragments = (instructionNode.extraArguments ?? []).flatMap(arg => {
+    const fragments = getInstructionExtraArguments(instructionNode).flatMap(arg => {
         const argFragment = getArgumentFragment(arg, extraArgsType, scope.resolvedInputs, scope.renamedArgs);
         return argFragment ? [argFragment] : [];
     });
@@ -169,7 +167,7 @@ function getExtraArgumentsFragment(
 }
 
 function getArgumentFragment(
-    arg: InstructionArgumentNode,
+    arg: InstructionDataField,
     argsType: string,
     resolvedInputs: ResolvedInstructionInput[],
     renamedArgs: Map<string, string>,
@@ -177,19 +175,19 @@ function getArgumentFragment(
     const resolvedArg = resolvedInputs.find(
         input => isNode(input, 'instructionArgumentNode') && input.name === arg.name,
     ) as ResolvedInstructionArgument | undefined;
-    if (arg.defaultValue && arg.defaultValueStrategy === 'omitted') return null;
+    if (hasInputDefault(arg) && arg.defaultValueStrategy === 'omitted') return null;
     const argName = camelCase(arg.name);
     const renamedName = renamedArgs.get(argName) ?? argName;
-    const optionalSign = arg.defaultValue || resolvedArg?.defaultValue ? '?' : '';
+    const optionalSign = hasInputDefault(arg) || (resolvedArg && hasInputDefault(resolvedArg)) ? '?' : '';
     return fragment`${renamedName}${optionalSign}: ${argsType}["${argName}"];`;
 }
 
 function getRemainingAccountsFragment(instructionNode: InstructionNode): Fragment | undefined {
     const fragments = (instructionNode.remainingAccounts ?? []).flatMap(remainingAccountsNode => {
-        if (isNode(remainingAccountsNode.value, 'resolverValueNode')) return [];
+        const name = getRemainingAccountsName(remainingAccountsNode);
+        if (name === undefined) return [];
         if (isRemainingAccountsBackedByArgument(instructionNode, remainingAccountsNode)) return [];
 
-        const { name } = remainingAccountsNode.value;
         const isSigner = remainingAccountsNode.isSigner ?? false;
         const optionalSign = (remainingAccountsNode.isOptional ?? false) ? '?' : '';
         const typeFragment = getInstructionAccountInputConstraintFragment({ isSigner });

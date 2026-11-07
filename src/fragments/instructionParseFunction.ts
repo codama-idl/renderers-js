@@ -7,6 +7,7 @@ import {
     fragment,
     getCustomDataOptions,
     getDocblockFragment,
+    hasInstructionData,
     mergeFragments,
     RenderScope,
     TypeManifest,
@@ -38,7 +39,7 @@ function getTypeFragment(
     const instructionParsedType = scope.nameApi.instructionParsedType(scope.instructionNode.name);
     const instructionDataName = scope.nameApi.instructionDataType(scope.instructionNode.name);
 
-    const hasData = !!customData || (scope.instructionNode.arguments ?? []).length > 0;
+    const hasData = !!customData || hasInstructionData(scope.instructionNode);
     const hasAccounts = (scope.instructionNode.accounts ?? []).length > 0;
 
     const typeParamDeclarations = mergeFragments(
@@ -83,7 +84,7 @@ function getFunctionFragment(
         ? scope.dataArgsManifest.decoder
         : fragment`${scope.nameApi.decoderFunction(instructionDataName)}()`;
 
-    const hasData = !!customData || (scope.instructionNode.arguments ?? []).length > 0;
+    const hasData = !!customData || hasInstructionData(scope.instructionNode);
     const hasAccounts = (scope.instructionNode.accounts ?? []).length > 0;
     const hasOptionalAccounts = (scope.instructionNode.accounts ?? []).some(account => account.isOptional);
     const minimumNumberOfAccounts =

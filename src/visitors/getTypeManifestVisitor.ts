@@ -13,7 +13,6 @@ import {
     resolveNestedTypeNode,
     structFieldTypeNode,
     structTypeNode,
-    structTypeNodeFromInstructionArgumentNodes,
     TypeNode,
 } from '@codama/nodes';
 import { mapFragmentContent, setFragmentContent } from '@codama/renderers-core';
@@ -38,6 +37,7 @@ import {
     getCustomDataOptions,
     getDocblockFragment,
     getEnumBody,
+    getInstructionDataNode,
     type GetImportFromFunction,
     mergeFragments,
     mergeTypeManifests,
@@ -476,8 +476,7 @@ export function getTypeManifestVisitor(input: {
                         strict: nameApi.dataType(instructionDataName),
                     };
                     const link = getCustomDataOptions(customInstructionData, instruction)?.linkNode;
-                    const struct = structTypeNodeFromInstructionArgumentNodes(instruction.arguments ?? []);
-                    const manifest = link ? visit(link, self) : visit(struct, self);
+                    const manifest = link ? visit(link, self) : visit(getInstructionDataNode(instruction), self);
                     parentName = null;
                     return manifest;
                 },

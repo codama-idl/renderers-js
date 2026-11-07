@@ -22,7 +22,10 @@ import {
     addFragmentImports,
     Fragment,
     fragment,
-    isAsyncDefaultValue,
+    getInputDefaultValue,
+    getInputResolver,
+    hasInputDefault,
+    isAsyncInput,
     isAsyncResolver,
     mergeFragments,
     RenderScope,
@@ -48,18 +51,18 @@ export function getInstructionInputDefaultFragment(
         typeManifestVisitor,
         getImportFrom,
     } = scope;
-    if (!input.defaultValue) {
+    if (!hasInputDefault(input)) {
         return fragment``;
     }
 
-    if (!useAsync && isAsyncDefaultValue(input.defaultValue, asyncResolvers)) {
+    if (!useAsync && isAsyncInput(input, asyncResolvers)) {
         return fragment``;
     }
 
-    const { defaultValue } = input;
+    const resolver = getInputResolver(input);
     const defaultFragment = (renderedValue: Fragment, isWritable?: boolean): Fragment => {
         const inputName = camelCase(input.name);
-        if (input.kind === 'instructionAccountNode' && isNode(defaultValue, 'resolverValueNode')) {
+        if (input.kind === 'instructionAccountNode' && resolver) {
             return fragment`accounts.${inputName} = { ...accounts.${inputName}, ...${renderedValue} };`;
         }
         if (input.kind === 'instructionAccountNode' && isWritable === undefined) {
@@ -86,6 +89,16 @@ export function getInstructionInputDefaultFragment(
     );
     const addressType = use('type Address', 'solanaAddresses');
 
+    // Resolved inputs delegate their whole value to a resolver function.
+    if (resolver) {
+        const resolverFunction = use(nameApi.resolverFunction(resolver.name), getImportFrom(resolver));
+        const resolverAwait = useAsync && isAsyncResolver(resolver.name, asyncResolvers) ? 'await ' : '';
+        return pipe(defaultFragment(fragment`${resolverAwait}${resolverFunction}(resolverScope)`), f =>
+            addFragmentFeatures(f, ['instruction:resolverScopeVariable']),
+        );
+    }
+
+    const defaultValue = getInputDefaultValue(input)!;
     switch (defaultValue.kind) {
         case 'accountValueNode':
             const name = camelCase(defaultValue.name);
@@ -226,13 +239,6 @@ export function getInstructionInputDefaultFragment(
         case 'argumentValueNode':
             return defaultFragment(
                 fragment`${getNonNullResolvedInstructionInput}("${camelCase(defaultValue.name)}", args.${camelCase(defaultValue.name)})`,
-            );
-
-        case 'resolverValueNode':
-            const resolverFunction = use(nameApi.resolverFunction(defaultValue.name), getImportFrom(defaultValue));
-            const resolverAwait = useAsync && isAsyncResolver(defaultValue.name, asyncResolvers) ? 'await ' : '';
-            return pipe(defaultFragment(fragment`${resolverAwait}${resolverFunction}(resolverScope)`), f =>
-                addFragmentFeatures(f, ['instruction:resolverScopeVariable']),
             );
 
         case 'conditionalValueNode':
