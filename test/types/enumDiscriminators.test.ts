@@ -1,4 +1,5 @@
 import {
+    DefinedTypeNode,
     definedTypeNode,
     enumEmptyVariantTypeNode,
     enumStructVariantTypeNode,
@@ -9,8 +10,9 @@ import {
     structTypeNode,
     tupleTypeNode,
 } from '@codama/nodes';
+import { getFromRenderMap } from '@codama/renderers-core';
 import { visit } from '@codama/visitors-core';
-import { test } from 'vitest';
+import { expect, test } from 'vitest';
 
 import { getRenderMapVisitor } from '../../src';
 import { renderMapContains, renderMapDoesNotContain } from '../_setup';
@@ -121,4 +123,36 @@ test('it renders enums without custom discriminators as before', async () => {
         'return getEnumEncoder(Direction);',
     ]);
     await renderMapDoesNotContain(dataRenderMap, 'types/event.ts', ['useValuesAsDiscriminators', 'transformEncoder']);
+});
+
+test('it renders explicit discriminators matching the variant positions as positional ones', () => {
+    // Given scalar and data enums whose explicit discriminators match the variant positions.
+    const scalarNode = (withDiscriminators: boolean) =>
+        definedTypeNode({
+            name: 'direction',
+            type: enumTypeNode([
+                enumEmptyVariantTypeNode('up', withDiscriminators ? 0 : undefined),
+                enumEmptyVariantTypeNode('down', withDiscriminators ? 1 : undefined),
+            ]),
+        });
+    const dataNode = (withDiscriminators: boolean) =>
+        definedTypeNode({
+            name: 'event',
+            type: enumTypeNode([
+                enumEmptyVariantTypeNode('quit', withDiscriminators ? 0 : undefined),
+                enumTupleVariantTypeNode(
+                    'write',
+                    tupleTypeNode([numberTypeNode('u32')]),
+                    withDiscriminators ? 1 : undefined,
+                ),
+            ]),
+        });
+
+    // When we render them with and without these discriminators.
+    const render = (node: DefinedTypeNode, path: string) =>
+        getFromRenderMap(visit(node, getRenderMapVisitor()), path).content;
+
+    // Then we expect the exact same code.
+    expect(render(scalarNode(true), 'types/direction.ts')).toBe(render(scalarNode(false), 'types/direction.ts'));
+    expect(render(dataNode(true), 'types/event.ts')).toBe(render(dataNode(false), 'types/event.ts'));
 });

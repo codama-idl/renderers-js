@@ -12,10 +12,13 @@ export function getEnumVariantDiscriminators(variants: readonly EnumVariantTypeN
 }
 
 /**
- * Whether any variant of the enum declares an explicit `discriminator`.
+ * Whether the discriminator of any variant differs from its position in the enum.
+ *
+ * Explicit discriminators matching the variant positions, e.g. `A = 0, B = 1`, encode
+ * exactly like positional ones, so they do not require custom discriminator handling.
  *
  * @param variants - The variants of the enum, in declaration order.
  */
 export function hasCustomEnumVariantDiscriminators(variants: readonly EnumVariantTypeNode[]): boolean {
-    return variants.some(variant => variant.discriminator !== undefined);
+    return getEnumVariantDiscriminators(variants).some((discriminator, index) => discriminator !== index);
 }

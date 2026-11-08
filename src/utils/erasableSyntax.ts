@@ -8,6 +8,8 @@
  *
  * @param variantNames - The variant names, in declaration order.
  * @param erasableSyntax - Whether to render the runtime object used for erasable enums.
+ * @param values - The explicit value of each variant, in declaration order. Variants are
+ * numbered from zero when omitted.
  * @returns The object body, without the surrounding braces.
  *
  * @example
@@ -17,7 +19,6 @@
  *
  * getEnumBody(['First', 'Fifth'], false, [1, 5]);
  * // "First = 1, Fifth = 5"
- * // "0: 'Uninitialized', 1: 'Asset', Uninitialized: 0, Asset: 1"
  * ```
  */
 export function getEnumBody(variantNames: string[], erasableSyntax: boolean, values?: number[]): string {
