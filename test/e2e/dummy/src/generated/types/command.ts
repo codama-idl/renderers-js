@@ -41,7 +41,7 @@ export function getCommandEncoder(): Encoder<CommandArgs> {
             ['Write', getStructEncoder([['fields', getTupleEncoder([getU32Encoder()])]])],
             ['Move', getStructEncoder([['x', getU32Encoder()]])],
         ],
-        { size: transformEncoder(getU16Encoder(), (index: bigint | number) => [0, 3, 5][Number(index)]) },
+        { size: transformEncoder(getU16Encoder(), (index: bigint | number) => [0, 3, 5][Number(index)]!) },
     );
 }
 

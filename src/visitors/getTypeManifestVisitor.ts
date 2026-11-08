@@ -316,7 +316,7 @@ export function getTypeManifestVisitor(input: {
                         const sizeManifest = visit(enumType.size, self);
                         const values = `[${discriminators.join(', ')}]`;
                         encoderOptions.push(
-                            fragment`size: ${use('transformEncoder', 'solanaCodecsCore')}(${sizeManifest.encoder}, (index: bigint | number) => ${values}[Number(index)])`,
+                            fragment`size: ${use('transformEncoder', 'solanaCodecsCore')}(${sizeManifest.encoder}, (index: bigint | number) => ${values}[Number(index)]!)`,
                         );
                         decoderOptions.push(
                             fragment`size: ${use('transformDecoder', 'solanaCodecsCore')}(${sizeManifest.decoder}, (value: bigint | number) => ${values}.indexOf(Number(value)))`,

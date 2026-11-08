@@ -71,7 +71,7 @@ test('it maps the discriminated union prefix to the custom discriminators', asyn
 
     // Then the prefix codec translates between variant positions and custom values.
     await renderMapContains(renderMap, 'types/event.ts', [
-        'size: transformEncoder( getU8Encoder(), (index: bigint | number) => [0, 3, 5][Number(index)] )',
+        'size: transformEncoder( getU8Encoder(), (index: bigint | number) => [0, 3, 5][Number(index)]! )',
         'size: transformDecoder( getU8Decoder(), (value: bigint | number) => [0, 3, 5].indexOf(Number(value)) )',
     ]);
 });
@@ -94,7 +94,7 @@ test('it keeps the configured prefix size when mapping custom discriminators', a
 
     // Then the u16 codec is the one being mapped.
     await renderMapContains(renderMap, 'types/event.ts', [
-        'size: transformEncoder( getU16Encoder(), (index: bigint | number) => [300, 1][Number(index)] )',
+        'size: transformEncoder( getU16Encoder(), (index: bigint | number) => [300, 1][Number(index)]! )',
         'size: transformDecoder( getU16Decoder(), (value: bigint | number) => [300, 1].indexOf(Number(value)) )',
     ]);
 });
