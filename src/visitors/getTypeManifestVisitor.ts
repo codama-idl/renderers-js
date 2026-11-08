@@ -1,3 +1,4 @@
+import { CODAMA_ERROR__UNRECOGNIZED_BYTES_ENCODING, CodamaError } from '@codama/errors';
 import {
     camelCase,
     CamelCaseString,
@@ -626,7 +627,9 @@ export function getTypeManifestVisitor(input: {
                             case 'utf8':
                                 return ['getUtf8Encoder', 'getUtf8Decoder'];
                             default:
-                                throw new Error(`Unsupported string encoding: ${stringType.encoding as string}`);
+                                throw new CodamaError(CODAMA_ERROR__UNRECOGNIZED_BYTES_ENCODING, {
+                                    encoding: stringType.encoding satisfies never,
+                                });
                         }
                     })();
 

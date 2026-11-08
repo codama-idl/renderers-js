@@ -1,3 +1,4 @@
+import { CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, CodamaError } from '@codama/errors';
 import {
     accountValueNode,
     argumentValueNode,
@@ -17,6 +18,7 @@ import {
     fixedSizeTypeNode,
     instructionAccountNode,
     instructionArgumentNode,
+    injectedValueNode,
     instructionNode,
     instructionRemainingAccountsNode,
     numberTypeNode,
@@ -36,7 +38,7 @@ import {
 } from '@codama/nodes';
 import { getFromRenderMap } from '@codama/renderers-core';
 import { visit } from '@codama/visitors-core';
-import { test } from 'vitest';
+import { expect, test } from 'vitest';
 
 import { getRenderMapVisitor } from '../src';
 import {
@@ -1269,4 +1271,26 @@ test('it renders remaining accounts backed by an instruction argument as plain a
     ]);
     // And we expect the account meta helper to not be declared nor imported since it is not used.
     await renderMapDoesNotContain(renderMap, 'instructions/myInstruction.ts', ['getAccountMeta']);
+});
+
+test('it fails loudly on instruction input default values it cannot render', () => {
+    // Given an instruction account defaulting to an injected value, which this renderer does not support yet.
+    const defaultValue = injectedValueNode({ key: 'authority' });
+    const node = programNode({
+        instructions: [
+            instructionNode({
+                accounts: [
+                    instructionAccountNode({ defaultValue, isSigner: false, isWritable: false, name: 'authority' }),
+                ],
+                name: 'increment',
+            }),
+        ],
+        name: 'counter',
+        publicKey: '1111',
+    });
+
+    // Then rendering fails at generation time with a clear error.
+    expect(() => visit(node, getRenderMapVisitor())).toThrow(
+        new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, { kind: 'injectedValueNode', node: defaultValue }),
+    );
 });

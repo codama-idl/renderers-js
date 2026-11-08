@@ -1,3 +1,4 @@
+import { CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, CodamaError } from '@codama/errors';
 import {
     camelCase,
     InstructionInputValueNode,
@@ -304,7 +305,10 @@ export function getInstructionInputDefaultFragment(
         case 'accountFieldValueNode':
         case 'injectedValueNode':
             // These contextual value nodes are not yet supported as instruction input defaults by this renderer.
-            throw new Error(`Unsupported instruction input default value node: [${defaultValue.kind}]`);
+            throw new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, {
+                kind: defaultValue.kind,
+                node: defaultValue,
+            });
 
         default:
             const valueManifest = visit(defaultValue, typeManifestVisitor).value;

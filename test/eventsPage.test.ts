@@ -1,4 +1,10 @@
 import {
+    CODAMA_ERROR__DISCRIMINATOR_FIELD_HAS_NO_DEFAULT_VALUE,
+    CODAMA_ERROR__DISCRIMINATOR_FIELD_NOT_FOUND,
+    CodamaError,
+} from '@codama/errors';
+import {
+    camelCase,
     bytesTypeNode,
     bytesValueNode,
     constantDiscriminatorNode,
@@ -349,8 +355,28 @@ test('it fails loudly when a field discriminator has no matching payload field',
     });
 
     // Then rendering fails at generation time with a clear error.
-    expect(() => visit(node, getRenderMapVisitor())).toThrowError(
-        'Field discriminator "key" does not have a matching argument with default value.',
+    expect(() => visit(node, getRenderMapVisitor())).toThrow(
+        new CodamaError(CODAMA_ERROR__DISCRIMINATOR_FIELD_NOT_FOUND, { field: camelCase('key') }),
+    );
+});
+
+test('it fails loudly when a field discriminator has no default value', () => {
+    // Given an event whose field discriminator points to a field without a default value.
+    const node = programNode({
+        events: [
+            eventNode({
+                data: structTypeNode([structFieldTypeNode({ name: 'key', type: numberTypeNode('u8') })]),
+                discriminators: [fieldDiscriminatorNode('key')],
+                name: 'broken',
+            }),
+        ],
+        name: 'myProgram',
+        publicKey: '1111',
+    });
+
+    // Then rendering fails at generation time with a clear error.
+    expect(() => visit(node, getRenderMapVisitor())).toThrow(
+        new CodamaError(CODAMA_ERROR__DISCRIMINATOR_FIELD_HAS_NO_DEFAULT_VALUE, { field: camelCase('key') }),
     );
 });
 
