@@ -1,17 +1,17 @@
 import { isDataEnum, isNode, TypeNode } from '@codama/nodes';
 
-import { Fragment, fragment, getDocblockFragment, RenderScope, TypeManifest, use } from '../utils';
+import { DocsInput, Fragment, fragment, getDocblockFragment, RenderScope, TypeManifest, use } from '../utils';
 
 export function getTypeEncoderFragment(
     scope: Pick<RenderScope, 'nameApi'> & {
-        docs?: string[];
+        docs?: DocsInput;
         manifest: Pick<TypeManifest, 'encoder'>;
         name: string;
         node: TypeNode;
         size: number | null;
     },
 ): Fragment {
-    const { name, node, manifest, nameApi, docs = [] } = scope;
+    const { name, node, manifest, nameApi, docs } = scope;
     const encoderFunction = nameApi.encoderFunction(name);
     const looseName = nameApi.dataArgsType(name);
 

@@ -103,7 +103,7 @@ function getAccountsFragment(
             hasInputDefault(resolvedAccount) &&
             !isNode(resolvedAccount.defaultValue, ['identityValueNode', 'payerValueNode']) &&
             (useAsync || !isAsyncInput(resolvedAccount, asyncResolvers));
-        const docs = getDocblockFragment(account.docs ?? [], true);
+        const docs = getDocblockFragment(account.docs, true);
         const optionalSign = hasDefaultValue || resolvedAccount.isOptional ? '?' : '';
         return fragment`${docs}${camelCase(account.name)}${optionalSign}: TAccount${pascalCase(account.name)};`;
     });

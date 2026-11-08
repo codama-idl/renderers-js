@@ -111,7 +111,7 @@ export function getRenderMapVisitor(
             extendVisitor(v, {
                 visitAccount(node) {
                     return createRenderMap(
-                        `accounts/${camelCase(node.name)}.ts`,
+                        `accounts/${renderScope.nameApi.fileName(node.name)}.ts`,
                         asPage(
                             getAccountPageFragment({
                                 ...renderScope,
@@ -124,7 +124,7 @@ export function getRenderMapVisitor(
 
                 visitDefinedType(node) {
                     return createRenderMap(
-                        `types/${camelCase(node.name)}.ts`,
+                        `types/${renderScope.nameApi.fileName(node.name)}.ts`,
                         asPage(getTypePageFragment({ ...renderScope, node, size: visit(node, byteSizeVisitor) }), {
                             generatedTypes: renderScope.getImportPath('.', 'directory'),
                         }),
@@ -133,7 +133,7 @@ export function getRenderMapVisitor(
 
                 visitEvent(node) {
                     return createRenderMap(
-                        `events/${camelCase(node.name)}.ts`,
+                        `events/${renderScope.nameApi.fileName(node.name)}.ts`,
                         asPage(
                             getEventPageFragment({
                                 ...renderScope,
@@ -146,7 +146,7 @@ export function getRenderMapVisitor(
 
                 visitInstruction(node) {
                     return createRenderMap(
-                        `instructions/${camelCase(node.name)}.ts`,
+                        `instructions/${renderScope.nameApi.fileName(node.name)}.ts`,
                         asPage(
                             getInstructionPageFragment({
                                 ...renderScope,
@@ -160,7 +160,7 @@ export function getRenderMapVisitor(
 
                 visitPda(node) {
                     return createRenderMap(
-                        `pdas/${camelCase(node.name)}.ts`,
+                        `pdas/${renderScope.nameApi.fileName(node.name)}.ts`,
                         asPage(getPdaPageFragment({ ...renderScope, pdaPath: stack.getPath('pdaNode') })),
                     );
                 },
@@ -175,7 +175,7 @@ export function getRenderMapVisitor(
 
                     return mergeRenderMaps([
                         createRenderMap({
-                            [`constants/${camelCase(node.name)}.ts`]:
+                            [`constants/${renderScope.nameApi.fileName(node.name)}.ts`]:
                                 constantsToExport.length > 0
                                     ? asPage(
                                           getConstantsPageFragment({
@@ -186,8 +186,10 @@ export function getRenderMapVisitor(
                                           { generatedTypes: renderScope.getImportPath('../types', 'directory') },
                                       )
                                     : undefined,
-                            [`programs/${camelCase(node.name)}.ts`]: asPage(getProgramPageFragment(scope)),
-                            [`errors/${camelCase(node.name)}.ts`]:
+                            [`programs/${renderScope.nameApi.fileName(node.name)}.ts`]: asPage(
+                                getProgramPageFragment(scope),
+                            ),
+                            [`errors/${renderScope.nameApi.fileName(node.name)}.ts`]:
                                 (node.errors ?? []).length > 0 ? asPage(getErrorPageFragment(scope)) : undefined,
                         }),
                         ...(node.pdas ?? []).map(p => visit(p, self)),

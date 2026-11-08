@@ -52,7 +52,7 @@ function getFunctionFragment(
     const seedTypeName = scope.nameApi.pdaSeedsType(pdaNode.name);
     const findPdaFunction = scope.nameApi.pdaFindFunction(pdaNode.name);
 
-    const docs = getDocblockFragment(pdaNode.docs ?? [], true);
+    const docs = getDocblockFragment(pdaNode.docs, true);
     const hasVariableSeeds = seeds.filter(isNodeFilter('variablePdaSeedNode')).length > 0;
     const seedArgument = hasVariableSeeds ? `seeds: ${seedTypeName}, ` : '';
     const programAddress = pdaNode.programId ?? programNode.publicKey;
@@ -77,7 +77,7 @@ function parsePdaSeedNodes(seeds: PdaSeedNode[], scope: Pick<RenderScope, 'typeM
     return seeds.map(seed => {
         if (isNode(seed, 'variablePdaSeedNode')) {
             const name = camelCase(seed.name);
-            const docs = getDocblockFragment(seed.docs ?? [], true);
+            const docs = getDocblockFragment(seed.docs, true);
             const { encoder, looseType } = visit(seed.type, scope.typeManifestVisitor);
             return {
                 ...seed,

@@ -1,21 +1,30 @@
 import type { TypeNode } from '@codama/nodes';
 
-import { Fragment, fragment, getDocblockFragment, mergeFragments, RenderScope, TypeManifest, use } from '../utils';
+import {
+    DocsInput,
+    Fragment,
+    fragment,
+    getDocblockFragment,
+    mergeFragments,
+    RenderScope,
+    TypeManifest,
+    use,
+} from '../utils';
 import { getTypeDecoderFragment } from './typeDecoder';
 import { getTypeEncoderFragment } from './typeEncoder';
 
 export function getTypeCodecFragment(
     scope: Pick<RenderScope, 'nameApi'> & {
-        codecDocs?: string[];
-        decoderDocs?: string[];
-        encoderDocs?: string[];
+        codecDocs?: DocsInput;
+        decoderDocs?: DocsInput;
+        encoderDocs?: DocsInput;
         manifest: Pick<TypeManifest, 'decoder' | 'encoder'>;
         name: string;
         node: TypeNode;
         size: number | null;
     },
 ): Fragment {
-    const { codecDocs = [], name, nameApi } = scope;
+    const { codecDocs, name, nameApi } = scope;
     const codecFunction = nameApi.codecFunction(name);
     const decoderFunction = nameApi.decoderFunction(name);
     const encoderFunction = nameApi.encoderFunction(name);

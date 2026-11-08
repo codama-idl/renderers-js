@@ -647,7 +647,7 @@ export function getTypeManifestVisitor(input: {
                 visitStructFieldType(structFieldType, { self }) {
                     const name = camelCase(structFieldType.name);
                     const originalChildManifest = visit(structFieldType.type, self);
-                    let docs = getDocblockFragment(structFieldType.docs ?? [], true);
+                    let docs = getDocblockFragment(structFieldType.docs, true);
                     docs = docs ? fragment`\n${docs}` : docs;
                     const childManifest = typeManifest({
                         ...originalChildManifest,
