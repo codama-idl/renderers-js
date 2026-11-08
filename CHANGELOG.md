@@ -1,5 +1,19 @@
 # @codama/renderers-js
 
+## 2.9.0
+
+### Minor Changes
+
+- [#292](https://github.com/codama-idl/renderers-js/pull/292) [`27d7495`](https://github.com/codama-idl/renderers-js/commit/27d74959b0947815dd1f4b8a934f30cfa395603b) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Add a `fileName` name transformer controlling the names of generated files and their re-exports from the barrel files. It defaults to the camelCase name used so far, so nothing changes unless it is overridden, e.g. `nameTransformers: { fileName: (name, { kebabCase }) => kebabCase(name) }` writes `my-account.ts` instead of `myAccount.ts`. Documentation blocks also now split their items on line breaks, so multi-line documentation strings render as several lines rather than a single line containing a line break.
+
+- [#244](https://github.com/codama-idl/renderers-js/pull/244) [`9893423`](https://github.com/codama-idl/renderers-js/commit/98934239910b2dd98f6dd3b26b3b6db0ecad52ae) Thanks [@plutohan](https://github.com/plutohan)! - Honor custom variant discriminators when rendering enums. Scalar enums with a custom `discriminator` on any variant are declared with explicit member values and encoded with `useValuesAsDiscriminators`, and discriminated unions map their prefix to the custom values, so the generated codecs match the on-chain layout instead of numbering variants from zero.
+
+### Patch Changes
+
+- [#288](https://github.com/codama-idl/renderers-js/pull/288) [`51d57df`](https://github.com/codama-idl/renderers-js/commit/51d57df699f457e81da9a31ca825ce84c6232511) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Derive every name in generated code from the camelCase form of the node names, so that IDLs whose names are not camelCase — e.g. hand-written JSON IDLs using snake_case — render the same code as their camelCase equivalent. Previously, a few names leaked their raw spelling into generated code (struct value defaults, PDA seed values and the `programName` of identification errors), name conflicts between instruction accounts and arguments were only detected on exact spelling, and errors and constants were sorted by raw name. The keys of the `linkOverrides` option are now matched regardless of their casing too — e.g. `counter_account`, `counterAccount` and `CounterAccount` all refer to the same node — as the `customAccountData`, `customInstructionData`, `internalNodes`, `nonScalarEnums` and `asyncResolvers` options already did.
+
+- [#293](https://github.com/codama-idl/renderers-js/pull/293) [`0092eb9`](https://github.com/codama-idl/renderers-js/commit/0092eb95d3723092c9d3dde383b885500cd1a26e) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Throw `CodamaError`s instead of plain errors when an IDL cannot be rendered, so that callers can identify them by code: `CODAMA_ERROR__DISCRIMINATOR_FIELD_NOT_FOUND` and `CODAMA_ERROR__DISCRIMINATOR_FIELD_HAS_NO_DEFAULT_VALUE` for field discriminators that do not match a field with a default value (previously a single plain error), and `CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE` for instruction input default values the renderer does not support yet, i.e. `accountFieldValueNode` and `injectedValueNode`. The messages of these errors change accordingly.
+
 ## 2.8.0
 
 ### Minor Changes
