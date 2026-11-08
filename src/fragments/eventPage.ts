@@ -1,7 +1,7 @@
-import { EventNode, isNode, resolveNestedTypeNode, structTypeNode } from '@codama/nodes';
+import { EventNode, isNode, structTypeNode } from '@codama/nodes';
 import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
 
-import { Fragment, fragment, mergeFragments, RenderScope, use } from '../utils';
+import { Fragment, fragment, getInnerTypeNode, mergeFragments, RenderScope, use } from '../utils';
 import { getDiscriminatorConditionFragment } from './discriminatorCondition';
 import { getDiscriminatorConstantsFragment, getEventDiscriminatorPrefix } from './discriminatorConstants';
 import { getTypeWithCodecFragment } from './typeWithCodec';
@@ -27,7 +27,7 @@ export function getEventPageFragment(
     const { nameApi } = scope;
     const typeManifest = visit(node, scope.typeManifestVisitor);
     const eventDataName = nameApi.eventDataType(node.name);
-    const resolvedData = resolveNestedTypeNode(node.data);
+    const resolvedData = getInnerTypeNode(node.data);
     const fields = isNode(resolvedData, 'structTypeNode') ? (resolvedData.fields ?? []) : [];
 
     return mergeFragments(
@@ -84,7 +84,7 @@ function getEventParseFunctionFragment(
 }`;
     }
 
-    const resolvedData = resolveNestedTypeNode(node.data);
+    const resolvedData = getInnerTypeNode(node.data);
     const condition = getDiscriminatorConditionFragment({
         ...scope,
         dataName: 'data',

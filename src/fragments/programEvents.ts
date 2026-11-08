@@ -1,6 +1,6 @@
-import { camelCase, isNode, ProgramNode, resolveNestedTypeNode, structTypeNode } from '@codama/nodes';
+import { camelCase, isNode, ProgramNode, structTypeNode } from '@codama/nodes';
 
-import { Fragment, fragment, mergeFragments, RenderScope, use } from '../utils';
+import { Fragment, fragment, getInnerTypeNode, mergeFragments, RenderScope, use } from '../utils';
 import { getDiscriminatorConditionFragment } from './discriminatorCondition';
 import { getEnumDeclarationFragment } from './enumDeclaration';
 
@@ -52,7 +52,7 @@ function getProgramEventsIdentifierFunctionFragment(
     const discriminatorsFragment = mergeFragments(
         eventsWithDiscriminators.map((event): Fragment => {
             const variant = nameApi.programEventsEnumVariant(event.name);
-            const resolvedData = resolveNestedTypeNode(event.data);
+            const resolvedData = getInnerTypeNode(event.data);
             return getDiscriminatorConditionFragment({
                 ...scope,
                 dataName: 'data',

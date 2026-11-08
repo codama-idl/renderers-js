@@ -1,3 +1,13 @@
+/**
+ * The renderer's own view of the inputs of an instruction.
+ *
+ * Fragments consume instructions through the helpers of this module rather than
+ * reading `arguments`, `extraArguments` or resolver value nodes directly, so that
+ * the way the IDL stores these inputs is only known here.
+ *
+ * @packageDocumentation
+ */
+
 import {
     AccountValueNode,
     ArgumentValueNode,
@@ -14,14 +24,6 @@ import {
     StructTypeNode,
     structTypeNodeFromInstructionArgumentNodes,
 } from '@codama/nodes';
-
-/**
- * The renderer's own view of the inputs of an instruction.
- *
- * Fragments consume instructions through the helpers of this module rather than
- * reading `arguments`, `extraArguments` or resolver value nodes directly, so that
- * the way the IDL stores these inputs is only known here.
- */
 
 /** A field of the instruction data or an extra argument, as consumed by the renderer. */
 export type InstructionDataField = Pick<

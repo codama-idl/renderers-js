@@ -6,11 +6,13 @@ import {
     isNode,
     isNodeFilter,
     isScalarEnum,
+    NumberTypeNode,
+    PostOffsetTypeNode,
+    PreOffsetTypeNode,
     REGISTERED_TYPE_NODE_KINDS,
     REGISTERED_VALUE_NODE_KINDS,
     RegisteredTypeNode,
     RegisteredValueNode,
-    resolveNestedTypeNode,
     structFieldTypeNode,
     structTypeNode,
     TypeNode,
@@ -37,8 +39,11 @@ import {
     getCustomDataOptions,
     getDocblockFragment,
     getEnumBody,
+    getInnerTypeNode,
     getInstructionDataNode,
     type GetImportFromFunction,
+    isBigNumberFormat,
+    isDefaultNumberType,
     mergeFragments,
     mergeTypeManifests,
     type NameApi,
@@ -101,6 +106,51 @@ export function getTypeManifestVisitor(input: {
         return nameApi.constant(getConstantDiscriminatorName(prefix, index));
     };
 
+    /**
+     * Renders a variant of a discriminated union from its name and its data, if any.
+     *
+     * A struct data is spread into the variant object alongside the discriminator
+     * attribute, whereas any other data is exposed under a `fields` attribute.
+     */
+    const renderEnumVariant = (
+        variant: { data: TypeNode | undefined; name: string },
+        self: Visitor<TypeManifest, TypeNode['kind']>,
+    ): TypeManifest => {
+        const currentParentName = parentName;
+        const discriminator = nameApi.discriminatedUnionDiscriminator(camelCase(currentParentName?.strict ?? ''));
+        const name = nameApi.discriminatedUnionVariant(variant.name);
+        const kindAttribute = `${discriminator}: "${name}"`;
+
+        if (variant.data === undefined) {
+            return typeManifest({
+                decoder: fragment`['${name}', ${use('getUnitDecoder', 'solanaCodecsDataStructures')}()]`,
+                encoder: fragment`['${name}', ${use('getUnitEncoder', 'solanaCodecsDataStructures')}()]`,
+                looseType: fragment`{ ${kindAttribute} }`,
+                strictType: fragment`{ ${kindAttribute} }`,
+            });
+        }
+
+        const struct = isNode(variant.data, 'structTypeNode')
+            ? variant.data
+            : structTypeNode([structFieldTypeNode({ name: 'fields', type: variant.data })]);
+
+        parentName = null;
+        const structManifest = visit(struct, self);
+        parentName = currentParentName;
+
+        return typeManifest({
+            ...structManifest,
+            decoder: fragment`['${name}', ${structManifest.decoder}]`,
+            encoder: fragment`['${name}', ${structManifest.encoder}]`,
+            looseType: pipe(structManifest.looseType, f =>
+                mapFragmentContent(f, c => `{ ${kindAttribute},${c.slice(1, -1)}}`),
+            ),
+            strictType: pipe(structManifest.strictType, f =>
+                mapFragmentContent(f, c => `{ ${kindAttribute},${c.slice(1, -1)}}`),
+            ),
+        });
+    };
+
     return pipe(
         staticVisitor(() => typeManifest(), {
             keys: [
@@ -155,8 +205,7 @@ export function getTypeManifestVisitor(input: {
                 visitBooleanType(booleanType, { self }) {
                     let sizeEncoder = fragment``;
                     let sizeDecoder = fragment``;
-                    const resolvedSize = resolveNestedTypeNode(booleanType.size);
-                    if (resolvedSize.format !== 'u8' || resolvedSize.endian !== 'le') {
+                    if (!isDefaultNumberType(getInnerTypeNode(booleanType.size), 'u8')) {
                         const size = visit(booleanType.size, self);
                         sizeEncoder = fragment`{ size: ${size.encoder} }`;
                         sizeDecoder = fragment`{ size: ${size.decoder} }`;
@@ -231,72 +280,22 @@ export function getTypeManifestVisitor(input: {
                     });
                 },
 
-                visitEnumEmptyVariantType(enumEmptyVariantType) {
-                    const discriminator = nameApi.discriminatedUnionDiscriminator(camelCase(parentName?.strict ?? ''));
-                    const name = nameApi.discriminatedUnionVariant(enumEmptyVariantType.name);
-                    const kindAttribute = `${discriminator}: "${name}"`;
-                    return typeManifest({
-                        decoder: fragment`['${name}', ${use('getUnitDecoder', 'solanaCodecsDataStructures')}()]`,
-                        encoder: fragment`['${name}', ${use('getUnitEncoder', 'solanaCodecsDataStructures')}()]`,
-                        looseType: fragment`{ ${kindAttribute} }`,
-                        strictType: fragment`{ ${kindAttribute} }`,
-                    });
+                visitEnumEmptyVariantType(enumEmptyVariantType, { self }) {
+                    return renderEnumVariant({ data: undefined, name: enumEmptyVariantType.name }, self);
                 },
 
                 visitEnumStructVariantType(enumStructVariantType, { self }) {
-                    const currentParentName = parentName;
-                    const discriminator = nameApi.discriminatedUnionDiscriminator(
-                        camelCase(currentParentName?.strict ?? ''),
+                    return renderEnumVariant(
+                        { data: enumStructVariantType.struct, name: enumStructVariantType.name },
+                        self,
                     );
-                    const name = nameApi.discriminatedUnionVariant(enumStructVariantType.name);
-                    const kindAttribute = `${discriminator}: "${name}"`;
-
-                    parentName = null;
-                    const structManifest = visit(enumStructVariantType.struct, self);
-                    parentName = currentParentName;
-
-                    return typeManifest({
-                        ...structManifest,
-                        decoder: fragment`['${name}', ${structManifest.decoder}]`,
-                        encoder: fragment`['${name}', ${structManifest.encoder}]`,
-                        looseType: pipe(structManifest.looseType, f =>
-                            mapFragmentContent(f, c => `{ ${kindAttribute},${c.slice(1, -1)}}`),
-                        ),
-                        strictType: pipe(structManifest.strictType, f =>
-                            mapFragmentContent(f, c => `{ ${kindAttribute},${c.slice(1, -1)}}`),
-                        ),
-                    });
                 },
 
                 visitEnumTupleVariantType(enumTupleVariantType, { self }) {
-                    const currentParentName = parentName;
-                    const discriminator = nameApi.discriminatedUnionDiscriminator(
-                        camelCase(currentParentName?.strict ?? ''),
+                    return renderEnumVariant(
+                        { data: enumTupleVariantType.tuple, name: enumTupleVariantType.name },
+                        self,
                     );
-                    const name = nameApi.discriminatedUnionVariant(enumTupleVariantType.name);
-                    const kindAttribute = `${discriminator}: "${name}"`;
-                    const struct = structTypeNode([
-                        structFieldTypeNode({
-                            name: 'fields',
-                            type: enumTupleVariantType.tuple,
-                        }),
-                    ]);
-
-                    parentName = null;
-                    const structManifest = visit(struct, self);
-                    parentName = currentParentName;
-
-                    return typeManifest({
-                        ...structManifest,
-                        decoder: fragment`['${name}', ${structManifest.decoder}]`,
-                        encoder: fragment`['${name}', ${structManifest.encoder}]`,
-                        looseType: pipe(structManifest.looseType, f =>
-                            mapFragmentContent(f, c => `{ ${kindAttribute},${c.slice(1, -1)}}`),
-                        ),
-                        strictType: pipe(structManifest.strictType, f =>
-                            mapFragmentContent(f, c => `{ ${kindAttribute},${c.slice(1, -1)}}`),
-                        ),
-                    });
                 },
 
                 visitEnumType(enumType, { self }) {
@@ -304,8 +303,7 @@ export function getTypeManifestVisitor(input: {
                     const encoderOptions: Fragment[] = [];
                     const decoderOptions: Fragment[] = [];
 
-                    const enumSize = resolveNestedTypeNode(enumType.size);
-                    if (enumSize.format !== 'u8' || enumSize.endian !== 'le') {
+                    if (!isDefaultNumberType(getInnerTypeNode(enumType.size), 'u8')) {
                         const sizeManifest = visit(enumType.size, self);
                         encoderOptions.push(fragment`size: ${sizeManifest.encoder}`);
                         decoderOptions.push(fragment`size: ${sizeManifest.decoder}`);
@@ -423,50 +421,21 @@ export function getTypeManifestVisitor(input: {
                 },
 
                 visitFixedSizeType(node, { self }) {
-                    const manifest = visit(node.type, self);
-                    return typeManifest({
-                        ...manifest,
-                        decoder: fragment`${use('fixDecoderSize', 'solanaCodecsCore')}(${manifest.decoder}, ${node.size})`,
-                        encoder: fragment`${use('fixEncoderSize', 'solanaCodecsCore')}(${manifest.encoder}, ${node.size})`,
-                    });
+                    return applyFixedSize(visit(node.type, self), node.size);
                 },
 
                 visitHiddenPrefixType(node, { self }) {
-                    const manifest = visit(node.type, self);
-                    const prefixes = (node.prefix ?? []).map(c => visit(c, self).value);
-                    const prefixEncoders = pipe(
-                        mergeFragments(prefixes, cs => cs.map(c => `getConstantEncoder(${c})`).join(', ')),
-                        f => addFragmentImports(f, 'solanaCodecsCore', ['getConstantEncoder']),
+                    return applyHiddenPrefix(
+                        visit(node.type, self),
+                        (node.prefix ?? []).map(c => visit(c, self).value),
                     );
-                    const prefixDecoders = pipe(
-                        mergeFragments(prefixes, cs => cs.map(c => `getConstantDecoder(${c})`).join(', ')),
-                        f => addFragmentImports(f, 'solanaCodecsCore', ['getConstantDecoder']),
-                    );
-
-                    return typeManifest({
-                        ...manifest,
-                        decoder: fragment`${use('getHiddenPrefixDecoder', 'solanaCodecsDataStructures')}(${manifest.decoder}, [${prefixDecoders}])`,
-                        encoder: fragment`${use('getHiddenPrefixEncoder', 'solanaCodecsDataStructures')}(${manifest.encoder}, [${prefixEncoders}])`,
-                    });
                 },
 
                 visitHiddenSuffixType(node, { self }) {
-                    const manifest = visit(node.type, self);
-                    const suffixes = (node.suffix ?? []).map(c => visit(c, self).value);
-                    const suffixEncoders = pipe(
-                        mergeFragments(suffixes, cs => cs.map(c => `getConstantEncoder(${c})`).join(', ')),
-                        f => addFragmentImports(f, 'solanaCodecsCore', ['getConstantEncoder']),
+                    return applyHiddenSuffix(
+                        visit(node.type, self),
+                        (node.suffix ?? []).map(c => visit(c, self).value),
                     );
-                    const suffixDecoders = pipe(
-                        mergeFragments(suffixes, cs => cs.map(c => `getConstantDecoder(${c})`).join(', ')),
-                        f => addFragmentImports(f, 'solanaCodecsCore', ['getConstantDecoder']),
-                    );
-
-                    return typeManifest({
-                        ...manifest,
-                        decoder: fragment`${use('getHiddenSuffixDecoder', 'solanaCodecsDataStructures')}(${manifest.decoder}, [${suffixDecoders}])`,
-                        encoder: fragment`${use('getHiddenSuffixEncoder', 'solanaCodecsDataStructures')}(${manifest.encoder}, [${suffixEncoders}])`,
-                    });
                 },
 
                 visitInstruction(instruction, { self }) {
@@ -519,23 +488,11 @@ export function getTypeManifestVisitor(input: {
                 },
 
                 visitNumberType(numberType) {
-                    const encoderFunction = use(nameApi.encoderFunction(numberType.format), 'solanaCodecsNumbers');
-                    const decoderFunction = use(nameApi.decoderFunction(numberType.format), 'solanaCodecsNumbers');
-                    const isBigNumber = ['u64', 'u128', 'i64', 'i128'].includes(numberType.format);
-                    const endianness =
-                        numberType.endian === 'be'
-                            ? fragment`{ endian: ${use('Endian', 'solanaCodecsNumbers')}.Big }`
-                            : '';
-                    return typeManifest({
-                        decoder: fragment`${decoderFunction}(${endianness})`,
-                        encoder: fragment`${encoderFunction}(${endianness})`,
-                        looseType: fragment`${isBigNumber ? 'number | bigint' : 'number'}`,
-                        strictType: fragment`${isBigNumber ? 'bigint' : 'number'}`,
-                    });
+                    return renderNumberType(numberType.format, numberType.endian, nameApi);
                 },
 
                 visitNumberValue(node) {
-                    return typeManifest({ value: fragment`${JSON.stringify(node.number)}` });
+                    return renderNumberValue(node.number);
                 },
 
                 visitOptionType(optionType, { self }) {
@@ -544,8 +501,7 @@ export function getTypeManifestVisitor(input: {
                     const decoderOptions: Fragment[] = [];
 
                     // Prefix option.
-                    const optionPrefix = resolveNestedTypeNode(optionType.prefix);
-                    if (optionPrefix.format !== 'u8' || optionPrefix.endian !== 'le') {
+                    if (!isDefaultNumberType(getInnerTypeNode(optionType.prefix), 'u8')) {
                         const prefixManifest = visit(optionType.prefix, self);
                         encoderOptions.push(fragment`prefix: ${prefixManifest.encoder}`);
                         decoderOptions.push(fragment`prefix: ${prefixManifest.decoder}`);
@@ -574,69 +530,11 @@ export function getTypeManifestVisitor(input: {
                 },
 
                 visitPostOffsetType(node, { self }) {
-                    const manifest = visit(node.type, self);
-                    if (node.strategy === 'padded') {
-                        return typeManifest({
-                            ...manifest,
-                            decoder: fragment`${use('padRightDecoder', 'solanaCodecsCore')}(${manifest.decoder}, ${node.offset})`,
-                            encoder: fragment`${use('padRightEncoder', 'solanaCodecsCore')}(${manifest.encoder}, ${node.offset})`,
-                        });
-                    }
-
-                    const fn = (() => {
-                        switch (node.strategy) {
-                            case 'absolute':
-                                return node.offset < 0
-                                    ? `({ wrapBytes }) => wrapBytes(${node.offset})`
-                                    : `() => ${node.offset}`;
-                            case 'preOffset':
-                                return node.offset < 0
-                                    ? `({ preOffset }) => preOffset ${node.offset}`
-                                    : `({ preOffset }) => preOffset + ${node.offset}`;
-                            case 'relative':
-                            default:
-                                return node.offset < 0
-                                    ? `({ postOffset }) => postOffset ${node.offset}`
-                                    : `({ postOffset }) => postOffset + ${node.offset}`;
-                        }
-                    })();
-
-                    return typeManifest({
-                        ...manifest,
-                        decoder: fragment`${use('offsetDecoder', 'solanaCodecsCore')}(${manifest.decoder}, { postOffset: ${fn} })`,
-                        encoder: fragment`${use('offsetEncoder', 'solanaCodecsCore')}(${manifest.encoder}, { postOffset: ${fn} })`,
-                    });
+                    return applyPostOffset(visit(node.type, self), node.offset, node.strategy);
                 },
 
                 visitPreOffsetType(node, { self }) {
-                    const manifest = visit(node.type, self);
-                    if (node.strategy === 'padded') {
-                        return typeManifest({
-                            ...manifest,
-                            decoder: fragment`${use('padLeftDecoder', 'solanaCodecsCore')}(${manifest.decoder}, ${node.offset})`,
-                            encoder: fragment`${use('padLeftEncoder', 'solanaCodecsCore')}(${manifest.encoder}, ${node.offset})`,
-                        });
-                    }
-
-                    const fn = (() => {
-                        switch (node.strategy) {
-                            case 'absolute':
-                                return node.offset < 0
-                                    ? `({ wrapBytes }) => wrapBytes(${node.offset})`
-                                    : `() => ${node.offset}`;
-                            case 'relative':
-                            default:
-                                return node.offset < 0
-                                    ? `({ preOffset }) => preOffset ${node.offset}`
-                                    : `({ preOffset }) => preOffset + ${node.offset}`;
-                        }
-                    })();
-
-                    return typeManifest({
-                        ...manifest,
-                        decoder: fragment`${use('offsetDecoder', 'solanaCodecsCore')}(${manifest.decoder}, { preOffset: ${fn} })`,
-                        encoder: fragment`${use('offsetEncoder', 'solanaCodecsCore')}(${manifest.encoder}, { preOffset: ${fn} })`,
-                    });
+                    return applyPreOffset(visit(node.type, self), node.offset, node.strategy);
                 },
 
                 visitPublicKeyType() {
@@ -676,13 +574,7 @@ export function getTypeManifestVisitor(input: {
                 },
 
                 visitSentinelType(node, { self }) {
-                    const manifest = visit(node.type, self);
-                    const sentinel = visit(node.sentinel, self).value;
-                    return typeManifest({
-                        ...manifest,
-                        decoder: fragment`${use('addDecoderSentinel', 'solanaCodecsCore')}(${manifest.decoder}, ${sentinel})`,
-                        encoder: fragment`${use('addEncoderSentinel', 'solanaCodecsCore')}(${manifest.encoder}, ${sentinel})`,
-                    });
+                    return applySentinel(visit(node.type, self), visit(node.sentinel, self).value);
                 },
 
                 visitSetType(setType, { self }) {
@@ -708,26 +600,11 @@ export function getTypeManifestVisitor(input: {
                 },
 
                 visitSizePrefixType(node, { self }) {
-                    const manifest = visit(node.type, self);
-                    const prefix = visit(node.prefix, self);
-
-                    return typeManifest({
-                        ...manifest,
-                        decoder: fragment`${use('addDecoderSizePrefix', 'solanaCodecsCore')}(${manifest.decoder}, ${prefix.decoder})`,
-                        encoder: fragment`${use('addEncoderSizePrefix', 'solanaCodecsCore')}(${manifest.encoder}, ${prefix.encoder})`,
-                    });
+                    return applySizePrefix(visit(node.type, self), visit(node.prefix, self));
                 },
 
                 visitSolAmountType({ number }, { self }) {
-                    const numberManifest = visit(number, self);
-
-                    return typeManifest({
-                        ...numberManifest,
-                        decoder: fragment`${use('getLamportsDecoder', 'solanaRpcTypes')}(${numberManifest.decoder})`,
-                        encoder: fragment`${use('getLamportsEncoder', 'solanaRpcTypes')}(${numberManifest.encoder})`,
-                        looseType: use('type Lamports', 'solanaRpcTypes'),
-                        strictType: use('type Lamports', 'solanaRpcTypes'),
-                    });
+                    return applyLamports(visit(number, self));
                 },
 
                 visitSomeValue(node, { self }) {
@@ -930,6 +807,171 @@ export function getTypeManifestVisitor(input: {
     );
 }
 
+/** Renders the codecs and types of a number from its format and endianness. */
+function renderNumberType(
+    format: NumberTypeNode['format'],
+    endian: NumberTypeNode['endian'],
+    nameApi: NameApi,
+): TypeManifest {
+    const encoderFunction = use(nameApi.encoderFunction(format), 'solanaCodecsNumbers');
+    const decoderFunction = use(nameApi.decoderFunction(format), 'solanaCodecsNumbers');
+    const isBigNumber = isBigNumberFormat(format);
+    const endianness = endian === 'be' ? fragment`{ endian: ${use('Endian', 'solanaCodecsNumbers')}.Big }` : '';
+    return typeManifest({
+        decoder: fragment`${decoderFunction}(${endianness})`,
+        encoder: fragment`${encoderFunction}(${endianness})`,
+        looseType: fragment`${isBigNumber ? 'number | bigint' : 'number'}`,
+        strictType: fragment`${isBigNumber ? 'bigint' : 'number'}`,
+    });
+}
+
+/** Renders a number literal. */
+function renderNumberValue(value: number): TypeManifest {
+    return typeManifest({ value: fragment`${JSON.stringify(value)}` });
+}
+
+/** Wraps the codecs of a number into lamports codecs, typed as `Lamports`. */
+function applyLamports(manifest: TypeManifest): TypeManifest {
+    return typeManifest({
+        ...manifest,
+        decoder: fragment`${use('getLamportsDecoder', 'solanaRpcTypes')}(${manifest.decoder})`,
+        encoder: fragment`${use('getLamportsEncoder', 'solanaRpcTypes')}(${manifest.encoder})`,
+        looseType: use('type Lamports', 'solanaRpcTypes'),
+        strictType: use('type Lamports', 'solanaRpcTypes'),
+    });
+}
+
+/** Fixes the byte size of the codecs of a type. */
+function applyFixedSize(manifest: TypeManifest, size: number): TypeManifest {
+    return typeManifest({
+        ...manifest,
+        decoder: fragment`${use('fixDecoderSize', 'solanaCodecsCore')}(${manifest.decoder}, ${size})`,
+        encoder: fragment`${use('fixEncoderSize', 'solanaCodecsCore')}(${manifest.encoder}, ${size})`,
+    });
+}
+
+/** Prefixes the codecs of a type with the given constant values. */
+function applyHiddenPrefix(manifest: TypeManifest, prefixes: Fragment[]): TypeManifest {
+    const prefixEncoders = pipe(
+        mergeFragments(prefixes, cs => cs.map(c => `getConstantEncoder(${c})`).join(', ')),
+        f => addFragmentImports(f, 'solanaCodecsCore', ['getConstantEncoder']),
+    );
+    const prefixDecoders = pipe(
+        mergeFragments(prefixes, cs => cs.map(c => `getConstantDecoder(${c})`).join(', ')),
+        f => addFragmentImports(f, 'solanaCodecsCore', ['getConstantDecoder']),
+    );
+    return typeManifest({
+        ...manifest,
+        decoder: fragment`${use('getHiddenPrefixDecoder', 'solanaCodecsDataStructures')}(${manifest.decoder}, [${prefixDecoders}])`,
+        encoder: fragment`${use('getHiddenPrefixEncoder', 'solanaCodecsDataStructures')}(${manifest.encoder}, [${prefixEncoders}])`,
+    });
+}
+
+/** Suffixes the codecs of a type with the given constant values. */
+function applyHiddenSuffix(manifest: TypeManifest, suffixes: Fragment[]): TypeManifest {
+    const suffixEncoders = pipe(
+        mergeFragments(suffixes, cs => cs.map(c => `getConstantEncoder(${c})`).join(', ')),
+        f => addFragmentImports(f, 'solanaCodecsCore', ['getConstantEncoder']),
+    );
+    const suffixDecoders = pipe(
+        mergeFragments(suffixes, cs => cs.map(c => `getConstantDecoder(${c})`).join(', ')),
+        f => addFragmentImports(f, 'solanaCodecsCore', ['getConstantDecoder']),
+    );
+    return typeManifest({
+        ...manifest,
+        decoder: fragment`${use('getHiddenSuffixDecoder', 'solanaCodecsDataStructures')}(${manifest.decoder}, [${suffixDecoders}])`,
+        encoder: fragment`${use('getHiddenSuffixEncoder', 'solanaCodecsDataStructures')}(${manifest.encoder}, [${suffixEncoders}])`,
+    });
+}
+
+/** Moves the cursor after the codecs of a type have run. */
+function applyPostOffset(
+    manifest: TypeManifest,
+    offset: number,
+    strategy: PostOffsetTypeNode['strategy'] | undefined,
+): TypeManifest {
+    if (strategy === 'padded') {
+        return typeManifest({
+            ...manifest,
+            decoder: fragment`${use('padRightDecoder', 'solanaCodecsCore')}(${manifest.decoder}, ${offset})`,
+            encoder: fragment`${use('padRightEncoder', 'solanaCodecsCore')}(${manifest.encoder}, ${offset})`,
+        });
+    }
+
+    const fn = (() => {
+        switch (strategy) {
+            case 'absolute':
+                return offset < 0 ? `({ wrapBytes }) => wrapBytes(${offset})` : `() => ${offset}`;
+            case 'preOffset':
+                return offset < 0
+                    ? `({ preOffset }) => preOffset ${offset}`
+                    : `({ preOffset }) => preOffset + ${offset}`;
+            case 'relative':
+            default:
+                return offset < 0
+                    ? `({ postOffset }) => postOffset ${offset}`
+                    : `({ postOffset }) => postOffset + ${offset}`;
+        }
+    })();
+
+    return typeManifest({
+        ...manifest,
+        decoder: fragment`${use('offsetDecoder', 'solanaCodecsCore')}(${manifest.decoder}, { postOffset: ${fn} })`,
+        encoder: fragment`${use('offsetEncoder', 'solanaCodecsCore')}(${manifest.encoder}, { postOffset: ${fn} })`,
+    });
+}
+
+/** Moves the cursor before the codecs of a type run. */
+function applyPreOffset(
+    manifest: TypeManifest,
+    offset: number,
+    strategy: PreOffsetTypeNode['strategy'] | undefined,
+): TypeManifest {
+    if (strategy === 'padded') {
+        return typeManifest({
+            ...manifest,
+            decoder: fragment`${use('padLeftDecoder', 'solanaCodecsCore')}(${manifest.decoder}, ${offset})`,
+            encoder: fragment`${use('padLeftEncoder', 'solanaCodecsCore')}(${manifest.encoder}, ${offset})`,
+        });
+    }
+
+    const fn = (() => {
+        switch (strategy) {
+            case 'absolute':
+                return offset < 0 ? `({ wrapBytes }) => wrapBytes(${offset})` : `() => ${offset}`;
+            case 'relative':
+            default:
+                return offset < 0
+                    ? `({ preOffset }) => preOffset ${offset}`
+                    : `({ preOffset }) => preOffset + ${offset}`;
+        }
+    })();
+
+    return typeManifest({
+        ...manifest,
+        decoder: fragment`${use('offsetDecoder', 'solanaCodecsCore')}(${manifest.decoder}, { preOffset: ${fn} })`,
+        encoder: fragment`${use('offsetEncoder', 'solanaCodecsCore')}(${manifest.encoder}, { preOffset: ${fn} })`,
+    });
+}
+
+/** Delimits the codecs of a type with a sentinel value. */
+function applySentinel(manifest: TypeManifest, sentinel: Fragment): TypeManifest {
+    return typeManifest({
+        ...manifest,
+        decoder: fragment`${use('addDecoderSentinel', 'solanaCodecsCore')}(${manifest.decoder}, ${sentinel})`,
+        encoder: fragment`${use('addEncoderSentinel', 'solanaCodecsCore')}(${manifest.encoder}, ${sentinel})`,
+    });
+}
+
+/** Prefixes the codecs of a type with its byte size. */
+function applySizePrefix(manifest: TypeManifest, prefix: TypeManifest): TypeManifest {
+    return typeManifest({
+        ...manifest,
+        decoder: fragment`${use('addDecoderSizePrefix', 'solanaCodecsCore')}(${manifest.decoder}, ${prefix.decoder})`,
+        encoder: fragment`${use('addEncoderSizePrefix', 'solanaCodecsCore')}(${manifest.encoder}, ${prefix.encoder})`,
+    });
+}
+
 function getArrayLikeSizeOption(
     count: CountNode,
     visitor: Visitor<TypeManifest, TypeNode['kind']>,
@@ -949,8 +991,7 @@ function getArrayLikeSizeOption(
             encoder: fragment`size: 'remainder'`,
         };
     }
-    const prefix = resolveNestedTypeNode(count.prefix);
-    if (prefix.format === 'u32' && prefix.endian === 'le') {
+    if (isDefaultNumberType(getInnerTypeNode(count.prefix), 'u32')) {
         return { decoder: undefined, encoder: undefined };
     }
     const prefixManifest = visit(count.prefix, visitor);
