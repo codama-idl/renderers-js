@@ -1,9 +1,11 @@
-import { NestedTypeNode, NumberTypeNode, resolveNestedTypeNode, TypeNode } from '@codama/nodes';
-
 /**
  * Helpers reading type nodes the way the renderer needs them, so that the
  * way the IDL wraps types (e.g. with size prefixes or offsets) is only known here.
+ *
+ * @packageDocumentation
  */
+
+import { NestedTypeNode, NumberTypeNode, resolveNestedTypeNode, TypeNode } from '@codama/nodes';
 
 /** The innermost type of a possibly wrapped type node. */
 export function getInnerTypeNode<T extends TypeNode>(node: NestedTypeNode<T>): T {
