@@ -54,7 +54,7 @@ function getTypeFragment(
 
     const accounts = mergeFragments(
         (scope.instructionNode.accounts ?? []).map((account, i) => {
-            const docs = getDocblockFragment(account.docs ?? [], true);
+            const docs = getDocblockFragment(account.docs, true);
             const name = camelCase(account.name);
             return fragment`${docs}${name}${account.isOptional ? '?' : ''}: TAccountMetas[${i}]${account.isOptional ? ' | undefined' : ''};`;
         }),

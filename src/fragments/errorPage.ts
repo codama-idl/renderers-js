@@ -21,7 +21,7 @@ function getConstantsFragment(scope: Pick<RenderScope, 'nameApi'> & { programNod
         [...(scope.programNode.errors ?? [])]
             .sort((a, b) => a.code - b.code)
             .map(error => {
-                const docs = getDocblockFragment(error.docs ?? [], true);
+                const docs = getDocblockFragment(error.docs, true);
                 const name = constantPrefix + scope.nameApi.programErrorConstant(error.name);
                 return fragment`${docs}export const ${name} = 0x${error.code.toString(16)}; // ${error.code}`;
             }),

@@ -1,14 +1,14 @@
-import { Fragment, fragment, getDocblockFragment, RenderScope, TypeManifest } from '../utils';
+import { DocsInput, Fragment, fragment, getDocblockFragment, RenderScope, TypeManifest } from '../utils';
 import { getEnumDeclarationFromBodyFragment } from './enumDeclaration';
 
 export function getTypeFragment(
     scope: Pick<RenderScope, 'erasableSyntax' | 'nameApi'> & {
-        docs?: string[];
+        docs?: DocsInput;
         manifest: TypeManifest;
         name: string;
     },
 ): Fragment {
-    const { name, manifest, nameApi, docs = [] } = scope;
+    const { name, manifest, nameApi, docs } = scope;
 
     const docblock = getDocblockFragment(docs, true);
     const strictName = nameApi.dataType(name);

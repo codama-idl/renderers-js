@@ -36,7 +36,7 @@ function getConstantFragment(
     const useBigInt = isNode(node.value, 'numberValueNode') && resolvesToBigInt(node.type, scope);
     const value = useBigInt ? fragment`${rawValue}n` : rawValue;
     const valueType = isNode(node.value, 'stringValueNode') ? fragment`string` : typeManifest.strictType;
-    const docs = getDocblockFragment(node.docs ?? [], true);
+    const docs = getDocblockFragment(node.docs, true);
 
     return fragment`${docs}export const ${scope.nameApi.constant(node.name)}: ${valueType} = ${value};`;
 }

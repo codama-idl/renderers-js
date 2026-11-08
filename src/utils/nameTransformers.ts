@@ -33,6 +33,7 @@ export type NameTransformerKey =
     | 'enumVariant'
     | 'eventDataType'
     | 'eventParseFunction'
+    | 'fileName'
     | 'instructionAsyncFunction'
     | 'instructionAsyncInputType'
     | 'instructionDataType'
@@ -115,6 +116,7 @@ export const DEFAULT_NAME_TRANSFORMERS: NameTransformers = {
     enumVariant: name => `${pascalCase(name)}`,
     eventDataType: name => `${pascalCase(name)}Event`,
     eventParseFunction: name => `parse${pascalCase(name)}Event`,
+    fileName: name => camelCase(name),
     instructionAsyncFunction: name => `get${pascalCase(name)}InstructionAsync`,
     instructionAsyncInputType: name => `${pascalCase(name)}AsyncInput`,
     instructionDataType: name => `${pascalCase(name)}InstructionData`,
