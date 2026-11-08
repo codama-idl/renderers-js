@@ -40,8 +40,10 @@ import {
     getCustomDataOptions,
     getDocblockFragment,
     getEnumBody,
+    getEnumVariantDiscriminators,
     getInnerTypeNode,
     getInstructionDataNode,
+    hasCustomEnumVariantDiscriminators,
     type GetImportFromFunction,
     isBigNumberFormat,
     isDefaultNumberType,
@@ -303,11 +305,30 @@ export function getTypeManifestVisitor(input: {
                     const currentParentName = parentName;
                     const encoderOptions: Fragment[] = [];
                     const decoderOptions: Fragment[] = [];
+                    const variants = enumType.variants ?? [];
+                    const hasCustomDiscriminators = hasCustomEnumVariantDiscriminators(variants);
+                    const discriminators = getEnumVariantDiscriminators(variants);
 
-                    if (!isDefaultNumberType(getInnerTypeNode(enumType.size), 'u8')) {
+                    const hasDefaultSize = isDefaultNumberType(getInnerTypeNode(enumType.size), 'u8');
+                    if (hasCustomDiscriminators && !isScalarEnum(enumType)) {
+                        // The discriminated union codec writes the position of the variant as its
+                        // prefix, so the prefix codec maps that position to the custom discriminator.
+                        const sizeManifest = visit(enumType.size, self);
+                        const values = `[${discriminators.join(', ')}]`;
+                        encoderOptions.push(
+                            fragment`size: ${use('transformEncoder', 'solanaCodecsCore')}(${sizeManifest.encoder}, (index: bigint | number) => ${values}[Number(index)]!)`,
+                        );
+                        decoderOptions.push(
+                            fragment`size: ${use('transformDecoder', 'solanaCodecsCore')}(${sizeManifest.decoder}, (value: bigint | number) => ${values}.indexOf(Number(value)))`,
+                        );
+                    } else if (!hasDefaultSize) {
                         const sizeManifest = visit(enumType.size, self);
                         encoderOptions.push(fragment`size: ${sizeManifest.encoder}`);
                         decoderOptions.push(fragment`size: ${sizeManifest.decoder}`);
+                    }
+                    if (hasCustomDiscriminators && isScalarEnum(enumType)) {
+                        encoderOptions.push(fragment`useValuesAsDiscriminators: true`);
+                        decoderOptions.push(fragment`useValuesAsDiscriminators: true`);
                     }
 
                     const discriminator = nameApi.discriminatedUnionDiscriminator(
@@ -333,8 +354,12 @@ export function getTypeManifestVisitor(input: {
                                     'defined type that is a scalar enum through a visitor.',
                             );
                         }
-                        const variantNames = (enumType.variants ?? []).map(({ name }) => nameApi.enumVariant(name));
-                        const body = getEnumBody(variantNames, erasableSyntax);
+                        const variantNames = variants.map(({ name }) => nameApi.enumVariant(name));
+                        const body = getEnumBody(
+                            variantNames,
+                            erasableSyntax,
+                            hasCustomDiscriminators ? discriminators : undefined,
+                        );
                         // Reverse mappings would widen the decoder output type. The encoder
                         // can safely accept the wider input type, so only narrow the decoder.
                         const decoderConstructor = erasableSyntax

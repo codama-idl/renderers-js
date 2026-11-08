@@ -8,18 +8,27 @@
  *
  * @param variantNames - The variant names, in declaration order.
  * @param erasableSyntax - Whether to render the runtime object used for erasable enums.
+ * @param values - The explicit value of each variant, in declaration order. Variants are
+ * numbered from zero when omitted.
  * @returns The object body, without the surrounding braces.
  *
  * @example
  * ```ts
  * getEnumBody(['Uninitialized', 'Asset'], true);
  * // "0: 'Uninitialized', 1: 'Asset', Uninitialized: 0, Asset: 1"
+ *
+ * getEnumBody(['First', 'Fifth'], false, [1, 5]);
+ * // "First = 1, Fifth = 5"
  * ```
  */
-export function getEnumBody(variantNames: string[], erasableSyntax: boolean): string {
-    if (!erasableSyntax) return variantNames.join(', ');
+export function getEnumBody(variantNames: string[], erasableSyntax: boolean, values?: number[]): string {
+    if (!erasableSyntax) {
+        if (!values) return variantNames.join(', ');
+        return variantNames.map((name, index) => `${name} = ${values[index]}`).join(', ');
+    }
 
-    const reverseEntries = variantNames.map((name, index) => `${index}: '${name}'`);
-    const forwardEntries = variantNames.map((name, index) => `${name}: ${index}`);
+    const resolvedValues = values ?? variantNames.map((_, index) => index);
+    const reverseEntries = variantNames.map((name, index) => `${resolvedValues[index]}: '${name}'`);
+    const forwardEntries = variantNames.map((name, index) => `${name}: ${resolvedValues[index]}`);
     return [...reverseEntries, ...forwardEntries].join(', ');
 }
