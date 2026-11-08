@@ -1,4 +1,9 @@
 import {
+    CODAMA_ERROR__DISCRIMINATOR_FIELD_HAS_NO_DEFAULT_VALUE,
+    CODAMA_ERROR__DISCRIMINATOR_FIELD_NOT_FOUND,
+    CodamaError,
+} from '@codama/errors';
+import {
     camelCase,
     type ConstantDiscriminatorNode,
     constantDiscriminatorNode,
@@ -91,10 +96,11 @@ function getFieldConditionFragment(
     },
 ): Fragment {
     const field = (scope.struct.fields ?? []).find(f => camelCase(f.name) === camelCase(discriminator.name));
-    if (!field || !field.defaultValue) {
-        throw new Error(
-            `Field discriminator "${discriminator.name}" does not have a matching argument with default value.`,
-        );
+    if (!field) {
+        throw new CodamaError(CODAMA_ERROR__DISCRIMINATOR_FIELD_NOT_FOUND, { field: discriminator.name });
+    }
+    if (!field.defaultValue) {
+        throw new CodamaError(CODAMA_ERROR__DISCRIMINATOR_FIELD_HAS_NO_DEFAULT_VALUE, { field: discriminator.name });
     }
 
     // This handles the case where a field uses an u8 array to represent its discriminator.
