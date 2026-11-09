@@ -1,5 +1,8 @@
 version: 2
 updates:
+  # `main` hosts the current major. Dependabot only reads this file from the default
+  # branch, so it takes effect once `main` is the default branch again; until then,
+  # the configuration of the `2.x` branch applies.
   - package-ecosystem: 'npm'
     directory: '/'
     schedule:
@@ -11,10 +14,20 @@ updates:
       codama:
         patterns:
           - '@codama/*'
+
+  # `2.x` maintains the previous major, which targets Codama v1.
   - package-ecosystem: 'npm'
-    directory: 'packages/renderers-js/test/e2e'
+    directory: '/'
+    target-branch: 2.x
     schedule:
       interval: daily
       time: '01:00'
       timezone: America/Los_Angeles
     open-pull-requests-limit: 10
+    groups:
+      codama:
+        patterns:
+          - '@codama/*'
+    ignore:
+      - dependency-name: '@codama/*'
+        update-types: ['version-update:semver-major']
