@@ -1,7 +1,7 @@
 import { camelCase } from '@codama/fragments/casing';
-import { isNode, ProgramNode, structTypeNode } from '@codama/nodes';
+import { ProgramNode } from '@codama/nodes';
 
-import { Fragment, fragment, getInnerTypeNode, mergeFragments, RenderScope, use } from '../utils';
+import { Fragment, fragment, getStructFields, mergeFragments, RenderScope, use } from '../utils';
 import { getDiscriminatorConditionFragment } from './discriminatorCondition';
 import { getEnumDeclarationFragment } from './enumDeclaration';
 
@@ -53,13 +53,12 @@ function getProgramEventsIdentifierFunctionFragment(
     const discriminatorsFragment = mergeFragments(
         eventsWithDiscriminators.map((event): Fragment => {
             const variant = nameApi.programEventsEnumVariant(event.identifier);
-            const resolvedData = getInnerTypeNode(event.data);
             return getDiscriminatorConditionFragment({
                 ...scope,
                 dataName: 'data',
                 discriminators: event.discriminators ?? [],
+                fields: getStructFields(event.data),
                 ifTrue: `return ${programEventsEnum}.${variant};`,
-                struct: isNode(resolvedData, 'structTypeNode') ? resolvedData : structTypeNode([]),
             });
         }),
         c => c.join('\n'),

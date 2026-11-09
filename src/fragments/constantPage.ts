@@ -1,8 +1,9 @@
+import { mapFragmentContent } from '@codama/fragments';
 import { camelCase } from '@codama/fragments/casing';
 import { ConstantNode, isNode, ProgramNode, TypeNode } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
 
-import { Fragment, fragment, getDocblockFragment, mergeFragments, RenderScope } from '../utils';
+import { Fragment, fragment, getBigIntLiteral, getDocblockFragment, mergeFragments, RenderScope } from '../utils';
 
 /**
  * Renders program constants as TypeScript value declarations.
@@ -34,8 +35,8 @@ function getConstantFragment(
 ): Fragment {
     const typeManifest = visit(node.type, scope.typeManifestVisitor);
     const rawValue = visit(node.value, scope.typeManifestVisitor).value;
-    const useBigInt = isNode(node.value, 'numberValueNode') && resolvesToBigInt(node.type, scope);
-    const value = useBigInt ? fragment`${rawValue}n` : rawValue;
+    const useBigInt = isNode(node.value, 'integerValueNode') && resolvesToBigInt(node.type, scope);
+    const value = useBigInt ? mapFragmentContent(rawValue, getBigIntLiteral) : rawValue;
     const valueType = isNode(node.value, 'stringValueNode') ? fragment`string` : typeManifest.strictType;
     const docs = getDocblockFragment(node.docs, true);
 

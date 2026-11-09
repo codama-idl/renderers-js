@@ -1,14 +1,15 @@
 import { DefinedTypeNode } from '@codama/nodes';
-import { pipe, visit } from '@codama/visitors-core';
+import { NodePath, pipe, visit } from '@codama/visitors-core';
 
 import { Fragment, mergeFragments, removeFragmentImports, RenderScope } from '../utils';
 import { getTypeDiscriminatedUnionHelpersFragment } from './typeDiscriminatedUnionHelpers';
 import { getTypeWithCodecFragment } from './typeWithCodec';
 
 export function getTypePageFragment(
-    scope: Pick<RenderScope, 'erasableSyntax' | 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<RenderScope, 'erasableSyntax' | 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         node: DefinedTypeNode;
         size: number | null;
+        typePath: NodePath<DefinedTypeNode>;
     },
 ): Fragment {
     const node = scope.node;
@@ -23,7 +24,12 @@ export function getTypePageFragment(
                     node: node.type,
                     typeDocs: node.docs,
                 }),
-                getTypeDiscriminatedUnionHelpersFragment({ ...scope, name: node.identifier, typeNode: node.type }),
+                getTypeDiscriminatedUnionHelpersFragment({
+                    ...scope,
+                    name: node.identifier,
+                    typeNode: node.type,
+                    typePath: scope.typePath,
+                }),
             ],
             cs => cs.join('\n\n'),
         ),

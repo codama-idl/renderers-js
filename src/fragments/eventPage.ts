@@ -1,8 +1,8 @@
 import { CODAMA_ERROR__NODE_PATH_PROGRAM_MISSING, CodamaError } from '@codama/errors';
-import { EventNode, isNode, structTypeNode } from '@codama/nodes';
+import { EventNode } from '@codama/nodes';
 import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
 
-import { Fragment, fragment, getInnerTypeNode, mergeFragments, RenderScope, use } from '../utils';
+import { Fragment, fragment, getStructFields, mergeFragments, RenderScope, use } from '../utils';
 import { getDiscriminatorConditionFragment } from './discriminatorCondition';
 import { getDiscriminatorConstantsFragment, getEventDiscriminatorPrefix } from './discriminatorConstants';
 import { getTypeWithCodecFragment } from './typeWithCodec';
@@ -28,8 +28,7 @@ export function getEventPageFragment(
     const { nameApi } = scope;
     const typeManifest = visit(node, scope.typeManifestVisitor);
     const eventDataName = nameApi.eventDataType(node.identifier);
-    const resolvedData = getInnerTypeNode(node.data);
-    const fields = isNode(resolvedData, 'structTypeNode') ? (resolvedData.fields ?? []) : [];
+    const fields = getStructFields(node.data);
 
     return mergeFragments(
         [
@@ -85,14 +84,13 @@ function getEventParseFunctionFragment(
 }`;
     }
 
-    const resolvedData = getInnerTypeNode(node.data);
     const condition = getDiscriminatorConditionFragment({
         ...scope,
         dataName: 'data',
         discriminators,
+        fields: getStructFields(node.data),
         ifTrue: `return ${decoderFunction}().decode(data);`,
         programNode: findProgramNodeFromPath(scope.eventPath)!,
-        struct: isNode(resolvedData, 'structTypeNode') ? resolvedData : structTypeNode([]),
     });
 
     return fragment`${docblock}export function ${parseFunction}(data: ${readonlyUint8Array} | Uint8Array): ${strictName} {

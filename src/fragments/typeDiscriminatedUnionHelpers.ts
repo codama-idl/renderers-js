@@ -1,11 +1,12 @@
 import { isDataEnum, isNode, TypeNode } from '@codama/nodes';
+import { NodePath } from '@codama/visitors-core';
 
-import { Fragment, fragment, mergeFragments, RenderScope, use } from '../utils';
+import { Fragment, fragment, getEnumVariantDataShape, mergeFragments, RenderScope, use } from '../utils';
 
 export function getTypeDiscriminatedUnionHelpersFragment(
-    scope: Pick<RenderScope, 'nameApi'> & { name: string; typeNode: TypeNode },
+    scope: Pick<RenderScope, 'linkables' | 'nameApi'> & { name: string; typeNode: TypeNode; typePath: NodePath },
 ): Fragment | undefined {
-    const { name, typeNode, nameApi } = scope;
+    const { name, typeNode, typePath, linkables, nameApi } = scope;
     const isDiscriminatedUnion = isNode(typeNode, 'enumTypeNode') && isDataEnum(typeNode);
     if (!isDiscriminatedUnion) return;
 
@@ -20,10 +21,11 @@ export function getTypeDiscriminatedUnionHelpersFragment(
     const variantSignatures = mergeFragments(
         (typeNode.variants ?? []).map(variant => {
             const variantName = nameApi.discriminatedUnionVariant(variant.identifier);
-            if (isNode(variant, 'enumStructVariantTypeNode')) {
+            const shape = getEnumVariantDataShape(variant.data, typePath, linkables);
+            if (shape === 'struct') {
                 return fragment`export function ${functionName}(kind: '${variantName}', data: ${getVariantContentType}<${looseName}, '${discriminatorName}', '${variantName}'>): ${getVariantType}<${looseName}, '${discriminatorName}', '${variantName}'>;`;
             }
-            if (isNode(variant, 'enumTupleVariantTypeNode')) {
+            if (shape !== 'none') {
                 return fragment`export function ${functionName}(kind: '${variantName}', data: ${getVariantContentType}<${looseName}, '${discriminatorName}', '${variantName}'>['fields']): ${getVariantType}<${looseName}, '${discriminatorName}', '${variantName}'>;`;
             }
             return fragment`export function ${functionName}(kind: '${variantName}'): ${getVariantType}<${looseName}, '${discriminatorName}', '${variantName}'>;`;

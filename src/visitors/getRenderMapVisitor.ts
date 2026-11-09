@@ -123,9 +123,15 @@ export function getRenderMapVisitor(
                 visitDefinedType(node) {
                     return createRenderMap(
                         `types/${renderScope.nameApi.fileName(node.identifier)}.ts`,
-                        asPage(getTypePageFragment({ ...renderScope, node, size: visit(node, byteSizeVisitor) }), {
-                            generatedTypes: renderScope.getImportPath('.', 'directory'),
-                        }),
+                        asPage(
+                            getTypePageFragment({
+                                ...renderScope,
+                                node,
+                                size: visit(node, byteSizeVisitor),
+                                typePath: stack.getPath('definedTypeNode'),
+                            }),
+                            { generatedTypes: renderScope.getImportPath('.', 'directory') },
+                        ),
                     );
                 },
 

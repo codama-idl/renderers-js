@@ -1,7 +1,7 @@
 import { camelCase } from '@codama/fragments/casing';
 import { ProgramNode } from '@codama/nodes';
 
-import { Fragment, fragment, getInnerTypeNode, mergeFragments, RenderScope, use } from '../utils';
+import { Fragment, fragment, getStructFields, mergeFragments, RenderScope, use } from '../utils';
 import { getDiscriminatorConditionFragment } from './discriminatorCondition';
 import { getEnumDeclarationFragment } from './enumDeclaration';
 
@@ -54,8 +54,8 @@ function getProgramAccountsIdentifierFunctionFragment(
                 ...scope,
                 dataName: 'data',
                 discriminators: account.discriminators ?? [],
+                fields: getStructFields(account.data),
                 ifTrue: `return ${programAccountsEnum}.${variant};`,
-                struct: getInnerTypeNode(account.data),
             });
         }),
         c => c.join('\n'),
