@@ -1,4 +1,4 @@
-import { joinPath, Path } from '@codama/renderers-core';
+import { joinPath, Path } from '@codama/fragments';
 import { Plugin, resolveConfig } from 'prettier';
 import * as babelPlugin from 'prettier/plugins/babel';
 import * as estreePlugin from 'prettier/plugins/estree';

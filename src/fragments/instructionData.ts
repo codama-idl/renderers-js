@@ -22,7 +22,7 @@ export function getInstructionDataFragment(
     const instructionNode = getLastNodeFromPath(instructionPath);
     if (!hasInstructionData(instructionNode) || getCustomDataOptions(customInstructionData, instructionNode)) return;
 
-    const instructionDataName = nameApi.instructionDataType(instructionNode.name);
+    const instructionDataName = nameApi.instructionDataType(instructionNode.identifier);
     return getTypeWithCodecFragment({
         erasableSyntax: scope.erasableSyntax,
         manifest: dataArgsManifest,

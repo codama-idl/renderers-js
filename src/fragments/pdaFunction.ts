@@ -1,4 +1,5 @@
-import { camelCase, isNode, isNodeFilter, PdaNode, PdaSeedNode } from '@codama/nodes';
+import { camelCase } from '@codama/fragments/casing';
+import { isNode, isNodeFilter, PdaNode, PdaSeedNode } from '@codama/nodes';
 import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
 
 import { Fragment, fragment, getDocblockFragment, mergeFragments, RenderScope, use } from '../utils';
@@ -26,7 +27,7 @@ function getSeedInputTypeFragment(
     if (variableSeeds.length === 0) return;
 
     const pdaNode = getLastNodeFromPath(scope.pdaPath);
-    const seedTypeName = scope.nameApi.pdaSeedsType(pdaNode.name);
+    const seedTypeName = scope.nameApi.pdaSeedsType(pdaNode.identifier);
     const seedAttributes = mergeFragments(
         variableSeeds.map(seed => seed.inputAttribute),
         cs => cs.join('\n'),
@@ -49,8 +50,8 @@ function getFunctionFragment(
     const pdaType = use('type ProgramDerivedAddress', 'solanaAddresses');
     const getPdaFunction = use('getProgramDerivedAddress', 'solanaAddresses');
 
-    const seedTypeName = scope.nameApi.pdaSeedsType(pdaNode.name);
-    const findPdaFunction = scope.nameApi.pdaFindFunction(pdaNode.name);
+    const seedTypeName = scope.nameApi.pdaSeedsType(pdaNode.identifier);
+    const findPdaFunction = scope.nameApi.pdaFindFunction(pdaNode.identifier);
 
     const docs = getDocblockFragment(pdaNode.docs, true);
     const hasVariableSeeds = seeds.filter(isNodeFilter('variablePdaSeedNode')).length > 0;
@@ -76,7 +77,7 @@ type ParsedPdaSeedNode = PdaSeedNode & {
 function parsePdaSeedNodes(seeds: PdaSeedNode[], scope: Pick<RenderScope, 'typeManifestVisitor'>): ParsedPdaSeedNode[] {
     return seeds.map(seed => {
         if (isNode(seed, 'variablePdaSeedNode')) {
-            const name = camelCase(seed.name);
+            const name = camelCase(seed.identifier);
             const docs = getDocblockFragment(seed.docs, true);
             const { encoder, looseType } = visit(seed.type, scope.typeManifestVisitor);
             return {

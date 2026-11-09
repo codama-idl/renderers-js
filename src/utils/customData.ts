@@ -1,7 +1,6 @@
+import { camelCase } from '@codama/fragments/casing';
 import {
     AccountNode,
-    camelCase,
-    CamelCaseString,
     DefinedTypeLinkNode,
     definedTypeLinkNode,
     DefinedTypeNode,
@@ -28,11 +27,11 @@ export type CustomDataOptions =
  * so that nodes are matched regardless of the casing of their name.
  */
 export type ParsedCustomDataOptions = Map<
-    CamelCaseString,
+    string,
     {
         extract: boolean;
-        extractAs: CamelCaseString;
-        importAs: CamelCaseString;
+        extractAs: string;
+        importAs: string;
         importFrom: string;
         linkNode: DefinedTypeLinkNode;
     }
@@ -46,9 +45,9 @@ export type ParsedCustomDataOptions = Map<
  */
 export function getCustomDataOptions(
     options: ParsedCustomDataOptions,
-    node: Pick<AccountNode | InstructionNode, 'name'>,
+    node: Pick<AccountNode | InstructionNode, 'identifier'>,
 ): ReturnType<ParsedCustomDataOptions['get']> {
-    return options.get(camelCase(node.name));
+    return options.get(camelCase(node.identifier));
 }
 
 export const parseCustomDataOptions = (
@@ -82,12 +81,12 @@ export const getDefinedTypeNodesToExtract = (
         if (!options || !options.extract) return [];
 
         if (isNode(node, 'accountNode')) {
-            return [definedTypeNode({ name: options.extractAs, type: { ...node.data } })];
+            return [definedTypeNode({ identifier: options.extractAs, type: { ...node.data } })];
         }
 
         return [
             definedTypeNode({
-                name: options.extractAs,
+                identifier: options.extractAs,
                 type: getInstructionDataNode(node),
             }),
         ];

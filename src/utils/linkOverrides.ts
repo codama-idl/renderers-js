@@ -1,13 +1,6 @@
 import { CODAMA_ERROR__UNEXPECTED_NODE_KIND, CodamaError } from '@codama/errors';
-import {
-    AccountLinkNode,
-    camelCase,
-    DefinedTypeLinkNode,
-    InstructionLinkNode,
-    PdaLinkNode,
-    ProgramLinkNode,
-    ResolverValueNode,
-} from '@codama/nodes';
+import { camelCase } from '@codama/fragments/casing';
+import { AccountLinkNode, DefinedTypeLinkNode, InstructionLinkNode, PdaLinkNode, ProgramLinkNode } from '@codama/nodes';
 
 import { ParsedCustomDataOptions } from './customData';
 import { InstructionResolver, isInstructionResolver } from './instructionInputs';
@@ -27,13 +20,7 @@ export type LinkOverrides = {
     resolvers?: Record<string, string>;
 };
 
-type OverridableNodes =
-    | AccountLinkNode
-    | DefinedTypeLinkNode
-    | InstructionLinkNode
-    | PdaLinkNode
-    | ProgramLinkNode
-    | ResolverValueNode;
+type OverridableNodes = AccountLinkNode | DefinedTypeLinkNode | InstructionLinkNode | PdaLinkNode | ProgramLinkNode;
 
 /** Resolves the module a linked node, or a resolver, is imported from. */
 export type GetImportFromFunction = (node: InstructionResolver | OverridableNodes, fallback?: string) => string;
@@ -59,10 +46,10 @@ export function getImportFromFactory(
     };
 
     return (node: InstructionResolver | OverridableNodes) => {
-        const name = camelCase(node.name);
         if (isInstructionResolver(node)) {
-            return linkOverrides.resolvers[name] ?? 'hooked';
+            return linkOverrides.resolvers[camelCase(node.name)] ?? 'hooked';
         }
+        const name = camelCase(node.identifier);
         const kind = node.kind;
         switch (kind) {
             case 'accountLinkNode':
@@ -75,8 +62,6 @@ export function getImportFromFactory(
                 return linkOverrides.pdas[name] ?? 'generatedPdas';
             case 'programLinkNode':
                 return linkOverrides.programs[name] ?? 'generatedPrograms';
-            case 'resolverValueNode':
-                return linkOverrides.resolvers[name] ?? 'hooked';
             default:
                 throw new CodamaError(CODAMA_ERROR__UNEXPECTED_NODE_KIND, {
                     expectedKinds: [
@@ -85,10 +70,8 @@ export function getImportFromFactory(
                         'instructionLinkNode',
                         'pdaLinkNode',
                         'programLinkNode',
-                        'resolverValueNode',
                     ],
-                    kind: kind satisfies never,
-                    node,
+                    path: [node satisfies never],
                 });
         }
     };

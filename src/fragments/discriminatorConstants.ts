@@ -1,21 +1,29 @@
+import { camelCase } from '@codama/fragments/casing';
 import {
-    camelCase,
     ConstantDiscriminatorNode,
     DiscriminatorNode,
     FieldDiscriminatorNode,
     isNode,
     isNodeFilter,
     StructFieldTypeNode,
-    VALUE_NODES,
+    VALUE_NODE_KINDS,
 } from '@codama/nodes';
 import { visit } from '@codama/visitors-core';
 
-import { Fragment, fragment, InstructionDataField, mergeFragments, NameApi, RenderScope, use } from '../utils';
+import {
+    Fragment,
+    fragment,
+    getFieldDiscriminatorIdentifier,
+    mergeFragments,
+    NameApi,
+    RenderScope,
+    use,
+} from '../utils';
 
 export function getDiscriminatorConstantsFragment(
     scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
         discriminatorNodes: DiscriminatorNode[];
-        fields: InstructionDataField[] | StructFieldTypeNode[];
+        fields: StructFieldTypeNode[];
         prefix: string;
     },
 ): Fragment {
@@ -30,7 +38,7 @@ export function getDiscriminatorConstantFragment(
     discriminatorNode: DiscriminatorNode,
     scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
         discriminatorNodes: DiscriminatorNode[];
-        fields: InstructionDataField[] | StructFieldTypeNode[];
+        fields: StructFieldTypeNode[];
         prefix: string;
     },
 ): Fragment | null {
@@ -98,18 +106,19 @@ export function getConstantDiscriminatorConstantFragment(
 export function getFieldDiscriminatorConstantFragment(
     discriminatorNode: FieldDiscriminatorNode,
     scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
-        fields: InstructionDataField[] | StructFieldTypeNode[];
+        fields: StructFieldTypeNode[];
         prefix: string;
     },
 ): Fragment | null {
     const { fields, prefix, typeManifestVisitor } = scope;
 
-    const field = fields.find(f => camelCase(f.name) === camelCase(discriminatorNode.name));
-    if (!field || !field.defaultValue || !isNode(field.defaultValue, VALUE_NODES)) {
+    const identifier = getFieldDiscriminatorIdentifier(discriminatorNode);
+    const field = fields.find(f => camelCase(f.identifier) === camelCase(identifier));
+    if (!field || !field.defaultValue || !isNode(field.defaultValue, VALUE_NODE_KINDS)) {
         return null;
     }
 
-    const name = camelCase(`${prefix}_${discriminatorNode.name}`);
+    const name = camelCase(`${prefix}_${identifier}`);
     const typeManifest = visit(field.type, typeManifestVisitor);
     const encoder = typeManifest.encoder;
     const { value, valueType } = resolveDiscriminatorValue(

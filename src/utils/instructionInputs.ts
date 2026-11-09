@@ -8,10 +8,10 @@
  * @packageDocumentation
  */
 
+import { camelCase } from '@codama/fragments/casing';
 import {
     AccountValueNode,
     ArgumentValueNode,
-    camelCase,
     Docs,
     InstructionAccountNode,
     InstructionArgumentNode,
@@ -24,6 +24,14 @@ import {
     StructTypeNode,
     structTypeNodeFromInstructionArgumentNodes,
 } from '@codama/nodes';
+import {
+    getProvidedScopeFromPath,
+    getResolvedInstructionInputsVisitor,
+    LinkableDictionary,
+    NodePath,
+    NodeStack,
+    ResolvedInstructionInput,
+} from '@codama/visitors-core';
 
 /** A field of the instruction data or an extra argument, as consumed by the renderer. */
 export type InstructionDataField = Pick<
@@ -150,5 +158,22 @@ function getResolverFromValue(
     value: InstructionByteDeltaNode['value'] | InstructionInputValueNode | undefined,
 ): InstructionResolver | undefined {
     if (!isNode(value, 'resolverValueNode')) return undefined;
-    return Object.freeze({ dependsOn: value.dependsOn ?? [], docs: value.docs ?? [], name: value.name });
+    return Object.freeze({ dependsOn: value.dependsOn ?? [], docs: value.docs ?? [], name: value.identifier });
+}
+
+/**
+ * Resolves the inputs of an instruction in dependency order, with their default values
+ * after resolving injected values from the `provides` of the instruction and its parents.
+ *
+ * @param instructionPath - The path of the instruction from the root, which must contain
+ * its program so that linked instruction data can be followed.
+ * @param linkables - The linkable nodes of the tree the instruction belongs to.
+ */
+export function getResolvedInstructionInputs(
+    instructionPath: NodePath<InstructionNode>,
+    linkables: LinkableDictionary,
+): ResolvedInstructionInput[] {
+    const stack = new NodeStack();
+    const scope = getProvidedScopeFromPath(instructionPath.slice(0, -1));
+    return stack.visitPath(instructionPath, getResolvedInstructionInputsVisitor(linkables, { scope, stack }));
 }

@@ -1,4 +1,5 @@
-import { camelCase, ConstantNode, isNode, ProgramNode, TypeNode } from '@codama/nodes';
+import { camelCase } from '@codama/fragments/casing';
+import { ConstantNode, isNode, ProgramNode, TypeNode } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
 
 import { Fragment, fragment, getDocblockFragment, mergeFragments, RenderScope } from '../utils';
@@ -19,7 +20,7 @@ export function getConstantsPageFragment(
 
     return mergeFragments(
         [...scope.nodes]
-            .sort((a, b) => camelCase(a.name).localeCompare(camelCase(b.name)))
+            .sort((a, b) => camelCase(a.identifier).localeCompare(camelCase(b.identifier)))
             .map(node => getConstantFragment(node, scope)),
         constants => constants.join('\n\n'),
     );
@@ -38,7 +39,7 @@ function getConstantFragment(
     const valueType = isNode(node.value, 'stringValueNode') ? fragment`string` : typeManifest.strictType;
     const docs = getDocblockFragment(node.docs, true);
 
-    return fragment`${docs}export const ${scope.nameApi.constant(node.name)}: ${valueType} = ${value};`;
+    return fragment`${docs}export const ${scope.nameApi.constant(node.identifier)}: ${valueType} = ${value};`;
 }
 
 function resolvesToBigInt(

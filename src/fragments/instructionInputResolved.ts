@@ -1,5 +1,6 @@
-import { camelCase, InstructionNode, isNode, parseOptionalAccountStrategy } from '@codama/nodes';
-import { mapFragmentContent } from '@codama/renderers-core';
+import { mapFragmentContent } from '@codama/fragments';
+import { camelCase } from '@codama/fragments/casing';
+import { InstructionNode, isNode, parseOptionalAccountStrategy } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath, ResolvedInstructionInput } from '@codama/visitors-core';
 
 import { Fragment, fragment, mergeFragments, RenderScope } from '../utils';

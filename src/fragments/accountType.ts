@@ -16,12 +16,12 @@ export function getAccountTypeFragment(
     if (getCustomDataOptions(customAccountData, accountNode)) return;
 
     return getTypeWithCodecFragment({
-        codecDocs: [`Gets the codec for {@link ${nameApi.dataType(accountNode.name)}} account data.`],
-        decoderDocs: [`Gets the decoder for {@link ${nameApi.dataType(accountNode.name)}} account data.`],
-        encoderDocs: [`Gets the encoder for {@link ${nameApi.dataArgsType(accountNode.name)}} account data.`],
+        codecDocs: [`Gets the codec for {@link ${nameApi.dataType(accountNode.identifier)}} account data.`],
+        decoderDocs: [`Gets the decoder for {@link ${nameApi.dataType(accountNode.identifier)}} account data.`],
+        encoderDocs: [`Gets the encoder for {@link ${nameApi.dataArgsType(accountNode.identifier)}} account data.`],
         erasableSyntax: scope.erasableSyntax,
         manifest: typeManifest,
-        name: accountNode.name,
+        name: accountNode.identifier,
         nameApi,
         node: getInnerTypeNode(accountNode.data),
         size: scope.size,

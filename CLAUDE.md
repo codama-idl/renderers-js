@@ -47,7 +47,7 @@ Think of the repo as a 3-layer generator:
 
 ### `Fragment`
 
-Defined in `src/utils/fragment.ts`.
+Defined in `src/utils/fragment.ts`, on top of the `BaseFragment` and `createFragmentTemplate` primitives of `@codama/fragments`. The renderer keeps its own JavaScript flavour rather than `@codama/fragments/javascript` so that it controls import rendering (kit import strategies, import extensions).
 
 A `Fragment` is the fundamental render unit:
 
@@ -86,7 +86,7 @@ Shared context passed to fragments. Includes naming rules, dependency maps, cust
 
 ### `RenderMap`
 
-Comes from `@codama/renderers-core`.
+Comes from `@codama/fragments`, which also provides the filesystem and path helpers.
 
 Maps relative output file paths to fragments/content before final writing.
 
@@ -146,9 +146,11 @@ Root index generation is centralized in `src/fragments/rootIndexPage.ts`. `inter
 
 Naming is centralized in `src/utils/nameTransformers.ts`. Do not hardcode names in new code if a `nameApi` function already exists.
 
+Codama v2 node identifiers keep their original casing (e.g. `transfer_tokens` from an Anchor IDL), so every name emitted in generated code must go through `nameApi` or the casing helpers of `@codama/fragments/casing`, and option keys referencing nodes (e.g. `linkOverrides`, `internalNodes`) are compared by their camelCase form.
+
 Important defaults:
 
-- files: `camelCase(name).ts`
+- files: `camelCase(identifier).ts` (`fileName` transformer)
 - data types: `PascalCaseName`
 - loose/input data types: `PascalCaseNameArgs`
 - encoder: `getPascalCaseNameEncoder`

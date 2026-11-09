@@ -1,5 +1,6 @@
-import { logWarn } from '@codama/errors';
-import { camelCase, definedTypeNode, InstructionNode } from '@codama/nodes';
+import { CODAMA_ERROR__NODE_PATH_PROGRAM_MISSING, CodamaError, logWarn } from '@codama/errors';
+import { camelCase } from '@codama/fragments/casing';
+import { definedTypeNode, InstructionNode } from '@codama/nodes';
 import {
     findProgramNodeFromPath,
     getLastNodeFromPath,
@@ -41,7 +42,7 @@ export function getInstructionPageFragment(
 ): Fragment {
     const node = getLastNodeFromPath(scope.instructionPath);
     if (!findProgramNodeFromPath(scope.instructionPath)) {
-        throw new Error('Instruction must be visited inside a program.');
+        throw new CodamaError(CODAMA_ERROR__NODE_PATH_PROGRAM_MISSING, { path: scope.instructionPath });
     }
 
     const childScope = {
@@ -49,7 +50,7 @@ export function getInstructionPageFragment(
         dataArgsManifest: visit(node, scope.typeManifestVisitor),
         extraArgsManifest: visit(
             definedTypeNode({
-                name: scope.nameApi.instructionExtraType(node.name),
+                identifier: scope.nameApi.instructionExtraType(node.identifier),
                 type: getInstructionExtraArgumentsNode(node),
             }),
             scope.typeManifestVisitor,
@@ -63,7 +64,7 @@ export function getInstructionPageFragment(
                 ...childScope,
                 discriminatorNodes: node.discriminators ?? [],
                 fields: getInstructionDataFields(node),
-                prefix: node.name,
+                prefix: node.identifier,
             }),
             getInstructionTypeFragment(childScope),
             getInstructionDataFragment(childScope),
@@ -86,15 +87,17 @@ export function getRenamedArgsMap(instruction: InstructionNode): Map<string, str
     const argNames = getAllInstructionDataFields(instruction).map(a => camelCase(a.name));
     const duplicateArgs = argNames.filter((e, i, a) => a.indexOf(e) !== i);
     if (duplicateArgs.length > 0) {
-        throw new Error(`Duplicate args found: [${duplicateArgs.join(', ')}] in instruction [${instruction.name}].`);
+        throw new Error(
+            `Duplicate args found: [${duplicateArgs.join(', ')}] in instruction [${instruction.identifier}].`,
+        );
     }
 
-    const allNames = [...(instruction.accounts ?? []).map(account => camelCase(account.name)), ...argNames];
+    const allNames = [...(instruction.accounts ?? []).map(account => camelCase(account.identifier)), ...argNames];
     const duplicates = allNames.filter((e, i, a) => a.indexOf(e) !== i);
     if (duplicates.length === 0) return new Map();
 
     logWarn(
-        `[JavaScript] Accounts and args of instruction [${instruction.name}] have the following ` +
+        `[JavaScript] Accounts and args of instruction [${instruction.identifier}] have the following ` +
             `conflicting attributes [${duplicates.join(', ')}]. ` +
             `Thus, the arguments have been renamed to avoid conflicts in the input type.`,
     );

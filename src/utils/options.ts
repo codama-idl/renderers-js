@@ -1,4 +1,3 @@
-import type { CamelCaseString } from '@codama/nodes';
 import type { LinkableDictionary } from '@codama/visitors-core';
 
 import type { TypeManifestVisitor } from '../visitors';
@@ -39,7 +38,7 @@ export type GetRenderMapOptions = {
 };
 
 export type RenderScope = {
-    asyncResolvers: CamelCaseString[];
+    asyncResolvers: string[];
     customAccountData: ParsedCustomDataOptions;
     customInstructionData: ParsedCustomDataOptions;
     dependencyMap: Record<string, string>;
@@ -51,7 +50,7 @@ export type RenderScope = {
     kitImportStrategy: KitImportStrategy;
     linkables: LinkableDictionary;
     nameApi: NameApi;
-    nonScalarEnums: CamelCaseString[];
+    nonScalarEnums: string[];
     renderParentInstructions: boolean;
     typeManifestVisitor: TypeManifestVisitor;
 };

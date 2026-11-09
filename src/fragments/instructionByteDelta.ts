@@ -1,5 +1,6 @@
-import { assertIsNode, camelCase, InstructionByteDeltaNode, InstructionNode, isNode } from '@codama/nodes';
-import { mapFragmentContent } from '@codama/renderers-core';
+import { mapFragmentContent } from '@codama/fragments';
+import { camelCase } from '@codama/fragments/casing';
+import { assertIsNode, InstructionByteDeltaNode, InstructionNode, isNode } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
 import {
@@ -74,7 +75,7 @@ function getNumberValueNodeFragment(byteDelta: InstructionByteDeltaNode): Fragme
 
 function getArgumentValueNodeFragment(byteDelta: InstructionByteDeltaNode): Fragment {
     assertIsNode(byteDelta.value, 'argumentValueNode');
-    const argumentName = camelCase(byteDelta.value.name);
+    const argumentName = camelCase(byteDelta.value.identifier);
     return fragment`Number(args.${argumentName})`;
 }
 
@@ -84,7 +85,7 @@ function getAccountLinkNodeFragment(
 ): Fragment {
     assertIsNode(byteDelta.value, 'accountLinkNode');
     const functionName = use(
-        scope.nameApi.accountGetSizeFunction(byteDelta.value.name),
+        scope.nameApi.accountGetSizeFunction(byteDelta.value.identifier),
         scope.getImportFrom(byteDelta.value),
     );
     return fragment`${functionName}()`;

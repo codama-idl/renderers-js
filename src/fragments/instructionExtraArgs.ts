@@ -1,5 +1,5 @@
+import { mapFragmentContent } from '@codama/fragments';
 import { InstructionNode } from '@codama/nodes';
-import { mapFragmentContent } from '@codama/renderers-core';
 import { getLastNodeFromPath, NodePath } from '@codama/visitors-core';
 
 import { Fragment, getInstructionExtraArguments, RenderScope, TypeManifest } from '../utils';
@@ -14,7 +14,7 @@ export function getInstructionExtraArgsFragment(
     const instructionNode = getLastNodeFromPath(instructionPath);
     if (getInstructionExtraArguments(instructionNode).length === 0) return;
 
-    const instructionExtraName = nameApi.instructionExtraType(instructionNode.name);
+    const instructionExtraName = nameApi.instructionExtraType(instructionNode.identifier);
     const looseName = nameApi.dataArgsType(instructionExtraName);
     return mapFragmentContent(extraArgsManifest.looseType, c => `export type ${looseName} = ${c};`);
 }

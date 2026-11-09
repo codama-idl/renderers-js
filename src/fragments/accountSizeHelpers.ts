@@ -10,7 +10,7 @@ export function getAccountSizeHelpersFragment(
     const accountNode = getLastNodeFromPath(accountPath);
     if (accountNode.size == null) return;
 
-    const getSizeFunction = nameApi.accountGetSizeFunction(accountNode.name);
+    const getSizeFunction = nameApi.accountGetSizeFunction(accountNode.identifier);
     return fragment`export function ${getSizeFunction}(): number {
   return ${accountNode.size};
 }`;
