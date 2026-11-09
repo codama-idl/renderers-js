@@ -405,7 +405,7 @@ If you need to...
 ## Practical repo facts
 
 - Package manager: `pnpm@10.15.1`
-- Required Node: `>=20.18.0`
+- Required Node: `>=22.12.0`
 - Package type: `commonjs`
 - Published files: built entrypoints and `dist/types`
 - Default generated folder in consumer packages: `src/generated`
