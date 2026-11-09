@@ -28,6 +28,7 @@ import {
 import {
     extendVisitor,
     findLastNodeFromPath,
+    getLastNodeFromPath,
     interceptVisitor,
     LinkableDictionary,
     NodeStack,
@@ -48,6 +49,7 @@ import {
     getDocblockFragment,
     getEnumBody,
     getFieldDiscriminatorIdentifier,
+    getEnumVariantDataShape,
     getEnumVariantDiscriminators,
     getInstructionDataNode,
     getIntegerLiteral,
@@ -57,7 +59,7 @@ import {
     type GetImportFromFunction,
     isBigIntegerFormat,
     isDefaultIntegerType,
-    isStructEnumVariantData,
+    isStructFieldCodecDefaultOverridable,
     mergeFragments,
     mergeTypeManifests,
     type NameApi,
@@ -123,10 +125,7 @@ export function getTypeManifestVisitor(input: {
     /**
      * Renders a variant of a discriminated union from its name and its data, if any.
      *
-     * The fields of a struct, inline or linked, are spread into the variant object
-     * alongside the discriminator attribute. Any other data is exposed under a `fields`
-     * tuple attribute, wrapping a single type into a one-item tuple, which encodes to
-     * the same bytes, so that `Variant(u8)` and `Variant((u8,))` share the same API.
+     * See {@link getEnumVariantDataShape} for how the data of the variant is exposed.
      */
     const renderEnumVariant = (
         variant: { data: TypeNode | undefined; name: string },
@@ -137,7 +136,8 @@ export function getTypeManifestVisitor(input: {
         const name = nameApi.discriminatedUnionVariant(variant.name);
         const kindAttribute = `${discriminator}: "${name}"`;
 
-        if (variant.data === undefined) {
+        const shape = getEnumVariantDataShape(variant.data, stack.getPath(), linkables);
+        if (shape === 'none' || variant.data === undefined) {
             return typeManifest({
                 decoder: fragment`['${name}', ${use('getUnitDecoder', 'solanaCodecsDataStructures')}()]`,
                 encoder: fragment`['${name}', ${use('getUnitEncoder', 'solanaCodecsDataStructures')}()]`,
@@ -146,10 +146,7 @@ export function getTypeManifestVisitor(input: {
             });
         }
 
-        if (
-            isNode(variant.data, 'definedTypeLinkNode') &&
-            isStructEnumVariantData(variant.data, stack.getPath(), linkables)
-        ) {
+        if (shape === 'struct' && !isNode(variant.data, 'structTypeNode')) {
             const linkManifest = visit(variant.data, self);
             return typeManifest({
                 ...linkManifest,
@@ -160,7 +157,7 @@ export function getTypeManifestVisitor(input: {
             });
         }
 
-        const fields = isNode(variant.data, 'tupleTypeNode') ? variant.data : tupleTypeNode([variant.data]);
+        const fields = shape === 'single' ? tupleTypeNode([variant.data]) : variant.data;
         const struct = isNode(variant.data, 'structTypeNode')
             ? variant.data
             : structTypeNode([structFieldTypeNode({ identifier: 'fields', type: fields })]);
@@ -212,7 +209,7 @@ export function getTypeManifestVisitor(input: {
                     return applySizePrefix(current, visit(transform.prefix, self));
                 default:
                     throw new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, {
-                        path: [transform satisfies never],
+                        path: [...stack.getPath(), transform satisfies never],
                     });
             }
         }, manifest);
@@ -440,7 +437,8 @@ export function getTypeManifestVisitor(input: {
                     const enumFunction = nameApi.discriminatedUnionFunction(node.enum.identifier);
                     const importFrom = getImportFrom(node.enum);
 
-                    const enumNode = linkables.get([...stack.getPath(), node.enum])?.type;
+                    const enumPath = linkables.getPath([...stack.getPath(), node.enum]);
+                    const enumNode = enumPath ? getLastNodeFromPath(enumPath).type : undefined;
                     const isScalar =
                         enumNode && isNode(enumNode, 'enumTypeNode')
                             ? isScalarEnum(enumNode)
@@ -470,10 +468,21 @@ export function getTypeManifestVisitor(input: {
                         });
                     }
 
+                    // The value of a variant holding a single type is passed as a one-item tuple.
+                    const variant =
+                        enumPath && enumNode && isNode(enumNode, 'enumTypeNode')
+                            ? (enumNode.variants ?? []).find(v => v.identifier === node.variant)
+                            : undefined;
+                    const isSingleValue =
+                        !!enumPath &&
+                        !!variant &&
+                        getEnumVariantDataShape(variant.data, [...enumPath, enumNode!, variant], linkables) ===
+                            'single';
                     return typeManifest({
                         ...manifest,
                         value: pipe(
                             visit(node.value, self).value,
+                            f => (isSingleValue ? mapFragmentContent(f, c => `[${c}]`) : f),
                             f => mapFragmentContent(f, c => `${enumFunction}('${variantName}', ${c})`),
                             f => addFragmentImports(f, importFrom, [enumFunction]),
                         ),
@@ -730,8 +739,8 @@ export function getTypeManifestVisitor(input: {
                         return childManifest;
                     }
 
-                    // Optional default value.
-                    if (structFieldType.defaultValueStrategy !== 'omitted') {
+                    // Optional default value, which a given value overrides.
+                    if (isStructFieldCodecDefaultOverridable(structFieldType)) {
                         return typeManifest({
                             ...childManifest,
                             looseType: fragment`${docs}${name}?: ${originalChildManifest.looseType}; `,
@@ -798,14 +807,14 @@ export function getTypeManifestVisitor(input: {
                                 const constantName = nameApi.constant(
                                     camelCase(`${discriminatorPrefix}_${f.identifier}`),
                                 );
-                                return f.defaultValueStrategy === 'omitted'
+                                return !isStructFieldCodecDefaultOverridable(f)
                                     ? fragment`${key}: ${constantName}`
                                     : fragment`${key}: value.${key} ?? ${constantName}`;
                             }
 
                             const defaultValue = getStructFieldCodecDefault(f)!;
                             const value = visit(defaultValue, self).value;
-                            return f.defaultValueStrategy === 'omitted'
+                            return !isStructFieldCodecDefaultOverridable(f)
                                 ? fragment`${key}: ${value}`
                                 : fragment`${key}: value.${key} ?? ${value}`;
                         }),

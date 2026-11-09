@@ -14,7 +14,7 @@ import {
     TypeNode,
     ValueNode,
 } from '@codama/nodes';
-import { LinkableDictionary, NodePath } from '@codama/visitors-core';
+import { getLastNodeFromPath, LinkableDictionary, NodePath } from '@codama/visitors-core';
 
 /**
  * Whether an integer type is the default one for prefixes and sizes, i.e. a
@@ -37,12 +37,24 @@ export function getTypeNodeTransforms(node: Node): readonly TransformNode[] {
 /**
  * The default value of a struct field that its codec fills in, if any.
  *
- * Injected values are resolved from the providers of an enclosing instruction, so
- * they are filled in by instruction builders rather than by the codec of the field.
+ * An injected value is resolved from the providers of an enclosing instruction, which
+ * instruction builders fill in before encoding. Its codec can therefore only fill in
+ * its `fallback`, the value used when nothing is provided — e.g. in account data —
+ * and only when no value was given, see {@link isStructFieldCodecDefaultOverridable}.
  */
 export function getStructFieldCodecDefault(field: StructFieldTypeNode): ValueNode | undefined {
-    if (!field.defaultValue || isNode(field.defaultValue, 'injectedValueNode')) return undefined;
+    if (!field.defaultValue) return undefined;
+    if (isNode(field.defaultValue, 'injectedValueNode')) return field.defaultValue.fallback;
     return field.defaultValue;
+}
+
+/**
+ * Whether a value given for a struct field takes precedence over the default value its
+ * codec fills in. That is the case unless the default is omitted from the input, except
+ * for injected values, since instruction builders provide them before encoding.
+ */
+export function isStructFieldCodecDefaultOverridable(field: StructFieldTypeNode): boolean {
+    return field.defaultValueStrategy !== 'omitted' || isNode(field.defaultValue, 'injectedValueNode');
 }
 
 /**
@@ -67,21 +79,44 @@ export function getBigIntLiteral(integerLiteral: string): string {
 }
 
 /**
- * Whether the data of an enum variant is spread into the variant object, i.e. it is a
- * struct, inline or linked, rather than exposed under a `fields` tuple attribute.
+ * How the data of an enum variant is exposed on the variant object:
+ *
+ * - `none`: a unit variant, without data.
+ * - `struct`: the fields of a struct are spread alongside the discriminator.
+ * - `tuple`: the items of a tuple are exposed as the `fields` attribute.
+ * - `single`: any other type is exposed as a one-item `fields` tuple, which
+ *   encodes to the same bytes, so `Variant(u8)` and `Variant((u8,))` share an API.
+ */
+export type EnumVariantDataShape = 'none' | 'single' | 'struct' | 'tuple';
+
+/**
+ * The shape of the data of an enum variant, following defined type links to
+ * their target, through any number of links.
+ *
+ * A link that cannot be resolved from the linkables, e.g. a type imported from
+ * outside the tree through `linkOverrides`, is exposed as a `single` value.
  *
  * @param data - The data of the variant.
- * @param path - The path of the variant, used to resolve a linked defined type.
+ * @param path - The path of the variant, used to resolve defined type links.
  * @param linkables - The linkable nodes of the tree.
  */
-export function isStructEnumVariantData(
+export function getEnumVariantDataShape(
     data: TypeNode | undefined,
     path: NodePath,
     linkables: LinkableDictionary,
-): boolean {
-    if (!data) return false;
-    if (isNode(data, 'structTypeNode')) return true;
-    if (!isNode(data, 'definedTypeLinkNode')) return false;
-    const linkedType = linkables.get([...path, data])?.type;
-    return !!linkedType && isNode(linkedType, 'structTypeNode');
+): EnumVariantDataShape {
+    if (!data) return 'none';
+    const visited = new Set<TypeNode>();
+    let current: TypeNode = data;
+    let currentPath: NodePath = path;
+    while (isNode(current, 'definedTypeLinkNode') && !visited.has(current)) {
+        visited.add(current);
+        const linkedPath = linkables.getPath([...currentPath, current]);
+        if (!linkedPath) return 'single';
+        currentPath = linkedPath;
+        current = getLastNodeFromPath(linkedPath).type;
+    }
+    if (isNode(current, 'structTypeNode')) return 'struct';
+    if (isNode(current, 'tupleTypeNode')) return 'tuple';
+    return 'single';
 }

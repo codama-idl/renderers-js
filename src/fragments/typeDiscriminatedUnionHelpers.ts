@@ -1,7 +1,7 @@
 import { isDataEnum, isNode, TypeNode } from '@codama/nodes';
 import { NodePath } from '@codama/visitors-core';
 
-import { Fragment, fragment, isStructEnumVariantData, mergeFragments, RenderScope, use } from '../utils';
+import { Fragment, fragment, getEnumVariantDataShape, mergeFragments, RenderScope, use } from '../utils';
 
 export function getTypeDiscriminatedUnionHelpersFragment(
     scope: Pick<RenderScope, 'linkables' | 'nameApi'> & { name: string; typeNode: TypeNode; typePath: NodePath },
@@ -21,10 +21,11 @@ export function getTypeDiscriminatedUnionHelpersFragment(
     const variantSignatures = mergeFragments(
         (typeNode.variants ?? []).map(variant => {
             const variantName = nameApi.discriminatedUnionVariant(variant.identifier);
-            if (isStructEnumVariantData(variant.data, typePath, linkables)) {
+            const shape = getEnumVariantDataShape(variant.data, typePath, linkables);
+            if (shape === 'struct') {
                 return fragment`export function ${functionName}(kind: '${variantName}', data: ${getVariantContentType}<${looseName}, '${discriminatorName}', '${variantName}'>): ${getVariantType}<${looseName}, '${discriminatorName}', '${variantName}'>;`;
             }
-            if (variant.data) {
+            if (shape !== 'none') {
                 return fragment`export function ${functionName}(kind: '${variantName}', data: ${getVariantContentType}<${looseName}, '${discriminatorName}', '${variantName}'>['fields']): ${getVariantType}<${looseName}, '${discriminatorName}', '${variantName}'>;`;
             }
             return fragment`export function ${functionName}(kind: '${variantName}'): ${getVariantType}<${looseName}, '${discriminatorName}', '${variantName}'>;`;
