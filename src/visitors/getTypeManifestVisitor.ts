@@ -439,10 +439,10 @@ export function getTypeManifestVisitor(input: {
 
                     const enumPath = linkables.getPath([...stack.getPath(), node.enum]);
                     const enumNode = enumPath ? getLastNodeFromPath(enumPath).type : undefined;
-                    const isScalar =
-                        enumNode && isNode(enumNode, 'enumTypeNode')
-                            ? isScalarEnum(enumNode)
-                            : !nonScalarEnums.includes(camelCase(node.enum.identifier));
+                    const enumType = enumNode && isNode(enumNode, 'enumTypeNode') ? enumNode : undefined;
+                    const isScalar = enumType
+                        ? isScalarEnum(enumType)
+                        : !nonScalarEnums.includes(camelCase(node.enum.identifier));
 
                     if (!node.value && isScalar) {
                         const variantName = nameApi.enumVariant(node.variant);
@@ -468,16 +468,14 @@ export function getTypeManifestVisitor(input: {
                         });
                     }
 
-                    // The value of a variant holding a single type is passed as a one-item tuple.
-                    const variant =
-                        enumPath && enumNode && isNode(enumNode, 'enumTypeNode')
-                            ? (enumNode.variants ?? []).find(v => v.identifier === node.variant)
-                            : undefined;
+                    // The value of a variant holding a single type is passed as a one-item tuple. Such a
+                    // value matches the type of the variant data, so it is never a tuple value itself.
+                    const variant = enumType?.variants?.find(v => v.identifier === node.variant);
                     const isSingleValue =
                         !!enumPath &&
+                        !!enumType &&
                         !!variant &&
-                        getEnumVariantDataShape(variant.data, [...enumPath, enumNode!, variant], linkables) ===
-                            'single';
+                        getEnumVariantDataShape(variant.data, [...enumPath, enumType, variant], linkables) === 'single';
                     return typeManifest({
                         ...manifest,
                         value: pipe(
