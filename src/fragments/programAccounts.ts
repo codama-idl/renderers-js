@@ -1,4 +1,5 @@
-import { camelCase, ProgramNode } from '@codama/nodes';
+import { camelCase } from '@codama/fragments/casing';
+import { ProgramNode } from '@codama/nodes';
 
 import { Fragment, fragment, getInnerTypeNode, mergeFragments, RenderScope, use } from '../utils';
 import { getDiscriminatorConditionFragment } from './discriminatorCondition';
@@ -24,8 +25,10 @@ function getProgramAccountsEnumFragment(
     const { programNode, nameApi } = scope;
     return getEnumDeclarationFragment({
         ...scope,
-        name: nameApi.programAccountsEnum(programNode.name),
-        variantNames: (programNode.accounts ?? []).map(account => nameApi.programAccountsEnumVariant(account.name)),
+        name: nameApi.programAccountsEnum(programNode.identifier),
+        variantNames: (programNode.accounts ?? []).map(account =>
+            nameApi.programAccountsEnumVariant(account.identifier),
+        ),
     });
 }
 
@@ -41,12 +44,12 @@ function getProgramAccountsIdentifierFunctionFragment(
     const hasAccountDiscriminators = accountsWithDiscriminators.length > 0;
     if (!hasAccountDiscriminators) return;
 
-    const programAccountsEnum = nameApi.programAccountsEnum(programNode.name);
-    const programAccountsIdentifierFunction = nameApi.programAccountsIdentifierFunction(programNode.name);
+    const programAccountsEnum = nameApi.programAccountsEnum(programNode.identifier);
+    const programAccountsIdentifierFunction = nameApi.programAccountsIdentifierFunction(programNode.identifier);
 
     const discriminatorsFragment = mergeFragments(
         accountsWithDiscriminators.map((account): Fragment => {
-            const variant = nameApi.programAccountsEnumVariant(account.name);
+            const variant = nameApi.programAccountsEnumVariant(account.identifier);
             return getDiscriminatorConditionFragment({
                 ...scope,
                 dataName: 'data',
@@ -65,6 +68,6 @@ function getProgramAccountsIdentifierFunctionFragment(
     return fragment`export function ${programAccountsIdentifierFunction}(account: { data: ${readonlyUint8Array} } | ${readonlyUint8Array}): ${programAccountsEnum} {
     const data = 'data' in account ? account.data : account;
     ${discriminatorsFragment}
-    throw new ${solanaError}(${solanaErrorCode}, { accountData: data, programName: "${camelCase(programNode.name)}" });
+    throw new ${solanaError}(${solanaErrorCode}, { accountData: data, programName: "${camelCase(programNode.identifier)}" });
 }`;
 }

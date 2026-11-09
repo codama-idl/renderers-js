@@ -1,5 +1,6 @@
-import { InstructionNode, pascalCase } from '@codama/nodes';
-import { mapFragmentContent } from '@codama/renderers-core';
+import { mapFragmentContent } from '@codama/fragments';
+import { pascalCase } from '@codama/fragments/casing';
+import { InstructionNode } from '@codama/nodes';
 import { findProgramNodeFromPath, getLastNodeFromPath, NodePath } from '@codama/visitors-core';
 
 import {
@@ -26,8 +27,8 @@ export function getInstructionTypeFragment(
     const customData = getCustomDataOptions(customInstructionData, instructionNode);
     const hasData = !!customData || hasInstructionData(instructionNode);
 
-    const instructionType = nameApi.instructionType(instructionNode.name);
-    const programAddressConstant = use(nameApi.programAddressConstant(programNode.name), 'generatedPrograms');
+    const instructionType = nameApi.instructionType(instructionNode.identifier);
+    const programAddressConstant = use(nameApi.programAddressConstant(programNode.identifier), 'generatedPrograms');
 
     const accountTypeParams = mergeFragments(
         (instructionNode.accounts ?? []).map(account =>
@@ -48,7 +49,7 @@ export function getInstructionTypeFragment(
     const accountMetasFragment = mergeFragments(
         (instructionNode.accounts ?? []).map(account =>
             mapFragmentContent(getInstructionAccountMetaFragment(account), c => {
-                const typeParam = `TAccount${pascalCase(account.name)}`;
+                const typeParam = `TAccount${pascalCase(account.identifier)}`;
                 const isLegacyOptional = account.isOptional && usesLegacyOptionalAccounts;
                 const type = `${typeParam} extends string ? ${c} : ${typeParam}`;
                 if (!isLegacyOptional) return type;

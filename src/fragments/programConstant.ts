@@ -7,7 +7,7 @@ export function getProgramConstantFragment(
     scope: Pick<RenderScope, 'nameApi'> & { programNode: ProgramNode },
 ): Fragment {
     const { programNode, nameApi } = scope;
-    const programAddressConstant = nameApi.programAddressConstant(programNode.name);
+    const programAddressConstant = nameApi.programAddressConstant(programNode.identifier);
 
     return pipe(
         fragment`export const ${programAddressConstant} = '${programNode.publicKey}' as Address<'${programNode.publicKey}'>;`,

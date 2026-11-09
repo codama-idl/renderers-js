@@ -1,7 +1,8 @@
-import { AccountNode } from '@codama/nodes';
+import { CODAMA_ERROR__NODE_PATH_PROGRAM_MISSING, CodamaError } from '@codama/errors';
+import { AccountNode, isNode } from '@codama/nodes';
 import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
 
-import { Fragment, getInnerTypeNode, mergeFragments, RenderScope } from '../utils';
+import { Fragment, mergeFragments, RenderScope } from '../utils';
 import { getAccountFetchHelpersFragment } from './accountFetchHelpers';
 import { getAccountPdaHelpersFragment } from './accountPdaHelpers';
 import { getAccountSizeHelpersFragment } from './accountSizeHelpers';
@@ -19,18 +20,19 @@ export function getAccountPageFragment(
 ): Fragment {
     const node = getLastNodeFromPath(scope.accountPath);
     if (!findProgramNodeFromPath(scope.accountPath)) {
-        throw new Error('Account must be visited inside a program.');
+        throw new CodamaError(CODAMA_ERROR__NODE_PATH_PROGRAM_MISSING, { path: scope.accountPath });
     }
 
     const typeManifest = visit(node, scope.typeManifestVisitor);
-    const fields = getInnerTypeNode(node.data).fields ?? [];
+    // Field discriminators can only refer to the fields of struct data.
+    const fields = isNode(node.data, 'structTypeNode') ? (node.data.fields ?? []) : [];
     return mergeFragments(
         [
             getDiscriminatorConstantsFragment({
                 ...scope,
                 discriminatorNodes: node.discriminators ?? [],
                 fields,
-                prefix: node.name,
+                prefix: node.identifier,
             }),
             getAccountTypeFragment({ ...scope, typeManifest }),
             getAccountFetchHelpersFragment({ ...scope, typeManifest }),

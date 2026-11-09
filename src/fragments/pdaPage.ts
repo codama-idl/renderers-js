@@ -1,3 +1,4 @@
+import { CODAMA_ERROR__NODE_PATH_PROGRAM_MISSING, CodamaError } from '@codama/errors';
 import { PdaNode } from '@codama/nodes';
 import { findProgramNodeFromPath, NodePath } from '@codama/visitors-core';
 
@@ -10,7 +11,7 @@ export function getPdaPageFragment(
     },
 ): Fragment {
     if (!findProgramNodeFromPath(scope.pdaPath)) {
-        throw new Error('PDA must be visited inside a program.');
+        throw new CodamaError(CODAMA_ERROR__NODE_PATH_PROGRAM_MISSING, { path: scope.pdaPath });
     }
 
     return getPdaFunctionFragment(scope);

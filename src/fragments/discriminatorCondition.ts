@@ -3,8 +3,9 @@ import {
     CODAMA_ERROR__DISCRIMINATOR_FIELD_NOT_FOUND,
     CodamaError,
 } from '@codama/errors';
+import { mapFragmentContent } from '@codama/fragments';
+import { camelCase } from '@codama/fragments/casing';
 import {
-    camelCase,
     type ConstantDiscriminatorNode,
     constantDiscriminatorNode,
     constantValueNode,
@@ -17,11 +18,10 @@ import {
     type SizeDiscriminatorNode,
     type StructTypeNode,
 } from '@codama/nodes';
-import { mapFragmentContent } from '@codama/renderers-core';
 import { pipe, visit } from '@codama/visitors-core';
 import { getBase64Decoder } from '@solana/codecs-strings';
 
-import { Fragment, fragment, mergeFragments, RenderScope, use } from '../utils';
+import { Fragment, fragment, getFieldDiscriminatorIdentifier, mergeFragments, RenderScope, use } from '../utils';
 
 /**
  * ```
@@ -95,12 +95,16 @@ function getFieldConditionFragment(
         struct: StructTypeNode;
     },
 ): Fragment {
-    const field = (scope.struct.fields ?? []).find(f => camelCase(f.name) === camelCase(discriminator.name));
+    const identifier = getFieldDiscriminatorIdentifier(discriminator);
+    const field = (scope.struct.fields ?? []).find(f => camelCase(f.identifier) === camelCase(identifier));
     if (!field) {
-        throw new CodamaError(CODAMA_ERROR__DISCRIMINATOR_FIELD_NOT_FOUND, { field: discriminator.name });
+        throw new CodamaError(CODAMA_ERROR__DISCRIMINATOR_FIELD_NOT_FOUND, {
+            field: discriminator.path,
+            path: [discriminator],
+        });
     }
     if (!field.defaultValue) {
-        throw new CodamaError(CODAMA_ERROR__DISCRIMINATOR_FIELD_HAS_NO_DEFAULT_VALUE, { field: discriminator.name });
+        throw new CodamaError(CODAMA_ERROR__DISCRIMINATOR_FIELD_HAS_NO_DEFAULT_VALUE, { path: [field] });
     }
 
     // This handles the case where a field uses an u8 array to represent its discriminator.
@@ -116,13 +120,15 @@ function getFieldConditionFragment(
     ) {
         const base64Bytes = getBase64Decoder().decode(new Uint8Array(defaultValueItems.map(node => node.number)));
         return getByteConditionFragment(
-            constantDiscriminatorNode(constantValueNodeFromBytes('base64', base64Bytes), discriminator.offset),
+            constantDiscriminatorNode(constantValueNodeFromBytes('base64', base64Bytes), {
+                offset: discriminator.offset,
+            }),
             scope,
         );
     }
 
     return getByteConditionFragment(
-        constantDiscriminatorNode(constantValueNode(field.type, field.defaultValue), discriminator.offset),
+        constantDiscriminatorNode(constantValueNode(field.type, field.defaultValue), { offset: discriminator.offset }),
         scope,
     );
 }

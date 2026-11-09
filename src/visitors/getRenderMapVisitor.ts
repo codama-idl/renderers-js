@@ -1,6 +1,6 @@
+import { createRenderMap, mergeRenderMaps, RenderMap } from '@codama/fragments';
+import { camelCase } from '@codama/fragments/casing';
 import {
-    camelCase,
-    CamelCaseString,
     getAllAccounts,
     getAllDefinedTypes,
     getAllEvents,
@@ -8,11 +8,9 @@ import {
     getAllPdas,
     getAllPrograms,
 } from '@codama/nodes';
-import { createRenderMap, mergeRenderMaps, RenderMap } from '@codama/renderers-core';
 import {
     extendVisitor,
     getByteSizeVisitor,
-    getResolvedInstructionInputsVisitor,
     LinkableDictionary,
     NodeStack,
     pipe,
@@ -44,6 +42,7 @@ import {
     getImportPathFactory,
     getNameApi,
     getPageFragment,
+    getResolvedInstructionInputs,
     GetRenderMapOptions,
     parseCustomDataOptions,
     RenderScope,
@@ -81,8 +80,7 @@ export function getRenderMapVisitor(
     const renderScope: RenderScope = { ...renderScopeWithTypeManifestVisitor, typeManifestVisitor };
 
     const internalNodes = (options.internalNodes ?? []).map(camelCase);
-    const isNotInternal = (node: { name: CamelCaseString }) => !internalNodes.includes(camelCase(node.name));
-    const resolvedInstructionInputVisitor = getResolvedInstructionInputsVisitor();
+    const isNotInternal = (node: { identifier: string }) => !internalNodes.includes(camelCase(node.identifier));
     const byteSizeVisitor = getByteSizeVisitor(linkables, { stack });
     const asPage = <TFragment extends Fragment | undefined>(
         fragment: TFragment,
@@ -111,7 +109,7 @@ export function getRenderMapVisitor(
             extendVisitor(v, {
                 visitAccount(node) {
                     return createRenderMap(
-                        `accounts/${renderScope.nameApi.fileName(node.name)}.ts`,
+                        `accounts/${renderScope.nameApi.fileName(node.identifier)}.ts`,
                         asPage(
                             getAccountPageFragment({
                                 ...renderScope,
@@ -124,7 +122,7 @@ export function getRenderMapVisitor(
 
                 visitDefinedType(node) {
                     return createRenderMap(
-                        `types/${renderScope.nameApi.fileName(node.name)}.ts`,
+                        `types/${renderScope.nameApi.fileName(node.identifier)}.ts`,
                         asPage(getTypePageFragment({ ...renderScope, node, size: visit(node, byteSizeVisitor) }), {
                             generatedTypes: renderScope.getImportPath('.', 'directory'),
                         }),
@@ -133,7 +131,7 @@ export function getRenderMapVisitor(
 
                 visitEvent(node) {
                     return createRenderMap(
-                        `events/${renderScope.nameApi.fileName(node.name)}.ts`,
+                        `events/${renderScope.nameApi.fileName(node.identifier)}.ts`,
                         asPage(
                             getEventPageFragment({
                                 ...renderScope,
@@ -145,13 +143,14 @@ export function getRenderMapVisitor(
                 },
 
                 visitInstruction(node) {
+                    const instructionPath = stack.getPath('instructionNode');
                     return createRenderMap(
-                        `instructions/${renderScope.nameApi.fileName(node.name)}.ts`,
+                        `instructions/${renderScope.nameApi.fileName(node.identifier)}.ts`,
                         asPage(
                             getInstructionPageFragment({
                                 ...renderScope,
-                                instructionPath: stack.getPath('instructionNode'),
-                                resolvedInputs: visit(node, resolvedInstructionInputVisitor),
+                                instructionPath,
+                                resolvedInputs: getResolvedInstructionInputs(instructionPath, linkables),
                                 size: visit(node, byteSizeVisitor),
                             }),
                         ),
@@ -160,7 +159,7 @@ export function getRenderMapVisitor(
 
                 visitPda(node) {
                     return createRenderMap(
-                        `pdas/${renderScope.nameApi.fileName(node.name)}.ts`,
+                        `pdas/${renderScope.nameApi.fileName(node.identifier)}.ts`,
                         asPage(getPdaPageFragment({ ...renderScope, pdaPath: stack.getPath('pdaNode') })),
                     );
                 },
@@ -171,11 +170,11 @@ export function getRenderMapVisitor(
                         ...getDefinedTypeNodesToExtract(node.accounts ?? [], customAccountData),
                         ...getDefinedTypeNodesToExtract(node.instructions ?? [], customInstructionData),
                     ];
-                    const scope = { ...renderScope, programNode: node };
+                    const scope = { ...renderScope, programNode: node, programPath: stack.getPath('programNode') };
 
                     return mergeRenderMaps([
                         createRenderMap({
-                            [`constants/${renderScope.nameApi.fileName(node.name)}.ts`]:
+                            [`constants/${renderScope.nameApi.fileName(node.identifier)}.ts`]:
                                 constantsToExport.length > 0
                                     ? asPage(
                                           getConstantsPageFragment({
@@ -186,10 +185,10 @@ export function getRenderMapVisitor(
                                           { generatedTypes: renderScope.getImportPath('../types', 'directory') },
                                       )
                                     : undefined,
-                            [`programs/${renderScope.nameApi.fileName(node.name)}.ts`]: asPage(
+                            [`programs/${renderScope.nameApi.fileName(node.identifier)}.ts`]: asPage(
                                 getProgramPageFragment(scope),
                             ),
-                            [`errors/${renderScope.nameApi.fileName(node.name)}.ts`]:
+                            [`errors/${renderScope.nameApi.fileName(node.identifier)}.ts`]:
                                 (node.errors ?? []).length > 0 ? asPage(getErrorPageFragment(scope)) : undefined,
                         }),
                         ...(node.pdas ?? []).map(p => visit(p, self)),

@@ -1,4 +1,5 @@
-import { BaseFragment, createFragmentTemplate } from '@codama/renderers-core';
+import { BaseFragment, createFragmentTemplate } from '@codama/fragments';
+import { getTextNodeContent, isNode, TextNode } from '@codama/nodes';
 
 import {
     addToImportMap,
@@ -68,11 +69,14 @@ export function getExportAllFragment(module: string): Fragment {
     return fragment`export * from '${module}';`;
 }
 
-/** Documentation as found on nodes or provided by the renderer: a single text or a list of lines. */
-export type DocsInput = string | readonly string[] | undefined;
+/**
+ * Documentation as found on nodes or provided by the renderer: a single text,
+ * either plain or as a `TextNode`, or a list of lines.
+ */
+export type DocsInput = TextNode | string | readonly string[] | undefined;
 
 /**
- * Renders a JSDoc block from the given documentation, or nothing when it is empty.
+ * Renders a JSDoc block from the given documentation, or nothing when it is blank.
  *
  * Items containing line breaks are split into separate lines, ignoring a single
  * trailing line break, so that a multi-line text renders like a list of lines.
@@ -80,7 +84,7 @@ export type DocsInput = string | readonly string[] | undefined;
 export function getDocblockFragment(docs: DocsInput, withLineJump = false): Fragment | undefined {
     const lineJump = withLineJump ? '\n' : '';
     const lines = getDocsLines(docs);
-    if (lines.length === 0) return;
+    if (lines.every(line => line.trim() === '')) return;
     if (lines.length === 1) return fragment`/** ${lines[0]} */${lineJump}`;
     const prefixedLines = lines.map(line => (line ? ` * ${line}` : ' *'));
     return fragment`/**\n${prefixedLines.join('\n')}\n */${lineJump}`;
@@ -89,8 +93,12 @@ export function getDocblockFragment(docs: DocsInput, withLineJump = false): Frag
 /** The lines of the given documentation, splitting items on line breaks. */
 export function getDocsLines(docs: DocsInput): string[] {
     if (docs === undefined) return [];
-    const items = typeof docs === 'string' ? [docs] : docs;
+    const items: readonly string[] = typeof docs === 'string' || isTextNode(docs) ? [getTextNodeContent(docs)] : docs;
     return items.flatMap(item => item.replace(/\r?\n$/, '').split(/\r?\n/));
+}
+
+function isTextNode(docs: TextNode | readonly string[]): docs is TextNode {
+    return !Array.isArray(docs) && isNode(docs as TextNode, 'textNode');
 }
 
 export function getPageFragment(

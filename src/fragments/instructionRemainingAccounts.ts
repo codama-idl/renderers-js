@@ -1,4 +1,5 @@
-import { camelCase, InstructionNode, InstructionRemainingAccountsNode } from '@codama/nodes';
+import { camelCase } from '@codama/fragments/casing';
+import { InstructionNode, InstructionRemainingAccountsNode } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
 import {

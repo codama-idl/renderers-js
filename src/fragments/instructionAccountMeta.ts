@@ -1,9 +1,10 @@
-import { InstructionAccountNode, pascalCase } from '@codama/nodes';
+import { pascalCase } from '@codama/fragments/casing';
+import { InstructionAccountNode } from '@codama/nodes';
 
 import { Fragment, fragment, use } from '../utils';
 
 export function getInstructionAccountMetaFragment(instructionAccountNode: InstructionAccountNode): Fragment {
-    const typeParam = `TAccount${pascalCase(instructionAccountNode.name)}`;
+    const typeParam = `TAccount${pascalCase(instructionAccountNode.identifier)}`;
 
     // Writable, signer.
     if (instructionAccountNode.isSigner === true && instructionAccountNode.isWritable) {

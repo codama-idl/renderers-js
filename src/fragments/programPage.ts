@@ -1,4 +1,5 @@
 import { ProgramNode } from '@codama/nodes';
+import { NodePath } from '@codama/visitors-core';
 
 import { Fragment, mergeFragments, RenderScope } from '../utils';
 import { getProgramAccountsFragment } from './programAccounts';
@@ -13,11 +14,13 @@ export function getProgramPageFragment(
         | 'asyncResolvers'
         | 'customInstructionData'
         | 'erasableSyntax'
+        | 'linkables'
         | 'nameApi'
         | 'renderParentInstructions'
         | 'typeManifestVisitor'
     > & {
         programNode: ProgramNode;
+        programPath: NodePath<ProgramNode>;
     },
 ): Fragment {
     return mergeFragments(

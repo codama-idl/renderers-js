@@ -16,19 +16,19 @@ export function getAccountPdaHelpersFragment(
 
     const accountType = getCustomDataOptions(customAccountData, accountNode)
         ? typeManifest.strictType
-        : nameApi.dataType(accountNode.name);
+        : nameApi.dataType(accountNode.identifier);
 
     // Here we cannot use the `getImportFrom` function because
     // we need to know the seeds of the PDA in order to know
     // if we need to render a `seeds` argument or not.
     const importFrom = 'generatedPdas';
-    const pdaSeedsType = nameApi.pdaSeedsType(pdaNode.name);
-    const findPdaFunction = nameApi.pdaFindFunction(pdaNode.name);
+    const pdaSeedsType = nameApi.pdaSeedsType(pdaNode.identifier);
+    const findPdaFunction = nameApi.pdaFindFunction(pdaNode.identifier);
     const hasVariableSeeds = (pdaNode.seeds ?? []).filter(isNodeFilter('variablePdaSeedNode')).length > 0;
 
-    const fetchFromSeedsFunction = nameApi.accountFetchFromSeedsFunction(accountNode.name);
-    const fetchMaybeFromSeedsFunction = nameApi.accountFetchMaybeFromSeedsFunction(accountNode.name);
-    const fetchMaybeFunction = nameApi.accountFetchMaybeFunction(accountNode.name);
+    const fetchFromSeedsFunction = nameApi.accountFetchFromSeedsFunction(accountNode.identifier);
+    const fetchMaybeFromSeedsFunction = nameApi.accountFetchMaybeFromSeedsFunction(accountNode.identifier);
+    const fetchMaybeFunction = nameApi.accountFetchMaybeFunction(accountNode.identifier);
 
     return pipe(
         fragment`export async function ${fetchFromSeedsFunction}(

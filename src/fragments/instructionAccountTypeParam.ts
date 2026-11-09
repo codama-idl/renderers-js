@@ -1,4 +1,5 @@
-import { InstructionAccountNode, InstructionInputValueNode, pascalCase } from '@codama/nodes';
+import { pascalCase } from '@codama/fragments/casing';
+import { InstructionAccountNode, InstructionInputValueNode } from '@codama/nodes';
 import {
     findInstructionNodeFromPath,
     findProgramNodeFromPath,
@@ -19,7 +20,7 @@ export function getInstructionAccountTypeParamFragment(
     const instructionAccountNode = getLastNodeFromPath(instructionAccountPath);
     const instructionNode = findInstructionNodeFromPath(instructionAccountPath)!;
     const programNode = findProgramNodeFromPath(instructionAccountPath)!;
-    const typeParam = `TAccount${pascalCase(instructionAccountNode.name)}`;
+    const typeParam = `TAccount${pascalCase(instructionAccountNode.identifier)}`;
     const accountMeta = allowAccountMeta
         ? fragment` | ${use('type AccountMeta', 'solanaInstructions')}<string>`
         : undefined;

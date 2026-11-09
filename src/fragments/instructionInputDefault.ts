@@ -1,6 +1,7 @@
 import { CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, CodamaError } from '@codama/errors';
+import { mapFragmentContent, setFragmentContent } from '@codama/fragments';
+import { camelCase } from '@codama/fragments/casing';
 import {
-    camelCase,
     InstructionInputValueNode,
     InstructionNode,
     isNode,
@@ -8,7 +9,6 @@ import {
     OptionalAccountStrategy,
     PdaNode,
 } from '@codama/nodes';
-import { mapFragmentContent, setFragmentContent } from '@codama/renderers-core';
 import {
     findProgramNodeFromPath,
     getLastNodeFromPath,
@@ -148,17 +148,17 @@ export function getInstructionInputDefaultFragment(
                     if (isNode(seed, 'variablePdaSeedNode')) {
                         const typeManifest = visit(seed.type, typeManifestVisitor);
                         const valueSeed = (defaultValue.seeds ?? []).find(
-                            s => camelCase(s.name) === camelCase(seed.name),
+                            s => camelCase(s.name) === camelCase(seed.identifier),
                         )?.value;
                         if (!valueSeed) return [];
                         if (isNode(valueSeed, 'accountValueNode')) {
-                            const name = camelCase(valueSeed.name);
+                            const name = camelCase(valueSeed.identifier);
                             return [
                                 fragment`${typeManifest.encoder}.encode(${getAddressFromResolvedInstructionAccount}("${name}", accounts.${name}.value))`,
                             ];
                         }
                         if (isNode(valueSeed, 'argumentValueNode')) {
-                            const name = camelCase(valueSeed.name);
+                            const name = camelCase(valueSeed.identifier);
                             return [
                                 fragment`${typeManifest.encoder}.encode(${getNonNullResolvedInstructionInput}("${name}", args.${name}))`,
                             ];
@@ -344,7 +344,7 @@ function isPdaDerivedFromInstructionProgram(
     if (!pdaPath || getLastNodeFromPath(pdaPath).programId) return false;
     const pdaProgram = findProgramNodeFromPath(pdaPath);
     const instructionProgram = findProgramNodeFromPath(instructionPath);
-    return !!pdaProgram && !!instructionProgram && pdaProgram.name === instructionProgram.name;
+    return !!pdaProgram && !!instructionProgram && pdaProgram.identifier === instructionProgram.identifier;
 }
 
 /**

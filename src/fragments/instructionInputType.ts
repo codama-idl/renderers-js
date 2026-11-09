@@ -1,5 +1,6 @@
-import { camelCase, InstructionAccountNode, InstructionNode, isNode, pascalCase } from '@codama/nodes';
-import { mapFragmentContent } from '@codama/renderers-core';
+import { mapFragmentContent } from '@codama/fragments';
+import { camelCase, pascalCase } from '@codama/fragments/casing';
+import { InstructionAccountNode, InstructionNode, isNode } from '@codama/nodes';
 import {
     getLastNodeFromPath,
     NodePath,
@@ -40,8 +41,8 @@ export function getInstructionInputTypeFragment(
     const { instructionPath, useAsync, nameApi } = scope;
     const instructionNode = getLastNodeFromPath(instructionPath);
     const instructionInputType = useAsync
-        ? nameApi.instructionAsyncInputType(instructionNode.name)
-        : nameApi.instructionSyncInputType(instructionNode.name);
+        ? nameApi.instructionAsyncInputType(instructionNode.identifier)
+        : nameApi.instructionSyncInputType(instructionNode.identifier);
     const [dataArgumentsFragment, customDataArgumentsFragment] = getDataArgumentsFragments(scope);
 
     // One type parameter per account, holding the input value provided for that account
@@ -49,7 +50,7 @@ export function getInstructionInputTypeFragment(
     const accountTypeParams = mergeFragments(
         (instructionNode.accounts ?? []).map(account => {
             const constraint = getInstructionAccountInputConstraintFragment(account);
-            return fragment`TAccount${pascalCase(account.name)} extends ${constraint} = ${constraint}`;
+            return fragment`TAccount${pascalCase(account.identifier)} extends ${constraint} = ${constraint}`;
         }),
         cs => (cs.length > 0 ? `<${cs.join(', ')}>` : ''),
     );
@@ -97,7 +98,7 @@ function getAccountsFragment(
 
     const fragments = (instructionNode.accounts ?? []).map(account => {
         const resolvedAccount = resolvedInputs.find(
-            input => input.kind === 'instructionAccountNode' && input.name === account.name,
+            input => input.kind === 'instructionAccountNode' && input.name === account.identifier,
         ) as ResolvedInstructionAccount;
         const hasDefaultValue =
             hasInputDefault(resolvedAccount) &&
@@ -105,7 +106,7 @@ function getAccountsFragment(
             (useAsync || !isAsyncInput(resolvedAccount, asyncResolvers));
         const docs = getDocblockFragment(account.docs, true);
         const optionalSign = hasDefaultValue || resolvedAccount.isOptional ? '?' : '';
-        return fragment`${docs}${camelCase(account.name)}${optionalSign}: TAccount${pascalCase(account.name)};`;
+        return fragment`${docs}${camelCase(account.identifier)}${optionalSign}: TAccount${pascalCase(account.identifier)};`;
     });
 
     return mergeFragments(fragments, c => c.join('\n'));
@@ -134,7 +135,7 @@ function getDataArgumentsFragments(
         ];
     }
 
-    const instructionDataName = nameApi.instructionDataType(instructionNode.name);
+    const instructionDataName = nameApi.instructionDataType(instructionNode.identifier);
     const dataArgsType = nameApi.dataArgsType(instructionDataName);
 
     const fragments = getInstructionDataFields(instructionNode).flatMap(arg => {
@@ -154,7 +155,7 @@ function getExtraArgumentsFragment(
 ): Fragment | undefined {
     const { instructionPath, nameApi } = scope;
     const instructionNode = getLastNodeFromPath(instructionPath);
-    const instructionExtraName = nameApi.instructionExtraType(instructionNode.name);
+    const instructionExtraName = nameApi.instructionExtraType(instructionNode.identifier);
     const extraArgsType = nameApi.dataArgsType(instructionExtraName);
 
     const fragments = getInstructionExtraArguments(instructionNode).flatMap(arg => {

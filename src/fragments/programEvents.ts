@@ -1,4 +1,5 @@
-import { camelCase, isNode, ProgramNode, structTypeNode } from '@codama/nodes';
+import { camelCase } from '@codama/fragments/casing';
+import { isNode, ProgramNode, structTypeNode } from '@codama/nodes';
 
 import { Fragment, fragment, getInnerTypeNode, mergeFragments, RenderScope, use } from '../utils';
 import { getDiscriminatorConditionFragment } from './discriminatorCondition';
@@ -30,8 +31,8 @@ function getProgramEventsEnumFragment(
     const { programNode, nameApi } = scope;
     return getEnumDeclarationFragment({
         ...scope,
-        name: nameApi.programEventsEnum(programNode.name),
-        variantNames: (programNode.events ?? []).map(event => nameApi.programEventsEnumVariant(event.name)),
+        name: nameApi.programEventsEnum(programNode.identifier),
+        variantNames: (programNode.events ?? []).map(event => nameApi.programEventsEnumVariant(event.identifier)),
     });
 }
 
@@ -46,12 +47,12 @@ function getProgramEventsIdentifierFunctionFragment(
     );
     if (eventsWithDiscriminators.length === 0) return;
 
-    const programEventsEnum = nameApi.programEventsEnum(programNode.name);
-    const programEventsIdentifierFunction = nameApi.programEventsIdentifierFunction(programNode.name);
+    const programEventsEnum = nameApi.programEventsEnum(programNode.identifier);
+    const programEventsIdentifierFunction = nameApi.programEventsIdentifierFunction(programNode.identifier);
 
     const discriminatorsFragment = mergeFragments(
         eventsWithDiscriminators.map((event): Fragment => {
-            const variant = nameApi.programEventsEnumVariant(event.name);
+            const variant = nameApi.programEventsEnumVariant(event.identifier);
             const resolvedData = getInnerTypeNode(event.data);
             return getDiscriminatorConditionFragment({
                 ...scope,
@@ -69,6 +70,6 @@ function getProgramEventsIdentifierFunctionFragment(
     return fragment`export function ${programEventsIdentifierFunction}(event: { data: ${readonlyUint8Array} } | ${readonlyUint8Array}): ${programEventsEnum} {
     const data = 'data' in event ? event.data : event;
     ${discriminatorsFragment}
-    throw new Error('The provided event could not be identified as a ${camelCase(programNode.name)} event.');
+    throw new Error('The provided event could not be identified as a ${camelCase(programNode.identifier)} event.');
 }`;
 }

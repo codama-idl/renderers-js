@@ -1,10 +1,9 @@
+import { camelCase } from '@codama/fragments/casing';
 import {
     AccountValueNode,
     accountValueNode,
     ArgumentValueNode,
     argumentValueNode,
-    camelCase,
-    CamelCaseString,
     InstructionInputValueNode,
     InstructionNode,
     isNode,
@@ -111,18 +110,18 @@ export function getInputDependencies(
     };
 
     if (isNode(input.defaultValue, ['accountValueNode', 'accountBumpValueNode'])) {
-        return [accountValueNode(input.defaultValue.name)];
+        return [accountValueNode(input.defaultValue.identifier)];
     }
 
     if (isNode(input.defaultValue, ['argumentValueNode'])) {
-        return [argumentValueNode(input.defaultValue.name)];
+        return [argumentValueNode(input.defaultValue.identifier)];
     }
 
     if (isNode(input.defaultValue, 'pdaValueNode')) {
-        const dependencies = new Map<CamelCaseString, AccountValueNode | ArgumentValueNode>();
+        const dependencies = new Map<string, AccountValueNode | ArgumentValueNode>();
         (input.defaultValue.seeds ?? []).forEach(seed => {
             if (isNode(seed.value, ['accountValueNode', 'argumentValueNode'])) {
-                dependencies.set(camelCase(seed.value.name), { ...seed.value });
+                dependencies.set(camelCase(seed.value.identifier), { ...seed.value });
             }
         });
         return [...dependencies.values()];

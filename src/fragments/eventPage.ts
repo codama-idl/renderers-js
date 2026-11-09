@@ -1,3 +1,4 @@
+import { CODAMA_ERROR__NODE_PATH_PROGRAM_MISSING, CodamaError } from '@codama/errors';
 import { EventNode, isNode, structTypeNode } from '@codama/nodes';
 import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
 
@@ -21,12 +22,12 @@ export function getEventPageFragment(
 ): Fragment {
     const node = getLastNodeFromPath(scope.eventPath);
     if (!findProgramNodeFromPath(scope.eventPath)) {
-        throw new Error('Event must be visited inside a program.');
+        throw new CodamaError(CODAMA_ERROR__NODE_PATH_PROGRAM_MISSING, { path: scope.eventPath });
     }
 
     const { nameApi } = scope;
     const typeManifest = visit(node, scope.typeManifestVisitor);
-    const eventDataName = nameApi.eventDataType(node.name);
+    const eventDataName = nameApi.eventDataType(node.identifier);
     const resolvedData = getInnerTypeNode(node.data);
     const fields = isNode(resolvedData, 'structTypeNode') ? (resolvedData.fields ?? []) : [];
 
@@ -36,7 +37,7 @@ export function getEventPageFragment(
                 ...scope,
                 discriminatorNodes: node.discriminators ?? [],
                 fields,
-                prefix: getEventDiscriminatorPrefix(nameApi, node.name),
+                prefix: getEventDiscriminatorPrefix(nameApi, node.identifier),
             }),
             getTypeWithCodecFragment({
                 codecDocs: [`Gets the codec for {@link ${nameApi.dataType(eventDataName)}} event data.`],
@@ -70,9 +71,9 @@ function getEventParseFunctionFragment(
     },
 ): Fragment {
     const { nameApi, node } = scope;
-    const eventDataName = nameApi.eventDataType(node.name);
+    const eventDataName = nameApi.eventDataType(node.identifier);
     const strictName = nameApi.dataType(eventDataName);
-    const parseFunction = nameApi.eventParseFunction(node.name);
+    const parseFunction = nameApi.eventParseFunction(node.identifier);
     const decoderFunction = nameApi.decoderFunction(eventDataName);
     const readonlyUint8Array = use('type ReadonlyUint8Array', 'solanaCodecsCore');
     const docblock = fragment`/** Parses the provided bytes into {@link ${strictName}} event data. */\n`;

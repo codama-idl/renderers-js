@@ -16,18 +16,24 @@ export function getTypePageFragment(
     return pipe(
         mergeFragments(
             [
-                getTypeWithCodecFragment({ ...scope, manifest, name: node.name, node: node.type, typeDocs: node.docs }),
-                getTypeDiscriminatedUnionHelpersFragment({ ...scope, name: node.name, typeNode: node.type }),
+                getTypeWithCodecFragment({
+                    ...scope,
+                    manifest,
+                    name: node.identifier,
+                    node: node.type,
+                    typeDocs: node.docs,
+                }),
+                getTypeDiscriminatedUnionHelpersFragment({ ...scope, name: node.identifier, typeNode: node.type }),
             ],
             cs => cs.join('\n\n'),
         ),
         f =>
             removeFragmentImports(f, 'generatedTypes', [
-                scope.nameApi.dataType(node.name),
-                scope.nameApi.dataArgsType(node.name),
-                scope.nameApi.encoderFunction(node.name),
-                scope.nameApi.decoderFunction(node.name),
-                scope.nameApi.codecFunction(node.name),
+                scope.nameApi.dataType(node.identifier),
+                scope.nameApi.dataArgsType(node.identifier),
+                scope.nameApi.encoderFunction(node.identifier),
+                scope.nameApi.decoderFunction(node.identifier),
+                scope.nameApi.codecFunction(node.identifier),
             ]),
     );
 }

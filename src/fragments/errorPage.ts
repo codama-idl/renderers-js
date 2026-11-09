@@ -1,4 +1,5 @@
-import { camelCase, ProgramNode } from '@codama/nodes';
+import { camelCase } from '@codama/fragments/casing';
+import { getTextNodeContent, ProgramNode } from '@codama/nodes';
 
 import { Fragment, fragment, getDocblockFragment, mergeFragments, RenderScope, use } from '../utils';
 
@@ -16,13 +17,13 @@ export function getErrorPageFragment(scope: Pick<RenderScope, 'nameApi'> & { pro
 }
 
 function getConstantsFragment(scope: Pick<RenderScope, 'nameApi'> & { programNode: ProgramNode }): Fragment {
-    const constantPrefix = scope.nameApi.programErrorConstantPrefix(scope.programNode.name);
+    const constantPrefix = scope.nameApi.programErrorConstantPrefix(scope.programNode.identifier);
     return mergeFragments(
         [...(scope.programNode.errors ?? [])]
             .sort((a, b) => a.code - b.code)
             .map(error => {
                 const docs = getDocblockFragment(error.docs, true);
-                const name = constantPrefix + scope.nameApi.programErrorConstant(error.name);
+                const name = constantPrefix + scope.nameApi.programErrorConstant(error.identifier);
                 return fragment`${docs}export const ${name} = 0x${error.code.toString(16)}; // ${error.code}`;
             }),
         cs => cs.join('\n'),
@@ -30,12 +31,12 @@ function getConstantsFragment(scope: Pick<RenderScope, 'nameApi'> & { programNod
 }
 
 function getConstantUnionTypeFragment(scope: Pick<RenderScope, 'nameApi'> & { programNode: ProgramNode }): Fragment {
-    const constantPrefix = scope.nameApi.programErrorConstantPrefix(scope.programNode.name);
-    const typeName = scope.nameApi.programErrorUnion(scope.programNode.name);
+    const constantPrefix = scope.nameApi.programErrorConstantPrefix(scope.programNode.identifier);
+    const typeName = scope.nameApi.programErrorUnion(scope.programNode.identifier);
     const errorTypes = mergeFragments(
         [...(scope.programNode.errors ?? [])]
-            .sort((a, b) => camelCase(a.name).localeCompare(camelCase(b.name)))
-            .map(error => fragment`typeof ${constantPrefix + scope.nameApi.programErrorConstant(error.name)}`),
+            .sort((a, b) => camelCase(a.identifier).localeCompare(camelCase(b.identifier)))
+            .map(error => fragment`typeof ${constantPrefix + scope.nameApi.programErrorConstant(error.identifier)}`),
         cs => cs.join(' | '),
     );
 
@@ -43,15 +44,15 @@ function getConstantUnionTypeFragment(scope: Pick<RenderScope, 'nameApi'> & { pr
 }
 
 function getErrorMessagesFragment(scope: Pick<RenderScope, 'nameApi'> & { programNode: ProgramNode }): Fragment {
-    const mapName = scope.nameApi.programErrorMessagesMap(scope.programNode.name);
-    const errorUnionType = scope.nameApi.programErrorUnion(scope.programNode.name);
-    const constantPrefix = scope.nameApi.programErrorConstantPrefix(scope.programNode.name);
+    const mapName = scope.nameApi.programErrorMessagesMap(scope.programNode.identifier);
+    const errorUnionType = scope.nameApi.programErrorUnion(scope.programNode.identifier);
+    const constantPrefix = scope.nameApi.programErrorConstantPrefix(scope.programNode.identifier);
     const messageEntries = mergeFragments(
         [...(scope.programNode.errors ?? [])]
-            .sort((a, b) => camelCase(a.name).localeCompare(camelCase(b.name)))
+            .sort((a, b) => camelCase(a.identifier).localeCompare(camelCase(b.identifier)))
             .map(error => {
-                const constantName = constantPrefix + scope.nameApi.programErrorConstant(error.name);
-                const escapedMessage = error.message.replace(/`/g, '\\`');
+                const constantName = constantPrefix + scope.nameApi.programErrorConstant(error.identifier);
+                const escapedMessage = getTextNodeContent(error.message).replace(/`/g, '\\`');
                 return fragment`[${constantName}]: \`${escapedMessage}\``;
             }),
         cs => cs.join(', '),
@@ -64,9 +65,9 @@ if (process.env['NODE_ENV'] !== 'production') {
 }
 
 function getErrorMessageFunctionFragment(scope: Pick<RenderScope, 'nameApi'> & { programNode: ProgramNode }): Fragment {
-    const functionName = scope.nameApi.programGetErrorMessageFunction(scope.programNode.name);
-    const errorUnionType = scope.nameApi.programErrorUnion(scope.programNode.name);
-    const messageMapName = scope.nameApi.programErrorMessagesMap(scope.programNode.name);
+    const functionName = scope.nameApi.programGetErrorMessageFunction(scope.programNode.identifier);
+    const errorUnionType = scope.nameApi.programErrorUnion(scope.programNode.identifier);
+    const messageMapName = scope.nameApi.programErrorMessagesMap(scope.programNode.identifier);
 
     return fragment`export function ${functionName}(code: ${errorUnionType}): string {
   if (process.env['NODE_ENV'] !== 'production') {
@@ -79,9 +80,9 @@ function getErrorMessageFunctionFragment(scope: Pick<RenderScope, 'nameApi'> & {
 
 function getIsErrorFunctionFragment(scope: Pick<RenderScope, 'nameApi'> & { programNode: ProgramNode }): Fragment {
     const { programNode, nameApi } = scope;
-    const programAddressConstant = use(nameApi.programAddressConstant(programNode.name), 'generatedPrograms');
-    const functionName = nameApi.programIsErrorFunction(programNode.name);
-    const programErrorUnion = nameApi.programErrorUnion(programNode.name);
+    const programAddressConstant = use(nameApi.programAddressConstant(programNode.identifier), 'generatedPrograms');
+    const functionName = nameApi.programIsErrorFunction(programNode.identifier);
+    const programErrorUnion = nameApi.programErrorUnion(programNode.identifier);
     const addressType = use('type Address', 'solanaAddresses');
     const hasAddressType = use('type HasAddress', 'solanaAddresses');
 

@@ -11,15 +11,17 @@ export function getAccountFetchHelpersFragment(
 ): Fragment {
     const { accountPath, typeManifest, nameApi, customAccountData } = scope;
     const accountNode = getLastNodeFromPath(accountPath);
-    const decodeFunction = nameApi.accountDecodeFunction(accountNode.name);
-    const fetchAllFunction = nameApi.accountFetchAllFunction(accountNode.name);
-    const fetchAllMaybeFunction = nameApi.accountFetchAllMaybeFunction(accountNode.name);
-    const fetchFunction = nameApi.accountFetchFunction(accountNode.name);
-    const fetchMaybeFunction = nameApi.accountFetchMaybeFunction(accountNode.name);
+    const decodeFunction = nameApi.accountDecodeFunction(accountNode.identifier);
+    const fetchAllFunction = nameApi.accountFetchAllFunction(accountNode.identifier);
+    const fetchAllMaybeFunction = nameApi.accountFetchAllMaybeFunction(accountNode.identifier);
+    const fetchFunction = nameApi.accountFetchFunction(accountNode.identifier);
+    const fetchMaybeFunction = nameApi.accountFetchMaybeFunction(accountNode.identifier);
 
     const hasCustomData = !!getCustomDataOptions(customAccountData, accountNode);
-    const accountType = hasCustomData ? typeManifest.strictType : nameApi.dataType(accountNode.name);
-    const decoderFunction = hasCustomData ? typeManifest.decoder : `${nameApi.decoderFunction(accountNode.name)}()`;
+    const accountType = hasCustomData ? typeManifest.strictType : nameApi.dataType(accountNode.identifier);
+    const decoderFunction = hasCustomData
+        ? typeManifest.decoder
+        : `${nameApi.decoderFunction(accountNode.identifier)}()`;
 
     return pipe(
         fragment`export function ${decodeFunction}<TAddress extends string = string>(encodedAccount: EncodedAccount<TAddress>): Account<${accountType}, TAddress>;

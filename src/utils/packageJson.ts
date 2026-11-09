@@ -1,5 +1,5 @@
 import { CODAMA_ERROR__RENDERERS__MISSING_DEPENDENCY_VERSIONS, CodamaError, logWarn } from '@codama/errors';
-import { fileExists, joinPath, readJson, RenderMap, writeFile } from '@codama/renderers-core';
+import { fileExists, joinPath, readJson, RenderMap, writeFile } from '@codama/fragments';
 import { lt as ltVersion, minVersion, subset } from 'semver';
 
 import type { CodeFormatter } from './formatCode';

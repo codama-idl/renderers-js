@@ -1,4 +1,4 @@
-import { camelCase, capitalize, kebabCase, pascalCase, snakeCase, titleCase } from '@codama/nodes';
+import { camelCase, capitalize, kebabCase, pascalCase, snakeCase, titleCase } from '@codama/fragments/casing';
 
 export type NameTransformerHelpers = {
     camelCase: (name: string) => string;

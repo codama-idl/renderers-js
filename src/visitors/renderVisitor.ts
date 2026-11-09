@@ -1,4 +1,4 @@
-import { deleteDirectory, joinPath, mapRenderMapContentAsync, writeRenderMap } from '@codama/renderers-core';
+import { deleteDirectory, joinPath, mapRenderMapContentAsync, writeRenderMap } from '@codama/fragments';
 import { rootNodeVisitor, visit, Visitor } from '@codama/visitors-core';
 
 import { getCodeFormatter, RenderOptions, syncPackageJson } from '../utils';

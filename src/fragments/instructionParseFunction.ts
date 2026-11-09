@@ -1,4 +1,5 @@
-import { camelCase, InstructionNode } from '@codama/nodes';
+import { camelCase } from '@codama/fragments/casing';
+import { InstructionNode } from '@codama/nodes';
 import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
 import {
@@ -22,7 +23,10 @@ export function getInstructionParseFunctionFragment(
 ): Fragment {
     const instructionNode = getLastNodeFromPath(scope.instructionPath);
     const programNode = findProgramNodeFromPath(scope.instructionPath)!;
-    const programAddressConstant = use(scope.nameApi.programAddressConstant(programNode.name), 'generatedPrograms');
+    const programAddressConstant = use(
+        scope.nameApi.programAddressConstant(programNode.identifier),
+        'generatedPrograms',
+    );
     const childScope = { ...scope, instructionNode, programAddressConstant };
 
     return mergeFragments([getTypeFragment(childScope), getFunctionFragment(childScope)], cs => cs.join('\n\n'));
@@ -36,8 +40,8 @@ function getTypeFragment(
     },
 ): Fragment {
     const customData = getCustomDataOptions(scope.customInstructionData, scope.instructionNode);
-    const instructionParsedType = scope.nameApi.instructionParsedType(scope.instructionNode.name);
-    const instructionDataName = scope.nameApi.instructionDataType(scope.instructionNode.name);
+    const instructionParsedType = scope.nameApi.instructionParsedType(scope.instructionNode.identifier);
+    const instructionDataName = scope.nameApi.instructionDataType(scope.instructionNode.identifier);
 
     const hasData = !!customData || hasInstructionData(scope.instructionNode);
     const hasAccounts = (scope.instructionNode.accounts ?? []).length > 0;
@@ -55,7 +59,7 @@ function getTypeFragment(
     const accounts = mergeFragments(
         (scope.instructionNode.accounts ?? []).map((account, i) => {
             const docs = getDocblockFragment(account.docs, true);
-            const name = camelCase(account.name);
+            const name = camelCase(account.identifier);
             return fragment`${docs}${name}${account.isOptional ? '?' : ''}: TAccountMetas[${i}]${account.isOptional ? ' | undefined' : ''};`;
         }),
         cs => (hasAccounts ? `\naccounts: {\n${cs.join('\n')}\n};` : ''),
@@ -77,9 +81,9 @@ function getFunctionFragment(
     },
 ): Fragment {
     const customData = getCustomDataOptions(scope.customInstructionData, scope.instructionNode);
-    const instructionParsedType = scope.nameApi.instructionParsedType(scope.instructionNode.name);
-    const instructionParseFunction = scope.nameApi.instructionParseFunction(scope.instructionNode.name);
-    const instructionDataName = scope.nameApi.instructionDataType(scope.instructionNode.name);
+    const instructionParsedType = scope.nameApi.instructionParsedType(scope.instructionNode.identifier);
+    const instructionParseFunction = scope.nameApi.instructionParseFunction(scope.instructionNode.identifier);
+    const instructionDataName = scope.nameApi.instructionDataType(scope.instructionNode.identifier);
     const decoderFunction = customData
         ? scope.dataArgsManifest.decoder
         : fragment`${scope.nameApi.decoderFunction(instructionDataName)}()`;
@@ -153,8 +157,8 @@ const getNextOptionalAccount = () => {
     const accounts = mergeFragments(
         (scope.instructionNode.accounts ?? []).map(account =>
             account.isOptional
-                ? fragment`${camelCase(account.name)}: getNextOptionalAccount()`
-                : fragment`${camelCase(account.name)}: getNextAccount()`,
+                ? fragment`${camelCase(account.identifier)}: getNextOptionalAccount()`
+                : fragment`${camelCase(account.identifier)}: getNextAccount()`,
         ),
         cs => (hasAccounts ? `, accounts: { ${cs.join(', ')} }` : ''),
     );

@@ -1,4 +1,5 @@
-import { camelCase, getAllInstructionsWithSubs, InstructionNode, ProgramNode } from '@codama/nodes';
+import { camelCase } from '@codama/fragments/casing';
+import { getAllInstructionsWithSubs, InstructionNode, ProgramNode } from '@codama/nodes';
 
 import { Fragment, fragment, getInstructionDataNode, mergeFragments, RenderScope, use } from '../utils';
 import { getDiscriminatorConditionFragment } from './discriminatorCondition';
@@ -36,8 +37,10 @@ function getProgramInstructionsEnumFragment(
     const { programNode, allInstructions, nameApi } = scope;
     return getEnumDeclarationFragment({
         ...scope,
-        name: nameApi.programInstructionsEnum(programNode.name),
-        variantNames: allInstructions.map(instruction => nameApi.programInstructionsEnumVariant(instruction.name)),
+        name: nameApi.programInstructionsEnum(programNode.identifier),
+        variantNames: allInstructions.map(instruction =>
+            nameApi.programInstructionsEnumVariant(instruction.identifier),
+        ),
     });
 }
 
@@ -54,11 +57,11 @@ function getProgramInstructionsIdentifierFunctionFragment(
     const hasInstructionDiscriminators = instructionsWithDiscriminators.length > 0;
     if (!hasInstructionDiscriminators) return;
 
-    const programInstructionsEnum = nameApi.programInstructionsEnum(programNode.name);
-    const programInstructionsIdentifierFunction = nameApi.programInstructionsIdentifierFunction(programNode.name);
+    const programInstructionsEnum = nameApi.programInstructionsEnum(programNode.identifier);
+    const programInstructionsIdentifierFunction = nameApi.programInstructionsIdentifierFunction(programNode.identifier);
     const discriminatorsFragment = mergeFragments(
         instructionsWithDiscriminators.map((instruction): Fragment => {
-            const variant = nameApi.programInstructionsEnumVariant(instruction.name);
+            const variant = nameApi.programInstructionsEnumVariant(instruction.identifier);
             return getDiscriminatorConditionFragment({
                 ...scope,
                 dataName: 'data',
@@ -77,7 +80,7 @@ function getProgramInstructionsIdentifierFunctionFragment(
     return fragment`export function ${programInstructionsIdentifierFunction}(instruction: { data: ${readonlyUint8Array} } | ${readonlyUint8Array}): ${programInstructionsEnum} {
     const data = 'data' in instruction ? instruction.data : instruction;
     ${discriminatorsFragment}
-    throw new ${solanaError}(${solanaErrorCode}, { instructionData: data, programName: "${camelCase(programNode.name)}" });
+    throw new ${solanaError}(${solanaErrorCode}, { instructionData: data, programName: "${camelCase(programNode.identifier)}" });
 }`;
 }
 
@@ -90,13 +93,13 @@ function getProgramInstructionsParsedUnionTypeFragment(
     const { programNode, allInstructions, nameApi, erasableSyntax } = scope;
 
     const programAddress = programNode.publicKey;
-    const programInstructionsType = nameApi.programInstructionsParsedUnionType(programNode.name);
-    const programInstructionsEnum = nameApi.programInstructionsEnum(programNode.name);
+    const programInstructionsType = nameApi.programInstructionsParsedUnionType(programNode.identifier);
+    const programInstructionsEnum = nameApi.programInstructionsEnum(programNode.identifier);
 
     const typeVariants = allInstructions.map((instruction): Fragment => {
-        const instructionEnumVariant = nameApi.programInstructionsEnumVariant(instruction.name);
+        const instructionEnumVariant = nameApi.programInstructionsEnumVariant(instruction.identifier);
         const parsedInstructionType = use(
-            `type ${nameApi.instructionParsedType(instruction.name)}`,
+            `type ${nameApi.instructionParsedType(instruction.identifier)}`,
             'generatedInstructions',
         );
 
@@ -132,15 +135,18 @@ function getProgramInstructionsParseFunctionFragment(
     );
     if (instructionsWithDiscriminators.length === 0) return;
 
-    const programInstructionsEnum = nameApi.programInstructionsEnum(programNode.name);
-    const programInstructionsIdentifierFunction = nameApi.programInstructionsIdentifierFunction(programNode.name);
-    const programInstructionsParsedUnionType = nameApi.programInstructionsParsedUnionType(programNode.name);
-    const parseFunction = nameApi.programInstructionsParseFunction(programNode.name);
+    const programInstructionsEnum = nameApi.programInstructionsEnum(programNode.identifier);
+    const programInstructionsIdentifierFunction = nameApi.programInstructionsIdentifierFunction(programNode.identifier);
+    const programInstructionsParsedUnionType = nameApi.programInstructionsParsedUnionType(programNode.identifier);
+    const parseFunction = nameApi.programInstructionsParseFunction(programNode.identifier);
 
     const switchCases = mergeFragments(
         allInstructions.map((instruction): Fragment => {
-            const enumVariant = nameApi.programInstructionsEnumVariant(instruction.name);
-            const parseFunction = use(nameApi.instructionParseFunction(instruction.name), 'generatedInstructions');
+            const enumVariant = nameApi.programInstructionsEnumVariant(instruction.identifier);
+            const parseFunction = use(
+                nameApi.instructionParseFunction(instruction.identifier),
+                'generatedInstructions',
+            );
             const assertIsInstructionWithAccounts = use('assertIsInstructionWithAccounts', 'solanaInstructions');
             // Only need accounts assertion since data is guaranteed by the input type
             const hasAccounts = (instruction.accounts ?? []).length > 0;
@@ -163,7 +169,7 @@ function getProgramInstructionsParseFunctionFragment(
             const instructionType = ${programInstructionsIdentifierFunction}(instruction);
             switch (instructionType) {
                 ${switchCases}
-                default: throw new ${solanaError}(${solanaErrorCode}, { instructionType: instructionType as string, programName: "${camelCase(programNode.name)}" });
+                default: throw new ${solanaError}(${solanaErrorCode}, { instructionType: instructionType as string, programName: "${camelCase(programNode.identifier)}" });
             }
         }`;
 }
