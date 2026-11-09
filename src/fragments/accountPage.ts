@@ -1,8 +1,8 @@
 import { CODAMA_ERROR__NODE_PATH_PROGRAM_MISSING, CodamaError } from '@codama/errors';
-import { AccountNode, isNode } from '@codama/nodes';
+import { AccountNode } from '@codama/nodes';
 import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
 
-import { Fragment, mergeFragments, RenderScope } from '../utils';
+import { Fragment, getStructFields, mergeFragments, RenderScope } from '../utils';
 import { getAccountFetchHelpersFragment } from './accountFetchHelpers';
 import { getAccountPdaHelpersFragment } from './accountPdaHelpers';
 import { getAccountSizeHelpersFragment } from './accountSizeHelpers';
@@ -24,8 +24,7 @@ export function getAccountPageFragment(
     }
 
     const typeManifest = visit(node, scope.typeManifestVisitor);
-    // Field discriminators can only refer to the fields of struct data.
-    const fields = isNode(node.data, 'structTypeNode') ? (node.data.fields ?? []) : [];
+    const fields = getStructFields(node.data);
     return mergeFragments(
         [
             getDiscriminatorConstantsFragment({

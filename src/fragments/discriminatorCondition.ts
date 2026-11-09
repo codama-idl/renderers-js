@@ -16,7 +16,7 @@ import {
     isNodeFilter,
     type ProgramNode,
     type SizeDiscriminatorNode,
-    type StructTypeNode,
+    type StructFieldTypeNode,
 } from '@codama/nodes';
 import { pipe, visit } from '@codama/visitors-core';
 import { getBase64Decoder } from '@solana/codecs-strings';
@@ -44,7 +44,7 @@ export function getDiscriminatorConditionFragment(
         discriminators: DiscriminatorNode[];
         ifTrue: string;
         programNode: ProgramNode;
-        struct: StructTypeNode;
+        fields: StructFieldTypeNode[];
     },
 ): Fragment {
     return pipe(
@@ -92,11 +92,11 @@ function getFieldConditionFragment(
     discriminator: FieldDiscriminatorNode,
     scope: Pick<RenderScope, 'typeManifestVisitor'> & {
         dataName: string;
-        struct: StructTypeNode;
+        fields: StructFieldTypeNode[];
     },
 ): Fragment {
     const identifier = getFieldDiscriminatorIdentifier(discriminator);
-    const field = (scope.struct.fields ?? []).find(f => camelCase(f.identifier) === camelCase(identifier));
+    const field = scope.fields.find(f => camelCase(f.identifier) === camelCase(identifier));
     if (!field) {
         throw new CodamaError(CODAMA_ERROR__DISCRIMINATOR_FIELD_NOT_FOUND, {
             field: discriminator.path,
@@ -112,13 +112,15 @@ function getFieldConditionFragment(
     const defaultValueItems = isNode(field.defaultValue, 'arrayValueNode') ? (field.defaultValue.items ?? []) : [];
     if (
         isNode(field.type, 'arrayTypeNode') &&
-        isNode(field.type.item, 'numberTypeNode') &&
+        isNode(field.type.item, 'integerTypeNode') &&
         field.type.item.format === 'u8' &&
         isNode(field.type.count, 'fixedCountNode') &&
         isNode(field.defaultValue, 'arrayValueNode') &&
-        defaultValueItems.every(isNodeFilter('numberValueNode'))
+        defaultValueItems.every(isNodeFilter('integerValueNode'))
     ) {
-        const base64Bytes = getBase64Decoder().decode(new Uint8Array(defaultValueItems.map(node => node.number)));
+        const base64Bytes = getBase64Decoder().decode(
+            new Uint8Array(defaultValueItems.map(node => Number(node.value))),
+        );
         return getByteConditionFragment(
             constantDiscriminatorNode(constantValueNodeFromBytes('base64', base64Bytes), {
                 offset: discriminator.offset,

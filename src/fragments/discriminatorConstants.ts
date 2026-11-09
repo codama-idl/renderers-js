@@ -1,3 +1,4 @@
+import { mapFragmentContent } from '@codama/fragments';
 import { camelCase } from '@codama/fragments/casing';
 import {
     ConstantDiscriminatorNode,
@@ -13,6 +14,7 @@ import { visit } from '@codama/visitors-core';
 import {
     Fragment,
     fragment,
+    getBigIntLiteral,
     getFieldDiscriminatorIdentifier,
     mergeFragments,
     NameApi,
@@ -97,7 +99,7 @@ export function getConstantDiscriminatorConstantFragment(
     const encoder = typeManifest.encoder;
     const { value, valueType } = resolveDiscriminatorValue(
         visit(discriminatorNode.constant.value, typeManifestVisitor).value,
-        isNode(discriminatorNode.constant.value, 'numberValueNode'),
+        isNode(discriminatorNode.constant.value, 'integerValueNode'),
         typeManifest.strictType,
     );
     return getConstantFragment({ ...scope, encoder, name, value, valueType });
@@ -123,14 +125,15 @@ export function getFieldDiscriminatorConstantFragment(
     const encoder = typeManifest.encoder;
     const { value, valueType } = resolveDiscriminatorValue(
         visit(field.defaultValue, typeManifestVisitor).value,
-        isNode(field.defaultValue, 'numberValueNode'),
+        isNode(field.defaultValue, 'integerValueNode'),
         typeManifest.strictType,
     );
     return getConstantFragment({ ...scope, encoder, name, value, valueType });
 }
 
-function resolveDiscriminatorValue(rawValue: Fragment, isNumberValue: boolean, strictType: Fragment) {
-    const value = strictType.content === 'bigint' && isNumberValue ? fragment`${rawValue}n` : rawValue;
+function resolveDiscriminatorValue(rawValue: Fragment, isIntegerValue: boolean, strictType: Fragment) {
+    const value =
+        strictType.content === 'bigint' && isIntegerValue ? mapFragmentContent(rawValue, getBigIntLiteral) : rawValue;
     const needsTypeAnnotation = !['string', 'number', 'boolean', 'bigint'].includes(strictType.content);
     return { value, valueType: needsTypeAnnotation ? strictType : undefined };
 }

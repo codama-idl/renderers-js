@@ -1,7 +1,15 @@
 import { camelCase } from '@codama/fragments/casing';
 import { getAllInstructionsWithSubs, InstructionNode, ProgramNode } from '@codama/nodes';
 
-import { Fragment, fragment, getInstructionDataNode, mergeFragments, RenderScope, use } from '../utils';
+import {
+    Fragment,
+    fragment,
+    getInstructionDataNode,
+    getStructFields,
+    mergeFragments,
+    RenderScope,
+    use,
+} from '../utils';
 import { getDiscriminatorConditionFragment } from './discriminatorCondition';
 import { getEnumDeclarationFragment } from './enumDeclaration';
 
@@ -66,8 +74,8 @@ function getProgramInstructionsIdentifierFunctionFragment(
                 ...scope,
                 dataName: 'data',
                 discriminators: instruction.discriminators ?? [],
+                fields: getStructFields(getInstructionDataNode(instruction)),
                 ifTrue: `return ${programInstructionsEnum}.${variant};`,
-                struct: getInstructionDataNode(instruction),
             });
         }),
         c => c.join('\n'),

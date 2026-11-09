@@ -1,26 +1,34 @@
-import { CODAMA_ERROR__UNRECOGNIZED_BYTES_ENCODING, CodamaError } from '@codama/errors';
+import {
+    CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE,
+    CODAMA_ERROR__UNRECOGNIZED_BYTES_ENCODING,
+    CodamaError,
+} from '@codama/errors';
 import { mapFragmentContent, setFragmentContent } from '@codama/fragments';
 import { camelCase } from '@codama/fragments/casing';
 import {
     ConstantValueNode,
     CountNode,
+    FloatFormat,
+    IntegerFormat,
     isNode,
     isNodeFilter,
     isScalarEnum,
-    NumberTypeNode,
-    PostOffsetTypeNode,
-    PreOffsetTypeNode,
+    PostOffsetStrategy,
+    PreOffsetStrategy,
     REGISTERED_TYPE_NODE_KINDS,
     REGISTERED_VALUE_NODE_KINDS,
     RegisteredTypeNode,
     RegisteredValueNode,
     structFieldTypeNode,
     structTypeNode,
+    TransformNode,
+    tupleTypeNode,
     TypeNode,
 } from '@codama/nodes';
 import {
     extendVisitor,
     findLastNodeFromPath,
+    interceptVisitor,
     LinkableDictionary,
     NodeStack,
     pipe,
@@ -41,12 +49,15 @@ import {
     getEnumBody,
     getFieldDiscriminatorIdentifier,
     getEnumVariantDiscriminators,
-    getInnerTypeNode,
     getInstructionDataNode,
+    getIntegerLiteral,
+    getStructFieldCodecDefault,
+    getTypeNodeTransforms,
     hasCustomEnumVariantDiscriminators,
     type GetImportFromFunction,
-    isBigNumberFormat,
-    isDefaultNumberType,
+    isBigIntegerFormat,
+    isDefaultIntegerType,
+    isStructEnumVariantData,
     mergeFragments,
     mergeTypeManifests,
     type NameApi,
@@ -112,8 +123,10 @@ export function getTypeManifestVisitor(input: {
     /**
      * Renders a variant of a discriminated union from its name and its data, if any.
      *
-     * A struct data is spread into the variant object alongside the discriminator
-     * attribute, whereas any other data is exposed under a `fields` attribute.
+     * The fields of a struct, inline or linked, are spread into the variant object
+     * alongside the discriminator attribute. Any other data is exposed under a `fields`
+     * tuple attribute, wrapping a single type into a one-item tuple, which encodes to
+     * the same bytes, so that `Variant(u8)` and `Variant((u8,))` share the same API.
      */
     const renderEnumVariant = (
         variant: { data: TypeNode | undefined; name: string },
@@ -133,9 +146,24 @@ export function getTypeManifestVisitor(input: {
             });
         }
 
+        if (
+            isNode(variant.data, 'definedTypeLinkNode') &&
+            isStructEnumVariantData(variant.data, stack.getPath(), linkables)
+        ) {
+            const linkManifest = visit(variant.data, self);
+            return typeManifest({
+                ...linkManifest,
+                decoder: fragment`['${name}', ${linkManifest.decoder}]`,
+                encoder: fragment`['${name}', ${linkManifest.encoder}]`,
+                looseType: fragment`{ ${kindAttribute} } & ${linkManifest.looseType}`,
+                strictType: fragment`{ ${kindAttribute} } & ${linkManifest.strictType}`,
+            });
+        }
+
+        const fields = isNode(variant.data, 'tupleTypeNode') ? variant.data : tupleTypeNode([variant.data]);
         const struct = isNode(variant.data, 'structTypeNode')
             ? variant.data
-            : structTypeNode([structFieldTypeNode({ name: 'fields', type: variant.data })]);
+            : structTypeNode([structFieldTypeNode({ identifier: 'fields', type: fields })]);
 
         parentName = null;
         const structManifest = visit(struct, self);
@@ -153,6 +181,41 @@ export function getTypeManifestVisitor(input: {
             ),
         });
     };
+
+    /** Applies the transforms of a type node around its codecs, innermost first. */
+    const applyTransforms = (
+        manifest: TypeManifest,
+        transforms: readonly TransformNode[],
+        self: Visitor<TypeManifest, RegisteredTypeNode['kind'] | RegisteredValueNode['kind']>,
+    ): TypeManifest =>
+        transforms.reduce((current, transform): TypeManifest => {
+            switch (transform.kind) {
+                case 'fixedSizeTransformNode':
+                    return applyFixedSize(current, transform.size);
+                case 'hiddenPrefixTransformNode':
+                    return applyHiddenPrefix(
+                        current,
+                        (transform.prefix ?? []).map(c => visit(c, self).value),
+                    );
+                case 'hiddenSuffixTransformNode':
+                    return applyHiddenSuffix(
+                        current,
+                        (transform.suffix ?? []).map(c => visit(c, self).value),
+                    );
+                case 'postOffsetTransformNode':
+                    return applyPostOffset(current, transform.offset, transform.strategy);
+                case 'preOffsetTransformNode':
+                    return applyPreOffset(current, transform.offset, transform.strategy);
+                case 'sentinelTransformNode':
+                    return applySentinel(current, visit(transform.sentinel, self).value);
+                case 'sizePrefixTransformNode':
+                    return applySizePrefix(current, visit(transform.prefix, self));
+                default:
+                    throw new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, {
+                        path: [transform satisfies never],
+                    });
+            }
+        }, manifest);
 
     return pipe(
         staticVisitor(() => typeManifest(), {
@@ -177,10 +240,6 @@ export function getTypeManifestVisitor(input: {
                     const manifest = link ? visit(link, self) : visit(account.data, self);
                     parentName = null;
                     return manifest;
-                },
-
-                visitAmountType(amountType, { self }) {
-                    return visit(amountType.number, self);
                 },
 
                 visitArrayType(arrayType, { self }) {
@@ -208,7 +267,7 @@ export function getTypeManifestVisitor(input: {
                 visitBooleanType(booleanType, { self }) {
                     let sizeEncoder = fragment``;
                     let sizeDecoder = fragment``;
-                    if (!isDefaultNumberType(getInnerTypeNode(booleanType.size), 'u8')) {
+                    if (!isDefaultIntegerType(booleanType.size, 'u8')) {
                         const size = visit(booleanType.size, self);
                         sizeEncoder = fragment`{ size: ${size.encoder} }`;
                         sizeDecoder = fragment`{ size: ${size.decoder} }`;
@@ -283,22 +342,8 @@ export function getTypeManifestVisitor(input: {
                     });
                 },
 
-                visitEnumEmptyVariantType(enumEmptyVariantType, { self }) {
-                    return renderEnumVariant({ data: undefined, name: enumEmptyVariantType.name }, self);
-                },
-
-                visitEnumStructVariantType(enumStructVariantType, { self }) {
-                    return renderEnumVariant(
-                        { data: enumStructVariantType.struct, name: enumStructVariantType.name },
-                        self,
-                    );
-                },
-
-                visitEnumTupleVariantType(enumTupleVariantType, { self }) {
-                    return renderEnumVariant(
-                        { data: enumTupleVariantType.tuple, name: enumTupleVariantType.name },
-                        self,
-                    );
+                visitDurationType(durationType, { self }) {
+                    return visit(durationType.number, self);
                 },
 
                 visitEnumType(enumType, { self }) {
@@ -309,7 +354,7 @@ export function getTypeManifestVisitor(input: {
                     const hasCustomDiscriminators = hasCustomEnumVariantDiscriminators(variants);
                     const discriminators = getEnumVariantDiscriminators(variants);
 
-                    const hasDefaultSize = isDefaultNumberType(getInnerTypeNode(enumType.size), 'u8');
+                    const hasDefaultSize = isDefaultIntegerType(enumType.size, 'u8');
                     if (hasCustomDiscriminators && !isScalarEnum(enumType)) {
                         // The discriminated union codec writes the position of the variant as its
                         // prefix, so the prefix codec maps that position to the custom discriminator.
@@ -435,6 +480,10 @@ export function getTypeManifestVisitor(input: {
                     });
                 },
 
+                visitEnumVariantType(enumVariantType, { self }) {
+                    return renderEnumVariant({ data: enumVariantType.data, name: enumVariantType.identifier }, self);
+                },
+
                 visitEvent(event, { self }) {
                     const eventDataName = nameApi.eventDataType(event.identifier);
                     parentName = {
@@ -446,22 +495,33 @@ export function getTypeManifestVisitor(input: {
                     return manifest;
                 },
 
-                visitFixedSizeType(node, { self }) {
-                    return applyFixedSize(visit(node.type, self), node.size);
+                visitFixedPointType(fixedPointType, { self }) {
+                    const numberManifest = visit(fixedPointType.number, self);
+                    // SOL amounts are lamports: a fixed point of 9 decimal places with a `SOL` unit.
+                    const isSolAmount =
+                        fixedPointType.scale === 9 &&
+                        (fixedPointType.base ?? 10) === 10 &&
+                        fixedPointType.unit === 'SOL';
+                    return isSolAmount ? applyLamports(numberManifest) : numberManifest;
                 },
 
-                visitHiddenPrefixType(node, { self }) {
-                    return applyHiddenPrefix(
-                        visit(node.type, self),
-                        (node.prefix ?? []).map(c => visit(c, self).value),
-                    );
+                visitFloatType(floatType) {
+                    return renderNumberType(floatType.format, floatType.endian, nameApi);
                 },
 
-                visitHiddenSuffixType(node, { self }) {
-                    return applyHiddenSuffix(
-                        visit(node.type, self),
-                        (node.suffix ?? []).map(c => visit(c, self).value),
-                    );
+                visitFloatValue(node) {
+                    return renderNumberValue(node.value);
+                },
+
+                visitInjectedValue(node, { self }) {
+                    // Injected values are resolved by instruction builders. Only their fallback,
+                    // if any, can be rendered as a standalone value.
+                    if (!node.fallback) {
+                        throw new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, {
+                            path: [...stack.getPath(), node],
+                        });
+                    }
+                    return visit(node.fallback, self);
                 },
 
                 visitInstruction(instruction, { self }) {
@@ -474,6 +534,14 @@ export function getTypeManifestVisitor(input: {
                     const manifest = link ? visit(link, self) : visit(getInstructionDataNode(instruction), self);
                     parentName = null;
                     return manifest;
+                },
+
+                visitIntegerType(integerType) {
+                    return renderNumberType(integerType.format, integerType.endian, nameApi);
+                },
+
+                visitIntegerValue(node) {
+                    return renderNumberValue(getIntegerLiteral(node.value));
                 },
 
                 visitMapEntryValue(node, { self }) {
@@ -513,21 +581,13 @@ export function getTypeManifestVisitor(input: {
                     });
                 },
 
-                visitNumberType(numberType) {
-                    return renderNumberType(numberType.format, numberType.endian, nameApi);
-                },
-
-                visitNumberValue(node) {
-                    return renderNumberValue(node.number);
-                },
-
                 visitOptionType(optionType, { self }) {
                     const childManifest = visit(optionType.item, self);
                     const encoderOptions: Fragment[] = [];
                     const decoderOptions: Fragment[] = [];
 
                     // Prefix option.
-                    if (!isDefaultNumberType(getInnerTypeNode(optionType.prefix), 'u8')) {
+                    if (!isDefaultIntegerType(optionType.prefix, 'u8')) {
                         const prefixManifest = visit(optionType.prefix, self);
                         encoderOptions.push(fragment`prefix: ${prefixManifest.encoder}`);
                         decoderOptions.push(fragment`prefix: ${prefixManifest.decoder}`);
@@ -553,14 +613,6 @@ export function getTypeManifestVisitor(input: {
                         looseType: fragment`${use('type OptionOrNullable', 'solanaOptions')}<${childManifest.looseType}>`,
                         strictType: fragment`${use('type Option', 'solanaOptions')}<${childManifest.strictType}>`,
                     });
-                },
-
-                visitPostOffsetType(node, { self }) {
-                    return applyPostOffset(visit(node.type, self), node.offset, node.strategy);
-                },
-
-                visitPreOffsetType(node, { self }) {
-                    return applyPreOffset(visit(node.type, self), node.offset, node.strategy);
                 },
 
                 visitPublicKeyType() {
@@ -599,10 +651,6 @@ export function getTypeManifestVisitor(input: {
                     });
                 },
 
-                visitSentinelType(node, { self }) {
-                    return applySentinel(visit(node.type, self), visit(node.sentinel, self).value);
-                },
-
                 visitSetType(setType, { self }) {
                     const childManifest = visit(setType.item, self);
                     const sizeManifest = getArrayLikeSizeOption(setType.count, self);
@@ -623,14 +671,6 @@ export function getTypeManifestVisitor(input: {
                         (node.items ?? []).map(v => visit(v, self)),
                         { mergeValues: renders => `new Set([${renders.join(', ')}])` },
                     );
-                },
-
-                visitSizePrefixType(node, { self }) {
-                    return applySizePrefix(visit(node.type, self), visit(node.prefix, self));
-                },
-
-                visitSolAmountType({ number }, { self }) {
-                    return applyLamports(visit(number, self));
                 },
 
                 visitSomeValue(node, { self }) {
@@ -685,8 +725,8 @@ export function getTypeManifestVisitor(input: {
                         strictType: fragment`${docs}${name}: ${originalChildManifest.strictType}; `,
                     });
 
-                    // No default value.
-                    if (!structFieldType.defaultValue) {
+                    // No default value filled in by the codec.
+                    if (!getStructFieldCodecDefault(structFieldType)) {
                         return childManifest;
                     }
 
@@ -710,7 +750,7 @@ export function getTypeManifestVisitor(input: {
                 },
 
                 visitStructType(structType, { self }) {
-                    const optionalFields = (structType.fields ?? []).filter(f => !!f.defaultValue);
+                    const optionalFields = (structType.fields ?? []).filter(f => !!getStructFieldCodecDefault(f));
 
                     const mergedManifest = pipe(
                         mergeTypeManifests(
@@ -763,7 +803,7 @@ export function getTypeManifestVisitor(input: {
                                     : fragment`${key}: value.${key} ?? ${constantName}`;
                             }
 
-                            const defaultValue = f.defaultValue as NonNullable<typeof f.defaultValue>;
+                            const defaultValue = getStructFieldCodecDefault(f)!;
                             const value = visit(defaultValue, self).value;
                             return f.defaultValueStrategy === 'omitted'
                                 ? fragment`${key}: ${value}`
@@ -837,19 +877,26 @@ export function getTypeManifestVisitor(input: {
                     });
                 },
             }),
+        // Type nodes carry their transforms, which wrap the codecs of the type itself.
+        visitor =>
+            interceptVisitor(visitor, (node, next, self) => {
+                const manifest = next(node);
+                if (!isNode(node, [...REGISTERED_TYPE_NODE_KINDS, 'definedTypeLinkNode'])) return manifest;
+                return applyTransforms(manifest, getTypeNodeTransforms(node), self);
+            }),
         visitor => recordNodeStackVisitor(visitor, stack),
     );
 }
 
 /** Renders the codecs and types of a number from its format and endianness. */
 function renderNumberType(
-    format: NumberTypeNode['format'],
-    endian: NumberTypeNode['endian'],
+    format: FloatFormat | IntegerFormat,
+    endian: 'be' | 'le' | undefined,
     nameApi: NameApi,
 ): TypeManifest {
     const encoderFunction = use(nameApi.encoderFunction(format), 'solanaCodecsNumbers');
     const decoderFunction = use(nameApi.decoderFunction(format), 'solanaCodecsNumbers');
-    const isBigNumber = isBigNumberFormat(format);
+    const isBigNumber = format !== 'f32' && format !== 'f64' && isBigIntegerFormat(format);
     const endianness = endian === 'be' ? fragment`{ endian: ${use('Endian', 'solanaCodecsNumbers')}.Big }` : '';
     return typeManifest({
         decoder: fragment`${decoderFunction}(${endianness})`,
@@ -859,9 +906,9 @@ function renderNumberType(
     });
 }
 
-/** Renders a number literal. */
-function renderNumberValue(value: number): TypeManifest {
-    return typeManifest({ value: fragment`${JSON.stringify(value)}` });
+/** Renders a number literal, given as the JavaScript expression of an integer or decimal value. */
+function renderNumberValue(value: string): TypeManifest {
+    return typeManifest({ value: fragment`${value}` });
 }
 
 /** Wraps the codecs of a number into lamports codecs, typed as `Lamports`. */
@@ -922,7 +969,7 @@ function applyHiddenSuffix(manifest: TypeManifest, suffixes: Fragment[]): TypeMa
 function applyPostOffset(
     manifest: TypeManifest,
     offset: number,
-    strategy: PostOffsetTypeNode['strategy'] | undefined,
+    strategy: PostOffsetStrategy | undefined,
 ): TypeManifest {
     if (strategy === 'padded') {
         return typeManifest({
@@ -956,11 +1003,7 @@ function applyPostOffset(
 }
 
 /** Moves the cursor before the codecs of a type run. */
-function applyPreOffset(
-    manifest: TypeManifest,
-    offset: number,
-    strategy: PreOffsetTypeNode['strategy'] | undefined,
-): TypeManifest {
+function applyPreOffset(manifest: TypeManifest, offset: number, strategy: PreOffsetStrategy | undefined): TypeManifest {
     if (strategy === 'padded') {
         return typeManifest({
             ...manifest,
@@ -1008,7 +1051,7 @@ function applySizePrefix(manifest: TypeManifest, prefix: TypeManifest): TypeMani
 
 function getArrayLikeSizeOption(
     count: CountNode,
-    visitor: Visitor<TypeManifest, TypeNode['kind']>,
+    visitor: Visitor<TypeManifest, RegisteredTypeNode['kind'] | RegisteredValueNode['kind']>,
 ): {
     decoder: Fragment | undefined;
     encoder: Fragment | undefined;
@@ -1025,7 +1068,13 @@ function getArrayLikeSizeOption(
             encoder: fragment`size: 'remainder'`,
         };
     }
-    if (isDefaultNumberType(getInnerTypeNode(count.prefix), 'u32')) {
+    if (isNode(count, 'sentinelCountNode')) {
+        const sentinel = visit(count.sentinel, visitor).value;
+        const strategy = (count.strategy ?? 'required') === 'required' ? '' : `, strategy: '${count.strategy}'`;
+        const size = fragment`size: { __kind: 'sentinel', sentinel: ${sentinel}${strategy} }`;
+        return { decoder: size, encoder: size };
+    }
+    if (isDefaultIntegerType(count.prefix, 'u32')) {
         return { decoder: undefined, encoder: undefined };
     }
     const prefixManifest = visit(count.prefix, visitor);
