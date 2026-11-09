@@ -1,5 +1,6 @@
 version: 2
 updates:
+  # The default branch (`2.x` during the transition to v3) maintains the stable major.
   - package-ecosystem: 'npm'
     directory: '/'
     schedule:
@@ -11,10 +12,22 @@ updates:
       codama:
         patterns:
           - '@codama/*'
+    ignore:
+      # The stable major targets Codama v1: Codama majors are adopted on `main` only.
+      - dependency-name: '@codama/*'
+        update-types: ['version-update:semver-major']
+
+  # `main` hosts the next major. Dependabot only reads this file from the default
+  # branch, so `main` is targeted explicitly until it becomes the default again.
   - package-ecosystem: 'npm'
-    directory: 'packages/renderers-js/test/e2e'
+    directory: '/'
+    target-branch: main
     schedule:
       interval: daily
       time: '01:00'
       timezone: America/Los_Angeles
     open-pull-requests-limit: 10
+    groups:
+      codama:
+        patterns:
+          - '@codama/*'
