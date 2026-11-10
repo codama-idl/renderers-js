@@ -1,5 +1,4 @@
 import { mapFragmentContent } from '@codama/fragments';
-import { camelCase } from '@codama/fragments/casing';
 import { assertIsNode, InstructionByteDeltaNode, InstructionNode, isNode } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
@@ -8,6 +7,7 @@ import {
     Fragment,
     fragment,
     getByteDeltaResolver,
+    getDataPathExpression,
     InstructionResolver,
     isAsyncResolver,
     mergeFragments,
@@ -43,11 +43,11 @@ function getByteDeltaFragment(
         if (resolver) {
             return getResolverFragment(resolver, scope);
         }
-        if (isNode(byteDelta.value, 'numberValueNode')) {
-            return getNumberValueNodeFragment(byteDelta);
+        if (isNode(byteDelta.value, 'integerValueNode')) {
+            return fragment`${byteDelta.value.value}`;
         }
-        if (isNode(byteDelta.value, 'argumentValueNode')) {
-            return getArgumentValueNodeFragment(byteDelta);
+        if (isNode(byteDelta.value, 'dataValueNode')) {
+            return fragment`Number(${getDataPathExpression(byteDelta.value.path)})`;
         }
         if (isNode(byteDelta.value, 'accountLinkNode')) {
             return getAccountLinkNodeFragment(byteDelta, scope);
@@ -66,17 +66,6 @@ function getByteDeltaFragment(
     }
 
     return [bytesFragment];
-}
-
-function getNumberValueNodeFragment(byteDelta: InstructionByteDeltaNode): Fragment {
-    assertIsNode(byteDelta.value, 'numberValueNode');
-    return fragment`${byteDelta.value.number}`;
-}
-
-function getArgumentValueNodeFragment(byteDelta: InstructionByteDeltaNode): Fragment {
-    assertIsNode(byteDelta.value, 'argumentValueNode');
-    const argumentName = camelCase(byteDelta.value.identifier);
-    return fragment`Number(args.${argumentName})`;
 }
 
 function getAccountLinkNodeFragment(

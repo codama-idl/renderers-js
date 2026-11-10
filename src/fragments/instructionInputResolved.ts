@@ -1,9 +1,9 @@
 import { mapFragmentContent } from '@codama/fragments';
 import { camelCase } from '@codama/fragments/casing';
-import { InstructionNode, isNode, parseOptionalAccountStrategy } from '@codama/nodes';
-import { getLastNodeFromPath, NodePath, ResolvedInstructionInput } from '@codama/visitors-core';
+import { InstructionNode, parseOptionalAccountStrategy } from '@codama/nodes';
+import { getLastNodeFromPath, NodePath } from '@codama/visitors-core';
 
-import { Fragment, fragment, mergeFragments, RenderScope } from '../utils';
+import { Fragment, fragment, mergeFragments, RenderScope, ResolvedInstructionInput } from '../utils';
 import { getInstructionInputDefaultFragment } from './instructionInputDefault';
 
 export function getInstructionInputResolvedFragment(
@@ -21,10 +21,10 @@ export function getInstructionInputResolvedFragment(
             optionalAccountStrategy: parseOptionalAccountStrategy(instructionNode.optionalAccountStrategy),
         });
         if (!inputFragment.content) return [];
-        const camelName = camelCase(input.name);
+        const camelName = camelCase(input.node.identifier);
         return [
             mapFragmentContent(inputFragment, c =>
-                isNode(input, 'instructionArgumentNode')
+                input.kind === 'data'
                     ? `if (!args.${camelName}) {\n${c}\n}`
                     : `if (!accounts.${camelName}.value) {\n${c}\n}`,
             ),

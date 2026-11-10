@@ -1,20 +1,16 @@
 import { mapFragmentContent } from '@codama/fragments';
 import { camelCase, pascalCase } from '@codama/fragments/casing';
 import { InstructionAccountNode, InstructionNode, isNodeFilter } from '@codama/nodes';
-import {
-    findProgramNodeFromPath,
-    getLastNodeFromPath,
-    NodePath,
-    pipe,
-    ResolvedInstructionAccount,
-    ResolvedInstructionInput,
-} from '@codama/visitors-core';
+import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
 import {
     Fragment,
+    findResolvedAccount,
+    findResolvedDataField,
     fragment,
-    getCustomDataOptions,
+    getDataPathRoot,
     getInstructionDataFields,
+    getInstructionDataLink,
     getInstructionDependencies,
     getInstructionExtraArguments,
     getRemainingAccountsName,
@@ -26,6 +22,7 @@ import {
     isAsyncInput,
     mergeFragments,
     RenderScope,
+    ResolvedInstructionInput,
     TypeManifest,
     use,
 } from '../utils';
@@ -54,9 +51,9 @@ export function getInstructionFunctionFragment(
     const programNode = findProgramNodeFromPath(instructionPath)!;
     if (useAsync && !hasAsyncFunction(instructionNode, resolvedInputs, asyncResolvers)) return;
 
-    const customData = getCustomDataOptions(customInstructionData, instructionNode);
     const hasAccounts = (instructionNode.accounts ?? []).length > 0;
-    const hasData = !!customData || hasInstructionData(instructionNode);
+    const hasData =
+        !!getInstructionDataLink(instructionNode, customInstructionData) || hasInstructionData(instructionNode);
     const { hasAnyArgs, hasDataArgs, hasInput } = getInstructionFunctionInputFlags(instructionNode, scope);
     const programAddressConstant = use(nameApi.programAddressConstant(programNode.identifier), 'generatedPrograms');
 
@@ -113,24 +110,28 @@ export function getInstructionFunctionFragment(
  */
 export function getInstructionFunctionInputFlags(
     instructionNode: InstructionNode,
-    scope: Pick<RenderScope, 'asyncResolvers' | 'customInstructionData'> & { useAsync: boolean },
+    scope: Pick<RenderScope, 'asyncResolvers' | 'customInstructionData'> & {
+        resolvedInputs: ResolvedInstructionInput[];
+        useAsync: boolean;
+    },
 ): { hasAnyArgs: boolean; hasDataArgs: boolean; hasInput: boolean } {
-    const { asyncResolvers, customInstructionData, useAsync } = scope;
-    const customData = getCustomDataOptions(customInstructionData, instructionNode);
+    const { asyncResolvers, customInstructionData, resolvedInputs, useAsync } = scope;
+    const dataLink = getInstructionDataLink(instructionNode, customInstructionData);
     const hasAccounts = (instructionNode.accounts ?? []).length > 0;
-    const instructionDependencies = getInstructionDependencies(instructionNode, asyncResolvers, useAsync);
+    const instructionDependencies = getInstructionDependencies(resolvedInputs, asyncResolvers, useAsync);
     const argDependencies = instructionDependencies
-        .filter(isNodeFilter('argumentValueNode'))
-        .map(node => camelCase(node.identifier));
+        .filter(isNodeFilter('dataValueNode'))
+        .map(node => camelCase(getDataPathRoot(node.path) ?? ''));
     const argIsNotOmitted = (arg: InstructionDataField) =>
         !(hasInputDefault(arg) && arg.defaultValueStrategy === 'omitted');
-    const argIsDependent = (arg: InstructionDataField) => argDependencies.includes(camelCase(arg.name));
+    const argIsDependent = (arg: InstructionDataField) => argDependencies.includes(camelCase(arg.identifier));
     const argHasDefaultValue = (arg: InstructionDataField) => {
         if (!hasInputDefault(arg)) return false;
         if (useAsync) return true;
-        return !isAsyncInput(arg, asyncResolvers);
+        const resolvedArg = findResolvedDataField(resolvedInputs, arg);
+        return !resolvedArg || !isAsyncInput(resolvedArg, asyncResolvers);
     };
-    const hasDataArgs = !!customData || getInstructionDataFields(instructionNode).filter(argIsNotOmitted).length > 0;
+    const hasDataArgs = !!dataLink || getInstructionDataFields(instructionNode).filter(argIsNotOmitted).length > 0;
     const hasExtraArgs =
         getInstructionExtraArguments(instructionNode).filter(
             field => argIsNotOmitted(field) && (argIsDependent(field) || argHasDefaultValue(field)),
@@ -195,10 +196,7 @@ const accounts = originalAccounts as Record<keyof typeof originalAccounts, ${use
  */
 function getRuntimeIsSignerFlag(account: InstructionAccountNode, resolvedInputs: ResolvedInstructionInput[]): string {
     if (account.isSigner === false) return 'false';
-    const resolvedAccount = resolvedInputs.find(
-        (input): input is ResolvedInstructionAccount =>
-            input.kind === 'instructionAccountNode' && input.name === account.identifier,
-    );
+    const resolvedAccount = findResolvedAccount(resolvedInputs, account);
     const resolvedIsSigner = resolvedAccount?.resolvedIsSigner ?? account.isSigner;
     return resolvedIsSigner === true ? 'true' : "'either'";
 }
@@ -266,12 +264,12 @@ function getReturnStatementFragment(
     }
 
     // Data.
-    const customData = getCustomDataOptions(scope.customInstructionData, instructionNode);
+    const dataLink = getInstructionDataLink(instructionNode, scope.customInstructionData);
     const instructionDataName = nameApi.instructionDataType(instructionNode.identifier);
-    const encoderFunctionFragment = customData
+    const encoderFunctionFragment = dataLink
         ? scope.dataArgsManifest.encoder
         : `${nameApi.encoderFunction(instructionDataName)}()`;
-    const argsTypeFragment = customData ? scope.dataArgsManifest.looseType : nameApi.dataArgsType(instructionDataName);
+    const argsTypeFragment = dataLink ? scope.dataArgsManifest.looseType : nameApi.dataArgsType(instructionDataName);
     let data: Fragment | undefined;
     if (hasDataArgs) {
         data = fragment`data: ${encoderFunctionFragment}.encode(args as ${argsTypeFragment})`;

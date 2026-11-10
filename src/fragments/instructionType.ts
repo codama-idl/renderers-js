@@ -6,7 +6,7 @@ import { findProgramNodeFromPath, getLastNodeFromPath, NodePath } from '@codama/
 import {
     Fragment,
     fragment,
-    getCustomDataOptions,
+    getInstructionDataLink,
     hasInstructionData,
     mergeFragments,
     RenderScope,
@@ -24,8 +24,8 @@ export function getInstructionTypeFragment(
     const instructionNode = getLastNodeFromPath(instructionPath);
     const programNode = findProgramNodeFromPath(instructionPath)!;
     const hasAccounts = (instructionNode.accounts ?? []).length > 0;
-    const customData = getCustomDataOptions(customInstructionData, instructionNode);
-    const hasData = !!customData || hasInstructionData(instructionNode);
+    const hasData =
+        !!getInstructionDataLink(instructionNode, customInstructionData) || hasInstructionData(instructionNode);
 
     const instructionType = nameApi.instructionType(instructionNode.identifier);
     const programAddressConstant = use(nameApi.programAddressConstant(programNode.identifier), 'generatedPrograms');
