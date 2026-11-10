@@ -224,6 +224,8 @@ Instruction generation is one of the more complex parts of the codebase. Dependi
 - sync and optionally async builders
 - parse helpers
 
+Instruction inputs are read through `src/utils/instructionInputs.ts`, the only module that knows how the IDL stores them: the fields of the instruction `data` struct (or a linked data type), the `codama.extraArgument` plugins on the instruction, the `codama.resolver` plugins on accounts, data fields, extra arguments, remaining accounts and byte deltas, and the `provides` resolving injected defaults. Its `getResolvedInstructionInputs` orders inputs so that each default comes after the inputs it depends on, including resolver dependencies, and fragments consume these resolved inputs rather than the raw nodes.
+
 Async generation is controlled by `src/utils/async.ts`.
 
 Async instruction variants are emitted when needed, especially for:

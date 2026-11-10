@@ -1,21 +1,14 @@
 import { camelCase } from '@codama/fragments/casing';
-import {
-    AccountValueNode,
-    accountValueNode,
-    ArgumentValueNode,
-    argumentValueNode,
-    InstructionInputValueNode,
-    InstructionNode,
-    isNode,
-} from '@codama/nodes';
-import { deduplicateInstructionDependencies, ResolvedInstructionInput } from '@codama/visitors-core';
+import { InstructionNode } from '@codama/nodes';
 
 import {
-    getAllInstructionDataFields,
+    deduplicateInstructionDependencies,
     getByteDeltaResolver,
-    getInputResolver,
+    getDefaultValueDependencies,
     getRemainingAccountsResolver,
-    InstructionInput,
+    InstructionDependency,
+    InstructionInputDefaultValue,
+    ResolvedInstructionInput,
 } from './instructionInputs';
 
 /**
@@ -50,90 +43,45 @@ export function hasAsyncDefaultValues(resolvedInputs: ResolvedInstructionInput[]
 }
 
 /**
- * Whether the default value of an instruction input, or the resolver computing it,
- * requires the asynchronous instruction builder.
+ * Whether the resolved default value of an instruction input, or the resolver computing
+ * it, requires the asynchronous instruction builder.
  */
-export function isAsyncInput(input: Pick<InstructionInput, 'defaultValue'>, asyncResolvers: string[]): boolean {
-    const resolver = getInputResolver(input);
-    if (resolver) return isAsyncResolver(resolver.name, asyncResolvers);
-    return !!input.defaultValue && isAsyncDefaultValue(input.defaultValue, asyncResolvers);
+export function isAsyncInput(
+    input: Pick<ResolvedInstructionInput, 'resolvedDefaultValue' | 'resolver'>,
+    asyncResolvers: string[],
+): boolean {
+    if (input.resolver) return isAsyncResolver(input.resolver.name, asyncResolvers);
+    return !!input.resolvedDefaultValue && isAsyncDefaultValue(input.resolvedDefaultValue);
 }
 
-export function isAsyncDefaultValue(defaultValue: InstructionInputValueNode, asyncResolvers: string[]): boolean {
+export function isAsyncDefaultValue(defaultValue: InstructionInputDefaultValue): boolean {
     switch (defaultValue.kind) {
         case 'pdaValueNode':
             return true;
-        case 'resolverValueNode':
-            return isAsyncResolver(defaultValue.name, asyncResolvers);
         case 'conditionalValueNode':
             return (
-                isAsyncDefaultValue(defaultValue.condition, asyncResolvers) ||
-                (defaultValue.ifFalse == null ? false : isAsyncDefaultValue(defaultValue.ifFalse, asyncResolvers)) ||
-                (defaultValue.ifTrue == null ? false : isAsyncDefaultValue(defaultValue.ifTrue, asyncResolvers))
+                (defaultValue.ifFalse == null ? false : isAsyncDefaultValue(defaultValue.ifFalse)) ||
+                (defaultValue.ifTrue == null ? false : isAsyncDefaultValue(defaultValue.ifTrue))
             );
         default:
             return false;
     }
 }
 
-/** The accounts and arguments the default values of an instruction's inputs depend on. */
+/**
+ * The inputs the default values of an instruction depend on, leaving out the
+ * dependencies of asynchronous resolvers when rendering the synchronous builder.
+ */
 export function getInstructionDependencies(
-    instruction: InstructionNode,
+    resolvedInputs: ResolvedInstructionInput[],
     asyncResolvers: string[],
     useAsync: boolean,
-): (AccountValueNode | ArgumentValueNode)[] {
-    return deduplicateInstructionDependencies([
-        ...(instruction.accounts ?? []).flatMap(x => getInputDependencies(x, asyncResolvers, useAsync)),
-        ...getAllInstructionDataFields(instruction).flatMap(x => getInputDependencies(x, asyncResolvers, useAsync)),
-    ]);
-}
-
-/** The accounts and arguments the default value of an instruction input depends on. */
-export function getInputDependencies(
-    input: InstructionInput,
-    asyncResolvers: string[],
-    useAsync: boolean,
-): (AccountValueNode | ArgumentValueNode)[] {
-    const resolver = getInputResolver(input);
-    if (resolver) {
-        const isSynchronousResolver = !isAsyncResolver(resolver.name, asyncResolvers);
-        return useAsync || isSynchronousResolver ? [...resolver.dependsOn] : [];
-    }
-
-    if (!input.defaultValue) return [];
-
-    const getNestedDependencies = (
-        defaultValue: InstructionInputValueNode | undefined,
-    ): (AccountValueNode | ArgumentValueNode)[] => {
-        if (!defaultValue) return [];
-        return getInputDependencies({ ...input, defaultValue }, asyncResolvers, useAsync);
-    };
-
-    if (isNode(input.defaultValue, ['accountValueNode', 'accountBumpValueNode'])) {
-        return [accountValueNode(input.defaultValue.identifier)];
-    }
-
-    if (isNode(input.defaultValue, ['argumentValueNode'])) {
-        return [argumentValueNode(input.defaultValue.identifier)];
-    }
-
-    if (isNode(input.defaultValue, 'pdaValueNode')) {
-        const dependencies = new Map<string, AccountValueNode | ArgumentValueNode>();
-        (input.defaultValue.seeds ?? []).forEach(seed => {
-            if (isNode(seed.value, ['accountValueNode', 'argumentValueNode'])) {
-                dependencies.set(camelCase(seed.value.identifier), { ...seed.value });
-            }
-        });
-        return [...dependencies.values()];
-    }
-
-    if (isNode(input.defaultValue, 'conditionalValueNode')) {
-        return deduplicateInstructionDependencies([
-            ...getNestedDependencies(input.defaultValue.condition),
-            ...getNestedDependencies(input.defaultValue.ifTrue),
-            ...getNestedDependencies(input.defaultValue.ifFalse),
-        ]);
-    }
-
-    return [];
+): InstructionDependency[] {
+    return deduplicateInstructionDependencies(
+        resolvedInputs.flatMap(input => {
+            if (!input.resolver) return getDefaultValueDependencies(input.resolvedDefaultValue);
+            const isSynchronousResolver = !isAsyncResolver(input.resolver.name, asyncResolvers);
+            return useAsync || isSynchronousResolver ? [...input.resolver.dependsOn] : [];
+        }),
+    );
 }

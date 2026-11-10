@@ -1,21 +1,14 @@
 import { mapFragmentContent } from '@codama/fragments';
 import { camelCase, pascalCase } from '@codama/fragments/casing';
 import { InstructionAccountNode, InstructionNode, isNode } from '@codama/nodes';
-import {
-    getLastNodeFromPath,
-    NodePath,
-    pipe,
-    ResolvedInstructionAccount,
-    ResolvedInstructionArgument,
-    ResolvedInstructionInput,
-} from '@codama/visitors-core';
+import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
 import {
     Fragment,
     fragment,
-    getCustomDataOptions,
     getDocblockFragment,
     getInstructionDataFields,
+    getInstructionDataLink,
     getInstructionExtraArguments,
     getRemainingAccountsName,
     hasInputDefault,
@@ -25,6 +18,8 @@ import {
     mergeFragmentImports,
     mergeFragments,
     RenderScope,
+    findResolvedAccount,
+    ResolvedInstructionInput,
     TypeManifest,
     use,
 } from '../utils';
@@ -97,15 +92,14 @@ function getAccountsFragment(
     const instructionNode = getLastNodeFromPath(instructionPath);
 
     const fragments = (instructionNode.accounts ?? []).map(account => {
-        const resolvedAccount = resolvedInputs.find(
-            input => input.kind === 'instructionAccountNode' && input.name === account.identifier,
-        ) as ResolvedInstructionAccount;
+        const resolvedAccount = findResolvedAccount(resolvedInputs, account);
         const hasDefaultValue =
-            hasInputDefault(resolvedAccount) &&
-            !isNode(resolvedAccount.defaultValue, ['identityValueNode', 'payerValueNode']) &&
+            !!resolvedAccount &&
+            (!!resolvedAccount.resolver || !!resolvedAccount.resolvedDefaultValue) &&
+            !isNode(resolvedAccount.resolvedDefaultValue, ['identityValueNode', 'payerValueNode']) &&
             (useAsync || !isAsyncInput(resolvedAccount, asyncResolvers));
         const docs = getDocblockFragment(account.docs, true);
-        const optionalSign = hasDefaultValue || resolvedAccount.isOptional ? '?' : '';
+        const optionalSign = hasDefaultValue || account.isOptional ? '?' : '';
         return fragment`${docs}${camelCase(account.identifier)}${optionalSign}: TAccount${pascalCase(account.identifier)};`;
     });
 
@@ -123,12 +117,12 @@ function getDataArgumentsFragments(
     const { instructionPath, nameApi } = scope;
     const instructionNode = getLastNodeFromPath(instructionPath);
 
-    const customData = getCustomDataOptions(scope.customInstructionData, instructionNode);
-    if (customData) {
+    const dataLink = getInstructionDataLink(instructionNode, scope.customInstructionData);
+    if (dataLink) {
         return [
             undefined,
             pipe(
-                fragment`${nameApi.dataArgsType(customData.importAs)}`,
+                fragment`${nameApi.dataArgsType(dataLink.identifier)}`,
                 f => mergeFragmentImports(f, [scope.dataArgsManifest.looseType.imports]),
                 f => mapFragmentContent(f, c => `${c} & `),
             ),
@@ -139,7 +133,7 @@ function getDataArgumentsFragments(
     const dataArgsType = nameApi.dataArgsType(instructionDataName);
 
     const fragments = getInstructionDataFields(instructionNode).flatMap(arg => {
-        const argFragment = getArgumentFragment(arg, dataArgsType, scope.resolvedInputs, scope.renamedArgs);
+        const argFragment = getArgumentFragment(arg, dataArgsType, scope.renamedArgs);
         return argFragment ? [argFragment] : [];
     });
 
@@ -159,7 +153,7 @@ function getExtraArgumentsFragment(
     const extraArgsType = nameApi.dataArgsType(instructionExtraName);
 
     const fragments = getInstructionExtraArguments(instructionNode).flatMap(arg => {
-        const argFragment = getArgumentFragment(arg, extraArgsType, scope.resolvedInputs, scope.renamedArgs);
+        const argFragment = getArgumentFragment(arg, extraArgsType, scope.renamedArgs);
         return argFragment ? [argFragment] : [];
     });
     if (fragments.length === 0) return;
@@ -170,16 +164,12 @@ function getExtraArgumentsFragment(
 function getArgumentFragment(
     arg: InstructionDataField,
     argsType: string,
-    resolvedInputs: ResolvedInstructionInput[],
     renamedArgs: Map<string, string>,
 ): Fragment | null {
-    const resolvedArg = resolvedInputs.find(
-        input => isNode(input, 'instructionArgumentNode') && input.name === arg.name,
-    ) as ResolvedInstructionArgument | undefined;
     if (hasInputDefault(arg) && arg.defaultValueStrategy === 'omitted') return null;
-    const argName = camelCase(arg.name);
+    const argName = camelCase(arg.identifier);
     const renamedName = renamedArgs.get(argName) ?? argName;
-    const optionalSign = hasInputDefault(arg) || (resolvedArg && hasInputDefault(resolvedArg)) ? '?' : '';
+    const optionalSign = hasInputDefault(arg) ? '?' : '';
     return fragment`${renamedName}${optionalSign}: ${argsType}["${argName}"];`;
 }
 

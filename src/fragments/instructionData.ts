@@ -3,7 +3,7 @@ import { getLastNodeFromPath, NodePath } from '@codama/visitors-core';
 
 import {
     Fragment,
-    getCustomDataOptions,
+    getInstructionDataLink,
     getInstructionDataNode,
     hasInstructionData,
     RenderScope,
@@ -20,7 +20,7 @@ export function getInstructionDataFragment(
 ): Fragment | undefined {
     const { instructionPath, dataArgsManifest, nameApi, customInstructionData } = scope;
     const instructionNode = getLastNodeFromPath(instructionPath);
-    if (!hasInstructionData(instructionNode) || getCustomDataOptions(customInstructionData, instructionNode)) return;
+    if (!hasInstructionData(instructionNode) || getInstructionDataLink(instructionNode, customInstructionData)) return;
 
     const instructionDataName = nameApi.instructionDataType(instructionNode.identifier);
     return getTypeWithCodecFragment({

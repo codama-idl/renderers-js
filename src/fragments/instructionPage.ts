@@ -1,13 +1,7 @@
 import { CODAMA_ERROR__NODE_PATH_PROGRAM_MISSING, CodamaError, logWarn } from '@codama/errors';
 import { camelCase } from '@codama/fragments/casing';
 import { definedTypeNode, InstructionNode } from '@codama/nodes';
-import {
-    findProgramNodeFromPath,
-    getLastNodeFromPath,
-    NodePath,
-    ResolvedInstructionInput,
-    visit,
-} from '@codama/visitors-core';
+import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
 
 import {
     Fragment,
@@ -16,6 +10,7 @@ import {
     getInstructionExtraArgumentsNode,
     mergeFragments,
     RenderScope,
+    ResolvedInstructionInput,
 } from '../utils';
 import { getDiscriminatorConstantsFragment } from './discriminatorConstants';
 import { getInstructionDataFragment } from './instructionData';
@@ -84,7 +79,7 @@ export function getInstructionPageFragment(
  * Names are compared by their camelCase form since that is how they are emitted.
  */
 export function getRenamedArgsMap(instruction: InstructionNode): Map<string, string> {
-    const argNames = getAllInstructionDataFields(instruction).map(a => camelCase(a.name));
+    const argNames = getAllInstructionDataFields(instruction).map(a => camelCase(a.identifier));
     const duplicateArgs = argNames.filter((e, i, a) => a.indexOf(e) !== i);
     if (duplicateArgs.length > 0) {
         throw new Error(

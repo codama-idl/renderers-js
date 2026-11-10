@@ -6,8 +6,8 @@ import {
     addFragmentImports,
     Fragment,
     fragment,
-    getCustomDataOptions,
     getDocblockFragment,
+    getInstructionDataLink,
     hasInstructionData,
     mergeFragments,
     RenderScope,
@@ -39,11 +39,11 @@ function getTypeFragment(
         programAddressConstant: Fragment;
     },
 ): Fragment {
-    const customData = getCustomDataOptions(scope.customInstructionData, scope.instructionNode);
+    const dataLink = getInstructionDataLink(scope.instructionNode, scope.customInstructionData);
     const instructionParsedType = scope.nameApi.instructionParsedType(scope.instructionNode.identifier);
     const instructionDataName = scope.nameApi.instructionDataType(scope.instructionNode.identifier);
 
-    const hasData = !!customData || hasInstructionData(scope.instructionNode);
+    const hasData = !!dataLink || hasInstructionData(scope.instructionNode);
     const hasAccounts = (scope.instructionNode.accounts ?? []).length > 0;
 
     const typeParamDeclarations = mergeFragments(
@@ -65,7 +65,7 @@ function getTypeFragment(
         cs => (hasAccounts ? `\naccounts: {\n${cs.join('\n')}\n};` : ''),
     );
 
-    const dataTypeFragment = customData
+    const dataTypeFragment = dataLink
         ? scope.dataArgsManifest.strictType
         : fragment`${scope.nameApi.dataType(instructionDataName)}`;
     const data = hasData ? fragment`\ndata: ${dataTypeFragment};` : fragment``;
@@ -80,15 +80,15 @@ function getFunctionFragment(
         programAddressConstant: Fragment;
     },
 ): Fragment {
-    const customData = getCustomDataOptions(scope.customInstructionData, scope.instructionNode);
+    const dataLink = getInstructionDataLink(scope.instructionNode, scope.customInstructionData);
     const instructionParsedType = scope.nameApi.instructionParsedType(scope.instructionNode.identifier);
     const instructionParseFunction = scope.nameApi.instructionParseFunction(scope.instructionNode.identifier);
     const instructionDataName = scope.nameApi.instructionDataType(scope.instructionNode.identifier);
-    const decoderFunction = customData
+    const decoderFunction = dataLink
         ? scope.dataArgsManifest.decoder
         : fragment`${scope.nameApi.decoderFunction(instructionDataName)}()`;
 
-    const hasData = !!customData || hasInstructionData(scope.instructionNode);
+    const hasData = !!dataLink || hasInstructionData(scope.instructionNode);
     const hasAccounts = (scope.instructionNode.accounts ?? []).length > 0;
     const hasOptionalAccounts = (scope.instructionNode.accounts ?? []).some(account => account.isOptional);
     const minimumNumberOfAccounts =

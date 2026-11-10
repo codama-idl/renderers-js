@@ -51,6 +51,7 @@ import {
     getFieldDiscriminatorIdentifier,
     getEnumVariantDataShape,
     getEnumVariantDiscriminators,
+    getInstructionDataLink,
     getInstructionDataNode,
     getIntegerLiteral,
     getStructFieldCodecDefault,
@@ -302,7 +303,10 @@ export function getTypeManifestVisitor(input: {
                     if (discriminatorConstantName) {
                         return typeManifest({ value: fragment`${discriminatorConstantName}` });
                     }
-                    if (isNode(node.type, 'bytesTypeNode') && isNode(node.value, 'bytesValueNode')) {
+                    // Raw bytes are their own encoding, unless transforms alter it, e.g. a fixed size.
+                    const isRawBytes =
+                        isNode(node.type, 'bytesTypeNode') && getTypeNodeTransforms(node.type).length === 0;
+                    if (isRawBytes && isNode(node.value, 'bytesValueNode')) {
                         return visit(node.value, self);
                     }
                     return typeManifest({
@@ -537,7 +541,7 @@ export function getTypeManifestVisitor(input: {
                         loose: nameApi.dataArgsType(instructionDataName),
                         strict: nameApi.dataType(instructionDataName),
                     };
-                    const link = getCustomDataOptions(customInstructionData, instruction)?.linkNode;
+                    const link = getInstructionDataLink(instruction, customInstructionData);
                     const manifest = link ? visit(link, self) : visit(getInstructionDataNode(instruction), self);
                     parentName = null;
                     return manifest;

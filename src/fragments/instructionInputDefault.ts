@@ -2,6 +2,7 @@ import { CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, CodamaError } from '@codama/
 import { mapFragmentContent, setFragmentContent } from '@codama/fragments';
 import { camelCase } from '@codama/fragments/casing';
 import {
+    InstructionAccountNode,
     InstructionInputValueNode,
     InstructionNode,
     isNode,
@@ -9,27 +10,19 @@ import {
     OptionalAccountStrategy,
     PdaNode,
 } from '@codama/nodes';
-import {
-    findProgramNodeFromPath,
-    getLastNodeFromPath,
-    NodePath,
-    pipe,
-    ResolvedInstructionInput,
-    visit,
-} from '@codama/visitors-core';
+import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, pipe, visit } from '@codama/visitors-core';
 
 import {
     addFragmentFeatures,
-    addFragmentImports,
     Fragment,
     fragment,
-    getInputDefaultValue,
-    getInputResolver,
-    hasInputDefault,
+    getDataPathExpression,
+    getDataPathLabel,
     isAsyncInput,
     isAsyncResolver,
     mergeFragments,
     RenderScope,
+    ResolvedInstructionInput,
     use,
 } from '../utils';
 
@@ -52,7 +45,8 @@ export function getInstructionInputDefaultFragment(
         typeManifestVisitor,
         getImportFrom,
     } = scope;
-    if (!hasInputDefault(input)) {
+    const { resolver, resolvedDefaultValue: defaultValue } = input;
+    if (!resolver && !defaultValue) {
         return fragment``;
     }
 
@@ -60,16 +54,15 @@ export function getInstructionInputDefaultFragment(
         return fragment``;
     }
 
-    const resolver = getInputResolver(input);
     const defaultFragment = (renderedValue: Fragment, isWritable?: boolean): Fragment => {
-        const inputName = camelCase(input.name);
-        if (input.kind === 'instructionAccountNode' && resolver) {
+        const inputName = camelCase(input.node.identifier);
+        if (input.kind === 'account' && resolver) {
             return fragment`accounts.${inputName} = { ...accounts.${inputName}, ...${renderedValue} };`;
         }
-        if (input.kind === 'instructionAccountNode' && isWritable === undefined) {
+        if (input.kind === 'account' && isWritable === undefined) {
             return fragment`accounts.${inputName}.value = ${renderedValue};`;
         }
-        if (input.kind === 'instructionAccountNode') {
+        if (input.kind === 'account') {
             return fragment`accounts.${inputName}.value = ${renderedValue};\naccounts.${inputName}.isWritable = ${isWritable ? 'true' : 'false'}`;
         }
         return fragment`args.${inputName} = ${renderedValue};`;
@@ -99,16 +92,16 @@ export function getInstructionInputDefaultFragment(
         );
     }
 
-    const defaultValue = getInputDefaultValue(input)!;
+    if (!defaultValue) return fragment``;
     switch (defaultValue.kind) {
         case 'accountValueNode':
             const name = camelCase(defaultValue.identifier);
-            if (input.kind === 'instructionAccountNode' && input.resolvedIsSigner && !input.isSigner) {
+            if (input.kind === 'account' && input.resolvedIsSigner && !input.node.isSigner) {
                 return defaultFragment(
                     fragment`${getResolvedInstructionAccountAsTransactionSigner}("${name}", accounts.${name}.value).address`,
                 );
             }
-            if (input.kind === 'instructionAccountNode') {
+            if (input.kind === 'account') {
                 return defaultFragment(
                     fragment`${getNonNullResolvedInstructionInput}("${name}", accounts.${name}.value)`,
                 );
@@ -123,9 +116,9 @@ export function getInstructionInputDefaultFragment(
                 const name = camelCase(defaultValue.programId.identifier);
                 pdaProgramValue = fragment`${getAddressFromResolvedInstructionAccount}("${name}", accounts.${name}.value)`;
             }
-            if (isNode(defaultValue.programId, 'argumentValueNode')) {
-                const name = camelCase(defaultValue.programId.name);
-                pdaProgramValue = fragment`${getAddressFromResolvedInstructionAccount}("${name}", args.${name})`;
+            if (isNode(defaultValue.programId, 'dataValueNode')) {
+                const { path } = defaultValue.programId;
+                pdaProgramValue = fragment`${getAddressFromResolvedInstructionAccount}("${getDataPathLabel(path)}", ${getDataPathExpression(path)})`;
             }
 
             // Inlined PDA value.
@@ -157,10 +150,10 @@ export function getInstructionInputDefaultFragment(
                                 fragment`${typeManifest.encoder}.encode(${getAddressFromResolvedInstructionAccount}("${name}", accounts.${name}.value))`,
                             ];
                         }
-                        if (isNode(valueSeed, 'argumentValueNode')) {
-                            const name = camelCase(valueSeed.name);
+                        if (isNode(valueSeed, 'dataValueNode')) {
+                            const { path } = valueSeed;
                             return [
-                                fragment`${typeManifest.encoder}.encode(${getNonNullResolvedInstructionInput}("${name}", args.${name}))`,
+                                fragment`${typeManifest.encoder}.encode(${getNonNullResolvedInstructionInput}("${getDataPathLabel(path)}", ${getDataPathExpression(path)}))`,
                             ];
                         }
                         const valueManifest = visit(valueSeed, typeManifestVisitor);
@@ -190,9 +183,9 @@ export function getInstructionInputDefaultFragment(
                     const name = camelCase(seed.value.identifier);
                     return fragment`${seedName}: ${getAddressFromResolvedInstructionAccount}("${name}", accounts.${name}.value)`;
                 }
-                if (isNode(seed.value, 'argumentValueNode')) {
-                    const name = camelCase(seed.value.name);
-                    return fragment`${seedName}: ${getNonNullResolvedInstructionInput}("${name}", args.${name})`;
+                if (isNode(seed.value, 'dataValueNode')) {
+                    const { path } = seed.value;
+                    return fragment`${seedName}: ${getNonNullResolvedInstructionInput}("${getDataPathLabel(path)}", ${getDataPathExpression(path)})`;
                 }
                 return pipe(visit(seed.value, typeManifestVisitor).value, f =>
                     mapFragmentContent(f, c => `${seedName}: ${c}`),
@@ -218,15 +211,14 @@ export function getInstructionInputDefaultFragment(
             );
 
         case 'programLinkNode':
-            const programAddress = use(nameApi.programAddressConstant(defaultValue.name), getImportFrom(defaultValue));
+            const programAddress = use(
+                nameApi.programAddressConstant(defaultValue.identifier),
+                getImportFrom(defaultValue),
+            );
             return defaultFragment(programAddress, false);
 
         case 'programIdValueNode':
-            if (
-                optionalAccountStrategy === 'programId' &&
-                input.kind === 'instructionAccountNode' &&
-                input.isOptional
-            ) {
+            if (optionalAccountStrategy === 'programId' && input.kind === 'account' && input.node.isOptional) {
                 return fragment``;
             }
             return defaultFragment(fragment`programAddress`, false);
@@ -240,9 +232,9 @@ export function getInstructionInputDefaultFragment(
                 fragment`${getResolvedInstructionAccountAsProgramDerivedAddress}("${camelCase(defaultValue.identifier)}", accounts.${camelCase(defaultValue.identifier)}.value)[1]`,
             );
 
-        case 'argumentValueNode':
+        case 'dataValueNode':
             return defaultFragment(
-                fragment`${getNonNullResolvedInstructionInput}("${camelCase(defaultValue.name)}", args.${camelCase(defaultValue.name)})`,
+                fragment`${getNonNullResolvedInstructionInput}("${getDataPathLabel(defaultValue.path)}", ${getDataPathExpression(defaultValue.path)})`,
             );
 
         case 'conditionalValueNode':
@@ -267,30 +259,16 @@ export function getInstructionInputDefaultFragment(
             const negatedCondition = !ifTrueRenderer;
             let condition = 'true';
 
-            if (isNode(defaultValue.condition, 'resolverValueNode')) {
-                const conditionalResolverFunction = nameApi.resolverFunction(defaultValue.condition.name);
-                const module = getImportFrom(defaultValue.condition);
-                conditionalFragment = pipe(
-                    conditionalFragment,
-                    f => addFragmentImports(f, module, [conditionalResolverFunction]),
-                    f => addFragmentFeatures(f, ['instruction:resolverScopeVariable']),
-                );
-                const conditionalResolverAwait =
-                    useAsync && isAsyncResolver(defaultValue.condition.name, asyncResolvers) ? 'await ' : '';
-                condition = `${conditionalResolverAwait}${conditionalResolverFunction}(resolverScope)`;
-                condition = negatedCondition ? `!${condition}` : condition;
+            const comparedInputName = isNode(defaultValue.condition, 'accountValueNode')
+                ? `accounts.${camelCase(defaultValue.condition.identifier)}.value`
+                : getDataPathExpression(defaultValue.condition.path);
+            if (defaultValue.value) {
+                const comparedValue = visit(defaultValue.value, typeManifestVisitor).value;
+                conditionalFragment = mergeFragments([conditionalFragment, comparedValue], c => c[0]);
+                const operator = negatedCondition ? '!==' : '===';
+                condition = `${comparedInputName} ${operator} ${comparedValue.content}`;
             } else {
-                const comparedInputName = isNode(defaultValue.condition, 'accountValueNode')
-                    ? `accounts.${camelCase(defaultValue.condition.name)}.value`
-                    : `args.${camelCase(defaultValue.condition.name)}`;
-                if (defaultValue.value) {
-                    const comparedValue = visit(defaultValue.value, typeManifestVisitor).value;
-                    conditionalFragment = mergeFragments([conditionalFragment, comparedValue], c => c[0]);
-                    const operator = negatedCondition ? '!==' : '===';
-                    condition = `${comparedInputName} ${operator} ${comparedValue.content}`;
-                } else {
-                    condition = negatedCondition ? `!${comparedInputName}` : comparedInputName;
-                }
+                condition = negatedCondition ? `!${comparedInputName}` : comparedInputName;
             }
 
             if (ifTrueRenderer && ifFalseRenderer) {
@@ -305,12 +283,12 @@ export function getInstructionInputDefaultFragment(
                 `if (${condition}) {\n${ifTrueRenderer ? ifTrueRenderer.content : ifFalseRenderer?.content}\n}`,
             );
 
-        case 'accountFieldValueNode':
+        case 'accountDataValueNode':
         case 'injectedValueNode':
-            // These contextual value nodes are not yet supported as instruction input defaults by this renderer.
+            // Account data is not yet supported as an instruction input default by this renderer,
+            // and injected values are resolved beforehand.
             throw new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, {
-                kind: defaultValue.kind,
-                node: defaultValue,
+                path: [...instructionPath, input.node as InstructionAccountNode, defaultValue],
             });
 
         default:
@@ -328,7 +306,7 @@ function renderNestedInstructionDefault(
     if (!defaultValue) return undefined;
     return getInstructionInputDefaultFragment({
         ...scope,
-        input: { ...input, defaultValue },
+        input: { ...input, resolvedDefaultValue: defaultValue },
     });
 }
 
