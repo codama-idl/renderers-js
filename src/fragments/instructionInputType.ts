@@ -4,6 +4,7 @@ import { InstructionAccountNode, InstructionNode, isNode } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
 import {
+    findResolvedAccount,
     Fragment,
     fragment,
     getDocblockFragment,
@@ -18,7 +19,6 @@ import {
     mergeFragmentImports,
     mergeFragments,
     RenderScope,
-    findResolvedAccount,
     ResolvedInstructionInput,
     TypeManifest,
     use,

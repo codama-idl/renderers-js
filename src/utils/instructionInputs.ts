@@ -36,6 +36,7 @@ import {
     PathString,
     PluginNode,
     REGISTERED_TYPE_NODE_KINDS,
+    REGISTERED_VALUE_NODE_KINDS,
     StructFieldTypeNode,
     structFieldTypeNode,
     StructTypeNode,
@@ -255,6 +256,8 @@ export function getDataPathRoot(path: PathString): string | undefined {
 type ResolvedInputBase = {
     /** The inputs the default value or the resolver depends on. */
     dependsOn: InstructionDependency[];
+    /** The path of the input, e.g. to report errors. */
+    path: NodePath;
     /** The default value of the input, after resolving injected values, unless a resolver computes it. */
     resolvedDefaultValue?: InstructionInputDefaultValue;
     /** The resolver computing the value of the input, if any. */
@@ -327,7 +330,7 @@ export function getResolvedInstructionInputs(
 ): ResolvedInstructionInput[] {
     const scope = getProvidedScopeFromPath(instructionPath);
     assertNoUnsupportedInjections(instructionPath, scope, linkables);
-    const entries = getInputEntries(instructionPath, scope);
+    const entries = getInputEntries(instructionPath, scope, linkables);
     const ordered = sortEntriesByDependencies(entries.filter(isBuilderInput), entries, instructionPath);
     return ordered.reduce<ResolvedInstructionInput[]>(
         (resolved, entry) => [...resolved, toResolvedInput(entry, resolved, entries)],
@@ -338,14 +341,20 @@ export function getResolvedInstructionInputs(
 /** An instruction input, with its default value or resolver and their dependencies. */
 type InputEntry = ResolvedInputBase &
     (
-        | { kind: 'account'; node: InstructionAccountNode; path: NodePath }
-        | { isExtraArgument: boolean; kind: 'data'; node: InstructionDataField; path: NodePath }
+        | { kind: 'account'; node: InstructionAccountNode }
+        | { isExtraArgument: boolean; isLinked?: true; kind: 'data'; node: InstructionDataField }
     );
 
 /** The accounts, top-level data fields and extra arguments of an instruction, as entries. */
-function getInputEntries(instructionPath: NodePath<InstructionNode>, scope: ProvidedScope): InputEntry[] {
+function getInputEntries(
+    instructionPath: NodePath<InstructionNode>,
+    scope: ProvidedScope,
+    linkables: LinkableDictionary,
+): InputEntry[] {
     const instruction = getLastNodeFromPath(instructionPath);
-    const toEntry = <T extends Omit<InputEntry, keyof ResolvedInputBase>>(input: T): T & ResolvedInputBase => {
+    const toEntry = <T extends Omit<InputEntry, Exclude<keyof ResolvedInputBase, 'path'>>>(
+        input: T,
+    ): T & ResolvedInputBase => {
         const resolver = getInputResolver(input.node);
         const defaultValue = input.node.defaultValue;
         const resolvedDefaultValue =
@@ -381,7 +390,32 @@ function getInputEntries(instructionPath: NodePath<InstructionNode>, scope: Prov
                     path: [...instructionPath, plugin],
                 }),
             ),
+        ...getLinkedDataEntries(instructionPath, linkables),
     ];
+}
+
+/**
+ * The top-level fields of instruction data given as a link to a defined struct type.
+ *
+ * They are provided as a whole through the linked type, so instruction builders never
+ * fill them in. They are only listed so that other inputs may depend on them.
+ */
+function getLinkedDataEntries(instructionPath: NodePath<InstructionNode>, linkables: LinkableDictionary): InputEntry[] {
+    const data = getLastNodeFromPath(instructionPath).data;
+    if (!data || !isNode(data, 'definedTypeLinkNode')) return [];
+    const definedTypePath = linkables.getPath([...instructionPath, data]);
+    if (!definedTypePath) return [];
+    const definedType = getLastNodeFromPath(definedTypePath);
+    if (!isNode(definedType.type, 'structTypeNode')) return [];
+    const struct = definedType.type;
+    return (struct.fields ?? []).map(field => ({
+        dependsOn: [],
+        isExtraArgument: false,
+        isLinked: true,
+        kind: 'data' as const,
+        node: field,
+        path: [...definedTypePath, struct, field],
+    }));
 }
 
 /**
@@ -391,7 +425,9 @@ function getInputEntries(instructionPath: NodePath<InstructionNode>, scope: Prov
  * literal defaults, so only injected ones are left to instruction builders.
  */
 function isBuilderInput(entry: InputEntry): boolean {
-    if (entry.kind === 'account' || entry.resolver) return true;
+    if (entry.kind === 'account') return true;
+    if (entry.isLinked) return false;
+    if (entry.resolver) return true;
     if (!entry.node.defaultValue) return false;
     return entry.isExtraArgument || isNode(entry.node.defaultValue, 'injectedValueNode');
 }
@@ -468,9 +504,10 @@ function toResolvedInput(
     previous: readonly ResolvedInstructionInput[],
     entries: readonly InputEntry[],
 ): ResolvedInstructionInput {
-    const { dependsOn, resolvedDefaultValue, resolver } = entry;
+    const { dependsOn, path, resolvedDefaultValue, resolver } = entry;
     const base = {
         dependsOn,
+        path,
         ...(resolvedDefaultValue ? { resolvedDefaultValue } : {}),
         ...(resolver ? { resolver } : {}),
     };
@@ -560,10 +597,19 @@ function assertNoUnsupportedInjections(
 ): void {
     const data = getLastNodeFromPath(instructionPath).data;
     if (!data) return;
-    const nestedTypes = isNode(data, 'structTypeNode')
-        ? (data.fields ?? []).map(field => ({ path: [...instructionPath, data, field], type: field.type }))
-        : [{ path: [...instructionPath] as NodePath, type: data }];
-    nestedTypes.forEach(({ path, type }) => assertNoProvidedInjectionsWithin(type, path, scope, linkables, new Set()));
+    // Injections directly set as the default of a top-level field are filled in by builders,
+    // but not those nested within it, e.g. a struct value with an injected member.
+    const nestedNodes: { node: Node; path: NodePath }[] = isNode(data, 'structTypeNode')
+        ? (data.fields ?? []).flatMap(field => {
+              const path: NodePath = [...instructionPath, data, field];
+              const defaultValue = field.defaultValue;
+              return [
+                  { node: field.type, path },
+                  ...(defaultValue && !isNode(defaultValue, 'injectedValueNode') ? [{ node: defaultValue, path }] : []),
+              ];
+          })
+        : [{ node: data, path: [...instructionPath] }];
+    nestedNodes.forEach(({ node, path }) => assertNoProvidedInjectionsWithin(node, path, scope, linkables, new Set()));
 }
 
 function assertNoProvidedInjectionsWithin(
@@ -607,7 +653,7 @@ function isNodeObject(value: unknown): value is Node {
 }
 
 function isValueLike(node: Node): boolean {
-    return isNode(node, [...VALUE_NODE_KINDS, 'definedTypeLinkNode']);
+    return isNode(node, [...REGISTERED_VALUE_NODE_KINDS, 'definedTypeLinkNode']);
 }
 
 /**

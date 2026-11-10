@@ -2,7 +2,6 @@ import { CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, CodamaError } from '@codama/
 import { mapFragmentContent, setFragmentContent } from '@codama/fragments';
 import { camelCase } from '@codama/fragments/casing';
 import {
-    InstructionAccountNode,
     InstructionInputValueNode,
     InstructionNode,
     isNode,
@@ -288,7 +287,7 @@ export function getInstructionInputDefaultFragment(
             // Account data is not yet supported as an instruction input default by this renderer,
             // and injected values are resolved beforehand.
             throw new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, {
-                path: [...instructionPath, input.node as InstructionAccountNode, defaultValue],
+                path: [...input.path, defaultValue],
             });
 
         default:
