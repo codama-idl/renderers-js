@@ -16,24 +16,24 @@ test('it imports constants from the linked program', async () => {
     // Given the following node.
     const node = rootNode(
         programNode({
+            identifier: 'myProgram',
             instructions: [
                 instructionNode({
                     accounts: [
                         instructionAccountNode({
                             defaultValue: programLinkNode('someOtherProgram'),
+                            identifier: 'otherProgram',
                             isSigner: false,
                             isWritable: false,
-                            name: 'otherProgram',
                         }),
                     ],
-                    name: 'myInstruction',
+                    identifier: 'myInstruction',
                 }),
             ],
-            name: 'myProgram',
-            pdas: [pdaNode({ name: 'counter', seeds: [] })],
+            pdas: [pdaNode({ identifier: 'counter', seeds: [] })],
             publicKey: '1111',
         }),
-        [programNode({ name: 'someOtherProgram', publicKey: '2222' })],
+        { additionalPrograms: [programNode({ identifier: 'someOtherProgram', publicKey: '2222' })] },
     );
 
     // When we render it.
@@ -52,24 +52,24 @@ test('it can override the import of a linked account', async () => {
     // Given the following node.
     const node = rootNode(
         programNode({
+            identifier: 'myProgram',
             instructions: [
                 instructionNode({
                     accounts: [
                         instructionAccountNode({
                             defaultValue: programLinkNode('someOtherProgram'),
+                            identifier: 'otherProgram',
                             isSigner: false,
                             isWritable: false,
-                            name: 'otherProgram',
                         }),
                     ],
-                    name: 'myInstruction',
+                    identifier: 'myInstruction',
                 }),
             ],
-            name: 'myProgram',
-            pdas: [pdaNode({ name: 'counter', seeds: [] })],
+            pdas: [pdaNode({ identifier: 'counter', seeds: [] })],
             publicKey: '1111',
         }),
-        [programNode({ name: 'someOtherProgram', publicKey: '2222' })],
+        { additionalPrograms: [programNode({ identifier: 'someOtherProgram', publicKey: '2222' })] },
     );
 
     // When we render it using a custom import.

@@ -1,4 +1,4 @@
-import { definedTypeNode, numberTypeNode, solAmountTypeNode } from '@codama/nodes';
+import { definedTypeNode, fixedPointTypeNode, integerTypeNode } from '@codama/nodes';
 import { visit } from '@codama/visitors-core';
 import { test } from 'vitest';
 
@@ -8,8 +8,8 @@ import { renderMapContains, renderMapContainsImports } from '../_setup';
 test('it renders size prefix codecs', async () => {
     // Given the following node.
     const node = definedTypeNode({
-        name: 'myType',
-        type: solAmountTypeNode(numberTypeNode('u64')),
+        identifier: 'myType',
+        type: fixedPointTypeNode(integerTypeNode('u64'), { scale: 9, unit: 'SOL' }),
     });
 
     // When we render it.

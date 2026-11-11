@@ -3,10 +3,9 @@ import {
     constantDiscriminatorNode,
     constantValueNodeFromBytes,
     fieldDiscriminatorNode,
-    instructionArgumentNode,
     instructionNode,
-    numberTypeNode,
-    numberValueNode,
+    integerTypeNode,
+    integerValueNode,
     programNode,
     sizeDiscriminatorNode,
     structFieldTypeNode,
@@ -21,7 +20,7 @@ import { renderMapContains, renderMapContainsImports, renderMapDoesNotContain } 
 test('it renders the program address constant', async () => {
     // Given the following program.
     const node = programNode({
-        name: 'splToken',
+        identifier: 'splToken',
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
@@ -42,8 +41,8 @@ test('it renders the program address constant', async () => {
 test('it renders an enum of all available accounts for a program', async () => {
     // Given the following program.
     const node = programNode({
-        accounts: [accountNode({ name: 'mint' }), accountNode({ name: 'token' })],
-        name: 'splToken',
+        accounts: [accountNode({ identifier: 'mint' }), accountNode({ identifier: 'token' })],
+        identifier: 'splToken',
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
@@ -62,26 +61,26 @@ test('it renders an function that identifies accounts in a program', async () =>
             accountNode({
                 data: structTypeNode([
                     structFieldTypeNode({
-                        defaultValue: numberValueNode(5),
-                        name: 'key',
-                        type: numberTypeNode('u8'),
+                        defaultValue: integerValueNode('5'),
+                        identifier: 'key',
+                        type: integerTypeNode('u8'),
                     }),
                 ]),
                 discriminators: [fieldDiscriminatorNode('key')],
-                name: 'metadata',
+                identifier: 'metadata',
             }),
             // Size and byte discriminators.
             accountNode({
                 discriminators: [
                     sizeDiscriminatorNode(72),
-                    constantDiscriminatorNode(constantValueNodeFromBytes('base16', '010203'), 4),
+                    constantDiscriminatorNode(constantValueNodeFromBytes('base16', '010203'), { offset: 4 }),
                 ],
-                name: 'token',
+                identifier: 'token',
             }),
             // No discriminator.
-            accountNode({ discriminators: [], name: 'mint' }),
+            accountNode({ discriminators: [], identifier: 'mint' }),
         ],
-        name: 'splToken',
+        identifier: 'splToken',
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
@@ -113,12 +112,12 @@ test('it renders an function that identifies accounts in a program', async () =>
 test('it renders an enum of all available instructions for a program', async () => {
     // Given the following program.
     const node = programNode({
+        identifier: 'splToken',
         instructions: [
-            instructionNode({ name: 'mintTokens' }),
-            instructionNode({ name: 'transferTokens' }),
-            instructionNode({ name: 'updateAuthority' }),
+            instructionNode({ identifier: 'mintTokens' }),
+            instructionNode({ identifier: 'transferTokens' }),
+            instructionNode({ identifier: 'updateAuthority' }),
         ],
-        name: 'splToken',
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
@@ -134,31 +133,31 @@ test('it renders an enum of all available instructions for a program', async () 
 test('it renders an function that identifies instructions in a program', async () => {
     // Given the following program with 3 instructions. Two of which have discriminators.
     const node = programNode({
+        identifier: 'splToken',
         instructions: [
             // Field discriminator.
             instructionNode({
-                arguments: [
-                    instructionArgumentNode({
-                        defaultValue: numberValueNode(1),
-                        name: 'discriminator',
-                        type: numberTypeNode('u8'),
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: integerValueNode('1'),
+                        identifier: 'discriminator',
+                        type: integerTypeNode('u8'),
                     }),
-                ],
+                ]),
                 discriminators: [fieldDiscriminatorNode('discriminator')],
-                name: 'mintTokens',
+                identifier: 'mintTokens',
             }),
             // Size and byte discriminators.
             instructionNode({
                 discriminators: [
                     sizeDiscriminatorNode(72),
-                    constantDiscriminatorNode(constantValueNodeFromBytes('base16', '010203'), 4),
+                    constantDiscriminatorNode(constantValueNodeFromBytes('base16', '010203'), { offset: 4 }),
                 ],
-                name: 'transferTokens',
+                identifier: 'transferTokens',
             }),
             // No discriminator.
-            instructionNode({ discriminators: [], name: 'updateAuthority' }),
+            instructionNode({ discriminators: [], identifier: 'updateAuthority' }),
         ],
-        name: 'splToken',
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
@@ -185,47 +184,47 @@ test('it renders an function that identifies instructions in a program', async (
 test('it checks the discriminator of sub-instructions before their parents.', async () => {
     // Given the following program with a parent instruction and a sub-instruction.
     const node = programNode({
+        identifier: 'splToken',
         instructions: [
             // Parent instruction.
             instructionNode({
-                arguments: [
-                    instructionArgumentNode({
-                        defaultValue: numberValueNode(1),
-                        name: 'parentDiscriminator',
-                        type: numberTypeNode('u8'),
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: integerValueNode('1'),
+                        identifier: 'parentDiscriminator',
+                        type: integerTypeNode('u8'),
                     }),
-                    instructionArgumentNode({
-                        name: 'subDiscriminator',
-                        type: numberTypeNode('u32'),
+                    structFieldTypeNode({
+                        identifier: 'subDiscriminator',
+                        type: integerTypeNode('u32'),
                     }),
-                ],
+                ]),
                 discriminators: [fieldDiscriminatorNode('parentDiscriminator')],
-                name: 'mintTokens',
+                identifier: 'mintTokens',
                 subInstructions: [
                     // Sub instruction.
                     instructionNode({
-                        arguments: [
-                            instructionArgumentNode({
-                                defaultValue: numberValueNode(1),
-                                name: 'parentDiscriminator',
-                                type: numberTypeNode('u8'),
+                        data: structTypeNode([
+                            structFieldTypeNode({
+                                defaultValue: integerValueNode('1'),
+                                identifier: 'parentDiscriminator',
+                                type: integerTypeNode('u8'),
                             }),
-                            instructionArgumentNode({
-                                defaultValue: numberValueNode(1),
-                                name: 'subDiscriminator',
-                                type: numberTypeNode('u32'),
+                            structFieldTypeNode({
+                                defaultValue: integerValueNode('1'),
+                                identifier: 'subDiscriminator',
+                                type: integerTypeNode('u32'),
                             }),
-                        ],
+                        ]),
                         discriminators: [
                             fieldDiscriminatorNode('parentDiscriminator'),
-                            fieldDiscriminatorNode('subDiscriminator', 1),
+                            fieldDiscriminatorNode('subDiscriminator', { offset: 1 }),
                         ],
-                        name: 'mintTokensV1',
+                        identifier: 'mintTokensV1',
                     }),
                 ],
             }),
         ],
-        name: 'splToken',
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
@@ -244,12 +243,12 @@ test('it checks the discriminator of sub-instructions before their parents.', as
 test('it renders a parsed union type of all available instructions for a program', async () => {
     // Given the following program.
     const node = programNode({
+        identifier: 'splToken',
         instructions: [
-            instructionNode({ name: 'mintTokens' }),
-            instructionNode({ name: 'transferTokens' }),
-            instructionNode({ name: 'updateAuthority' }),
+            instructionNode({ identifier: 'mintTokens' }),
+            instructionNode({ identifier: 'transferTokens' }),
+            instructionNode({ identifier: 'updateAuthority' }),
         ],
-        name: 'splToken',
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
@@ -268,31 +267,31 @@ test('it renders a parsed union type of all available instructions for a program
 test('it renders a function that parses instructions in a program', async () => {
     // Given the following program with instructions that have discriminators.
     const node = programNode({
+        identifier: 'splToken',
         instructions: [
             instructionNode({
-                arguments: [
-                    instructionArgumentNode({
-                        defaultValue: numberValueNode(1),
-                        name: 'discriminator',
-                        type: numberTypeNode('u8'),
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: integerValueNode('1'),
+                        identifier: 'discriminator',
+                        type: integerTypeNode('u8'),
                     }),
-                ],
+                ]),
                 discriminators: [fieldDiscriminatorNode('discriminator')],
-                name: 'mintTokens',
+                identifier: 'mintTokens',
             }),
             instructionNode({
-                arguments: [
-                    instructionArgumentNode({
-                        defaultValue: numberValueNode(2),
-                        name: 'discriminator',
-                        type: numberTypeNode('u8'),
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: integerValueNode('2'),
+                        identifier: 'discriminator',
+                        type: integerTypeNode('u8'),
                     }),
-                ],
+                ]),
                 discriminators: [fieldDiscriminatorNode('discriminator')],
-                name: 'transferTokens',
+                identifier: 'transferTokens',
             }),
         ],
-        name: 'splToken',
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
@@ -327,29 +326,29 @@ test('the program plugin re-exposes identifyAccount, identifyInstruction and par
             accountNode({
                 data: structTypeNode([
                     structFieldTypeNode({
-                        defaultValue: numberValueNode(5),
-                        name: 'key',
-                        type: numberTypeNode('u8'),
+                        defaultValue: integerValueNode('5'),
+                        identifier: 'key',
+                        type: integerTypeNode('u8'),
                     }),
                 ]),
                 discriminators: [fieldDiscriminatorNode('key')],
-                name: 'metadata',
+                identifier: 'metadata',
             }),
         ],
+        identifier: 'splToken',
         instructions: [
             instructionNode({
-                arguments: [
-                    instructionArgumentNode({
-                        defaultValue: numberValueNode(1),
-                        name: 'discriminator',
-                        type: numberTypeNode('u8'),
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: integerValueNode('1'),
+                        identifier: 'discriminator',
+                        type: integerTypeNode('u8'),
                     }),
-                ],
+                ]),
                 discriminators: [fieldDiscriminatorNode('discriminator')],
-                name: 'mintTokens',
+                identifier: 'mintTokens',
             }),
         ],
-        name: 'splToken',
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
@@ -376,33 +375,33 @@ test('the program plugin exposes identifyInstruction/parseInstruction when only 
     // but whose sub-instruction does. The leaves-only walk in
     // getProgramInstructionsFragment still emits identify*/parse*.
     const node = programNode({
+        identifier: 'splToken',
         instructions: [
             instructionNode({
-                arguments: [
-                    instructionArgumentNode({
-                        defaultValue: numberValueNode(1),
-                        name: 'subDiscriminator',
-                        type: numberTypeNode('u8'),
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: integerValueNode('1'),
+                        identifier: 'subDiscriminator',
+                        type: integerTypeNode('u8'),
                     }),
-                ],
+                ]),
                 discriminators: [],
-                name: 'mintTokens',
+                identifier: 'mintTokens',
                 subInstructions: [
                     instructionNode({
-                        arguments: [
-                            instructionArgumentNode({
-                                defaultValue: numberValueNode(1),
-                                name: 'subDiscriminator',
-                                type: numberTypeNode('u8'),
+                        data: structTypeNode([
+                            structFieldTypeNode({
+                                defaultValue: integerValueNode('1'),
+                                identifier: 'subDiscriminator',
+                                type: integerTypeNode('u8'),
                             }),
-                        ],
+                        ]),
                         discriminators: [fieldDiscriminatorNode('subDiscriminator')],
-                        name: 'mintTokensV2',
+                        identifier: 'mintTokensV2',
                     }),
                 ],
             }),
         ],
-        name: 'splToken',
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
@@ -422,9 +421,9 @@ test('the program plugin exposes identifyInstruction/parseInstruction when only 
 test('the program plugin omits identify/parse keys when no node carries a discriminator', async () => {
     // Given a program with accounts and instructions but no discriminators.
     const node = programNode({
-        accounts: [accountNode({ discriminators: [], name: 'mint' })],
-        instructions: [instructionNode({ discriminators: [], name: 'mintTokens' })],
-        name: 'splToken',
+        accounts: [accountNode({ discriminators: [], identifier: 'mint' })],
+        identifier: 'splToken',
+        instructions: [instructionNode({ discriminators: [], identifier: 'mintTokens' })],
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
@@ -444,33 +443,33 @@ test('the program plugin honors renderParentInstructions when deciding whether t
     // sub-instruction does not. Without renderParentInstructions the parent
     // is filtered out by the leaves-only walk, so no identifier is emitted.
     const node = programNode({
+        identifier: 'splToken',
         instructions: [
             instructionNode({
-                arguments: [
-                    instructionArgumentNode({
-                        defaultValue: numberValueNode(1),
-                        name: 'parentDiscriminator',
-                        type: numberTypeNode('u8'),
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: integerValueNode('1'),
+                        identifier: 'parentDiscriminator',
+                        type: integerTypeNode('u8'),
                     }),
-                ],
+                ]),
                 discriminators: [fieldDiscriminatorNode('parentDiscriminator')],
-                name: 'mintTokens',
+                identifier: 'mintTokens',
                 subInstructions: [
                     instructionNode({
-                        arguments: [
-                            instructionArgumentNode({
-                                defaultValue: numberValueNode(1),
-                                name: 'parentDiscriminator',
-                                type: numberTypeNode('u8'),
+                        data: structTypeNode([
+                            structFieldTypeNode({
+                                defaultValue: integerValueNode('1'),
+                                identifier: 'parentDiscriminator',
+                                type: integerTypeNode('u8'),
                             }),
-                        ],
+                        ]),
                         discriminators: [],
-                        name: 'mintTokensV1',
+                        identifier: 'mintTokensV1',
                     }),
                 ],
             }),
         ],
-        name: 'splToken',
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
@@ -490,11 +489,11 @@ test('the program plugin honors renderParentInstructions when deciding whether t
 test('it does not render parse function when no instructions have discriminators', async () => {
     // Given the following program with instructions without discriminators.
     const node = programNode({
+        identifier: 'splToken',
         instructions: [
-            instructionNode({ discriminators: [], name: 'mintTokens' }),
-            instructionNode({ discriminators: [], name: 'transferTokens' }),
+            instructionNode({ discriminators: [], identifier: 'mintTokens' }),
+            instructionNode({ discriminators: [], identifier: 'transferTokens' }),
         ],
-        name: 'splToken',
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 

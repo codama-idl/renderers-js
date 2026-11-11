@@ -1,7 +1,7 @@
 import {
     constantValueNodeFromBytes,
     definedTypeNode,
-    numberTypeNode,
+    integerTypeNode,
     publicKeyTypeNode,
     zeroableOptionTypeNode,
 } from '@codama/nodes';
@@ -14,7 +14,7 @@ import { renderMapContains, renderMapContainsImports } from '../_setup';
 test('it renders zeroable option codecs', async () => {
     // Given the following node.
     const node = definedTypeNode({
-        name: 'myType',
+        identifier: 'myType',
         type: zeroableOptionTypeNode(publicKeyTypeNode()),
     });
 
@@ -47,8 +47,10 @@ test('it renders zeroable option codecs', async () => {
 test('it renders zeroable option codecs with custom zero values', async () => {
     // Given the following node.
     const node = definedTypeNode({
-        name: 'myType',
-        type: zeroableOptionTypeNode(numberTypeNode('u16'), constantValueNodeFromBytes('base16', 'ffff')),
+        identifier: 'myType',
+        type: zeroableOptionTypeNode(integerTypeNode('u16'), {
+            zeroValue: constantValueNodeFromBytes('base16', 'ffff'),
+        }),
     });
 
     // When we render it.

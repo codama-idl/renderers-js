@@ -1,7 +1,8 @@
-import { CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, CodamaError } from '@codama/errors';
+import { CODAMA_ERROR__INJECTED_VALUE_NOT_PROVIDED, CodamaError } from '@codama/errors';
+import { getFromRenderMap } from '@codama/fragments';
 import {
     accountValueNode,
-    argumentValueNode,
+    addTypeNodeTransforms,
     arrayTypeNode,
     booleanTypeNode,
     booleanValueNode,
@@ -9,34 +10,38 @@ import {
     constantPdaSeedNodeFromString,
     constantValueNode,
     constantValueNodeFromBytes,
+    dataValueNode,
     definedTypeLinkNode,
     definedTypeNode,
-    enumEmptyVariantTypeNode,
     enumTypeNode,
     enumValueNode,
+    enumVariantTypeNode,
     fieldDiscriminatorNode,
-    fixedSizeTypeNode,
-    instructionAccountNode,
-    instructionArgumentNode,
+    fixedSizeTransformNode,
+    identifierString,
     injectedValueNode,
+    instructionAccountNode,
     instructionNode,
     instructionRemainingAccountsNode,
-    numberTypeNode,
-    numberValueNode,
+    integerTypeNode,
+    integerValueNode,
     pdaLinkNode,
     pdaNode,
     pdaSeedValueNode,
     pdaValueNode,
+    pluginNode,
     prefixedCountNode,
+    programLinkNode,
     programNode,
+    providedNode,
     publicKeyTypeNode,
-    resolverValueNode,
     rootNode,
     stringTypeNode,
     stringValueNode,
+    structFieldTypeNode,
+    structTypeNode,
     variablePdaSeedNode,
 } from '@codama/nodes';
-import { getFromRenderMap } from '@codama/renderers-core';
 import { visit } from '@codama/visitors-core';
 import { expect, test } from 'vitest';
 
@@ -52,19 +57,19 @@ import {
 test('it renders instruction accounts that can either be signer or non-signer', async () => {
     // Given the following instruction with a signer or non-signer account.
     const node = programNode({
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
                 accounts: [
                     instructionAccountNode({
+                        identifier: 'myAccount',
                         isSigner: 'either',
                         isWritable: false,
-                        name: 'myAccount',
                     }),
                 ],
-                name: 'myInstruction',
+                identifier: 'myInstruction',
             }),
         ],
-        name: 'myProgram',
         publicKey: '1111',
     });
 
@@ -98,21 +103,21 @@ test('it renders instruction accounts that can either be signer or non-signer', 
 test('it downgrades the runtime signer flag of signer accounts whose default value may not be a signer', async () => {
     // Given a signer account defaulting to a PDA.
     const node = programNode({
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
                 accounts: [
                     instructionAccountNode({
                         defaultValue: pdaValueNode(pdaLinkNode('myPda')),
+                        identifier: 'myAccount',
                         isSigner: true,
                         isWritable: false,
-                        name: 'myAccount',
                     }),
                 ],
-                name: 'myInstruction',
+                identifier: 'myInstruction',
             }),
         ],
-        name: 'myProgram',
-        pdas: [pdaNode({ name: 'myPda', seeds: [] })],
+        pdas: [pdaNode({ identifier: 'myPda', seeds: [] })],
         publicKey: '1111',
     });
 
@@ -134,25 +139,25 @@ test('it downgrades the runtime signer flag of signer accounts whose default val
 test('it never upgrades the runtime signer flag of non-signer accounts', async () => {
     // Given a non-signer account defaulting to a signer account.
     const node = programNode({
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
                 accounts: [
                     instructionAccountNode({
+                        identifier: 'payer',
                         isSigner: true,
                         isWritable: true,
-                        name: 'payer',
                     }),
                     instructionAccountNode({
                         defaultValue: accountValueNode('payer'),
+                        identifier: 'owner',
                         isSigner: false,
                         isWritable: false,
-                        name: 'owner',
                     }),
                 ],
-                name: 'myInstruction',
+                identifier: 'myInstruction',
             }),
         ],
-        name: 'myProgram',
         publicKey: '1111',
     });
 
@@ -171,23 +176,20 @@ test('it renders extra arguments that default on each other', async () => {
     // Given the following instruction with two extra arguments
     // such that one defaults to the other.
     const node = programNode({
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
-                extraArguments: [
-                    instructionArgumentNode({
-                        defaultValue: argumentValueNode('bar'),
-                        name: 'foo',
-                        type: numberTypeNode('u64'),
+                identifier: 'create',
+                plugins: [
+                    pluginNode('codama.extraArgument', {
+                        defaultValue: dataValueNode('bar'),
+                        identifier: 'foo',
+                        type: integerTypeNode('u64'),
                     }),
-                    instructionArgumentNode({
-                        name: 'bar',
-                        type: numberTypeNode('u64'),
-                    }),
+                    pluginNode('codama.extraArgument', { identifier: 'bar', type: integerTypeNode('u64') }),
                 ],
-                name: 'create',
             }),
         ],
-        name: 'myProgram',
         publicKey: '1111',
     });
 
@@ -204,19 +206,19 @@ test('it renders extra arguments that default on each other', async () => {
 test('it renders the args variable on the async function only if the extra argument has an async default value', async () => {
     // Given the following instruction with an async resolver and an extra argument.
     const node = programNode({
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
-                extraArguments: [
-                    instructionArgumentNode({
-                        defaultValue: resolverValueNode('myAsyncResolver'),
-                        name: 'foo',
-                        type: numberTypeNode('u64'),
-                    }),
+                identifier: 'create',
+                plugins: [
+                    pluginNode(
+                        'codama.extraArgument',
+                        { identifier: 'foo', type: integerTypeNode('u64') },
+                        { plugins: [pluginNode('codama.resolver', { name: 'myAsyncResolver' })] },
+                    ),
                 ],
-                name: 'create',
             }),
         ],
-        name: 'myProgram',
         publicKey: '1111',
     });
 
@@ -237,28 +239,21 @@ test('it only renders the args variable on the async function if the extra argum
     // Given the following instruction with an async resolver depending on
     // an extra argument such that the instruction has no data arguments.
     const node = programNode({
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
                 accounts: [
                     instructionAccountNode({
-                        defaultValue: resolverValueNode('myAsyncResolver', {
-                            dependsOn: [argumentValueNode('bar')],
-                        }),
+                        identifier: 'foo',
                         isSigner: false,
                         isWritable: false,
-                        name: 'foo',
+                        plugins: [pluginNode('codama.resolver', { dependsOn: ['data.bar'], name: 'myAsyncResolver' })],
                     }),
                 ],
-                extraArguments: [
-                    instructionArgumentNode({
-                        name: 'bar',
-                        type: numberTypeNode('u64'),
-                    }),
-                ],
-                name: 'create',
+                identifier: 'create',
+                plugins: [pluginNode('codama.extraArgument', { identifier: 'bar', type: integerTypeNode('u64') })],
             }),
         ],
-        name: 'myProgram',
         publicKey: '1111',
     });
 
@@ -278,30 +273,30 @@ test('it only renders the args variable on the async function if the extra argum
 test('it renders instruction accounts with linked PDAs as default value', async () => {
     // Given the following program with a PDA node and an instruction account using it as default value.
     const node = programNode({
+        identifier: 'counter',
         instructions: [
             instructionNode({
                 accounts: [
                     instructionAccountNode({
+                        identifier: 'authority',
                         isSigner: true,
                         isWritable: false,
-                        name: 'authority',
                     }),
                     instructionAccountNode({
-                        defaultValue: pdaValueNode('counter', [
-                            pdaSeedValueNode('authority', accountValueNode('authority')),
-                        ]),
+                        defaultValue: pdaValueNode('counter', {
+                            seeds: [pdaSeedValueNode('authority', accountValueNode('authority'))],
+                        }),
+                        identifier: 'counter',
                         isSigner: false,
                         isWritable: false,
-                        name: 'counter',
                     }),
                 ],
-                name: 'increment',
+                identifier: 'increment',
             }),
         ],
-        name: 'counter',
         pdas: [
             pdaNode({
-                name: 'counter',
+                identifier: 'counter',
                 seeds: [
                     constantPdaSeedNodeFromString('utf8', 'counter'),
                     variablePdaSeedNode('authority', publicKeyTypeNode()),
@@ -329,37 +324,36 @@ test('it renders instruction accounts with linked PDA default values that point 
     // Given the following program with a PDA node and an instruction account using it as default value
     // such that the program used to derive the PDA is another account in the instruction.
     const node = programNode({
+        identifier: 'counter',
         instructions: [
             instructionNode({
                 accounts: [
                     instructionAccountNode({
+                        identifier: 'authority',
                         isSigner: true,
                         isWritable: false,
-                        name: 'authority',
                     }),
                     instructionAccountNode({
+                        identifier: 'myProgram',
                         isSigner: false,
                         isWritable: false,
-                        name: 'myProgram',
                     }),
                     instructionAccountNode({
-                        defaultValue: pdaValueNode(
-                            'counter',
-                            [pdaSeedValueNode('authority', accountValueNode('authority'))],
-                            accountValueNode('myProgram'),
-                        ),
+                        defaultValue: pdaValueNode('counter', {
+                            programId: accountValueNode('myProgram'),
+                            seeds: [pdaSeedValueNode('authority', accountValueNode('authority'))],
+                        }),
+                        identifier: 'counter',
                         isSigner: false,
                         isWritable: false,
-                        name: 'counter',
                     }),
                 ],
-                name: 'increment',
+                identifier: 'increment',
             }),
         ],
-        name: 'counter',
         pdas: [
             pdaNode({
-                name: 'counter',
+                identifier: 'counter',
                 seeds: [
                     constantPdaSeedNodeFromString('utf8', 'counter'),
                     variablePdaSeedNode('authority', publicKeyTypeNode()),
@@ -387,29 +381,33 @@ test('it does not render the program address for linked PDA default values that 
     // Given the following program with an instruction account using a PDA from another program as default value.
     const node = rootNode(
         programNode({
+            identifier: 'myProgram',
             instructions: [
                 instructionNode({
                     accounts: [
                         instructionAccountNode({
-                            defaultValue: pdaValueNode(pdaLinkNode('counter', 'myOtherProgram')),
+                            defaultValue: pdaValueNode(
+                                pdaLinkNode('counter', { program: programLinkNode('myOtherProgram') }),
+                            ),
+                            identifier: 'counter',
                             isSigner: false,
                             isWritable: false,
-                            name: 'counter',
                         }),
                     ],
-                    name: 'increment',
+                    identifier: 'increment',
                 }),
             ],
-            name: 'myProgram',
             publicKey: '1111',
         }),
-        [
-            programNode({
-                name: 'myOtherProgram',
-                pdas: [pdaNode({ name: 'counter', seeds: [] })],
-                publicKey: '2222',
-            }),
-        ],
+        {
+            additionalPrograms: [
+                programNode({
+                    identifier: 'myOtherProgram',
+                    pdas: [pdaNode({ identifier: 'counter', seeds: [] })],
+                    publicKey: '2222',
+                }),
+            ],
+        },
     );
 
     // When we render it.
@@ -424,21 +422,21 @@ test('it does not render the program address for linked PDA default values that 
 test('it does not render the program address for linked PDA default values with an explicit program ID', async () => {
     // Given the following program with a PDA node pinned to an explicit program ID.
     const node = programNode({
+        identifier: 'counter',
         instructions: [
             instructionNode({
                 accounts: [
                     instructionAccountNode({
                         defaultValue: pdaValueNode('counter'),
+                        identifier: 'counter',
                         isSigner: false,
                         isWritable: false,
-                        name: 'counter',
                     }),
                 ],
-                name: 'increment',
+                identifier: 'increment',
             }),
         ],
-        name: 'counter',
-        pdas: [pdaNode({ name: 'counter', programId: '2222', seeds: [] })],
+        pdas: [pdaNode({ identifier: 'counter', programId: '2222', seeds: [] })],
         publicKey: '1111',
     });
 
@@ -454,20 +452,21 @@ test('it does not render the program address for linked PDA default values with 
 test('it renders instruction arguments with linked PDA default values that forward the program address', async () => {
     // Given the following program with an instruction argument using a PDA as default value.
     const node = programNode({
+        identifier: 'counter',
         instructions: [
             instructionNode({
-                arguments: [
-                    instructionArgumentNode({
-                        defaultValue: pdaValueNode('counter'),
-                        name: 'counterAddress',
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: injectedValueNode({ key: 'counterAddress' }),
+                        identifier: 'counterAddress',
                         type: publicKeyTypeNode(),
                     }),
-                ],
-                name: 'increment',
+                ]),
+                identifier: 'increment',
+                provides: [providedNode('counterAddress', pdaValueNode('counter'))],
             }),
         ],
-        name: 'counter',
-        pdas: [pdaNode({ name: 'counter', seeds: [] })],
+        pdas: [pdaNode({ identifier: 'counter', seeds: [] })],
         publicKey: '1111',
     });
 
@@ -483,23 +482,23 @@ test('it renders instruction arguments with linked PDA default values that forwa
 test('it renders the seeds argument of linked PDA default values that provide no seed values', async () => {
     // Given the following program with a PDA node whose seeds are not filled by the default value.
     const node = programNode({
+        identifier: 'counter',
         instructions: [
             instructionNode({
                 accounts: [
                     instructionAccountNode({
                         defaultValue: pdaValueNode('counter'),
+                        identifier: 'counter',
                         isSigner: false,
                         isWritable: false,
-                        name: 'counter',
                     }),
                 ],
-                name: 'increment',
+                identifier: 'increment',
             }),
         ],
-        name: 'counter',
         pdas: [
             pdaNode({
-                name: 'counter',
+                identifier: 'counter',
                 seeds: [variablePdaSeedNode('authority', publicKeyTypeNode())],
             }),
         ],
@@ -518,34 +517,34 @@ test('it renders the seeds argument of linked PDA default values that provide no
 test('it renders instruction accounts with inlined PDAs as default value', async () => {
     // Given the following instruction with an inlined PDA default value.
     const node = programNode({
+        identifier: 'counter',
         instructions: [
             instructionNode({
                 accounts: [
                     instructionAccountNode({
+                        identifier: 'authority',
                         isSigner: true,
                         isWritable: false,
-                        name: 'authority',
                     }),
                     instructionAccountNode({
                         defaultValue: pdaValueNode(
                             pdaNode({
-                                name: 'counter',
+                                identifier: 'counter',
                                 seeds: [
                                     constantPdaSeedNodeFromString('utf8', 'counter'),
                                     variablePdaSeedNode('authority', publicKeyTypeNode()),
                                 ],
                             }),
-                            [pdaSeedValueNode('authority', accountValueNode('authority'))],
+                            { seeds: [pdaSeedValueNode('authority', accountValueNode('authority'))] },
                         ),
+                        identifier: 'counter',
                         isSigner: false,
                         isWritable: false,
-                        name: 'counter',
                     }),
                 ],
-                name: 'increment',
+                identifier: 'increment',
             }),
         ],
-        name: 'counter',
         publicKey: '1111',
     });
 
@@ -573,40 +572,42 @@ test('it renders instruction accounts with inlined PDA default values that point
     // Given the following instruction with an inlined PDA default value
     // such that the program used to derive the PDA is another account in the instruction.
     const node = programNode({
+        identifier: 'counter',
         instructions: [
             instructionNode({
                 accounts: [
                     instructionAccountNode({
+                        identifier: 'authority',
                         isSigner: true,
                         isWritable: false,
-                        name: 'authority',
                     }),
                     instructionAccountNode({
+                        identifier: 'myProgram',
                         isSigner: false,
                         isWritable: false,
-                        name: 'myProgram',
                     }),
                     instructionAccountNode({
                         defaultValue: pdaValueNode(
                             pdaNode({
-                                name: 'counter',
+                                identifier: 'counter',
                                 seeds: [
                                     constantPdaSeedNodeFromString('utf8', 'counter'),
                                     variablePdaSeedNode('authority', publicKeyTypeNode()),
                                 ],
                             }),
-                            [pdaSeedValueNode('authority', accountValueNode('authority'))],
-                            accountValueNode('myProgram'),
+                            {
+                                programId: accountValueNode('myProgram'),
+                                seeds: [pdaSeedValueNode('authority', accountValueNode('authority'))],
+                            },
                         ),
+                        identifier: 'counter',
                         isSigner: false,
                         isWritable: false,
-                        name: 'counter',
                     }),
                 ],
-                name: 'increment',
+                identifier: 'increment',
             }),
         ],
-        name: 'counter',
         publicKey: '1111',
     });
 
@@ -633,35 +634,35 @@ test('it renders instruction accounts with inlined PDA default values that point
 test('it renders instruction accounts with inlined PDAs from another program as default value', async () => {
     // Given the following instruction with an inlined PDA default value from another program.
     const node = programNode({
+        identifier: 'counter',
         instructions: [
             instructionNode({
                 accounts: [
                     instructionAccountNode({
+                        identifier: 'authority',
                         isSigner: true,
                         isWritable: false,
-                        name: 'authority',
                     }),
                     instructionAccountNode({
                         defaultValue: pdaValueNode(
                             pdaNode({
-                                name: 'counter',
+                                identifier: 'counter',
                                 programId: '2222',
                                 seeds: [
                                     constantPdaSeedNodeFromString('utf8', 'counter'),
                                     variablePdaSeedNode('authority', publicKeyTypeNode()),
                                 ],
                             }),
-                            [pdaSeedValueNode('authority', accountValueNode('authority'))],
+                            { seeds: [pdaSeedValueNode('authority', accountValueNode('authority'))] },
                         ),
+                        identifier: 'counter',
                         isSigner: false,
                         isWritable: false,
-                        name: 'counter',
                     }),
                 ],
-                name: 'increment',
+                identifier: 'increment',
             }),
         ],
-        name: 'counter',
         publicKey: '1111',
     });
 
@@ -688,21 +689,21 @@ test('it renders instruction accounts with inlined PDAs from another program as 
 test('it renders constants for instruction field discriminators', async () => {
     // Given the following instruction with a field discriminator.
     const node = programNode({
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
-                arguments: [
-                    instructionArgumentNode({
-                        defaultValue: numberValueNode(42),
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: integerValueNode('42'),
                         defaultValueStrategy: 'omitted',
-                        name: 'myDiscriminator',
-                        type: numberTypeNode('u8'),
+                        identifier: 'myDiscriminator',
+                        type: integerTypeNode('u8'),
                     }),
-                ],
+                ]),
                 discriminators: [fieldDiscriminatorNode('myDiscriminator')],
-                name: 'myInstruction',
+                identifier: 'myInstruction',
             }),
         ],
-        name: 'myProgram',
         publicKey: '1111',
     });
 
@@ -720,21 +721,21 @@ test('it renders constants for instruction field discriminators', async () => {
 
 test('it renders constants for boolean field discriminators', async () => {
     const node = programNode({
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
-                arguments: [
-                    instructionArgumentNode({
+                data: structTypeNode([
+                    structFieldTypeNode({
                         defaultValue: booleanValueNode(true),
                         defaultValueStrategy: 'omitted',
-                        name: 'myDiscriminator',
+                        identifier: 'myDiscriminator',
                         type: booleanTypeNode(),
                     }),
-                ],
+                ]),
                 discriminators: [fieldDiscriminatorNode('myDiscriminator')],
-                name: 'myInstruction',
+                identifier: 'myInstruction',
             }),
         ],
-        name: 'myProgram',
         publicKey: '1111',
     });
     const renderMap = visit(node, getRenderMapVisitor());
@@ -745,21 +746,21 @@ test('it renders constants for boolean field discriminators', async () => {
 
 test('it renders constants for string field discriminators', async () => {
     const node = programNode({
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
-                arguments: [
-                    instructionArgumentNode({
+                data: structTypeNode([
+                    structFieldTypeNode({
                         defaultValue: stringValueNode('hello'),
                         defaultValueStrategy: 'omitted',
-                        name: 'myDiscriminator',
-                        type: fixedSizeTypeNode(stringTypeNode('utf8'), 5),
+                        identifier: 'myDiscriminator',
+                        type: addTypeNodeTransforms(stringTypeNode('utf8'), [fixedSizeTransformNode(5)]),
                     }),
-                ],
+                ]),
                 discriminators: [fieldDiscriminatorNode('myDiscriminator')],
-                name: 'myInstruction',
+                identifier: 'myInstruction',
             }),
         ],
-        name: 'myProgram',
         publicKey: '1111',
     });
     const renderMap = visit(node, getRenderMapVisitor());
@@ -772,25 +773,25 @@ test('it renders constants for enum field discriminators', async () => {
     const node = programNode({
         definedTypes: [
             definedTypeNode({
-                name: 'key',
-                type: enumTypeNode([enumEmptyVariantTypeNode('Uninitialized'), enumEmptyVariantTypeNode('Asset')]),
+                identifier: 'key',
+                type: enumTypeNode([enumVariantTypeNode('Uninitialized'), enumVariantTypeNode('Asset')]),
             }),
         ],
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
-                arguments: [
-                    instructionArgumentNode({
+                data: structTypeNode([
+                    structFieldTypeNode({
                         defaultValue: enumValueNode('key', 'Asset'),
                         defaultValueStrategy: 'omitted',
-                        name: 'myDiscriminator',
+                        identifier: 'myDiscriminator',
                         type: definedTypeLinkNode('Key'),
                     }),
-                ],
+                ]),
                 discriminators: [fieldDiscriminatorNode('myDiscriminator')],
-                name: 'myInstruction',
+                identifier: 'myInstruction',
             }),
         ],
-        name: 'myProgram',
         publicKey: '1111',
     });
     const renderMap = visit(node, getRenderMapVisitor());
@@ -801,21 +802,21 @@ test('it renders constants for enum field discriminators', async () => {
 
 test('it renders constants for bigint field discriminators', async () => {
     const node = programNode({
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
-                arguments: [
-                    instructionArgumentNode({
-                        defaultValue: numberValueNode(7),
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: integerValueNode('7'),
                         defaultValueStrategy: 'omitted',
-                        name: 'myDiscriminator',
-                        type: numberTypeNode('u64'),
+                        identifier: 'myDiscriminator',
+                        type: integerTypeNode('u64'),
                     }),
-                ],
+                ]),
                 discriminators: [fieldDiscriminatorNode('myDiscriminator')],
-                name: 'myInstruction',
+                identifier: 'myInstruction',
             }),
         ],
-        name: 'myProgram',
         publicKey: '1111',
     });
     const renderMap = visit(node, getRenderMapVisitor());
@@ -826,15 +827,15 @@ test('it renders constants for bigint field discriminators', async () => {
 
 test('it renders constants for bigint constant discriminators', async () => {
     const node = programNode({
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
                 discriminators: [
-                    constantDiscriminatorNode(constantValueNode(numberTypeNode('u64'), numberValueNode(7))),
+                    constantDiscriminatorNode(constantValueNode(integerTypeNode('u64'), integerValueNode('7'))),
                 ],
-                name: 'myInstruction',
+                identifier: 'myInstruction',
             }),
         ],
-        name: 'myProgram',
         publicKey: '1111',
     });
     const renderMap = visit(node, getRenderMapVisitor());
@@ -843,47 +844,46 @@ test('it renders constants for bigint constant discriminators', async () => {
     ]);
 });
 
-test('it renders large bigint discriminators up to the safe integer range', async () => {
-    // Number.MAX_SAFE_INTEGER (2^53 - 1) is the largest integer a numberValueNode can
-    // carry exactly, since its value is stored as a 64-bit float. It must render as a
-    // BigInt literal for its u64 type.
+test('it renders large bigint discriminators beyond the safe integer range', async () => {
+    // Integer values are stored as decimal strings, so the largest u64 is carried exactly
+    // even though it exceeds Number.MAX_SAFE_INTEGER. It must render as a BigInt literal.
     const node = programNode({
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
-                arguments: [
-                    instructionArgumentNode({
-                        defaultValue: numberValueNode(Number.MAX_SAFE_INTEGER),
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: integerValueNode('18446744073709551615'),
                         defaultValueStrategy: 'omitted',
-                        name: 'myDiscriminator',
-                        type: numberTypeNode('u64'),
+                        identifier: 'myDiscriminator',
+                        type: integerTypeNode('u64'),
                     }),
-                ],
+                ]),
                 discriminators: [fieldDiscriminatorNode('myDiscriminator')],
-                name: 'myInstruction',
+                identifier: 'myInstruction',
             }),
         ],
-        name: 'myProgram',
         publicKey: '1111',
     });
     const renderMap = visit(node, getRenderMapVisitor());
     await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
-        'export const MY_INSTRUCTION_MY_DISCRIMINATOR = 9007199254740991n;',
+        'export const MY_INSTRUCTION_MY_DISCRIMINATOR = 18446744073709551615n;',
     ]);
 });
 
 test('it renders constants for instruction constant discriminators', async () => {
     // Given the following instruction with two constant discriminators.
     const node = programNode({
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
                 discriminators: [
                     constantDiscriminatorNode(constantValueNodeFromBytes('base16', '1111')),
-                    constantDiscriminatorNode(constantValueNodeFromBytes('base16', '2222'), 2),
+                    constantDiscriminatorNode(constantValueNodeFromBytes('base16', '2222'), { offset: 2 }),
                 ],
-                name: 'myInstruction',
+                identifier: 'myInstruction',
             }),
         ],
-        name: 'myProgram',
         publicKey: '1111',
     });
 
@@ -902,21 +902,21 @@ test('it renders constants for instruction constant discriminators', async () =>
 test('it can override the import of a resolver value node', async () => {
     // Given the following node with a resolver value node.
     const node = programNode({
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
                 accounts: [
                     instructionAccountNode({
-                        defaultValue: resolverValueNode('myResolver'),
+                        identifier: 'myAccount',
                         isSigner: false,
                         isWritable: false,
-                        name: 'myAccount',
+                        plugins: [pluginNode('codama.resolver', { name: 'myResolver' })],
                     }),
                 ],
-                name: 'myInstruction',
+                identifier: 'myInstruction',
             }),
         ],
-        name: 'myProgram',
-        pdas: [pdaNode({ name: 'counter', seeds: [] })],
+        pdas: [pdaNode({ identifier: 'counter', seeds: [] })],
         publicKey: '1111',
     });
 
@@ -942,13 +942,13 @@ test('it can override the import of a resolver value node', async () => {
 test('it renders optional config that can override the program address', async () => {
     // Given the following instruction
     const node = programNode({
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
                 accounts: [],
-                name: 'myInstruction',
+                identifier: 'myInstruction',
             }),
         ],
-        name: 'myProgram',
         publicKey: '1111',
     });
 
@@ -967,8 +967,8 @@ test('it renders optional config that can override the program address', async (
 test('it renders instructions with no accounts and no data', async () => {
     // Given the following instruction with no accounts and no arguments.
     const node = programNode({
-        instructions: [instructionNode({ name: 'myInstruction' })],
-        name: 'myProgram',
+        identifier: 'myProgram',
+        instructions: [instructionNode({ identifier: 'myInstruction' })],
         publicKey: '1111',
     });
 
@@ -985,21 +985,21 @@ test('it renders instructions with no accounts and no data', async () => {
 test('it renders instructions with no accounts but with some omitted data', async () => {
     // Given the following instruction with no accounts but with a discriminator argument.
     const node = programNode({
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
-                arguments: [
-                    instructionArgumentNode({
-                        defaultValue: numberValueNode(42),
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: integerValueNode('42'),
                         defaultValueStrategy: 'omitted',
-                        name: 'myDiscriminator',
-                        type: numberTypeNode('u32'),
+                        identifier: 'myDiscriminator',
+                        type: integerTypeNode('u32'),
                     }),
-                ],
+                ]),
                 discriminators: [fieldDiscriminatorNode('myDiscriminator')],
-                name: 'myInstruction',
+                identifier: 'myInstruction',
             }),
         ],
-        name: 'myProgram',
         publicKey: '1111',
     });
 
@@ -1016,18 +1016,18 @@ test('it renders instructions with no accounts but with some omitted data', asyn
 test('it renders instructions with no accounts but with some arguments', async () => {
     // Given the following instruction with no accounts but with a non-omitted argument.
     const node = programNode({
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
-                arguments: [
-                    instructionArgumentNode({
-                        name: 'myArgument',
-                        type: numberTypeNode('u32'),
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        identifier: 'myArgument',
+                        type: integerTypeNode('u32'),
                     }),
-                ],
-                name: 'myInstruction',
+                ]),
+                identifier: 'myInstruction',
             }),
         ],
-        name: 'myProgram',
         publicKey: '1111',
     });
 
@@ -1045,19 +1045,19 @@ test('it renders instructions with no accounts but with some arguments', async (
 test('it renders instructions with no arguments but with some accounts', async () => {
     // Given the following instruction with no arguments but with an account.
     const node = programNode({
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
                 accounts: [
                     instructionAccountNode({
+                        identifier: 'myAccount',
                         isSigner: false,
                         isWritable: false,
-                        name: 'myAccount',
                     }),
                 ],
-                name: 'myInstruction',
+                identifier: 'myInstruction',
             }),
         ],
-        name: 'myProgram',
         publicKey: '1111',
     });
 
@@ -1091,26 +1091,26 @@ test("it passes the program address for an unset optional account under the defa
     // so account ordering must be preserved when it is unset.
     // See https://github.com/codama-idl/renderers-js/issues/94
     const node = programNode({
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
                 accounts: [
                     instructionAccountNode({
+                        identifier: 'group',
                         isOptional: true,
                         isSigner: false,
                         isWritable: false,
-                        name: 'group',
                     }),
                     instructionAccountNode({
+                        identifier: 'permission',
                         isSigner: false,
                         isWritable: true,
-                        name: 'permission',
                     }),
                 ],
-                name: 'myInstruction',
+                identifier: 'myInstruction',
                 // optionalAccountStrategy left unset, defaulting to 'programId'.
             }),
         ],
-        name: 'myProgram',
         publicKey: '1111',
     });
     const renderMap = visit(node, getRenderMapVisitor());
@@ -1130,26 +1130,26 @@ test("it drops an unset optional account under the legacy 'omitted' strategy", a
     // Given the same instruction but with the legacy 'omitted' strategy, which models
     // Anchor's legacyOptionalAccountsStrategy where unset optional accounts are removed.
     const node = programNode({
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
                 accounts: [
                     instructionAccountNode({
+                        identifier: 'group',
                         isOptional: true,
                         isSigner: false,
                         isWritable: false,
-                        name: 'group',
                     }),
                     instructionAccountNode({
+                        identifier: 'permission',
                         isSigner: false,
                         isWritable: true,
-                        name: 'permission',
                     }),
                 ],
-                name: 'myInstruction',
+                identifier: 'myInstruction',
                 optionalAccountStrategy: 'omitted',
             }),
         ],
-        name: 'myProgram',
         publicKey: '1111',
     });
     const renderMap = visit(node, getRenderMapVisitor());
@@ -1166,15 +1166,13 @@ test("it drops an unset optional account under the legacy 'omitted' strategy", a
 test('it renders remaining accounts that accept the same inputs as instruction accounts', async () => {
     // Given an instruction with non-signer remaining accounts provided as an input argument.
     const node = programNode({
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
-                name: 'myInstruction',
-                remainingAccounts: [
-                    instructionRemainingAccountsNode(argumentValueNode('extraAccounts'), { isWritable: true }),
-                ],
+                identifier: 'myInstruction',
+                remainingAccounts: [instructionRemainingAccountsNode('extraAccounts', { isWritable: true })],
             }),
         ],
-        name: 'myProgram',
         publicKey: '1111',
     });
 
@@ -1201,18 +1199,18 @@ test('it renders remaining accounts that accept the same inputs as instruction a
 test('it renders optional remaining accounts that may be signers', async () => {
     // Given an instruction with optional remaining accounts that may or may not be signers.
     const node = programNode({
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
-                name: 'myInstruction',
+                identifier: 'myInstruction',
                 remainingAccounts: [
-                    instructionRemainingAccountsNode(argumentValueNode('extraAccounts'), {
+                    instructionRemainingAccountsNode('extraAccounts', {
                         isOptional: true,
                         isSigner: 'either',
                     }),
                 ],
             }),
         ],
-        name: 'myProgram',
         publicKey: '1111',
     });
 
@@ -1239,21 +1237,19 @@ test('it renders remaining accounts backed by an instruction argument as plain a
     // Given an instruction whose remaining accounts are backed by an
     // existing argument — i.e. an array of addresses encoded in the instruction data.
     const node = programNode({
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
-                arguments: [
-                    instructionArgumentNode({
-                        name: 'extraAccounts',
-                        type: arrayTypeNode(publicKeyTypeNode(), prefixedCountNode(numberTypeNode('u8'))),
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        identifier: 'extraAccounts',
+                        type: arrayTypeNode(publicKeyTypeNode(), prefixedCountNode(integerTypeNode('u8'))),
                     }),
-                ],
-                name: 'myInstruction',
-                remainingAccounts: [
-                    instructionRemainingAccountsNode(argumentValueNode('extraAccounts'), { isSigner: true }),
-                ],
+                ]),
+                identifier: 'myInstruction',
+                remainingAccounts: [instructionRemainingAccountsNode('extraAccounts', { isSigner: true })],
             }),
         ],
-        name: 'myProgram',
         publicKey: '1111',
     });
 
@@ -1273,24 +1269,103 @@ test('it renders remaining accounts backed by an instruction argument as plain a
     await renderMapDoesNotContain(renderMap, 'instructions/myInstruction.ts', ['getAccountMeta']);
 });
 
-test('it fails loudly on instruction input default values it cannot render', () => {
-    // Given an instruction account defaulting to an injected value, which this renderer does not support yet.
+test('it fails loudly on injected default values that are not provided', () => {
+    // Given an instruction account defaulting to an injected value that nothing provides.
     const defaultValue = injectedValueNode({ key: 'authority' });
     const node = programNode({
+        identifier: 'counter',
         instructions: [
             instructionNode({
                 accounts: [
-                    instructionAccountNode({ defaultValue, isSigner: false, isWritable: false, name: 'authority' }),
+                    instructionAccountNode({
+                        defaultValue,
+                        identifier: 'authority',
+                        isSigner: false,
+                        isWritable: false,
+                    }),
                 ],
-                name: 'increment',
+                identifier: 'increment',
             }),
         ],
-        name: 'counter',
         publicKey: '1111',
     });
 
     // Then rendering fails at generation time with a clear error.
     expect(() => visit(node, getRenderMapVisitor())).toThrow(
-        new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, { kind: 'injectedValueNode', node: defaultValue }),
+        new CodamaError(CODAMA_ERROR__INJECTED_VALUE_NOT_PROVIDED, {
+            key: identifierString('authority'),
+            path: [defaultValue],
+        }),
     );
+});
+
+test('it fills in omitted data fields with their resolver without exposing them as inputs', async () => {
+    // Given an instruction whose fee is omitted from the input and computed by a resolver.
+    const node = programNode({
+        identifier: 'myProgram',
+        instructions: [
+            instructionNode({
+                data: structTypeNode([
+                    structFieldTypeNode({ identifier: 'amount', type: integerTypeNode('u64') }),
+                    structFieldTypeNode({
+                        defaultValueStrategy: 'omitted',
+                        identifier: 'fee',
+                        plugins: [pluginNode('codama.resolver', { dependsOn: ['data.amount'], name: 'resolveFee' })],
+                        type: integerTypeNode('u64'),
+                    }),
+                ]),
+                identifier: 'transfer',
+            }),
+        ],
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the fee is resolved but not part of the input type.
+    await renderMapContains(renderMap, 'instructions/transfer.ts', [
+        "export type TransferInput = { amount: TransferInstructionDataArgs['amount']; }",
+        'if (!args.fee) { args.fee = resolveFee(resolverScope); }',
+    ]);
+});
+
+test('it passes linked instruction data to resolvers depending on its fields', async () => {
+    // Given an account resolver depending on a field of instruction data linked to a defined type.
+    const node = programNode({
+        definedTypes: [
+            definedTypeNode({
+                identifier: 'transferArgs',
+                type: structTypeNode([structFieldTypeNode({ identifier: 'amount', type: integerTypeNode('u64') })]),
+            }),
+        ],
+        identifier: 'myProgram',
+        instructions: [
+            instructionNode({
+                accounts: [
+                    instructionAccountNode({
+                        identifier: 'vault',
+                        isSigner: false,
+                        isWritable: true,
+                        plugins: [pluginNode('codama.resolver', { dependsOn: ['data.amount'], name: 'resolveVault' })],
+                    }),
+                ],
+                data: definedTypeLinkNode('transferArgs'),
+                identifier: 'transfer',
+            }),
+        ],
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the linked data is part of the input and reaches the resolver through the args.
+    await renderMapContains(renderMap, 'instructions/transfer.ts', [
+        '= TransferArgsArgs & { vault?: TAccountVault; }',
+        'const args = { ...input };',
+        'const resolverScope = { programAddress, accounts, args };',
+        'accounts.vault = { ...accounts.vault, ...resolveVault(resolverScope) };',
+        'data: getTransferArgsEncoder().encode(args as TransferArgsArgs)',
+    ]);
 });

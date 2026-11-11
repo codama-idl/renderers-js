@@ -1,14 +1,15 @@
 import {
     accountNode,
     definedTypeNode,
-    enumEmptyVariantTypeNode,
     enumTypeNode,
+    enumVariantTypeNode,
     fieldDiscriminatorNode,
-    instructionArgumentNode,
     instructionNode,
-    numberTypeNode,
-    numberValueNode,
+    integerTypeNode,
+    integerValueNode,
     programNode,
+    structFieldTypeNode,
+    structTypeNode,
 } from '@codama/nodes';
 import { visit } from '@codama/visitors-core';
 import { test } from 'vitest';
@@ -18,28 +19,28 @@ import { renderMapContains, renderMapDoesNotContain } from './_setup';
 
 // Given the following scalar enum.
 const keyTypeNode = definedTypeNode({
-    docs: ['Identifies the key type.'],
-    name: 'key',
-    type: enumTypeNode([enumEmptyVariantTypeNode('uninitialized'), enumEmptyVariantTypeNode('asset')]),
+    docs: 'Identifies the key type.',
+    identifier: 'key',
+    type: enumTypeNode([enumVariantTypeNode('uninitialized'), enumVariantTypeNode('asset')]),
 });
 
 // And the following program with accounts and instructions.
 const splTokenProgramNode = programNode({
-    accounts: [accountNode({ name: 'mint' }), accountNode({ name: 'token' })],
+    accounts: [accountNode({ identifier: 'mint' }), accountNode({ identifier: 'token' })],
+    identifier: 'splToken',
     instructions: [
         instructionNode({
-            arguments: [
-                instructionArgumentNode({
-                    defaultValue: numberValueNode(1),
-                    name: 'discriminator',
-                    type: numberTypeNode('u8'),
+            data: structTypeNode([
+                structFieldTypeNode({
+                    defaultValue: integerValueNode('1'),
+                    identifier: 'discriminator',
+                    type: integerTypeNode('u8'),
                 }),
-            ],
+            ]),
             discriminators: [fieldDiscriminatorNode('discriminator')],
-            name: 'mintTokens',
+            identifier: 'mintTokens',
         }),
     ],
-    name: 'splToken',
     publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
 });
 

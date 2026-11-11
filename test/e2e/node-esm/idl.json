@@ -1,60 +1,72 @@
 {
   "kind": "rootNode",
+  "standard": "codama",
+  "version": "2.0.0",
   "program": {
     "kind": "programNode",
-    "accounts": [],
-    "definedTypes": [
-      {
-        "kind": "definedTypeNode",
-        "name": "key",
-        "type": {
-          "kind": "enumTypeNode",
-          "variants": [
-            { "kind": "enumEmptyVariantTypeNode", "name": "uninitialized" },
-            { "kind": "enumEmptyVariantTypeNode", "name": "asset" }
-          ],
-          "size": { "kind": "numberTypeNode", "format": "u8", "endian": "le" }
-        },
-        "docs": ["Identifies a key."]
-      }
-    ],
-    "errors": [],
+    "identifier": "nodeEsm",
+    "publicKey": "Dummy1111111111111111111111111111111111",
+    "version": "1.0.0",
     "instructions": [
       {
         "kind": "instructionNode",
-        "name": "useKey",
+        "identifier": "useKey",
         "optionalAccountStrategy": "programId",
-        "accounts": [],
-        "arguments": [
-          {
-            "kind": "instructionArgumentNode",
-            "name": "discriminator",
-            "type": { "kind": "definedTypeLinkNode", "name": "key" },
-            "defaultValue": {
-              "kind": "enumValueNode",
-              "enum": { "kind": "definedTypeLinkNode", "name": "key" },
-              "variant": "asset"
-            },
-            "defaultValueStrategy": "omitted"
-          }
-        ],
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "discriminator",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "definedTypeLinkNode",
+                "identifier": "key"
+              },
+              "defaultValue": {
+                "kind": "enumValueNode",
+                "variant": "asset",
+                "enum": {
+                  "kind": "definedTypeLinkNode",
+                  "identifier": "key"
+                }
+              }
+            }
+          ]
+        },
         "discriminators": [
           {
             "kind": "fieldDiscriminatorNode",
-            "name": "discriminator",
+            "path": "discriminator",
             "offset": 0
           }
         ]
       }
     ],
-    "name": "nodeEsm",
-    "origin": "shank",
-    "pdas": [],
-    "prefix": "",
-    "publicKey": "Dummy1111111111111111111111111111111111",
-    "version": "1.0.0"
-  },
-  "additionalPrograms": [],
-  "standard": "codama",
-  "version": "1.0.0"
+    "definedTypes": [
+      {
+        "kind": "definedTypeNode",
+        "identifier": "key",
+        "docs": "Identifies a key.",
+        "type": {
+          "kind": "enumTypeNode",
+          "variants": [
+            {
+              "kind": "enumVariantTypeNode",
+              "identifier": "uninitialized"
+            },
+            {
+              "kind": "enumVariantTypeNode",
+              "identifier": "asset"
+            }
+          ],
+          "size": {
+            "kind": "integerTypeNode",
+            "format": "u8",
+            "endian": "le"
+          }
+        }
+      }
+    ]
+  }
 }

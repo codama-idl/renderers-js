@@ -1,41 +1,40 @@
+import { getFromRenderMap } from '@codama/fragments';
+import { snakeCase } from '@codama/fragments/casing';
 import {
     accountNode,
     accountValueNode,
-    argumentValueNode,
     constantNode,
     constantPdaSeedNodeFromString,
+    dataValueNode,
     definedTypeLinkNode,
     definedTypeNode,
-    enumEmptyVariantTypeNode,
     enumTypeNode,
     enumValueNode,
+    enumVariantTypeNode,
     errorNode,
     eventNode,
     fieldDiscriminatorNode,
     instructionAccountNode,
-    instructionArgumentNode,
     instructionNode,
     instructionRemainingAccountsNode,
-    numberTypeNode,
-    numberValueNode,
+    integerTypeNode,
+    integerValueNode,
     payerValueNode,
     pdaLinkNode,
     pdaNode,
     pdaSeedValueNode,
     pdaValueNode,
+    pluginNode,
     programNode,
     publicKeyTypeNode,
-    resolverValueNode,
-    RootNode,
     rootNode,
-    snakeCase,
+    type RootNode,
     structFieldTypeNode,
     structFieldValueNode,
     structTypeNode,
     structValueNode,
     variablePdaSeedNode,
 } from '@codama/nodes';
-import { getFromRenderMap } from '@codama/renderers-core';
 import { visit } from '@codama/visitors-core';
 import { expect, test } from 'vitest';
 
@@ -48,11 +47,8 @@ import { GetRenderMapOptions } from '../src/utils';
  * PDA seeds, struct value defaults, discriminator constants, errors, constants,
  * events and the program plugin.
  *
- * Instruction inputs defaulting directly to another input (`accountValueNode` or
- * `argumentValueNode`) are left out on purpose: `@codama/visitors-core@1` rebuilds
- * these references through constructors that re-case names, so it cannot resolve
- * them when names are not camelCase. References within PDA seeds and resolver
- * dependencies are kept as given and are therefore exercised.
+ * References between nodes, such as PDA seeds, injection keys, discriminator paths and
+ * resolver dependencies, are snake-cased along with the nodes they point to.
  */
 function getProgram(): RootNode {
     return rootNode(
@@ -61,120 +57,131 @@ function getProgram(): RootNode {
                 accountNode({
                     data: structTypeNode([
                         structFieldTypeNode({
-                            defaultValue: numberValueNode(1),
+                            defaultValue: integerValueNode('1'),
                             defaultValueStrategy: 'omitted',
-                            name: 'accountKey',
-                            type: numberTypeNode('u8'),
+                            identifier: 'accountKey',
+                            type: integerTypeNode('u8'),
                         }),
-                        structFieldTypeNode({ name: 'tokenOwner', type: publicKeyTypeNode() }),
+                        structFieldTypeNode({ identifier: 'tokenOwner', type: publicKeyTypeNode() }),
                         structFieldTypeNode({
-                            defaultValue: structValueNode([structFieldValueNode('maxFee', numberValueNode(42))]),
-                            name: 'feeConfig',
+                            defaultValue: structValueNode([structFieldValueNode('maxFee', integerValueNode('42'))]),
+                            identifier: 'feeConfig',
                             type: definedTypeLinkNode('feeConfig'),
                         }),
                         structFieldTypeNode({
                             defaultValue: enumValueNode('accountState', 'frozenState'),
-                            name: 'accountState',
+                            identifier: 'accountState',
                             type: definedTypeLinkNode('accountState'),
                         }),
                         // Links to a type outside the tree, so its scalar-ness comes from `nonScalarEnums`.
                         structFieldTypeNode({
                             defaultValue: enumValueNode('externalState', 'pendingState'),
-                            name: 'externalState',
+                            identifier: 'externalState',
                             type: definedTypeLinkNode('externalState'),
                         }),
                     ]),
                     discriminators: [fieldDiscriminatorNode('accountKey')],
-                    name: 'tokenAccount',
+                    identifier: 'tokenAccount',
                     pda: pdaLinkNode('tokenAccount'),
                 }),
             ],
             constants: [
-                constantNode('maxSupply', numberTypeNode('u64'), numberValueNode(1000)),
-                constantNode('defaultDecimals', numberTypeNode('u8'), numberValueNode(9)),
+                constantNode('maxSupply', integerTypeNode('u64'), integerValueNode('1000')),
+                constantNode('defaultDecimals', integerTypeNode('u8'), integerValueNode('9')),
             ],
             definedTypes: [
                 definedTypeNode({
-                    name: 'feeConfig',
-                    type: structTypeNode([structFieldTypeNode({ name: 'maxFee', type: numberTypeNode('u16') })]),
+                    identifier: 'feeConfig',
+                    type: structTypeNode([structFieldTypeNode({ identifier: 'maxFee', type: integerTypeNode('u16') })]),
                 }),
                 definedTypeNode({
-                    name: 'accountState',
-                    type: enumTypeNode([
-                        enumEmptyVariantTypeNode('activeState'),
-                        enumEmptyVariantTypeNode('frozenState'),
-                    ]),
+                    identifier: 'accountState',
+                    type: enumTypeNode([enumVariantTypeNode('activeState'), enumVariantTypeNode('frozenState')]),
                 }),
             ],
             errors: [
-                errorNode({ code: 1, message: 'Invalid owner', name: 'invalidOwner' }),
-                errorNode({ code: 0, message: 'Account frozen', name: 'accountFrozen' }),
+                errorNode({ code: 1, identifier: 'invalidOwner', message: 'Invalid owner' }),
+                errorNode({ code: 0, identifier: 'accountFrozen', message: 'Account frozen' }),
             ],
             events: [
                 eventNode({
                     data: structTypeNode([
                         structFieldTypeNode({
-                            defaultValue: numberValueNode(7),
+                            defaultValue: integerValueNode('7'),
                             defaultValueStrategy: 'omitted',
-                            name: 'eventKey',
-                            type: numberTypeNode('u8'),
+                            identifier: 'eventKey',
+                            type: integerTypeNode('u8'),
                         }),
-                        structFieldTypeNode({ name: 'transferredAmount', type: numberTypeNode('u64') }),
+                        structFieldTypeNode({ identifier: 'transferredAmount', type: integerTypeNode('u64') }),
                     ]),
                     discriminators: [fieldDiscriminatorNode('eventKey')],
-                    name: 'transferEvent',
+                    identifier: 'transferEvent',
                 }),
             ],
+            identifier: 'myProgram',
             instructions: [
                 instructionNode({
                     accounts: [
-                        instructionAccountNode({ isSigner: true, isWritable: true, name: 'tokenOwner' }),
+                        instructionAccountNode({ identifier: 'tokenOwner', isSigner: true, isWritable: true }),
                         instructionAccountNode({
                             defaultValue: payerValueNode(),
+                            identifier: 'feePayer',
                             isSigner: true,
                             isWritable: true,
-                            name: 'feePayer',
                         }),
                         instructionAccountNode({
-                            defaultValue: pdaValueNode('tokenAccount', [
-                                pdaSeedValueNode('tokenOwner', accountValueNode('tokenOwner')),
-                            ]),
-                            isSigner: false,
-                            isWritable: true,
-                            name: 'sourceAccount',
-                        }),
-                        instructionAccountNode({
-                            defaultValue: resolverValueNode('resolveDestination', {
-                                dependsOn: [accountValueNode('tokenOwner'), argumentValueNode('useAta')],
+                            defaultValue: pdaValueNode('tokenAccount', {
+                                seeds: [pdaSeedValueNode('tokenOwner', accountValueNode('tokenOwner'))],
                             }),
+                            identifier: 'sourceAccount',
                             isSigner: false,
                             isWritable: true,
-                            name: 'destinationAccount',
+                        }),
+                        instructionAccountNode({
+                            identifier: 'destinationAccount',
+                            isSigner: false,
+                            isWritable: true,
+                            plugins: [
+                                pluginNode('codama.resolver', {
+                                    dependsOn: ['accounts.tokenOwner', 'data.useAta'],
+                                    name: 'resolveDestination',
+                                }),
+                            ],
+                        }),
+                        instructionAccountNode({
+                            defaultValue: accountValueNode('tokenOwner'),
+                            identifier: 'closeAuthority',
+                            isSigner: false,
+                            isWritable: false,
                         }),
                     ],
-                    arguments: [
-                        instructionArgumentNode({
-                            defaultValue: numberValueNode(3),
+                    data: structTypeNode([
+                        structFieldTypeNode({
+                            defaultValue: integerValueNode('3'),
                             defaultValueStrategy: 'omitted',
-                            name: 'instructionKey',
-                            type: numberTypeNode('u8'),
+                            identifier: 'instructionKey',
+                            type: integerTypeNode('u8'),
                         }),
-                        instructionArgumentNode({ name: 'transferAmount', type: numberTypeNode('u64') }),
+                        structFieldTypeNode({ identifier: 'transferAmount', type: integerTypeNode('u64') }),
                         // Conflicts with the `tokenOwner` account and must be renamed in the input type.
-                        instructionArgumentNode({ name: 'tokenOwner', type: numberTypeNode('u64') }),
-                    ],
+                        structFieldTypeNode({ identifier: 'tokenOwner', type: integerTypeNode('u64') }),
+                    ]),
                     discriminators: [fieldDiscriminatorNode('instructionKey')],
-                    extraArguments: [instructionArgumentNode({ name: 'useAta', type: numberTypeNode('u8') })],
-                    name: 'transferTokens',
-                    remainingAccounts: [
-                        instructionRemainingAccountsNode(argumentValueNode('extraSigners'), { isSigner: true }),
+                    identifier: 'transferTokens',
+                    plugins: [
+                        pluginNode('codama.extraArgument', { identifier: 'useAta', type: integerTypeNode('u8') }),
+                        pluginNode('codama.extraArgument', {
+                            defaultValue: dataValueNode('transferAmount'),
+                            identifier: 'expectedAmount',
+                            type: integerTypeNode('u64'),
+                        }),
                     ],
+                    remainingAccounts: [instructionRemainingAccountsNode('extraSigners', { isSigner: true })],
                 }),
             ],
-            name: 'myProgram',
             pdas: [
                 pdaNode({
-                    name: 'tokenAccount',
+                    identifier: 'tokenAccount',
                     seeds: [
                         constantPdaSeedNodeFromString('utf8', 'token'),
                         variablePdaSeedNode('tokenOwner', publicKeyTypeNode()),
@@ -186,16 +193,27 @@ function getProgram(): RootNode {
     );
 }
 
-/** Rewrites the `name` of every node in the tree to snake_case, references included. */
+/**
+ * Rewrites every identifier of the tree to snake_case, references included: node
+ * identifiers, injection keys, resolver names, data and discriminator paths, and
+ * resolver dependencies such as `accounts.tokenOwner`.
+ */
 function withSnakeCaseNames<T>(value: T): T {
     if (Array.isArray(value)) return value.map(withSnakeCaseNames) as T;
     if (typeof value !== 'object' || value === null) return value;
-    return Object.fromEntries(
-        Object.entries(value).map(([key, child]) => [
-            key,
-            key === 'name' && typeof child === 'string' ? snakeCase(child) : withSnakeCaseNames(child),
-        ]),
-    ) as T;
+    return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, withSnakeCaseName(key, child)])) as T;
+}
+
+function withSnakeCaseName(key: string, value: unknown): unknown {
+    if (typeof value === 'string' && ['identifier', 'key', 'name'].includes(key)) return snakeCase(value);
+    if (typeof value === 'string' && key === 'path') return value.split('.').map(snakeCase).join('.');
+    if (key === 'dependsOn' && Array.isArray(value)) {
+        return value.map((dependency: string) => {
+            const [root, ...rest] = dependency.split('.');
+            return [root, ...rest.map(snakeCase)].join('.');
+        });
+    }
+    return withSnakeCaseNames(value);
 }
 
 const options: GetRenderMapOptions = {
@@ -233,7 +251,7 @@ test('it emits camelCase names for nodes whose names are not camelCase', () => {
     // Then we expect no snake_case name to leak into the generated code.
     renderMap.forEach(({ content }, key) => {
         expect(content, `File "${key}" leaks a snake_case name.`).not.toMatch(
-            /\b(token_owner|fee_config|account_state|external_state|max_fee|source_account|transfer_tokens|my_program|transfer_event)\b/,
+            /\b(token_owner|fee_config|account_state|external_state|max_fee|source_account|transfer_tokens|my_program|transfer_event|close_authority|expected_amount|transfer_amount)\b/,
         );
     });
 });

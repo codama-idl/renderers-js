@@ -1,16 +1,14 @@
+import { getFromRenderMap } from '@codama/fragments';
 import {
-    DefinedTypeNode,
     definedTypeNode,
-    enumEmptyVariantTypeNode,
-    enumStructVariantTypeNode,
-    enumTupleVariantTypeNode,
+    type DefinedTypeNode,
     enumTypeNode,
-    numberTypeNode,
+    enumVariantTypeNode,
+    integerTypeNode,
     structFieldTypeNode,
     structTypeNode,
     tupleTypeNode,
 } from '@codama/nodes';
-import { getFromRenderMap } from '@codama/renderers-core';
 import { visit } from '@codama/visitors-core';
 import { expect, test } from 'vitest';
 
@@ -19,25 +17,24 @@ import { renderMapContains, renderMapDoesNotContain } from '../_setup';
 
 // Given a scalar enum whose variants carry custom discriminators.
 const directionTypeNode = definedTypeNode({
-    name: 'direction',
+    identifier: 'direction',
     type: enumTypeNode([
-        enumEmptyVariantTypeNode('up'),
-        enumEmptyVariantTypeNode('down', 3),
-        enumEmptyVariantTypeNode('left', 5),
+        enumVariantTypeNode('up'),
+        enumVariantTypeNode('down', { discriminator: 3 }),
+        enumVariantTypeNode('left', { discriminator: 5 }),
     ]),
 });
 
 // And a data enum whose variants carry custom discriminators.
 const eventTypeNode = definedTypeNode({
-    name: 'event',
+    identifier: 'event',
     type: enumTypeNode([
-        enumEmptyVariantTypeNode('quit'),
-        enumTupleVariantTypeNode('write', tupleTypeNode([numberTypeNode('u32')]), 3),
-        enumStructVariantTypeNode(
-            'move',
-            structTypeNode([structFieldTypeNode({ name: 'x', type: numberTypeNode('u32') })]),
-            5,
-        ),
+        enumVariantTypeNode('quit'),
+        enumVariantTypeNode('write', { data: tupleTypeNode([integerTypeNode('u32')]), discriminator: 3 }),
+        enumVariantTypeNode('move', {
+            data: structTypeNode([structFieldTypeNode({ identifier: 'x', type: integerTypeNode('u32') })]),
+            discriminator: 5,
+        }),
     ]),
 });
 
@@ -79,13 +76,13 @@ test('it maps the discriminated union prefix to the custom discriminators', asyn
 test('it keeps the configured prefix size when mapping custom discriminators', async () => {
     // Given a data enum with a u16 prefix and custom discriminators.
     const node = definedTypeNode({
-        name: 'event',
+        identifier: 'event',
         type: enumTypeNode(
             [
-                enumEmptyVariantTypeNode('quit', 300),
-                enumTupleVariantTypeNode('write', tupleTypeNode([numberTypeNode('u32')])),
+                enumVariantTypeNode('quit', { discriminator: 300 }),
+                enumVariantTypeNode('write', { data: tupleTypeNode([integerTypeNode('u32')]) }),
             ],
-            { size: numberTypeNode('u16') },
+            { size: integerTypeNode('u16') },
         ),
     });
 
@@ -102,14 +99,14 @@ test('it keeps the configured prefix size when mapping custom discriminators', a
 test('it renders enums without custom discriminators as before', async () => {
     // Given scalar and data enums without custom discriminators.
     const scalarNode = definedTypeNode({
-        name: 'direction',
-        type: enumTypeNode([enumEmptyVariantTypeNode('up'), enumEmptyVariantTypeNode('down')]),
+        identifier: 'direction',
+        type: enumTypeNode([enumVariantTypeNode('up'), enumVariantTypeNode('down')]),
     });
     const dataNode = definedTypeNode({
-        name: 'event',
+        identifier: 'event',
         type: enumTypeNode([
-            enumEmptyVariantTypeNode('quit'),
-            enumTupleVariantTypeNode('write', tupleTypeNode([numberTypeNode('u32')])),
+            enumVariantTypeNode('quit'),
+            enumVariantTypeNode('write', { data: tupleTypeNode([integerTypeNode('u32')]) }),
         ]),
     });
 
@@ -129,22 +126,21 @@ test('it renders explicit discriminators matching the variant positions as posit
     // Given scalar and data enums whose explicit discriminators match the variant positions.
     const scalarNode = (withDiscriminators: boolean) =>
         definedTypeNode({
-            name: 'direction',
+            identifier: 'direction',
             type: enumTypeNode([
-                enumEmptyVariantTypeNode('up', withDiscriminators ? 0 : undefined),
-                enumEmptyVariantTypeNode('down', withDiscriminators ? 1 : undefined),
+                enumVariantTypeNode('up', { discriminator: withDiscriminators ? 0 : undefined }),
+                enumVariantTypeNode('down', { discriminator: withDiscriminators ? 1 : undefined }),
             ]),
         });
     const dataNode = (withDiscriminators: boolean) =>
         definedTypeNode({
-            name: 'event',
+            identifier: 'event',
             type: enumTypeNode([
-                enumEmptyVariantTypeNode('quit', withDiscriminators ? 0 : undefined),
-                enumTupleVariantTypeNode(
-                    'write',
-                    tupleTypeNode([numberTypeNode('u32')]),
-                    withDiscriminators ? 1 : undefined,
-                ),
+                enumVariantTypeNode('quit', { discriminator: withDiscriminators ? 0 : undefined }),
+                enumVariantTypeNode('write', {
+                    data: tupleTypeNode([integerTypeNode('u32')]),
+                    discriminator: withDiscriminators ? 1 : undefined,
+                }),
             ]),
         });
 

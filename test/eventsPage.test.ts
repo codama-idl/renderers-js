@@ -4,19 +4,20 @@ import {
     CodamaError,
 } from '@codama/errors';
 import {
-    camelCase,
+    addTypeNodeTransforms,
     bytesTypeNode,
     bytesValueNode,
     constantDiscriminatorNode,
     constantValueNode,
-    enumEmptyVariantTypeNode,
     enumTypeNode,
+    enumVariantTypeNode,
     eventNode,
     fieldDiscriminatorNode,
-    fixedSizeTypeNode,
-    hiddenPrefixTypeNode,
-    numberTypeNode,
-    numberValueNode,
+    fixedSizeTransformNode,
+    hiddenPrefixTransformNode,
+    integerTypeNode,
+    integerValueNode,
+    pathString,
     programNode,
     rootNode,
     sizeDiscriminatorNode,
@@ -31,8 +32,11 @@ import { renderMapContains, renderMapDoesNotContain } from './_setup';
 
 function fixedBytesDiscriminator(hex: string, size: number, offset = 0) {
     return constantDiscriminatorNode(
-        constantValueNode(fixedSizeTypeNode(bytesTypeNode(), size), bytesValueNode('base16', hex)),
-        offset,
+        constantValueNode(
+            addTypeNodeTransforms(bytesTypeNode(), [fixedSizeTransformNode(size)]),
+            bytesValueNode('base16', hex),
+        ),
+        { offset: offset },
     );
 }
 
@@ -42,12 +46,12 @@ test('it renders an event with an 8-byte constant discriminator', async () => {
     const node = programNode({
         events: [
             eventNode({
-                data: hiddenPrefixTypeNode(structTypeNode([]), [discriminator.constant]),
+                data: addTypeNodeTransforms(structTypeNode([]), [hiddenPrefixTransformNode([discriminator.constant])]),
                 discriminators: [discriminator],
-                name: 'offerCancelled',
+                identifier: 'offerCancelled',
             }),
         ],
-        name: 'offerbook',
+        identifier: 'offerbook',
         publicKey: '1111',
     });
 
@@ -73,12 +77,12 @@ test('it references the discriminator constant inside the event codec functions'
     const node = programNode({
         events: [
             eventNode({
-                data: hiddenPrefixTypeNode(structTypeNode([]), [discriminator.constant]),
+                data: addTypeNodeTransforms(structTypeNode([]), [hiddenPrefixTransformNode([discriminator.constant])]),
                 discriminators: [discriminator],
-                name: 'offerCancelled',
+                identifier: 'offerCancelled',
             }),
         ],
-        name: 'offerbook',
+        identifier: 'offerbook',
         publicKey: '1111',
     });
 
@@ -99,15 +103,15 @@ test('it renders multiple events with distinct discriminators', async () => {
             eventNode({
                 data: structTypeNode([]),
                 discriminators: [fixedBytesDiscriminator('0102', 2)],
-                name: 'eventOne',
+                identifier: 'eventOne',
             }),
             eventNode({
                 data: structTypeNode([]),
                 discriminators: [fixedBytesDiscriminator('a0b0', 2)],
-                name: 'eventTwo',
+                identifier: 'eventTwo',
             }),
         ],
-        name: 'myProgram',
+        identifier: 'myProgram',
         publicKey: '1111',
     });
 
@@ -121,8 +125,8 @@ test('it renders multiple events with distinct discriminators', async () => {
 test('it renders a valid module for an event with no discriminator', async () => {
     const node = rootNode(
         programNode({
-            events: [eventNode({ data: structTypeNode([]), name: 'heartbeat' })],
-            name: 'myProgram',
+            events: [eventNode({ data: structTypeNode([]), identifier: 'heartbeat' })],
+            identifier: 'myProgram',
             publicKey: '1111',
         }),
     );
@@ -144,10 +148,10 @@ test('it preserves offsets and multiple constant discriminator conditions', asyn
             eventNode({
                 data: structTypeNode([]),
                 discriminators: [fixedBytesDiscriminator('1122', 2, 2), fixedBytesDiscriminator('334455', 3, 9)],
-                name: 'composite',
+                identifier: 'composite',
             }),
         ],
-        name: 'myProgram',
+        identifier: 'myProgram',
         publicKey: '1111',
     });
 
@@ -166,12 +170,12 @@ test('it supports size discriminators when parsing events', async () => {
     const node = programNode({
         events: [
             eventNode({
-                data: structTypeNode([structFieldTypeNode({ name: 'value', type: numberTypeNode('u64') })]),
+                data: structTypeNode([structFieldTypeNode({ identifier: 'value', type: integerTypeNode('u64') })]),
                 discriminators: [sizeDiscriminatorNode(8)],
-                name: 'sized',
+                identifier: 'sized',
             }),
         ],
-        name: 'myProgram',
+        identifier: 'myProgram',
         publicKey: '1111',
     });
 
@@ -190,12 +194,12 @@ test('it renders events with non-struct payloads', async () => {
     const node = programNode({
         events: [
             eventNode({
-                data: enumTypeNode([enumEmptyVariantTypeNode('opened'), enumEmptyVariantTypeNode('closed')]),
+                data: enumTypeNode([enumVariantTypeNode('opened'), enumVariantTypeNode('closed')]),
                 discriminators: [fixedBytesDiscriminator('ff', 1)],
-                name: 'stateChange',
+                identifier: 'stateChange',
             }),
         ],
-        name: 'myProgram',
+        identifier: 'myProgram',
         publicKey: '1111',
     });
 
@@ -216,17 +220,17 @@ test('it references field discriminator constants in the event encoder', async (
             eventNode({
                 data: structTypeNode([
                     structFieldTypeNode({
-                        defaultValue: numberValueNode(42),
+                        defaultValue: integerValueNode('42'),
                         defaultValueStrategy: 'omitted',
-                        name: 'key',
-                        type: numberTypeNode('u8'),
+                        identifier: 'key',
+                        type: integerTypeNode('u8'),
                     }),
                 ]),
                 discriminators: [fieldDiscriminatorNode('key')],
-                name: 'keyed',
+                identifier: 'keyed',
             }),
         ],
-        name: 'myProgram',
+        identifier: 'myProgram',
         publicKey: '1111',
     });
 
@@ -247,15 +251,15 @@ test('it renders program-level event identification helpers', async () => {
             eventNode({
                 data: structTypeNode([]),
                 discriminators: [fixedBytesDiscriminator('0102', 2)],
-                name: 'eventOne',
+                identifier: 'eventOne',
             }),
             eventNode({
                 data: structTypeNode([]),
                 discriminators: [fixedBytesDiscriminator('a0b0', 2)],
-                name: 'eventTwo',
+                identifier: 'eventTwo',
             }),
         ],
-        name: 'myProgram',
+        identifier: 'myProgram',
         publicKey: '1111',
     });
 
@@ -273,8 +277,8 @@ test('it renders program-level event identification helpers', async () => {
 
 test('it omits the event identifier function when no event has discriminators', async () => {
     const node = programNode({
-        events: [eventNode({ data: structTypeNode([]), name: 'heartbeat' })],
-        name: 'myProgram',
+        events: [eventNode({ data: structTypeNode([]), identifier: 'heartbeat' })],
+        identifier: 'myProgram',
         publicKey: '1111',
     });
 
@@ -290,10 +294,10 @@ test('it applies custom name transformations to the event APIs', async () => {
             eventNode({
                 data: structTypeNode([]),
                 discriminators: [fixedBytesDiscriminator('01020304', 4)],
-                name: 'renamed',
+                identifier: 'renamed',
             }),
         ],
-        name: 'myProgram',
+        identifier: 'myProgram',
         publicKey: '1111',
     });
 
@@ -320,16 +324,16 @@ test('it exports public events while keeping internal events private', async () 
     const publicEvent = eventNode({
         data: structTypeNode([]),
         discriminators: [fixedBytesDiscriminator('01', 1)],
-        name: 'publicEvent',
+        identifier: 'publicEvent',
     });
     const internalEvent = eventNode({
         data: structTypeNode([]),
         discriminators: [fixedBytesDiscriminator('02', 1)],
-        name: 'internalEvent',
+        identifier: 'internalEvent',
     });
-    const node = rootNode(programNode({ events: [publicEvent], name: 'mainProgram', publicKey: '1111' }), [
-        programNode({ events: [internalEvent], name: 'otherProgram', publicKey: '2222' }),
-    ]);
+    const node = rootNode(programNode({ events: [publicEvent], identifier: 'mainProgram', publicKey: '1111' }), {
+        additionalPrograms: [programNode({ events: [internalEvent], identifier: 'otherProgram', publicKey: '2222' })],
+    });
 
     const renderMap = visit(node, getRenderMapVisitor({ internalNodes: ['internalEvent'] }));
 
@@ -342,46 +346,51 @@ test('it exports public events while keeping internal events private', async () 
 test('it fails loudly when a field discriminator has no matching payload field', () => {
     // Given an event with a non-struct payload and a field discriminator that
     // can therefore never resolve to a payload field.
+    const discriminator = fieldDiscriminatorNode('key');
     const node = programNode({
         events: [
             eventNode({
-                data: enumTypeNode([enumEmptyVariantTypeNode('opened')]),
-                discriminators: [fieldDiscriminatorNode('key')],
-                name: 'broken',
+                data: enumTypeNode([enumVariantTypeNode('opened')]),
+                discriminators: [discriminator],
+                identifier: 'broken',
             }),
         ],
-        name: 'myProgram',
+        identifier: 'myProgram',
         publicKey: '1111',
     });
 
     // Then rendering fails at generation time with a clear error.
     expect(() => visit(node, getRenderMapVisitor())).toThrow(
-        new CodamaError(CODAMA_ERROR__DISCRIMINATOR_FIELD_NOT_FOUND, { field: camelCase('key') }),
+        new CodamaError(CODAMA_ERROR__DISCRIMINATOR_FIELD_NOT_FOUND, {
+            field: pathString('key'),
+            path: [discriminator],
+        }),
     );
 });
 
 test('it fails loudly when a field discriminator has no default value', () => {
     // Given an event whose field discriminator points to a field without a default value.
+    const keyField = structFieldTypeNode({ identifier: 'key', type: integerTypeNode('u8') });
     const node = programNode({
         events: [
             eventNode({
-                data: structTypeNode([structFieldTypeNode({ name: 'key', type: numberTypeNode('u8') })]),
+                data: structTypeNode([keyField]),
                 discriminators: [fieldDiscriminatorNode('key')],
-                name: 'broken',
+                identifier: 'broken',
             }),
         ],
-        name: 'myProgram',
+        identifier: 'myProgram',
         publicKey: '1111',
     });
 
     // Then rendering fails at generation time with a clear error.
     expect(() => visit(node, getRenderMapVisitor())).toThrow(
-        new CodamaError(CODAMA_ERROR__DISCRIMINATOR_FIELD_HAS_NO_DEFAULT_VALUE, { field: camelCase('key') }),
+        new CodamaError(CODAMA_ERROR__DISCRIMINATOR_FIELD_HAS_NO_DEFAULT_VALUE, { path: [keyField] }),
     );
 });
 
 test('it omits event barrels for programs with no events', async () => {
-    const node = rootNode(programNode({ name: 'emptyProgram', publicKey: '1111' }));
+    const node = rootNode(programNode({ identifier: 'emptyProgram', publicKey: '1111' }));
 
     const renderMap = visit(node, getRenderMapVisitor());
 

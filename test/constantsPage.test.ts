@@ -4,11 +4,13 @@ import {
     constantNode,
     definedTypeLinkNode,
     definedTypeNode,
-    enumEmptyVariantTypeNode,
     enumTypeNode,
     enumValueNode,
-    numberTypeNode,
-    numberValueNode,
+    enumVariantTypeNode,
+    floatTypeNode,
+    floatValueNode,
+    integerTypeNode,
+    integerValueNode,
     programNode,
     publicKeyTypeNode,
     publicKeyValueNode,
@@ -25,13 +27,13 @@ test('it renders program constants in a program-specific constants page', async 
     const node = rootNode(
         programNode({
             constants: [
-                constantNode('maxOption', numberTypeNode('u8'), numberValueNode(10), ['Maximum options.']),
-                constantNode('minOption', numberTypeNode('u8'), numberValueNode(1)),
-                constantNode('signedOption', numberTypeNode('i32'), numberValueNode(-2)),
-                constantNode('tokenAmount', numberTypeNode('u64'), numberValueNode(42)),
-                constantNode('weight', numberTypeNode('f64'), numberValueNode(1.5)),
+                constantNode('maxOption', integerTypeNode('u8'), integerValueNode('10'), { docs: 'Maximum options.' }),
+                constantNode('minOption', integerTypeNode('u8'), integerValueNode('1')),
+                constantNode('signedOption', integerTypeNode('i32'), integerValueNode('-2')),
+                constantNode('tokenAmount', integerTypeNode('u64'), integerValueNode('42')),
+                constantNode('weight', floatTypeNode('f64'), floatValueNode('1.5')),
             ],
-            name: 'governance',
+            identifier: 'governance',
             publicKey: 'GovER5Lthms3bLBqWub97yVrQm9WLZ7YgRrxYQYy2P',
         }),
     );
@@ -56,17 +58,19 @@ test('it renders program constants in a program-specific constants page', async 
 test('it renders one constants file per program', async () => {
     const node = rootNode(
         programNode({
-            constants: [constantNode('governanceLimit', numberTypeNode('u8'), numberValueNode(1))],
-            name: 'governance',
+            constants: [constantNode('governanceLimit', integerTypeNode('u8'), integerValueNode('1'))],
+            identifier: 'governance',
             publicKey: 'GovER5Lthms3bLBqWub97yVrQm9WLZ7YgRrxYQYy2P',
         }),
-        [
-            programNode({
-                constants: [constantNode('treasuryLimit', numberTypeNode('u8'), numberValueNode(2))],
-                name: 'treasury',
-                publicKey: '11111111111111111111111111111111',
-            }),
-        ],
+        {
+            additionalPrograms: [
+                programNode({
+                    constants: [constantNode('treasuryLimit', integerTypeNode('u8'), integerValueNode('2'))],
+                    identifier: 'treasury',
+                    publicKey: '11111111111111111111111111111111',
+                }),
+            ],
+        },
     );
 
     const renderMap = visit(node, getRenderMapVisitor());
@@ -91,11 +95,11 @@ test('it renders values and imports using their declared types', async () => {
             ],
             definedTypes: [
                 definedTypeNode({
-                    name: 'accountStatus',
-                    type: enumTypeNode([enumEmptyVariantTypeNode('active'), enumEmptyVariantTypeNode('paused')]),
+                    identifier: 'accountStatus',
+                    type: enumTypeNode([enumVariantTypeNode('active'), enumVariantTypeNode('paused')]),
                 }),
             ],
-            name: 'governance',
+            identifier: 'governance',
             publicKey: 'GovER5Lthms3bLBqWub97yVrQm9WLZ7YgRrxYQYy2P',
         }),
     );
@@ -115,9 +119,9 @@ test('it renders values and imports using their declared types', async () => {
 test('it imports linked types from the top-level types directory', async () => {
     const node = rootNode(
         programNode({
-            constants: [constantNode('optionCount', definedTypeLinkNode('optionCountType'), numberValueNode(10))],
-            definedTypes: [definedTypeNode({ name: 'optionCountType', type: numberTypeNode('u8') })],
-            name: 'governance',
+            constants: [constantNode('optionCount', definedTypeLinkNode('optionCountType'), integerValueNode('10'))],
+            definedTypes: [definedTypeNode({ identifier: 'optionCountType', type: integerTypeNode('u8') })],
+            identifier: 'governance',
             publicKey: 'GovER5Lthms3bLBqWub97yVrQm9WLZ7YgRrxYQYy2P',
         }),
     );
@@ -132,9 +136,9 @@ test('it imports linked types from the top-level types directory', async () => {
 test('it renders bigint literals for linked bigint types', async () => {
     const node = rootNode(
         programNode({
-            constants: [constantNode('maxAmount', definedTypeLinkNode('bigNumber'), numberValueNode(42))],
-            definedTypes: [definedTypeNode({ name: 'bigNumber', type: numberTypeNode('u64') })],
-            name: 'governance',
+            constants: [constantNode('maxAmount', definedTypeLinkNode('bigNumber'), integerValueNode('42'))],
+            definedTypes: [definedTypeNode({ identifier: 'bigNumber', type: integerTypeNode('u64') })],
+            identifier: 'governance',
             publicKey: 'GovER5Lthms3bLBqWub97yVrQm9WLZ7YgRrxYQYy2P',
         }),
     );
@@ -158,7 +162,7 @@ test('it renders public key and bytes constants', async () => {
                 ),
                 constantNode('seedBytes', bytesTypeNode(), bytesValueNode('base16', '0102ff')),
             ],
-            name: 'governance',
+            identifier: 'governance',
             publicKey: 'GovER5Lthms3bLBqWub97yVrQm9WLZ7YgRrxYQYy2P',
         }),
     );
@@ -179,7 +183,7 @@ test('it renders string constants without importing their declared type', async 
     const node = rootNode(
         programNode({
             constants: [constantNode('abstainVoteIndex', definedTypeLinkNode('usize'), stringValueNode('0'))],
-            name: 'governance',
+            identifier: 'governance',
             publicKey: 'GovER5Lthms3bLBqWub97yVrQm9WLZ7YgRrxYQYy2P',
         }),
     );

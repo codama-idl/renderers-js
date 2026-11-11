@@ -1,4 +1,4 @@
-import { definedTypeNode, fixedSizeTypeNode, stringTypeNode } from '@codama/nodes';
+import { addTypeNodeTransforms, definedTypeNode, fixedSizeTransformNode, stringTypeNode } from '@codama/nodes';
 import { visit } from '@codama/visitors-core';
 import { test } from 'vitest';
 
@@ -8,8 +8,8 @@ import { renderMapContains, renderMapContainsImports } from '../_setup';
 test('it renders fixed size codecs', async () => {
     // Given the following node.
     const node = definedTypeNode({
-        name: 'myType',
-        type: fixedSizeTypeNode(stringTypeNode('utf8'), 10),
+        identifier: 'myType',
+        type: addTypeNodeTransforms(stringTypeNode('utf8'), [fixedSizeTransformNode(10)]),
     });
 
     // When we render it.

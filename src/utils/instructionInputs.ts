@@ -331,7 +331,11 @@ export function getResolvedInstructionInputs(
     const scope = getProvidedScopeFromPath(instructionPath);
     assertNoUnsupportedInjections(instructionPath, scope, linkables);
     const entries = getInputEntries(instructionPath, scope, linkables);
-    const ordered = sortEntriesByDependencies(entries.filter(isBuilderInput), entries, instructionPath);
+    // Fields of linked data only order their dependents: they are provided as a whole
+    // through the linked type, so they never appear as individual builder inputs.
+    const ordered = sortEntriesByDependencies(entries.filter(isBuilderInput), entries, instructionPath).filter(
+        entry => !(entry.kind === 'data' && entry.isLinked),
+    );
     return ordered.reduce<ResolvedInstructionInput[]>(
         (resolved, entry) => [...resolved, toResolvedInput(entry, resolved, entries)],
         [],

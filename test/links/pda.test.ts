@@ -15,21 +15,21 @@ import { renderMapContains, renderMapContainsImports } from '../_setup';
 test('it imports functions from the linked pda', async () => {
     // Given the following node.
     const node = programNode({
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
                 accounts: [
                     instructionAccountNode({
                         defaultValue: pdaValueNode(pdaLinkNode('counter')),
+                        identifier: 'counter',
                         isSigner: true,
                         isWritable: true,
-                        name: 'counter',
                     }),
                 ],
-                name: 'createCounter',
+                identifier: 'createCounter',
             }),
         ],
-        name: 'myProgram',
-        pdas: [pdaNode({ name: 'counter', seeds: [] })],
+        pdas: [pdaNode({ identifier: 'counter', seeds: [] })],
         publicKey: '1111',
     });
 
@@ -48,21 +48,21 @@ test('it imports functions from the linked pda', async () => {
 test('it can override the import of a linked account', async () => {
     // Given the following node.
     const node = programNode({
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
                 accounts: [
                     instructionAccountNode({
                         defaultValue: pdaValueNode(pdaLinkNode('counter')),
+                        identifier: 'counter',
                         isSigner: true,
                         isWritable: true,
-                        name: 'counter',
                     }),
                 ],
-                name: 'createCounter',
+                identifier: 'createCounter',
             }),
         ],
-        name: 'myProgram',
-        pdas: [pdaNode({ name: 'counter', seeds: [] })],
+        pdas: [pdaNode({ identifier: 'counter', seeds: [] })],
         publicKey: '1111',
     });
 

@@ -8,14 +8,14 @@ import { renderMapContains, renderMapContainsImports } from '../_setup';
 test('it imports functions from the linked account', async () => {
     // Given the following node.
     const node = programNode({
-        accounts: [accountNode({ name: 'counter', size: 42 })],
+        accounts: [accountNode({ identifier: 'counter', size: 42 })],
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
                 byteDeltas: [instructionByteDeltaNode(accountLinkNode('counter'))],
-                name: 'createCounter',
+                identifier: 'createCounter',
             }),
         ],
-        name: 'myProgram',
         publicKey: '1111',
     });
 
@@ -34,14 +34,14 @@ test('it imports functions from the linked account', async () => {
 test('it can override the import of a linked account', async () => {
     // Given the following node.
     const node = programNode({
-        accounts: [accountNode({ name: 'counter', size: 42 })],
+        accounts: [accountNode({ identifier: 'counter', size: 42 })],
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
                 byteDeltas: [instructionByteDeltaNode(accountLinkNode('counter'))],
-                name: 'createCounter',
+                identifier: 'createCounter',
             }),
         ],
-        name: 'myProgram',
         publicKey: '1111',
     });
 
@@ -67,14 +67,14 @@ test('it can override the import of a linked account', async () => {
 test('it matches link overrides regardless of the casing of their keys', async () => {
     // Given the following node.
     const node = programNode({
-        accounts: [accountNode({ name: 'counterAccount', size: 42 })],
+        accounts: [accountNode({ identifier: 'counterAccount', size: 42 })],
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
                 byteDeltas: [instructionByteDeltaNode(accountLinkNode('counterAccount'))],
-                name: 'createCounter',
+                identifier: 'createCounter',
             }),
         ],
-        name: 'myProgram',
         publicKey: '1111',
     });
 

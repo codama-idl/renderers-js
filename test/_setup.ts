@@ -1,5 +1,4 @@
-import { CamelCaseString } from '@codama/nodes';
-import { getFromRenderMap, RenderMap } from '@codama/renderers-core';
+import { getFromRenderMap, RenderMap } from '@codama/fragments';
 import { LinkableDictionary } from '@codama/visitors-core';
 import { Plugin } from 'prettier';
 import * as estreePlugin from 'prettier/plugins/estree';
@@ -40,7 +39,7 @@ export function getDefaultScope(): RenderScope {
     const getImportFrom = getImportFromFactory({}, customAccountData, customInstructionData);
     const linkables = new LinkableDictionary();
     const nameApi = getNameApi(DEFAULT_NAME_TRANSFORMERS);
-    const nonScalarEnums: CamelCaseString[] = [];
+    const nonScalarEnums: string[] = [];
     return {
         asyncResolvers: [],
         customAccountData,

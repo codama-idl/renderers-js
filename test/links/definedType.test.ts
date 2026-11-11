@@ -1,12 +1,12 @@
 import {
+    addTypeNodeTransforms,
     definedTypeLinkNode,
     definedTypeNode,
-    enumEmptyVariantTypeNode,
-    enumTupleVariantTypeNode,
     enumTypeNode,
     enumValueNode,
-    fixedSizeTypeNode,
-    numberTypeNode,
+    enumVariantTypeNode,
+    fixedSizeTransformNode,
+    integerTypeNode,
     programNode,
     stringTypeNode,
     structFieldTypeNode,
@@ -24,17 +24,17 @@ test('it imports types and functions from the linked type', async () => {
     const node = programNode({
         definedTypes: [
             definedTypeNode({
-                name: 'symbol',
-                type: fixedSizeTypeNode(stringTypeNode('utf8'), 5),
+                identifier: 'symbol',
+                type: addTypeNodeTransforms(stringTypeNode('utf8'), [fixedSizeTransformNode(5)]),
             }),
             definedTypeNode({
-                name: 'metadata',
+                identifier: 'metadata',
                 type: structTypeNode([
-                    structFieldTypeNode({ name: 'identifier', type: definedTypeLinkNode('symbol') }),
+                    structFieldTypeNode({ identifier: 'identifier', type: definedTypeLinkNode('symbol') }),
                 ]),
             }),
         ],
-        name: 'myProgram',
+        identifier: 'myProgram',
         publicKey: '1111',
     });
 
@@ -60,17 +60,17 @@ test('it can override the import of a linked type', async () => {
     const node = programNode({
         definedTypes: [
             definedTypeNode({
-                name: 'symbol',
-                type: fixedSizeTypeNode(stringTypeNode('utf8'), 5),
+                identifier: 'symbol',
+                type: addTypeNodeTransforms(stringTypeNode('utf8'), [fixedSizeTransformNode(5)]),
             }),
             definedTypeNode({
-                name: 'metadata',
+                identifier: 'metadata',
                 type: structTypeNode([
-                    structFieldTypeNode({ name: 'identifier', type: definedTypeLinkNode('symbol') }),
+                    structFieldTypeNode({ identifier: 'identifier', type: definedTypeLinkNode('symbol') }),
                 ]),
             }),
         ],
-        name: 'myProgram',
+        identifier: 'myProgram',
         publicKey: '1111',
     });
 
@@ -103,26 +103,26 @@ test('it knows if an enum value is a scalar enum using link nodes', async () => 
     const node = programNode({
         definedTypes: [
             definedTypeNode({
-                name: 'person',
+                identifier: 'person',
                 type: structTypeNode([
                     structFieldTypeNode({
                         defaultValue: enumValueNode('direction', 'up'),
-                        name: 'movement',
+                        identifier: 'movement',
                         type: definedTypeLinkNode('direction'),
                     }),
                 ]),
             }),
             definedTypeNode({
-                name: 'direction',
+                identifier: 'direction',
                 type: enumTypeNode([
-                    enumEmptyVariantTypeNode('up'),
-                    enumEmptyVariantTypeNode('right'),
-                    enumEmptyVariantTypeNode('down'),
-                    enumEmptyVariantTypeNode('left'),
+                    enumVariantTypeNode('up'),
+                    enumVariantTypeNode('right'),
+                    enumVariantTypeNode('down'),
+                    enumVariantTypeNode('left'),
                 ]),
             }),
         ],
-        name: 'myProgram',
+        identifier: 'myProgram',
         publicKey: '1111',
     });
 
@@ -149,26 +149,26 @@ test('it knows if an enum value is a data enum using link nodes', async () => {
     const node = programNode({
         definedTypes: [
             definedTypeNode({
-                name: 'person',
+                identifier: 'person',
                 type: structTypeNode([
                     structFieldTypeNode({
                         defaultValue: enumValueNode('action', 'stop'),
-                        name: 'nextAction',
+                        identifier: 'nextAction',
                         type: definedTypeLinkNode('action'),
                     }),
                 ]),
             }),
             definedTypeNode({
-                name: 'action',
+                identifier: 'action',
                 type: enumTypeNode([
-                    enumEmptyVariantTypeNode('stop'),
-                    enumEmptyVariantTypeNode('turnRight'),
-                    enumEmptyVariantTypeNode('turnLeft'),
-                    enumTupleVariantTypeNode('moveForward', tupleTypeNode([numberTypeNode('u8')])),
+                    enumVariantTypeNode('stop'),
+                    enumVariantTypeNode('turnRight'),
+                    enumVariantTypeNode('turnLeft'),
+                    enumVariantTypeNode('moveForward', { data: tupleTypeNode([integerTypeNode('u8')]) }),
                 ]),
             }),
         ],
-        name: 'myProgram',
+        identifier: 'myProgram',
         publicKey: '1111',
     });
 

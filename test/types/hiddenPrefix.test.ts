@@ -1,9 +1,10 @@
 import {
+    addTypeNodeTransforms,
     constantValueNodeFromBytes,
     constantValueNodeFromString,
     definedTypeNode,
-    hiddenPrefixTypeNode,
-    numberTypeNode,
+    hiddenPrefixTransformNode,
+    integerTypeNode,
 } from '@codama/nodes';
 import { visit } from '@codama/visitors-core';
 import { test } from 'vitest';
@@ -14,10 +15,12 @@ import { renderMapContains, renderMapContainsImports } from '../_setup';
 test('it renders hidden prefix codecs', async () => {
     // Given the following node.
     const node = definedTypeNode({
-        name: 'myType',
-        type: hiddenPrefixTypeNode(numberTypeNode('u32'), [
-            constantValueNodeFromString('utf8', 'hello world'),
-            constantValueNodeFromBytes('base16', 'ff'),
+        identifier: 'myType',
+        type: addTypeNodeTransforms(integerTypeNode('u32'), [
+            hiddenPrefixTransformNode([
+                constantValueNodeFromString('utf8', 'hello world'),
+                constantValueNodeFromBytes('base16', 'ff'),
+            ]),
         ]),
     });
 

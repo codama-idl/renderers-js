@@ -1,33 +1,28 @@
 {
   "kind": "rootNode",
+  "standard": "codama",
+  "version": "2.0.0",
   "program": {
     "kind": "programNode",
-    "pdas": [],
-    "accounts": [],
+    "identifier": "dummy",
+    "publicKey": "Dummy1111111111111111111111111111111111",
+    "version": "3.0.1",
     "instructions": [
       {
         "kind": "instructionNode",
-        "name": "instruction1",
+        "identifier": "instruction1",
         "optionalAccountStrategy": "programId",
-        "docs": ["Testing instructions with no accounts or arguments"],
-        "accounts": [],
-        "arguments": [],
-        "remainingAccounts": []
+        "docs": "Testing instructions with no accounts or arguments"
       },
       {
         "kind": "instructionNode",
-        "name": "instruction2",
+        "identifier": "instruction2",
         "optionalAccountStrategy": "programId",
-        "docs": ["Testing instructions with remaining accounts only"],
-        "accounts": [],
-        "arguments": [],
+        "docs": "Testing instructions with remaining accounts only",
         "remainingAccounts": [
           {
             "kind": "instructionRemainingAccountsNode",
-            "value": {
-              "kind": "argumentValueNode",
-              "name": "remainingAccounts"
-            },
+            "identifier": "remainingAccounts",
             "isOptional": true,
             "isSigner": false
           }
@@ -35,119 +30,119 @@
       },
       {
         "kind": "instructionNode",
-        "name": "instruction3",
+        "identifier": "instruction3",
         "optionalAccountStrategy": "programId",
-        "docs": ["Testing instructions with discriminator only"],
-        "accounts": [],
-        "arguments": [
-          {
-            "kind": "instructionArgumentNode",
-            "name": "discriminator",
-            "type": {
-              "kind": "numberTypeNode",
-              "format": "u32",
-              "endian": "le"
-            },
-            "docs": [],
-            "defaultValue": { "kind": "numberValueNode", "number": 42 },
-            "defaultValueStrategy": "omitted"
-          }
-        ],
+        "docs": "Testing instructions with discriminator only",
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "discriminator",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u32",
+                "endian": "le"
+              },
+              "defaultValue": {
+                "kind": "integerValueNode",
+                "value": "42"
+              }
+            }
+          ]
+        },
         "discriminators": [
           {
             "kind": "fieldDiscriminatorNode",
-            "name": "discriminator",
+            "path": "discriminator",
             "offset": 0
           }
         ]
       },
       {
         "kind": "instructionNode",
-        "name": "instruction4",
+        "identifier": "instruction4",
         "optionalAccountStrategy": "programId",
-        "docs": ["Testing instructions with arguments only"],
-        "accounts": [],
-        "arguments": [
+        "docs": "Testing instructions with arguments only",
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "myArgument",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u64",
+                "endian": "le"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "kind": "instructionNode",
+        "identifier": "instruction5",
+        "optionalAccountStrategy": "programId",
+        "docs": "Testing instructions with optional arguments only",
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "myArgument",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u64",
+                "endian": "le"
+              },
+              "defaultValue": {
+                "kind": "integerValueNode",
+                "value": "42"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "kind": "instructionNode",
+        "identifier": "instruction6",
+        "optionalAccountStrategy": "programId",
+        "docs": "Testing instructions with accounts only",
+        "accounts": [
           {
-            "kind": "instructionArgumentNode",
-            "name": "myArgument",
-            "type": {
-              "kind": "numberTypeNode",
-              "format": "u64",
-              "endian": "le"
-            },
-            "docs": []
+            "kind": "instructionAccountNode",
+            "identifier": "myAccount",
+            "isWritable": true,
+            "isSigner": false,
+            "isOptional": false
           }
         ]
       },
       {
         "kind": "instructionNode",
-        "name": "instruction5",
+        "identifier": "instruction7",
         "optionalAccountStrategy": "programId",
-        "docs": ["Testing instructions with optional arguments only"],
-        "accounts": [],
-        "arguments": [
+        "docs": "Testing instructions with optional accounts only",
+        "accounts": [
           {
-            "kind": "instructionArgumentNode",
-            "name": "myArgument",
-            "type": {
-              "kind": "numberTypeNode",
-              "format": "u64",
-              "endian": "le"
-            },
-            "defaultValue": { "kind": "numberValueNode", "number": 42 },
-            "docs": []
+            "kind": "instructionAccountNode",
+            "identifier": "myAccount",
+            "isWritable": true,
+            "isSigner": false,
+            "isOptional": true
           }
         ]
       },
       {
         "kind": "instructionNode",
-        "name": "instruction6",
+        "identifier": "instruction8",
         "optionalAccountStrategy": "programId",
-        "docs": ["Testing instructions with accounts only"],
-        "accounts": [
-          {
-            "kind": "instructionAccountNode",
-            "name": "myAccount",
-            "isWritable": true,
-            "isSigner": false,
-            "isOptional": false,
-            "docs": []
-          }
-        ],
-        "arguments": []
-      },
-      {
-        "kind": "instructionNode",
-        "name": "instruction7",
-        "optionalAccountStrategy": "programId",
-        "docs": ["Testing instructions with optional accounts only"],
-        "accounts": [
-          {
-            "kind": "instructionAccountNode",
-            "name": "myAccount",
-            "isWritable": true,
-            "isSigner": false,
-            "isOptional": true,
-            "docs": []
-          }
-        ],
-        "arguments": []
-      },
-      {
-        "kind": "instructionNode",
-        "name": "instruction8",
-        "optionalAccountStrategy": "programId",
-        "docs": ["Testing instructions with remaining accounts that can optionally be signers"],
-        "accounts": [],
-        "arguments": [],
+        "docs": "Testing instructions with remaining accounts that can optionally be signers",
         "remainingAccounts": [
           {
             "kind": "instructionRemainingAccountsNode",
-            "value": {
-              "kind": "argumentValueNode",
-              "name": "remainingAccounts"
-            },
+            "identifier": "remainingAccounts",
             "isOptional": true,
             "isSigner": "either"
           }
@@ -155,155 +150,200 @@
       },
       {
         "kind": "instructionNode",
-        "name": "instruction9",
+        "identifier": "instruction9",
         "optionalAccountStrategy": "programId",
-        "docs": ["Testing instructions with conflicting account and argument names both set as the payer"],
+        "docs": "Testing instructions with conflicting account and argument names both set as the payer",
         "accounts": [
           {
             "kind": "instructionAccountNode",
-            "name": "authority",
+            "identifier": "authority",
             "isWritable": false,
             "isSigner": false,
             "isOptional": false,
-            "defaultValue": { "kind": "payerValueNode" }
+            "defaultValue": {
+              "kind": "payerValueNode"
+            }
           }
         ],
-        "arguments": [
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "authority",
+              "type": {
+                "kind": "publicKeyTypeNode"
+              },
+              "defaultValue": {
+                "kind": "injectedValueNode",
+                "key": "authority"
+              }
+            }
+          ]
+        },
+        "provides": [
           {
-            "kind": "instructionArgumentNode",
-            "name": "authority",
-            "defaultValue": { "kind": "payerValueNode" },
-            "type": { "kind": "publicKeyTypeNode" }
+            "kind": "providedNode",
+            "identifier": "authority",
+            "node": {
+              "kind": "payerValueNode"
+            }
           }
-        ],
-        "remainingAccounts": []
+        ]
       },
       {
         "kind": "instructionNode",
-        "name": "instruction10",
+        "identifier": "instruction10",
         "optionalAccountStrategy": "programId",
-        "docs": ["Testing instructions with enum field discriminator"],
-        "accounts": [],
-        "arguments": [
-          {
-            "kind": "instructionArgumentNode",
-            "name": "discriminator",
-            "type": {
-              "kind": "definedTypeLinkNode",
-              "name": "key"
-            },
-            "docs": [],
-            "defaultValue": {
-              "kind": "enumValueNode",
-              "enum": { "kind": "definedTypeLinkNode", "name": "key" },
-              "variant": "asset"
-            },
-            "defaultValueStrategy": "omitted"
-          }
-        ],
+        "docs": "Testing instructions with enum field discriminator",
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "discriminator",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "definedTypeLinkNode",
+                "identifier": "key"
+              },
+              "defaultValue": {
+                "kind": "enumValueNode",
+                "variant": "asset",
+                "enum": {
+                  "kind": "definedTypeLinkNode",
+                  "identifier": "key"
+                }
+              }
+            }
+          ]
+        },
         "discriminators": [
           {
             "kind": "fieldDiscriminatorNode",
-            "name": "discriminator",
+            "path": "discriminator",
             "offset": 0
           }
         ]
       },
       {
         "kind": "instructionNode",
-        "name": "instruction11",
+        "identifier": "instruction11",
         "optionalAccountStrategy": "programId",
-        "docs": ["Testing an optional account followed by a required account"],
+        "docs": "Testing an optional account followed by a required account",
         "accounts": [
           {
             "kind": "instructionAccountNode",
-            "name": "optionalAccount",
+            "identifier": "optionalAccount",
             "isWritable": false,
             "isSigner": false,
-            "isOptional": true,
-            "docs": []
+            "isOptional": true
           },
           {
             "kind": "instructionAccountNode",
-            "name": "requiredAccount",
+            "identifier": "requiredAccount",
             "isWritable": true,
             "isSigner": false,
-            "isOptional": false,
-            "docs": []
+            "isOptional": false
           }
-        ],
-        "arguments": []
+        ]
       },
       {
         "kind": "instructionNode",
-        "name": "instruction12",
+        "identifier": "instruction12",
         "optionalAccountStrategy": "programId",
-        "docs": ["Testing the inputs accepted by instruction accounts, including a PDA whose bump seed is consumed by an argument"],
+        "docs": "Testing the inputs accepted by instruction accounts, including a PDA whose bump seed is consumed by an argument",
         "accounts": [
           {
             "kind": "instructionAccountNode",
-            "name": "authority",
+            "identifier": "authority",
             "isWritable": false,
             "isSigner": true,
-            "isOptional": false,
-            "docs": []
+            "isOptional": false
           },
           {
             "kind": "instructionAccountNode",
-            "name": "delegate",
+            "identifier": "delegate",
             "isWritable": false,
             "isSigner": "either",
-            "isOptional": false,
-            "docs": []
+            "isOptional": false
           },
           {
             "kind": "instructionAccountNode",
-            "name": "target",
+            "identifier": "target",
             "isWritable": true,
             "isSigner": false,
-            "isOptional": false,
-            "docs": []
+            "isOptional": false
           },
           {
             "kind": "instructionAccountNode",
-            "name": "metadata",
+            "identifier": "metadata",
             "isWritable": false,
             "isSigner": false,
-            "isOptional": false,
-            "docs": []
+            "isOptional": false
           }
         ],
-        "arguments": [
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "bump",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u8",
+                "endian": "le"
+              },
+              "defaultValue": {
+                "kind": "injectedValueNode",
+                "key": "bump"
+              }
+            }
+          ]
+        },
+        "provides": [
           {
-            "kind": "instructionArgumentNode",
-            "name": "bump",
-            "defaultValue": { "kind": "accountBumpValueNode", "name": "metadata" },
-            "type": { "kind": "numberTypeNode", "format": "u8", "endian": "le" }
+            "kind": "providedNode",
+            "identifier": "bump",
+            "node": {
+              "kind": "accountBumpValueNode",
+              "identifier": "metadata"
+            }
           }
-        ],
-        "remainingAccounts": []
+        ]
       },
       {
         "kind": "instructionNode",
-        "name": "instruction13",
+        "identifier": "instruction13",
         "optionalAccountStrategy": "programId",
-        "docs": ["Testing remaining accounts backed by an instruction argument, without any other account"],
-        "accounts": [],
-        "arguments": [
-          {
-            "kind": "instructionArgumentNode",
-            "name": "addresses",
-            "type": {
-              "kind": "arrayTypeNode",
-              "item": { "kind": "publicKeyTypeNode" },
-              "count": { "kind": "prefixedCountNode", "prefix": { "kind": "numberTypeNode", "format": "u8", "endian": "le" } }
+        "docs": "Testing remaining accounts backed by an instruction argument, without any other account",
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "addresses",
+              "type": {
+                "kind": "arrayTypeNode",
+                "item": {
+                  "kind": "publicKeyTypeNode"
+                },
+                "count": {
+                  "kind": "prefixedCountNode",
+                  "prefix": {
+                    "kind": "integerTypeNode",
+                    "format": "u8",
+                    "endian": "le"
+                  }
+                }
+              }
             }
-          }
-        ],
+          ]
+        },
         "remainingAccounts": [
           {
             "kind": "instructionRemainingAccountsNode",
-            "value": { "kind": "argumentValueNode", "name": "addresses" },
+            "identifier": "addresses",
             "isWritable": true
           }
         ]
@@ -312,67 +352,106 @@
     "definedTypes": [
       {
         "kind": "definedTypeNode",
-        "name": "key",
+        "identifier": "key",
         "type": {
           "kind": "enumTypeNode",
           "variants": [
-            { "kind": "enumEmptyVariantTypeNode", "name": "uninitialized" },
-            { "kind": "enumEmptyVariantTypeNode", "name": "asset" }
+            {
+              "kind": "enumVariantTypeNode",
+              "identifier": "uninitialized"
+            },
+            {
+              "kind": "enumVariantTypeNode",
+              "identifier": "asset"
+            }
           ],
-          "size": { "kind": "numberTypeNode", "format": "u8", "endian": "le" }
-        },
-        "docs": []
-      },
-      {
-        "kind": "definedTypeNode",
-        "name": "priority",
-        "type": {
-          "kind": "enumTypeNode",
-          "variants": [
-            { "kind": "enumEmptyVariantTypeNode", "name": "low" },
-            { "kind": "enumEmptyVariantTypeNode", "name": "medium", "discriminator": 3 },
-            { "kind": "enumEmptyVariantTypeNode", "name": "high", "discriminator": 5 }
-          ],
-          "size": { "kind": "numberTypeNode", "format": "u8", "endian": "le" }
+          "size": {
+            "kind": "integerTypeNode",
+            "format": "u8",
+            "endian": "le"
+          }
         }
       },
       {
         "kind": "definedTypeNode",
-        "name": "command",
+        "identifier": "priority",
         "type": {
           "kind": "enumTypeNode",
           "variants": [
-            { "kind": "enumEmptyVariantTypeNode", "name": "quit" },
             {
-              "kind": "enumTupleVariantTypeNode",
-              "name": "write",
-              "discriminator": 3,
-              "tuple": { "kind": "tupleTypeNode", "items": [{ "kind": "numberTypeNode", "format": "u32", "endian": "le" }] }
+              "kind": "enumVariantTypeNode",
+              "identifier": "low"
             },
             {
-              "kind": "enumStructVariantTypeNode",
-              "name": "move",
+              "kind": "enumVariantTypeNode",
+              "identifier": "medium",
+              "discriminator": 3
+            },
+            {
+              "kind": "enumVariantTypeNode",
+              "identifier": "high",
+              "discriminator": 5
+            }
+          ],
+          "size": {
+            "kind": "integerTypeNode",
+            "format": "u8",
+            "endian": "le"
+          }
+        }
+      },
+      {
+        "kind": "definedTypeNode",
+        "identifier": "command",
+        "type": {
+          "kind": "enumTypeNode",
+          "variants": [
+            {
+              "kind": "enumVariantTypeNode",
+              "identifier": "quit"
+            },
+            {
+              "kind": "enumVariantTypeNode",
+              "identifier": "write",
+              "discriminator": 3,
+              "data": {
+                "kind": "tupleTypeNode",
+                "items": [
+                  {
+                    "kind": "integerTypeNode",
+                    "format": "u32",
+                    "endian": "le"
+                  }
+                ]
+              }
+            },
+            {
+              "kind": "enumVariantTypeNode",
+              "identifier": "move",
               "discriminator": 5,
-              "struct": {
+              "data": {
                 "kind": "structTypeNode",
                 "fields": [
-                  { "kind": "structFieldTypeNode", "name": "x", "type": { "kind": "numberTypeNode", "format": "u32", "endian": "le" } }
+                  {
+                    "kind": "structFieldTypeNode",
+                    "identifier": "x",
+                    "type": {
+                      "kind": "integerTypeNode",
+                      "format": "u32",
+                      "endian": "le"
+                    }
+                  }
                 ]
               }
             }
           ],
-          "size": { "kind": "numberTypeNode", "format": "u16", "endian": "le" }
+          "size": {
+            "kind": "integerTypeNode",
+            "format": "u16",
+            "endian": "le"
+          }
         }
       }
-    ],
-    "errors": [],
-    "name": "dummy",
-    "prefix": "",
-    "publicKey": "Dummy1111111111111111111111111111111111",
-    "version": "3.0.1",
-    "origin": "shank"
-  },
-  "additionalPrograms": [],
-  "standard": "codama",
-  "version": "1.0.0"
+    ]
+  }
 }
