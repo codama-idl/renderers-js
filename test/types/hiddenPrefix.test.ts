@@ -28,14 +28,14 @@ test('it renders hidden prefix codecs', async () => {
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the following types and codecs to be exported.
-    await renderMapContains(renderMap, 'types/myType.ts', [
+    await renderMapContains(renderMap, 'types/my-type.ts', [
         'export type MyType = number',
         "getHiddenPrefixEncoder( getU32Encoder() , [ getConstantEncoder( getUtf8Encoder().encode('hello world') ), getConstantEncoder( new Uint8Array([ 255 ]) ) ] )",
         "getHiddenPrefixDecoder( getU32Decoder() , [ getConstantDecoder( getUtf8Encoder().encode('hello world') ), getConstantDecoder( new Uint8Array([ 255 ]) ) ] )",
     ]);
 
     // And we expect the following codec imports.
-    await renderMapContainsImports(renderMap, 'types/myType.ts', {
+    await renderMapContainsImports(renderMap, 'types/my-type.ts', {
         '@solana/kit': [
             'getHiddenPrefixEncoder',
             'getHiddenPrefixDecoder',

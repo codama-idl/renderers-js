@@ -16,14 +16,14 @@ test('it renders relative pre-offset codecs', async () => {
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the following types and codecs to be exported.
-    await renderMapContains(renderMap, 'types/myType.ts', [
+    await renderMapContains(renderMap, 'types/my-type.ts', [
         'export type MyType = number',
         'offsetEncoder( getU32Encoder() , { preOffset: ({ preOffset }) => preOffset + 4 } )',
         'offsetDecoder( getU32Decoder() , { preOffset: ({ preOffset }) => preOffset + 4 } )',
     ]);
 
     // And we expect the following codec imports.
-    await renderMapContainsImports(renderMap, 'types/myType.ts', {
+    await renderMapContainsImports(renderMap, 'types/my-type.ts', {
         '@solana/kit': ['offsetEncoder', 'offsetDecoder'],
     });
 });
@@ -39,14 +39,14 @@ test('it renders negative relative pre-offset codecs', async () => {
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the following types and codecs to be exported.
-    await renderMapContains(renderMap, 'types/myType.ts', [
+    await renderMapContains(renderMap, 'types/my-type.ts', [
         'export type MyType = number',
         'offsetEncoder( getU32Encoder() , { preOffset: ({ preOffset }) => preOffset - 4 } )',
         'offsetDecoder( getU32Decoder() , { preOffset: ({ preOffset }) => preOffset - 4 } )',
     ]);
 
     // And we expect the following codec imports.
-    await renderMapContainsImports(renderMap, 'types/myType.ts', {
+    await renderMapContainsImports(renderMap, 'types/my-type.ts', {
         '@solana/kit': ['offsetEncoder', 'offsetDecoder'],
     });
 });
@@ -62,14 +62,14 @@ test('it renders absolute pre-offset codecs', async () => {
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the following types and codecs to be exported.
-    await renderMapContains(renderMap, 'types/myType.ts', [
+    await renderMapContains(renderMap, 'types/my-type.ts', [
         'export type MyType = number',
         'offsetEncoder( getU32Encoder() , { preOffset: () => 4 } )',
         'offsetDecoder( getU32Decoder() , { preOffset: () => 4 } )',
     ]);
 
     // And we expect the following codec imports.
-    await renderMapContainsImports(renderMap, 'types/myType.ts', {
+    await renderMapContainsImports(renderMap, 'types/my-type.ts', {
         '@solana/kit': ['offsetEncoder', 'offsetDecoder'],
     });
 });
@@ -85,14 +85,14 @@ test('it renders negative absolute pre-offset codecs', async () => {
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the following types and codecs to be exported.
-    await renderMapContains(renderMap, 'types/myType.ts', [
+    await renderMapContains(renderMap, 'types/my-type.ts', [
         'export type MyType = number',
         'offsetEncoder( getU32Encoder() , { preOffset: ({ wrapBytes }) => wrapBytes(-4) } )',
         'offsetDecoder( getU32Decoder() , { preOffset: ({ wrapBytes }) => wrapBytes(-4) } )',
     ]);
 
     // And we expect the following codec imports.
-    await renderMapContainsImports(renderMap, 'types/myType.ts', {
+    await renderMapContainsImports(renderMap, 'types/my-type.ts', {
         '@solana/kit': ['offsetEncoder', 'offsetDecoder'],
     });
 });
@@ -108,14 +108,14 @@ test('it renders padded pre-offset codecs', async () => {
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the following types and codecs to be exported.
-    await renderMapContains(renderMap, 'types/myType.ts', [
+    await renderMapContains(renderMap, 'types/my-type.ts', [
         'export type MyType = number',
         'padLeftEncoder( getU32Encoder() , 4 )',
         'padLeftDecoder( getU32Decoder() , 4 )',
     ]);
 
     // And we expect the following codec imports.
-    await renderMapContainsImports(renderMap, 'types/myType.ts', {
+    await renderMapContainsImports(renderMap, 'types/my-type.ts', {
         '@solana/kit': ['padLeftEncoder', 'padLeftDecoder'],
     });
 });

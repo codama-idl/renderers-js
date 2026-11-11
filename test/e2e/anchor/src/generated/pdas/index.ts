@@ -6,5 +6,5 @@
  * @see https://github.com/codama-idl/codama
  */
 
-export * from './extraMetasAccount';
+export * from './extra-metas-account';
 export * from './guard';

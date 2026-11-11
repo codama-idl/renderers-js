@@ -16,7 +16,7 @@ test('it renders public key codecs that accept address-bearing objects', async (
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the encoder to accept addresses and address-bearing objects whilst the decoder yields addresses.
-    await renderMapContains(renderMap, 'types/myType.ts', [
+    await renderMapContains(renderMap, 'types/my-type.ts', [
         'export type MyType = Address',
         'export type MyTypeArgs = Address | HasAddress',
         'export function getMyTypeEncoder(): FixedSizeEncoder<MyTypeArgs> { return getAddressEncoder(); }',
@@ -25,7 +25,7 @@ test('it renders public key codecs that accept address-bearing objects', async (
     ]);
 
     // And we expect the following type and codec imports.
-    await renderMapContainsImports(renderMap, 'types/myType.ts', {
+    await renderMapContainsImports(renderMap, 'types/my-type.ts', {
         '@solana/kit': ['getAddressEncoder', 'getAddressDecoder', 'type Address', 'type HasAddress'],
     });
 });
@@ -41,7 +41,7 @@ test('it renders public key struct fields that accept address-bearing objects', 
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect only the loose type to accept address-bearing objects.
-    await renderMapContains(renderMap, 'types/myType.ts', [
+    await renderMapContains(renderMap, 'types/my-type.ts', [
         'export type MyType = { owner: Address }',
         'export type MyTypeArgs = { owner: Address | HasAddress }',
     ]);

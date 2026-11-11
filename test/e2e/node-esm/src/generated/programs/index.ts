@@ -6,4 +6,4 @@
  * @see https://github.com/codama-idl/codama
  */
 
-export * from './nodeEsm.ts';
+export * from './node-esm.ts';

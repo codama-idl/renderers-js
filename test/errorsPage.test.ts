@@ -18,7 +18,7 @@ test('it renders an is error function that accepts a custom program address', as
 
     // Then we expect the is error function to take an optional program address config
     // that defaults to the program address constant.
-    await renderMapContains(renderMap, 'errors/splToken.ts', [
+    await renderMapContains(renderMap, 'errors/spl-token.ts', [
         'code?: TProgramErrorCode, config: { programAddress?: Address | HasAddress } = {}',
         'const programAddressInput = config.programAddress ?? SPL_TOKEN_PROGRAM_ADDRESS;',
         "const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;",
@@ -26,7 +26,7 @@ test('it renders an is error function that accepts a custom program address', as
     ]);
 
     // And we expect the necessary imports to be included.
-    await renderMapContainsImports(renderMap, 'errors/splToken.ts', {
+    await renderMapContainsImports(renderMap, 'errors/spl-token.ts', {
         '@solana/kit': ['type Address', 'type HasAddress', 'isProgramError'],
     });
 });

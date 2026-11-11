@@ -170,7 +170,7 @@ test('it renders constants for account field discriminators', async () => {
 
     // Then we expect the following constant and function to be rendered
     // And we expect the field default value to use that constant.
-    await renderMapContains(renderMap, 'accounts/myAccount.ts', [
+    await renderMapContains(renderMap, 'accounts/my-account.ts', [
         'export const MY_ACCOUNT_MY_DISCRIMINATOR = 42;',
         'export function getMyAccountMyDiscriminatorBytes(): ReadonlyUint8Array { return getU8Encoder().encode(MY_ACCOUNT_MY_DISCRIMINATOR); }',
         '(value) => ({ ...value, myDiscriminator: MY_ACCOUNT_MY_DISCRIMINATOR })',
@@ -197,7 +197,7 @@ test('it renders constants for bigint account field discriminators', async () =>
         publicKey: '1111',
     });
     const renderMap = visit(node, getRenderMapVisitor());
-    await renderMapContains(renderMap, 'accounts/myAccount.ts', [
+    await renderMapContains(renderMap, 'accounts/my-account.ts', [
         'export const MY_ACCOUNT_MY_DISCRIMINATOR = 7n;',
         'export function getMyAccountMyDiscriminatorBytes(): ReadonlyUint8Array { return getU64Encoder().encode(MY_ACCOUNT_MY_DISCRIMINATOR); }',
     ]);
@@ -223,7 +223,7 @@ test('it renders constants for account constant discriminators', async () => {
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the following constants and functions to be rendered.
-    await renderMapContains(renderMap, 'accounts/myAccount.ts', [
+    await renderMapContains(renderMap, 'accounts/my-account.ts', [
         'export const MY_ACCOUNT_DISCRIMINATOR: ReadonlyUint8Array = new Uint8Array([ 17, 17 ]);',
         'export function getMyAccountDiscriminatorBytes(): ReadonlyUint8Array { return getBytesEncoder().encode(MY_ACCOUNT_DISCRIMINATOR); }',
         'export const MY_ACCOUNT_DISCRIMINATOR2: ReadonlyUint8Array = new Uint8Array([ 34, 34 ]);',
@@ -265,7 +265,7 @@ test('it can extracts account data and import it from another source', async () 
 
     // And we expect the existing account data to be extracted into a new type
     // so it can be imported from the hooked directory.
-    await renderMapContains(renderMap, 'types/counterAccountData.ts', [
+    await renderMapContains(renderMap, 'types/counter-account-data.ts', [
         'export type CounterAccountData',
         'export type CounterAccountDataArgs',
         'export function getCounterAccountDataEncoder',

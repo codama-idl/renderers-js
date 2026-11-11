@@ -16,14 +16,14 @@ test('it renders fixed size codecs', async () => {
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the following types and codecs to be exported.
-    await renderMapContains(renderMap, 'types/myType.ts', [
+    await renderMapContains(renderMap, 'types/my-type.ts', [
         'export type MyType = string',
         'fixEncoderSize( getUtf8Encoder() , 10 )',
         'fixDecoderSize( getUtf8Decoder() , 10 )',
     ]);
 
     // And we expect the following codec imports.
-    await renderMapContainsImports(renderMap, 'types/myType.ts', {
+    await renderMapContainsImports(renderMap, 'types/my-type.ts', {
         '@solana/kit': ['fixEncoderSize', 'fixDecoderSize'],
     });
 });

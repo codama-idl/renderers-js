@@ -104,7 +104,7 @@ test('it use a custom discriminator property for selected unions', async () => {
     const renderMapB = visit(eventTypeNodeB, getRenderMapVisitor({ nameTransformers }));
 
     // Then we expect discriminated union A to use 'typeA' as its discriminator property.
-    await renderMapContains(renderMapA, 'types/eventA.ts', [
+    await renderMapContains(renderMapA, 'types/event-a.ts', [
         "{ discriminator: 'typeA' }",
         "| { typeA: 'Quit' }",
         "| { typeA: 'Write'; fields: readonly [string] }",
@@ -112,7 +112,7 @@ test('it use a custom discriminator property for selected unions', async () => {
     ]);
 
     // And discriminated union B to use 'typeB' as its discriminator property.
-    await renderMapContains(renderMapB, 'types/eventB.ts', [
+    await renderMapContains(renderMapB, 'types/event-b.ts', [
         "{ discriminator: 'typeB' }",
         "| { typeB: 'Quit' }",
         "| { typeB: 'Write'; fields: readonly [string] }",

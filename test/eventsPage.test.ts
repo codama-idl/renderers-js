@@ -59,7 +59,7 @@ test('it renders an event with an 8-byte constant discriminator', async () => {
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the discriminator constants, data type, codec functions and parse helper.
-    await renderMapContains(renderMap, 'events/offerCancelled.ts', [
+    await renderMapContains(renderMap, 'events/offer-cancelled.ts', [
         /export const OFFER_CANCELLED_EVENT_DISCRIMINATOR: ReadonlyUint8Array =\s*new Uint8Array\(\s*\[\s*10, 11, 12, 13, 14, 15, 16, 17\s*\]\s*\);/,
         'export function getOfferCancelledEventDiscriminatorBytes(): ReadonlyUint8Array',
         /export type OfferCancelledEvent = \{\s*\};/,
@@ -90,7 +90,7 @@ test('it references the discriminator constant inside the event codec functions'
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then the codec functions reference the constant instead of inlining the bytes.
-    await renderMapContains(renderMap, 'events/offerCancelled.ts', [
+    await renderMapContains(renderMap, 'events/offer-cancelled.ts', [
         'getConstantEncoder(OFFER_CANCELLED_EVENT_DISCRIMINATOR)',
         'getConstantDecoder(OFFER_CANCELLED_EVENT_DISCRIMINATOR)',
         /containsBytes\(\s*data,\s*OFFER_CANCELLED_EVENT_DISCRIMINATOR,\s*0\s*\)/,
@@ -117,9 +117,9 @@ test('it renders multiple events with distinct discriminators', async () => {
 
     const renderMap = visit(node, getRenderMapVisitor());
 
-    await renderMapContains(renderMap, 'events/eventOne.ts', /new Uint8Array\(\s*\[\s*1, 2\s*\]\s*\)/);
-    await renderMapDoesNotContain(renderMap, 'events/eventOne.ts', /new Uint8Array\(\s*\[\s*160, 176\s*\]\s*\)/);
-    await renderMapContains(renderMap, 'events/eventTwo.ts', /new Uint8Array\(\s*\[\s*160, 176\s*\]\s*\)/);
+    await renderMapContains(renderMap, 'events/event-one.ts', /new Uint8Array\(\s*\[\s*1, 2\s*\]\s*\)/);
+    await renderMapDoesNotContain(renderMap, 'events/event-one.ts', /new Uint8Array\(\s*\[\s*160, 176\s*\]\s*\)/);
+    await renderMapContains(renderMap, 'events/event-two.ts', /new Uint8Array\(\s*\[\s*160, 176\s*\]\s*\)/);
 });
 
 test('it renders a valid module for an event with no discriminator', async () => {
@@ -207,7 +207,7 @@ test('it renders events with non-struct payloads', async () => {
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then the enum type and its codec functions are rendered.
-    await renderMapContains(renderMap, 'events/stateChange.ts', [
+    await renderMapContains(renderMap, 'events/state-change.ts', [
         /export enum StateChangeEvent \{\s*Opened,\s*Closed,?\s*\}/,
         'export function parseStateChangeEvent(',
     ]);
@@ -267,7 +267,7 @@ test('it renders program-level event identification helpers', async () => {
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then it exposes an event enum and an identifier function.
-    await renderMapContains(renderMap, 'programs/myProgram.ts', [
+    await renderMapContains(renderMap, 'programs/my-program.ts', [
         /export enum MyProgramEvent \{\s*EventOne,\s*EventTwo,?\s*\}/,
         /export function identifyMyProgramEvent\(\s*event: \{ data: ReadonlyUint8Array \} \| ReadonlyUint8Array\s*\): MyProgramEvent/,
         'return MyProgramEvent.EventOne;',
@@ -284,8 +284,8 @@ test('it omits the event identifier function when no event has discriminators', 
 
     const renderMap = visit(node, getRenderMapVisitor());
 
-    await renderMapContains(renderMap, 'programs/myProgram.ts', /export enum MyProgramEvent \{\s*Heartbeat,?\s*\}/);
-    await renderMapDoesNotContain(renderMap, 'programs/myProgram.ts', 'identifyMyProgramEvent');
+    await renderMapContains(renderMap, 'programs/my-program.ts', /export enum MyProgramEvent \{\s*Heartbeat,?\s*\}/);
+    await renderMapDoesNotContain(renderMap, 'programs/my-program.ts', 'identifyMyProgramEvent');
 });
 
 test('it applies custom name transformations to the event APIs', async () => {
@@ -337,9 +337,9 @@ test('it exports public events while keeping internal events private', async () 
 
     const renderMap = visit(node, getRenderMapVisitor({ internalNodes: ['internalEvent'] }));
 
-    expect(renderMap.has('events/internalEvent.ts')).toBe(true);
-    await renderMapContains(renderMap, 'events/index.ts', "export * from './publicEvent';");
-    await renderMapDoesNotContain(renderMap, 'events/index.ts', './internalEvent');
+    expect(renderMap.has('events/internal-event.ts')).toBe(true);
+    await renderMapContains(renderMap, 'events/index.ts', "export * from './public-event';");
+    await renderMapDoesNotContain(renderMap, 'events/index.ts', './internal-event');
     await renderMapContains(renderMap, 'index.ts', "export * from './events';");
 });
 

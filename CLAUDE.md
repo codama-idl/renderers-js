@@ -150,7 +150,7 @@ Codama v2 node identifiers keep their original casing (e.g. `transfer_tokens` fr
 
 Important defaults:
 
-- files: `camelCase(identifier).ts` (`fileName` transformer)
+- files: `kebabCase(identifier).ts` (`fileName` transformer)
 - data types: `PascalCaseName`
 - loose/input data types: `PascalCaseNameArgs`
 - encoder: `getPascalCaseNameEncoder`
