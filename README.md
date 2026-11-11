@@ -84,9 +84,9 @@ if (!accounts.vault.value) {
 }
 ```
 
-Account resolvers return the fields of the account to override, e.g. `{ value: address }`, whilst other resolvers return the value itself.
+Account resolvers return the fields of the account to override, e.g. `{ value: address }`. Remaining-accounts resolvers return an `AccountMeta[]`, byte-delta resolvers a number of bytes, and data resolvers the value itself.
 
-Use the `asyncResolvers` option to `await` resolvers that return promises, and `linkOverrides.resolvers` to import a resolver from elsewhere.
+Use the `asyncResolvers` option to `await` resolvers that return promises. These are only called by the async `get…InstructionAsync` builder: the sync `get…Instruction` builder leaves their inputs to the caller and omits their remaining accounts and byte deltas. Use `linkOverrides.resolvers` to import a resolver from elsewhere.
 
 ## Options
 
