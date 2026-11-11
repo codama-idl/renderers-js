@@ -1,6 +1,6 @@
 import {
     constantPdaSeedNodeFromString,
-    numberTypeNode,
+    integerTypeNode,
     optionTypeNode,
     pdaNode,
     programNode,
@@ -16,14 +16,14 @@ import { renderMapContains, renderMapContainsImports, renderMapDoesNotContainImp
 test('it renders a PDA helper function and its input type', async () => {
     // Given the following PDA node.
     const node = programNode({
-        name: 'myProgram',
+        identifier: 'myProgram',
         pdas: [
             pdaNode({
-                name: 'foo',
+                identifier: 'foo',
                 seeds: [
                     constantPdaSeedNodeFromString('utf8', 'myPrefix'),
                     variablePdaSeedNode('myAccount', publicKeyTypeNode()),
-                    variablePdaSeedNode('myArg', numberTypeNode('u64')),
+                    variablePdaSeedNode('myArg', integerTypeNode('u64')),
                 ],
             }),
         ],
@@ -47,10 +47,10 @@ test('it renders a PDA helper function and its input type', async () => {
 test('it renders a PDA helper function with a default program address', async () => {
     // Given the following PDA node with a default program address.
     const node = programNode({
-        name: 'myProgram',
+        identifier: 'myProgram',
         pdas: [
             pdaNode({
-                name: 'foo',
+                identifier: 'foo',
                 programId: 'myProgramId',
                 seeds: [constantPdaSeedNodeFromString('utf8', 'myPrefix')],
             }),
@@ -73,8 +73,8 @@ test('it renders a PDA helper function with a default program address', async ()
 test('it renders an empty array of seeds for seedless PDAs', async () => {
     // Given the following program with 1 account and 1 pda with empty seeds.
     const node = programNode({
-        name: 'myProgram',
-        pdas: [pdaNode({ name: 'foo', seeds: [] })],
+        identifier: 'myProgram',
+        pdas: [pdaNode({ identifier: 'foo', seeds: [] })],
         publicKey: '1111',
     });
 
@@ -91,10 +91,10 @@ test('it renders an empty array of seeds for seedless PDAs', async () => {
 test('it does not import strict types for variable seeds', async () => {
     // Given the following PDA node.
     const node = programNode({
-        name: 'myProgram',
+        identifier: 'myProgram',
         pdas: [
             pdaNode({
-                name: 'foo',
+                identifier: 'foo',
                 seeds: [variablePdaSeedNode('myAccount', optionTypeNode(publicKeyTypeNode()))],
             }),
         ],

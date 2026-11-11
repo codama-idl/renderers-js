@@ -1,4 +1,10 @@
-import { constantValueNodeFromBytes, definedTypeNode, sentinelTypeNode, stringTypeNode } from '@codama/nodes';
+import {
+    addTypeNodeTransforms,
+    constantValueNodeFromBytes,
+    definedTypeNode,
+    sentinelTransformNode,
+    stringTypeNode,
+} from '@codama/nodes';
 import { visit } from '@codama/visitors-core';
 import { test } from 'vitest';
 
@@ -8,8 +14,10 @@ import { renderMapContains, renderMapContainsImports } from '../_setup';
 test('it renders sentinel codecs', async () => {
     // Given the following node.
     const node = definedTypeNode({
-        name: 'myType',
-        type: sentinelTypeNode(stringTypeNode('utf8'), constantValueNodeFromBytes('base16', 'ff')),
+        identifier: 'myType',
+        type: addTypeNodeTransforms(stringTypeNode('utf8'), [
+            sentinelTransformNode(constantValueNodeFromBytes('base16', 'ff')),
+        ]),
     });
 
     // When we render it.

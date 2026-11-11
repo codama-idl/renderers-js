@@ -3,9 +3,9 @@ import {
     constantNode,
     definedTypeLinkNode,
     definedTypeNode,
-    enumEmptyVariantTypeNode,
     enumTypeNode,
     enumValueNode,
+    enumVariantTypeNode,
     instructionAccountNode,
     instructionNode,
     pdaLinkNode,
@@ -27,10 +27,10 @@ const node = rootNode(
         accounts: [
             accountNode({
                 data: structTypeNode([
-                    structFieldTypeNode({ name: 'authority', type: publicKeyTypeNode() }),
-                    structFieldTypeNode({ name: 'status', type: definedTypeLinkNode('accountStatus') }),
+                    structFieldTypeNode({ identifier: 'authority', type: publicKeyTypeNode() }),
+                    structFieldTypeNode({ identifier: 'status', type: definedTypeLinkNode('accountStatus') }),
                 ]),
-                name: 'counter',
+                identifier: 'counter',
                 pda: pdaLinkNode('counter'),
             }),
         ],
@@ -43,24 +43,24 @@ const node = rootNode(
         ],
         definedTypes: [
             definedTypeNode({
-                name: 'accountStatus',
-                type: enumTypeNode([enumEmptyVariantTypeNode('Active'), enumEmptyVariantTypeNode('Paused')]),
+                identifier: 'accountStatus',
+                type: enumTypeNode([enumVariantTypeNode('Active'), enumVariantTypeNode('Paused')]),
             }),
             definedTypeNode({
-                name: 'counterConfig',
+                identifier: 'counterConfig',
                 type: structTypeNode([
-                    structFieldTypeNode({ name: 'status', type: definedTypeLinkNode('accountStatus') }),
+                    structFieldTypeNode({ identifier: 'status', type: definedTypeLinkNode('accountStatus') }),
                 ]),
             }),
         ],
+        identifier: 'myProgram',
         instructions: [
             instructionNode({
-                accounts: [instructionAccountNode({ isSigner: false, isWritable: true, name: 'counter' })],
-                name: 'increment',
+                accounts: [instructionAccountNode({ identifier: 'counter', isSigner: false, isWritable: true })],
+                identifier: 'increment',
             }),
         ],
-        name: 'myProgram',
-        pdas: [pdaNode({ name: 'counter', seeds: [] })],
+        pdas: [pdaNode({ identifier: 'counter', seeds: [] })],
         publicKey: '1111',
     }),
 );

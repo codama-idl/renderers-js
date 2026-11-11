@@ -1,10 +1,8 @@
 import {
     definedTypeNode,
-    enumEmptyVariantTypeNode,
-    enumStructVariantTypeNode,
-    enumTupleVariantTypeNode,
     enumTypeNode,
-    numberTypeNode,
+    enumVariantTypeNode,
+    integerTypeNode,
     stringTypeNode,
     structFieldTypeNode,
     structTypeNode,
@@ -18,17 +16,16 @@ import { renderMapContains } from '../_setup';
 
 // Given the following event discriminated union.
 const eventTypeNode = definedTypeNode({
-    name: 'event',
+    identifier: 'event',
     type: enumTypeNode([
-        enumEmptyVariantTypeNode('quit'),
-        enumTupleVariantTypeNode('write', tupleTypeNode([stringTypeNode('utf8')])),
-        enumStructVariantTypeNode(
-            'move',
-            structTypeNode([
-                structFieldTypeNode({ name: 'x', type: numberTypeNode('u32') }),
-                structFieldTypeNode({ name: 'y', type: numberTypeNode('u32') }),
+        enumVariantTypeNode('quit'),
+        enumVariantTypeNode('write', { data: tupleTypeNode([stringTypeNode('utf8')]) }),
+        enumVariantTypeNode('move', {
+            data: structTypeNode([
+                structFieldTypeNode({ identifier: 'x', type: integerTypeNode('u32') }),
+                structFieldTypeNode({ identifier: 'y', type: integerTypeNode('u32') }),
             ]),
-        ),
+        }),
     ]),
 });
 
@@ -94,8 +91,8 @@ test('it exports discriminated union with custom discriminator properties', asyn
 
 test('it use a custom discriminator property for selected unions', async () => {
     // Given two discriminated unions A and B.
-    const eventTypeNodeA = definedTypeNode({ ...eventTypeNode, name: 'eventA' });
-    const eventTypeNodeB = definedTypeNode({ ...eventTypeNode, name: 'eventB' });
+    const eventTypeNodeA = definedTypeNode({ ...eventTypeNode, identifier: 'eventA' });
+    const eventTypeNodeB = definedTypeNode({ ...eventTypeNode, identifier: 'eventB' });
 
     // And given we use different discriminator properties for each union.
     const nameTransformers = {
@@ -126,16 +123,15 @@ test('it use a custom discriminator property for selected unions', async () => {
 test('it exports fixed-size discriminated union helpers with a type cast', async () => {
     // Given.
     const fixedSizeEnum = definedTypeNode({
-        name: 'choice',
+        identifier: 'choice',
         type: enumTypeNode([
-            enumTupleVariantTypeNode('a', tupleTypeNode([numberTypeNode('u32')])),
-            enumStructVariantTypeNode(
-                'b',
-                structTypeNode([
-                    structFieldTypeNode({ name: 'x', type: numberTypeNode('u16') }),
-                    structFieldTypeNode({ name: 'y', type: numberTypeNode('u16') }),
+            enumVariantTypeNode('a', { data: tupleTypeNode([integerTypeNode('u32')]) }),
+            enumVariantTypeNode('b', {
+                data: structTypeNode([
+                    structFieldTypeNode({ identifier: 'x', type: integerTypeNode('u16') }),
+                    structFieldTypeNode({ identifier: 'y', type: integerTypeNode('u16') }),
                 ]),
-            ),
+            }),
         ]),
     });
 

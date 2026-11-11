@@ -8,7 +8,7 @@ import { renderMapContains, renderMapContainsImports } from '../_setup';
 test('it renders public key codecs that accept address-bearing objects', async () => {
     // Given the following node.
     const node = definedTypeNode({
-        name: 'myType',
+        identifier: 'myType',
         type: publicKeyTypeNode(),
     });
 
@@ -33,8 +33,8 @@ test('it renders public key codecs that accept address-bearing objects', async (
 test('it renders public key struct fields that accept address-bearing objects', async () => {
     // Given the following struct with a public key field.
     const node = definedTypeNode({
-        name: 'myType',
-        type: structTypeNode([structFieldTypeNode({ name: 'owner', type: publicKeyTypeNode() })]),
+        identifier: 'myType',
+        type: structTypeNode([structFieldTypeNode({ identifier: 'owner', type: publicKeyTypeNode() })]),
     });
 
     // When we render it.

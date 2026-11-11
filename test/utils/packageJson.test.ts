@@ -1,5 +1,5 @@
 import { CODAMA_ERROR__RENDERERS__MISSING_DEPENDENCY_VERSIONS, CodamaError } from '@codama/errors';
-import { createRenderMap } from '@codama/renderers-core';
+import { createRenderMap } from '@codama/fragments';
 import { describe, expect, test } from 'vitest';
 
 import {

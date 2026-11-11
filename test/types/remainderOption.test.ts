@@ -8,7 +8,7 @@ import { renderMapContains, renderMapContainsImports } from '../_setup';
 test('it renders remainder option codecs', async () => {
     // Given the following node.
     const node = definedTypeNode({
-        name: 'myType',
+        identifier: 'myType',
         type: remainderOptionTypeNode(publicKeyTypeNode()),
     });
 

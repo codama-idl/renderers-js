@@ -1,44 +1,39 @@
 {
   "kind": "rootNode",
+  "standard": "codama",
+  "version": "2.0.0",
   "program": {
     "kind": "programNode",
-    "pdas": [],
-    "accounts": [],
+    "identifier": "memo",
+    "publicKey": "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
+    "version": "3.0.1",
     "instructions": [
       {
         "kind": "instructionNode",
-        "accounts": [],
-        "arguments": [
-          {
-            "kind": "instructionArgumentNode",
-            "name": "memo",
-            "type": { "kind": "stringTypeNode", "encoding": "utf8" },
-            "docs": []
-          }
-        ],
+        "identifier": "addMemo",
+        "optionalAccountStrategy": "programId",
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "memo",
+              "type": {
+                "kind": "stringTypeNode",
+                "encoding": "utf8"
+              }
+            }
+          ]
+        },
         "remainingAccounts": [
           {
             "kind": "instructionRemainingAccountsNode",
-            "value": { "kind": "argumentValueNode", "name": "signers" },
+            "identifier": "signers",
             "isOptional": true,
             "isSigner": true
           }
-        ],
-        "name": "addMemo",
-        "idlName": "addMemo",
-        "docs": [],
-        "optionalAccountStrategy": "programId"
+        ]
       }
-    ],
-    "definedTypes": [],
-    "errors": [],
-    "name": "memo",
-    "prefix": "",
-    "publicKey": "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
-    "version": "3.0.1",
-    "origin": "shank"
-  },
-  "additionalPrograms": [],
-  "standard": "codama",
-  "version": "1.0.0"
+    ]
+  }
 }

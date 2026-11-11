@@ -8,8 +8,8 @@ import { renderMapContains, renderMapContainsImports } from './_setup';
 test('it renders an is error function that accepts a custom program address', async () => {
     // Given the following program with an error.
     const node = programNode({
-        errors: [errorNode({ code: 42, message: 'Invalid mint', name: 'invalidMint' })],
-        name: 'splToken',
+        errors: [errorNode({ code: 42, identifier: 'invalidMint', message: 'Invalid mint' })],
+        identifier: 'splToken',
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 

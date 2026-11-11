@@ -1,4 +1,4 @@
-import { definedTypeNode, numberTypeNode, preOffsetTypeNode } from '@codama/nodes';
+import { addTypeNodeTransforms, definedTypeNode, integerTypeNode, preOffsetTransformNode } from '@codama/nodes';
 import { visit } from '@codama/visitors-core';
 import { test } from 'vitest';
 
@@ -8,8 +8,8 @@ import { renderMapContains, renderMapContainsImports } from '../_setup';
 test('it renders relative pre-offset codecs', async () => {
     // Given the following node.
     const node = definedTypeNode({
-        name: 'myType',
-        type: preOffsetTypeNode(numberTypeNode('u32'), 4),
+        identifier: 'myType',
+        type: addTypeNodeTransforms(integerTypeNode('u32'), [preOffsetTransformNode(4)]),
     });
 
     // When we render it.
@@ -31,8 +31,8 @@ test('it renders relative pre-offset codecs', async () => {
 test('it renders negative relative pre-offset codecs', async () => {
     // Given the following node.
     const node = definedTypeNode({
-        name: 'myType',
-        type: preOffsetTypeNode(numberTypeNode('u32'), -4),
+        identifier: 'myType',
+        type: addTypeNodeTransforms(integerTypeNode('u32'), [preOffsetTransformNode(-4)]),
     });
 
     // When we render it.
@@ -54,8 +54,8 @@ test('it renders negative relative pre-offset codecs', async () => {
 test('it renders absolute pre-offset codecs', async () => {
     // Given the following node.
     const node = definedTypeNode({
-        name: 'myType',
-        type: preOffsetTypeNode(numberTypeNode('u32'), 4, 'absolute'),
+        identifier: 'myType',
+        type: addTypeNodeTransforms(integerTypeNode('u32'), [preOffsetTransformNode(4, { strategy: 'absolute' })]),
     });
 
     // When we render it.
@@ -77,8 +77,8 @@ test('it renders absolute pre-offset codecs', async () => {
 test('it renders negative absolute pre-offset codecs', async () => {
     // Given the following node.
     const node = definedTypeNode({
-        name: 'myType',
-        type: preOffsetTypeNode(numberTypeNode('u32'), -4, 'absolute'),
+        identifier: 'myType',
+        type: addTypeNodeTransforms(integerTypeNode('u32'), [preOffsetTransformNode(-4, { strategy: 'absolute' })]),
     });
 
     // When we render it.
@@ -100,8 +100,8 @@ test('it renders negative absolute pre-offset codecs', async () => {
 test('it renders padded pre-offset codecs', async () => {
     // Given the following node.
     const node = definedTypeNode({
-        name: 'myType',
-        type: preOffsetTypeNode(numberTypeNode('u32'), 4, 'padded'),
+        identifier: 'myType',
+        type: addTypeNodeTransforms(integerTypeNode('u32'), [preOffsetTransformNode(4, { strategy: 'padded' })]),
     });
 
     // When we render it.

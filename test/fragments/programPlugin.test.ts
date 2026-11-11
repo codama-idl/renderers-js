@@ -3,16 +3,19 @@ import {
     accountValueNode,
     constantPdaSeedNodeFromString,
     fieldDiscriminatorNode,
+    injectedValueNode,
     instructionAccountNode,
-    instructionArgumentNode,
     instructionNode,
+    integerTypeNode,
     payerValueNode,
-    numberTypeNode,
     pdaNode,
     pdaSeedValueNode,
     pdaValueNode,
     programNode,
+    providedNode,
     publicKeyTypeNode,
+    structFieldTypeNode,
+    structTypeNode,
     variablePdaSeedNode,
 } from '@codama/nodes';
 import { expect, test } from 'vitest';
@@ -23,26 +26,26 @@ import { fragmentContains, fragmentContainsImports, fragmentDoesNotContain, getD
 test('it renders nothing is a program has no accounts or instructions', () => {
     // Given an empty program.
     const node = programNode({
-        name: 'splToken',
+        identifier: 'splToken',
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
     // Then we expect no plugin fragment to be rendered.
-    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node, programPath: [node] });
     expect(fragment).toBeUndefined();
 });
 
 test('it renders the main program plugin type', async () => {
     // Given a program with accounts and instructions.
     const node = programNode({
-        accounts: [accountNode({ name: 'mint' })],
-        instructions: [instructionNode({ name: 'initializeMint' })],
-        name: 'splToken',
+        accounts: [accountNode({ identifier: 'mint' })],
+        identifier: 'splToken',
+        instructions: [instructionNode({ identifier: 'initializeMint' })],
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
     // When we get the program plugin fragment.
-    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node, programPath: [node] });
 
     // Then we expect the following plugin type to be rendered.
     await fragmentContains(fragment, [
@@ -53,13 +56,13 @@ test('it renders the main program plugin type', async () => {
 test('it renders program plugin account types', async () => {
     // Given a program with accounts.
     const node = programNode({
-        accounts: [accountNode({ name: 'mint' }), accountNode({ name: 'token' })],
-        name: 'splToken',
+        accounts: [accountNode({ identifier: 'mint' }), accountNode({ identifier: 'token' })],
+        identifier: 'splToken',
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
     // When we get the program plugin fragment.
-    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node, programPath: [node] });
 
     // Then we expect the following type to be rendered.
     await fragmentContains(fragment, [
@@ -77,13 +80,16 @@ test('it renders program plugin account types', async () => {
 test('it renders program plugin instruction types', async () => {
     // Given a program with instructions.
     const node = programNode({
-        instructions: [instructionNode({ name: 'initializeToken' }), instructionNode({ name: 'initializeMint' })],
-        name: 'splToken',
+        identifier: 'splToken',
+        instructions: [
+            instructionNode({ identifier: 'initializeToken' }),
+            instructionNode({ identifier: 'initializeMint' }),
+        ],
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
     // When we get the program plugin fragment.
-    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node, programPath: [node] });
 
     // Then we expect the following type to be rendered.
     await fragmentContains(fragment, [
@@ -102,29 +108,31 @@ test('it renders program plugin instruction types with async builders', async ()
     // Given a program with an `initializeAssociatedToken` instruction that has an async builder
     // due to having to derive the PDA as a default value.
     const node = programNode({
+        identifier: 'splToken',
         instructions: [
             instructionNode({
                 accounts: [
-                    instructionAccountNode({ isSigner: false, isWritable: false, name: 'mint' }),
-                    instructionAccountNode({ isSigner: false, isWritable: false, name: 'owner' }),
+                    instructionAccountNode({ identifier: 'mint', isSigner: false, isWritable: false }),
+                    instructionAccountNode({ identifier: 'owner', isSigner: false, isWritable: false }),
                     instructionAccountNode({
-                        defaultValue: pdaValueNode('associatedTokenAccount', [
-                            pdaSeedValueNode('owner', accountValueNode('owner')),
-                            pdaSeedValueNode('mint', accountValueNode('mint')),
-                        ]),
+                        defaultValue: pdaValueNode('associatedTokenAccount', {
+                            seeds: [
+                                pdaSeedValueNode('owner', accountValueNode('owner')),
+                                pdaSeedValueNode('mint', accountValueNode('mint')),
+                            ],
+                        }),
+                        identifier: 'ata',
                         isSigner: false,
                         isWritable: false,
-                        name: 'ata',
                     }),
                 ],
-                name: 'initializeAssociatedToken',
+                identifier: 'initializeAssociatedToken',
             }),
-            instructionNode({ name: 'initializeMint' }),
+            instructionNode({ identifier: 'initializeMint' }),
         ],
-        name: 'splToken',
         pdas: [
             pdaNode({
-                name: 'associatedTokenAccount',
+                identifier: 'associatedTokenAccount',
                 seeds: [
                     variablePdaSeedNode('owner', publicKeyTypeNode()),
                     variablePdaSeedNode('mint', publicKeyTypeNode()),
@@ -135,7 +143,7 @@ test('it renders program plugin instruction types with async builders', async ()
     });
 
     // When we get the program plugin fragment.
-    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node, programPath: [node] });
 
     // Then we expect the `initializeAssociatedToken` instruction to be using the async input type.
     await fragmentContains(fragment, [
@@ -148,25 +156,25 @@ test('it renders program plugin instruction types with async builders', async ()
 test('it renders program plugin instruction types with default payer values', async () => {
     // Given a program with an instruction that has a payer value node as default value.
     const node = programNode({
+        identifier: 'splToken',
         instructions: [
             instructionNode({
                 accounts: [
                     instructionAccountNode({
                         defaultValue: payerValueNode(),
+                        identifier: 'rentPayer',
                         isSigner: false,
                         isWritable: false,
-                        name: 'rentPayer',
                     }),
                 ],
-                name: 'initializeMint',
+                identifier: 'initializeMint',
             }),
         ],
-        name: 'splToken',
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
     // When we get the program plugin fragment.
-    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node, programPath: [node] });
 
     // Then we expect the plugin instruction type to have a default payer in its input type.
     await fragmentContains(fragment, [
@@ -178,26 +186,26 @@ test('it renders program plugin instruction types with default payer values', as
 test('it renders the program plugin requirements', async () => {
     // Given a program with accounts and instructions such that one of them as a payer value node.
     const node = programNode({
-        accounts: [accountNode({ name: 'mint' })],
+        accounts: [accountNode({ identifier: 'mint' })],
+        identifier: 'splToken',
         instructions: [
             instructionNode({
                 accounts: [
                     instructionAccountNode({
                         defaultValue: payerValueNode(),
+                        identifier: 'payer',
                         isSigner: true,
                         isWritable: false,
-                        name: 'payer',
                     }),
                 ],
-                name: 'initializeMint',
+                identifier: 'initializeMint',
             }),
         ],
-        name: 'splToken',
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
     // When we get the program plugin fragment.
-    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node, programPath: [node] });
 
     // Then we expect the following requirements.
     await fragmentContains(fragment, [
@@ -223,14 +231,14 @@ test('it renders the program plugin requirements', async () => {
 test('it renders the program plugin function', async () => {
     // Given a program with accounts and instructions.
     const node = programNode({
-        accounts: [accountNode({ name: 'mint' })],
-        instructions: [instructionNode({ name: 'initializeMint' })],
-        name: 'splToken',
+        accounts: [accountNode({ identifier: 'mint' })],
+        identifier: 'splToken',
+        instructions: [instructionNode({ identifier: 'initializeMint' })],
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
     // When we get the program plugin fragment.
-    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node, programPath: [node] });
 
     // Then we expect the following plugin function.
     await fragmentContains(fragment, [
@@ -250,25 +258,25 @@ test('it renders the program plugin function', async () => {
 test('it fills payer value nodes with the payer (signer) set on the client by default', async () => {
     // Given a program with an instruction that has a payer value node as default value for one of its signer accounts.
     const node = programNode({
+        identifier: 'splToken',
         instructions: [
             instructionNode({
                 accounts: [
                     instructionAccountNode({
                         defaultValue: payerValueNode(),
+                        identifier: 'rentPayer',
                         isSigner: true,
                         isWritable: false,
-                        name: 'rentPayer',
                     }),
                 ],
-                name: 'initializeMint',
+                identifier: 'initializeMint',
             }),
         ],
-        name: 'splToken',
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
     // When we get the program plugin fragment.
-    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node, programPath: [node] });
 
     // Then we expect the following instruction function with a default payer to be rendered.
     await fragmentContains(fragment, [
@@ -280,25 +288,25 @@ test('it fills payer value nodes with the payer (signer) set on the client by de
 test('it fills payer value nodes with the payer (address) set on the client by default', async () => {
     // Given a program with an instruction that has a payer value node as default value for one of its non-signer accounts.
     const node = programNode({
+        identifier: 'splToken',
         instructions: [
             instructionNode({
                 accounts: [
                     instructionAccountNode({
                         defaultValue: payerValueNode(),
+                        identifier: 'rentPayer',
                         isSigner: false,
                         isWritable: false,
-                        name: 'rentPayer',
                     }),
                 ],
-                name: 'initializeMint',
+                identifier: 'initializeMint',
             }),
         ],
-        name: 'splToken',
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
     // When we get the program plugin fragment.
-    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node, programPath: [node] });
 
     // Then we expect the following instruction function with a default payer to be rendered.
     await fragmentContains(fragment, [
@@ -311,32 +319,33 @@ test('it tackles arguments and accounts with conflicting names', async () => {
     // Given a program with an instruction that has a payer value node
     // as default value for an account and an argument with the same name `authority`.
     const node = programNode({
+        identifier: 'splToken',
         instructions: [
             instructionNode({
                 accounts: [
                     instructionAccountNode({
                         defaultValue: payerValueNode(),
+                        identifier: 'authority',
                         isSigner: false,
                         isWritable: false,
-                        name: 'authority',
                     }),
                 ],
-                arguments: [
-                    instructionArgumentNode({
-                        defaultValue: payerValueNode(),
-                        name: 'authority',
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: injectedValueNode({ key: 'authority' }),
+                        identifier: 'authority',
                         type: publicKeyTypeNode(),
                     }),
-                ],
-                name: 'initializeMint',
+                ]),
+                identifier: 'initializeMint',
+                provides: [providedNode('authority', payerValueNode())],
             }),
         ],
-        name: 'splToken',
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
     // When we get the program plugin fragment.
-    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node, programPath: [node] });
 
     // Then we expect the following instruction function with default payers
     // and renamed conflicting attributes to be rendered.
@@ -349,12 +358,12 @@ test('it tackles arguments and accounts with conflicting names', async () => {
 test('it renders the plugin type with pdas field when program has PDAs', async () => {
     // Given a program with accounts, instructions and PDAs.
     const node = programNode({
-        accounts: [accountNode({ name: 'mint' })],
-        instructions: [instructionNode({ name: 'initializeMint' })],
-        name: 'splToken',
+        accounts: [accountNode({ identifier: 'mint' })],
+        identifier: 'splToken',
+        instructions: [instructionNode({ identifier: 'initializeMint' })],
         pdas: [
             pdaNode({
-                name: 'associatedTokenAccount',
+                identifier: 'associatedTokenAccount',
                 seeds: [variablePdaSeedNode('owner', publicKeyTypeNode())],
             }),
         ],
@@ -362,7 +371,7 @@ test('it renders the plugin type with pdas field when program has PDAs', async (
     });
 
     // When we get the program plugin fragment.
-    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node, programPath: [node] });
 
     // Then we expect the plugin type to include a pdas field.
     await fragmentContains(fragment, [
@@ -373,14 +382,14 @@ test('it renders the plugin type with pdas field when program has PDAs', async (
 test('it renders program plugin PDA types', async () => {
     // Given a program with PDAs.
     const node = programNode({
-        name: 'splToken',
+        identifier: 'splToken',
         pdas: [
             pdaNode({
-                name: 'associatedTokenAccount',
+                identifier: 'associatedTokenAccount',
                 seeds: [variablePdaSeedNode('owner', publicKeyTypeNode())],
             }),
             pdaNode({
-                name: 'mintAuthority',
+                identifier: 'mintAuthority',
                 seeds: [variablePdaSeedNode('mint', publicKeyTypeNode())],
             }),
         ],
@@ -388,7 +397,7 @@ test('it renders program plugin PDA types', async () => {
     });
 
     // When we get the program plugin fragment.
-    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node, programPath: [node] });
 
     // Then we expect the following PDA type to be rendered.
     await fragmentContains(fragment, [
@@ -406,11 +415,11 @@ test('it renders program plugin PDA types', async () => {
 test('it renders program plugin function with pdas object', async () => {
     // Given a program with a PDA and an account.
     const node = programNode({
-        accounts: [accountNode({ name: 'mint' })],
-        name: 'splToken',
+        accounts: [accountNode({ identifier: 'mint' })],
+        identifier: 'splToken',
         pdas: [
             pdaNode({
-                name: 'associatedTokenAccount',
+                identifier: 'associatedTokenAccount',
                 seeds: [variablePdaSeedNode('owner', publicKeyTypeNode())],
             }),
         ],
@@ -418,7 +427,7 @@ test('it renders program plugin function with pdas object', async () => {
     });
 
     // When we get the program plugin fragment.
-    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node, programPath: [node] });
 
     // Then we expect the plugin function to include pdas.
     await fragmentContains(fragment, [
@@ -434,10 +443,10 @@ test('it renders program plugin function with pdas object', async () => {
 test('it renders a plugin with only PDAs', async () => {
     // Given a program with only PDAs (no accounts or instructions).
     const node = programNode({
-        name: 'splToken',
+        identifier: 'splToken',
         pdas: [
             pdaNode({
-                name: 'associatedTokenAccount',
+                identifier: 'associatedTokenAccount',
                 seeds: [variablePdaSeedNode('owner', publicKeyTypeNode())],
             }),
         ],
@@ -445,7 +454,7 @@ test('it renders a plugin with only PDAs', async () => {
     });
 
     // When we get the program plugin fragment.
-    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node, programPath: [node] });
 
     // Then we expect the fragment to be defined.
     expect(fragment).toBeDefined();
@@ -463,10 +472,10 @@ test('it renders a plugin with only PDAs', async () => {
 test('it renders the requirements as object for a PDA-only program', async () => {
     // Given a program with only PDAs (no accounts or instructions).
     const node = programNode({
-        name: 'splToken',
+        identifier: 'splToken',
         pdas: [
             pdaNode({
-                name: 'associatedTokenAccount',
+                identifier: 'associatedTokenAccount',
                 seeds: [variablePdaSeedNode('owner', publicKeyTypeNode())],
             }),
         ],
@@ -474,7 +483,7 @@ test('it renders the requirements as object for a PDA-only program', async () =>
     });
 
     // When we get the program plugin fragment.
-    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node, programPath: [node] });
 
     // Then we expect the requirements to be `object` since PDAs need no client capabilities.
     await fragmentContains(fragment, ['export type SplTokenPluginRequirements = object']);
@@ -483,11 +492,11 @@ test('it renders the requirements as object for a PDA-only program', async () =>
 test('it renders the plugin function with instructions and PDAs but no accounts', async () => {
     // Given a program with instructions and PDAs but no accounts.
     const node = programNode({
-        instructions: [instructionNode({ name: 'initializeMint' })],
-        name: 'splToken',
+        identifier: 'splToken',
+        instructions: [instructionNode({ identifier: 'initializeMint' })],
         pdas: [
             pdaNode({
-                name: 'associatedTokenAccount',
+                identifier: 'associatedTokenAccount',
                 seeds: [variablePdaSeedNode('owner', publicKeyTypeNode())],
             }),
         ],
@@ -495,7 +504,7 @@ test('it renders the plugin function with instructions and PDAs but no accounts'
     });
 
     // When we get the program plugin fragment.
-    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node, programPath: [node] });
 
     // Then we expect the plugin type to include both instructions and pdas.
     await fragmentContains(fragment, [
@@ -512,13 +521,13 @@ test('it renders the plugin function with instructions and PDAs but no accounts'
 test('it exposes identifyAccount on the plugin when accounts have discriminators', async () => {
     // Given a program with one account that has a discriminator.
     const node = programNode({
-        accounts: [accountNode({ discriminators: [fieldDiscriminatorNode('key')], name: 'mint' })],
-        name: 'splToken',
+        accounts: [accountNode({ discriminators: [fieldDiscriminatorNode('key')], identifier: 'mint' })],
+        identifier: 'splToken',
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
     // When we get the program plugin fragment.
-    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node, programPath: [node] });
 
     // Then the plugin type and function expose identifyAccount.
     await fragmentContains(fragment, [
@@ -530,18 +539,18 @@ test('it exposes identifyAccount on the plugin when accounts have discriminators
 test('it exposes identifyInstruction and parseInstruction when instructions have discriminators', async () => {
     // Given a program with an instruction that has a discriminator.
     const node = programNode({
+        identifier: 'splToken',
         instructions: [
             instructionNode({
                 discriminators: [fieldDiscriminatorNode('discriminator')],
-                name: 'initializeMint',
+                identifier: 'initializeMint',
             }),
         ],
-        name: 'splToken',
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
     // When we get the program plugin fragment.
-    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node, programPath: [node] });
 
     // Then the plugin type and function expose identifyInstruction and parseInstruction.
     await fragmentContains(fragment, [
@@ -555,14 +564,14 @@ test('it exposes identifyInstruction and parseInstruction when instructions have
 test('it omits identify/parse helpers when nodes have no discriminators', async () => {
     // Given a program with accounts and instructions but no discriminators.
     const node = programNode({
-        accounts: [accountNode({ name: 'mint' })],
-        instructions: [instructionNode({ name: 'initializeMint' })],
-        name: 'splToken',
+        accounts: [accountNode({ identifier: 'mint' })],
+        identifier: 'splToken',
+        instructions: [instructionNode({ identifier: 'initializeMint' })],
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
     // When we get the program plugin fragment.
-    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node, programPath: [node] });
 
     // Then the plugin omits identify/parse keys entirely.
     await fragmentDoesNotContain(fragment, ['identifyAccount', 'identifyInstruction', 'parseInstruction']);
@@ -571,13 +580,13 @@ test('it omits identify/parse helpers when nodes have no discriminators', async 
 test('it omits the pdas field when program has no PDAs', async () => {
     // Given a program with accounts but no PDAs.
     const node = programNode({
-        accounts: [accountNode({ name: 'mint' })],
-        name: 'splToken',
+        accounts: [accountNode({ identifier: 'mint' })],
+        identifier: 'splToken',
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
     // When we get the program plugin fragment.
-    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node, programPath: [node] });
 
     // Then we expect the plugin type to NOT include a pdas field.
     await fragmentContains(fragment, ['export type SplTokenPlugin = { accounts: SplTokenPluginAccounts }']);
@@ -587,31 +596,33 @@ test('it omits the pdas field when program has no PDAs', async () => {
 test('it threads the plugin program address into instruction builders with per-call overrides', async () => {
     // Given a program with a sync instruction that has inputs and an async instruction deriving a PDA default.
     const node = programNode({
+        identifier: 'splToken',
         instructions: [
             instructionNode({
-                arguments: [instructionArgumentNode({ name: 'amount', type: numberTypeNode('u64') })],
-                name: 'mintTo',
+                data: structTypeNode([structFieldTypeNode({ identifier: 'amount', type: integerTypeNode('u64') })]),
+                identifier: 'mintTo',
             }),
             instructionNode({
                 accounts: [
-                    instructionAccountNode({ isSigner: false, isWritable: false, name: 'owner' }),
+                    instructionAccountNode({ identifier: 'owner', isSigner: false, isWritable: false }),
                     instructionAccountNode({
-                        defaultValue: pdaValueNode('vault', [pdaSeedValueNode('owner', accountValueNode('owner'))]),
+                        defaultValue: pdaValueNode('vault', {
+                            seeds: [pdaSeedValueNode('owner', accountValueNode('owner'))],
+                        }),
+                        identifier: 'vault',
                         isSigner: false,
                         isWritable: true,
-                        name: 'vault',
                     }),
                 ],
-                name: 'createVault',
+                identifier: 'createVault',
             }),
         ],
-        name: 'splToken',
-        pdas: [pdaNode({ name: 'vault', seeds: [variablePdaSeedNode('owner', publicKeyTypeNode())] })],
+        pdas: [pdaNode({ identifier: 'vault', seeds: [variablePdaSeedNode('owner', publicKeyTypeNode())] })],
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
     // When we get the program plugin fragment.
-    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node, programPath: [node] });
 
     // Then both builders receive the plugin config merged with the per-call config, the latter taking precedence.
     await fragmentContains(fragment, [
@@ -624,12 +635,12 @@ test('it threads the plugin program address into instruction builders with per-c
 test('it applies the plugin program address to PDAs derived from the program only', async () => {
     // Given a program with a seedless PDA, a seeded PDA and a PDA owned by another program.
     const node = programNode({
-        name: 'splToken',
+        identifier: 'splToken',
         pdas: [
-            pdaNode({ name: 'config', seeds: [constantPdaSeedNodeFromString('utf8', 'config')] }),
-            pdaNode({ name: 'vault', seeds: [variablePdaSeedNode('owner', publicKeyTypeNode())] }),
+            pdaNode({ identifier: 'config', seeds: [constantPdaSeedNodeFromString('utf8', 'config')] }),
+            pdaNode({ identifier: 'vault', seeds: [variablePdaSeedNode('owner', publicKeyTypeNode())] }),
             pdaNode({
-                name: 'associatedToken',
+                identifier: 'associatedToken',
                 programId: 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
                 seeds: [variablePdaSeedNode('owner', publicKeyTypeNode())],
             }),
@@ -638,7 +649,7 @@ test('it applies the plugin program address to PDAs derived from the program onl
     });
 
     // When we get the program plugin fragment.
-    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node, programPath: [node] });
 
     // Then only the PDAs derived from this program default to the plugin program address.
     await fragmentContains(fragment, [
@@ -651,11 +662,11 @@ test('it applies the plugin program address to PDAs derived from the program onl
 test('it omits the plugin config when nothing uses the program address', async () => {
     // Given a program with accounts and a PDA owned by another program.
     const node = programNode({
-        accounts: [accountNode({ name: 'mint' })],
-        name: 'splToken',
+        accounts: [accountNode({ identifier: 'mint' })],
+        identifier: 'splToken',
         pdas: [
             pdaNode({
-                name: 'associatedToken',
+                identifier: 'associatedToken',
                 programId: 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
                 seeds: [variablePdaSeedNode('owner', publicKeyTypeNode())],
             }),
@@ -664,7 +675,7 @@ test('it omits the plugin config when nothing uses the program address', async (
     });
 
     // When we get the program plugin fragment.
-    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node });
+    const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node, programPath: [node] });
 
     // Then the plugin function takes no config.
     await fragmentContains(fragment, ['export function splTokenProgram() {']);

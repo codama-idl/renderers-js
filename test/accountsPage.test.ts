@@ -5,12 +5,12 @@ import {
     constantValueNodeFromBytes,
     definedTypeLinkNode,
     definedTypeNode,
-    enumEmptyVariantTypeNode,
     enumTypeNode,
     enumValueNode,
+    enumVariantTypeNode,
     fieldDiscriminatorNode,
-    numberTypeNode,
-    numberValueNode,
+    integerTypeNode,
+    integerValueNode,
     pdaLinkNode,
     pdaNode,
     programNode,
@@ -28,9 +28,9 @@ import { renderMapContains, renderMapContainsImports } from './_setup';
 test('it renders PDA helpers for PDA with no seeds', async () => {
     // Given the following program with 1 account and 1 pda with empty seeds.
     const node = programNode({
-        accounts: [accountNode({ name: 'foo', pda: pdaLinkNode('bar') })],
-        name: 'myProgram',
-        pdas: [pdaNode({ name: 'bar', seeds: [] })],
+        accounts: [accountNode({ identifier: 'foo', pda: pdaLinkNode('bar') })],
+        identifier: 'myProgram',
+        pdas: [pdaNode({ identifier: 'bar', seeds: [] })],
         publicKey: '1111',
     });
 
@@ -53,9 +53,9 @@ test('it renders PDA helpers for PDA with no seeds', async () => {
 test('it renders PDA helpers for PDA with variable seeds', async () => {
     // Given the following program with 1 account and 1 pda with a variable seed.
     const node = programNode({
-        accounts: [accountNode({ name: 'foo', pda: pdaLinkNode('bar') })],
-        name: 'myProgram',
-        pdas: [pdaNode({ name: 'bar', seeds: [variablePdaSeedNode('owner', publicKeyTypeNode())] })],
+        accounts: [accountNode({ identifier: 'foo', pda: pdaLinkNode('bar') })],
+        identifier: 'myProgram',
+        pdas: [pdaNode({ identifier: 'bar', seeds: [variablePdaSeedNode('owner', publicKeyTypeNode())] })],
         publicKey: '1111',
     });
 
@@ -74,8 +74,8 @@ test('it renders PDA helpers for PDA with variable seeds', async () => {
 test('it renders fetch helpers accepting address-bearing objects and clients', async () => {
     // Given the following program with 1 account.
     const node = programNode({
-        accounts: [accountNode({ name: 'foo' })],
-        name: 'myProgram',
+        accounts: [accountNode({ identifier: 'foo' })],
+        identifier: 'myProgram',
         publicKey: '1111',
     });
 
@@ -112,29 +112,29 @@ test('it renders an account with a defined type link as discriminator', async ()
                     structFieldTypeNode({
                         defaultValue: enumValueNode('key', 'Asset'),
                         defaultValueStrategy: 'omitted',
-                        name: 'key',
+                        identifier: 'key',
                         type: definedTypeLinkNode('Key'),
                     }),
                     structFieldTypeNode({
-                        name: 'mutable',
+                        identifier: 'mutable',
                         type: booleanTypeNode(),
                     }),
                     structFieldTypeNode({
-                        name: 'owner',
+                        identifier: 'owner',
                         type: publicKeyTypeNode(),
                     }),
                 ]),
-                discriminators: [fieldDiscriminatorNode('key', 0)],
-                name: 'asset',
+                discriminators: [fieldDiscriminatorNode('key', { offset: 0 })],
+                identifier: 'asset',
             }),
         ],
         definedTypes: [
             definedTypeNode({
-                name: 'key',
-                type: enumTypeNode([enumEmptyVariantTypeNode('Uninitialized'), enumEmptyVariantTypeNode('Asset')]),
+                identifier: 'key',
+                type: enumTypeNode([enumVariantTypeNode('Uninitialized'), enumVariantTypeNode('Asset')]),
             }),
         ],
-        name: 'splToken',
+        identifier: 'splToken',
         publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
     });
 
@@ -151,17 +151,17 @@ test('it renders constants for account field discriminators', async () => {
             accountNode({
                 data: structTypeNode([
                     structFieldTypeNode({
-                        defaultValue: numberValueNode(42),
+                        defaultValue: integerValueNode('42'),
                         defaultValueStrategy: 'omitted',
-                        name: 'myDiscriminator',
-                        type: numberTypeNode('u8'),
+                        identifier: 'myDiscriminator',
+                        type: integerTypeNode('u8'),
                     }),
                 ]),
                 discriminators: [fieldDiscriminatorNode('myDiscriminator')],
-                name: 'myAccount',
+                identifier: 'myAccount',
             }),
         ],
-        name: 'myProgram',
+        identifier: 'myProgram',
         publicKey: '1111',
     });
 
@@ -183,17 +183,17 @@ test('it renders constants for bigint account field discriminators', async () =>
             accountNode({
                 data: structTypeNode([
                     structFieldTypeNode({
-                        defaultValue: numberValueNode(7),
+                        defaultValue: integerValueNode('7'),
                         defaultValueStrategy: 'omitted',
-                        name: 'myDiscriminator',
-                        type: numberTypeNode('u64'),
+                        identifier: 'myDiscriminator',
+                        type: integerTypeNode('u64'),
                     }),
                 ]),
                 discriminators: [fieldDiscriminatorNode('myDiscriminator')],
-                name: 'myAccount',
+                identifier: 'myAccount',
             }),
         ],
-        name: 'myProgram',
+        identifier: 'myProgram',
         publicKey: '1111',
     });
     const renderMap = visit(node, getRenderMapVisitor());
@@ -210,12 +210,12 @@ test('it renders constants for account constant discriminators', async () => {
             accountNode({
                 discriminators: [
                     constantDiscriminatorNode(constantValueNodeFromBytes('base16', '1111')),
-                    constantDiscriminatorNode(constantValueNodeFromBytes('base16', '2222'), 2),
+                    constantDiscriminatorNode(constantValueNodeFromBytes('base16', '2222'), { offset: 2 }),
                 ],
-                name: 'myAccount',
+                identifier: 'myAccount',
             }),
         ],
-        name: 'myProgram',
+        identifier: 'myProgram',
         publicKey: '1111',
     });
 
@@ -236,11 +236,11 @@ test('it can extracts account data and import it from another source', async () 
     const node = programNode({
         accounts: [
             accountNode({
-                data: structTypeNode([structFieldTypeNode({ name: 'value', type: numberTypeNode('u32') })]),
-                name: 'counter',
+                data: structTypeNode([structFieldTypeNode({ identifier: 'value', type: integerTypeNode('u32') })]),
+                identifier: 'counter',
             }),
         ],
-        name: 'myProgram',
+        identifier: 'myProgram',
         publicKey: '1111',
     });
 
