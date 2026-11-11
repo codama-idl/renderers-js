@@ -5,7 +5,7 @@ import { test } from 'vitest';
 import { getRenderMapVisitor } from '../../src';
 import { renderMapContains, renderMapContainsImports } from '../_setup';
 
-test('it renders size prefix codecs', async () => {
+test('it renders SOL amounts as lamports', async () => {
     // Given the following node.
     const node = definedTypeNode({
         identifier: 'myType',

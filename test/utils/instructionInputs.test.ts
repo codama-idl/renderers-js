@@ -451,3 +451,26 @@ test('it lets inputs depend on fields of linked instruction data without listing
     expect(inputs.map(getResolvedInputName)).toStrictEqual(['vault']);
     expect(inputs[0].dependsOn).toStrictEqual([dataValueNode('amount')]);
 });
+
+test('it lets inputs depend on nested fields of linked instruction data', () => {
+    // Given an account resolver depending on a nested field of linked instruction data.
+    const instruction = instructionNode({
+        accounts: [account('vault', { plugins: [resolverPlugin('resolveVault', ['data.config.fee'])] })],
+        data: definedTypeLinkNode('transferArgs'),
+        identifier: 'transfer',
+    });
+    const transferArgs = definedTypeNode({
+        identifier: 'transferArgs',
+        type: structTypeNode([
+            structFieldTypeNode({
+                identifier: 'config',
+                type: structTypeNode([structFieldTypeNode({ identifier: 'fee', type: integerTypeNode('u64') })]),
+            }),
+        ]),
+    });
+
+    // Then the dependency resolves through its top-level field.
+    const inputs = resolve(instruction, { definedTypes: [transferArgs] });
+    expect(inputs.map(getResolvedInputName)).toStrictEqual(['vault']);
+    expect(inputs[0].dependsOn).toStrictEqual([dataValueNode('config.fee')]);
+});
