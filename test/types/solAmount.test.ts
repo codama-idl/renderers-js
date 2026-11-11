@@ -16,7 +16,7 @@ test('it renders SOL amounts as lamports', async () => {
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the following types and codecs to be exported.
-    await renderMapContains(renderMap, 'types/myType.ts', [
+    await renderMapContains(renderMap, 'types/my-type.ts', [
         'export type MyType = Lamports',
         'export type MyTypeArgs = MyType',
         'export function getMyTypeEncoder(): FixedSizeEncoder<MyTypeArgs> { return getLamportsEncoder(getU64Encoder()); }',
@@ -24,7 +24,7 @@ test('it renders SOL amounts as lamports', async () => {
     ]);
 
     // And we expect the following type and codec imports.
-    await renderMapContainsImports(renderMap, 'types/myType.ts', {
+    await renderMapContainsImports(renderMap, 'types/my-type.ts', {
         '@solana/kit': ['type Lamports', 'getLamportsEncoder', 'getLamportsDecoder', 'getU64Encoder', 'getU64Decoder'],
     });
 });

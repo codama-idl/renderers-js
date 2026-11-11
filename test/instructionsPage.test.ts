@@ -77,7 +77,7 @@ test('it renders instruction accounts that can either be signer or non-signer', 
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the input to accept either a signer or non-signer input.
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', [
         `export type MyInstructionInput<
             TAccountMyAccount extends InstructionAccountInput | InstructionSignerInput =
                 InstructionAccountInput | InstructionSignerInput
@@ -85,7 +85,7 @@ test('it renders instruction accounts that can either be signer or non-signer', 
     ]);
 
     // And we expect the account to be resolved as a signer meta when a signer is provided.
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', [
         `ResolvedInstructionAccountMeta<
             TAccountMyAccount,
             InstructionAccountInputAddress<TAccountMyAccount>,
@@ -95,7 +95,7 @@ test('it renders instruction accounts that can either be signer or non-signer', 
     ]);
 
     // And we expect the runtime signer flag to be forwarded to the account meta factory.
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', [
         "myAccount: { value: input.myAccount ?? null, isSigner: 'either', isWritable: false }",
     ]);
 });
@@ -125,13 +125,13 @@ test('it downgrades the runtime signer flag of signer accounts whose default val
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the input type to still require a signer.
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', [
         'TAccountMyAccount extends InstructionSignerInput = InstructionSignerInput',
     ]);
 
     // But we expect the runtime signer flag to be downgraded to 'either' so that
     // the default value does not fail the signer requirement.
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', [
         "myAccount: { value: input.myAccount ?? null, isSigner: 'either', isWritable: false }",
     ]);
 });
@@ -166,7 +166,7 @@ test('it never upgrades the runtime signer flag of non-signer accounts', async (
 
     // Then we expect the runtime signer flag of the non-signer account to remain false,
     // so that any signer provided for it merely carries its address.
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', [
         'payer: { value: input.payer ?? null, isSigner: true, isWritable: true }',
         'owner: { value: input.owner ?? null, isSigner: false, isWritable: false }',
     ]);
@@ -712,7 +712,7 @@ test('it renders constants for instruction field discriminators', async () => {
 
     // Then we expect the following constant and function to be rendered
     // And we expect the field default value to use that constant.
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', [
         'export const MY_INSTRUCTION_MY_DISCRIMINATOR = 42;',
         'export function getMyInstructionMyDiscriminatorBytes(): ReadonlyUint8Array { return getU8Encoder().encode(MY_INSTRUCTION_MY_DISCRIMINATOR); }',
         '(value) => ({ ...value, myDiscriminator: MY_INSTRUCTION_MY_DISCRIMINATOR })',
@@ -739,7 +739,7 @@ test('it renders constants for boolean field discriminators', async () => {
         publicKey: '1111',
     });
     const renderMap = visit(node, getRenderMapVisitor());
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', [
         'export const MY_INSTRUCTION_MY_DISCRIMINATOR = true;',
     ]);
 });
@@ -764,7 +764,7 @@ test('it renders constants for string field discriminators', async () => {
         publicKey: '1111',
     });
     const renderMap = visit(node, getRenderMapVisitor());
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', [
         "export const MY_INSTRUCTION_MY_DISCRIMINATOR = 'hello';",
     ]);
 });
@@ -795,7 +795,7 @@ test('it renders constants for enum field discriminators', async () => {
         publicKey: '1111',
     });
     const renderMap = visit(node, getRenderMapVisitor());
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', [
         'export const MY_INSTRUCTION_MY_DISCRIMINATOR: Key = Key.Asset;',
     ]);
 });
@@ -820,7 +820,7 @@ test('it renders constants for bigint field discriminators', async () => {
         publicKey: '1111',
     });
     const renderMap = visit(node, getRenderMapVisitor());
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', [
         'export const MY_INSTRUCTION_MY_DISCRIMINATOR = 7n;',
     ]);
 });
@@ -839,7 +839,7 @@ test('it renders constants for bigint constant discriminators', async () => {
         publicKey: '1111',
     });
     const renderMap = visit(node, getRenderMapVisitor());
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', [
         'export const MY_INSTRUCTION_DISCRIMINATOR = 7n;',
     ]);
 });
@@ -866,7 +866,7 @@ test('it renders large bigint discriminators beyond the safe integer range', asy
         publicKey: '1111',
     });
     const renderMap = visit(node, getRenderMapVisitor());
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', [
         'export const MY_INSTRUCTION_MY_DISCRIMINATOR = 18446744073709551615n;',
     ]);
 });
@@ -891,7 +891,7 @@ test('it renders constants for instruction constant discriminators', async () =>
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the following constants and functions to be rendered.
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', [
         'export const MY_INSTRUCTION_DISCRIMINATOR: ReadonlyUint8Array = new Uint8Array([ 17, 17 ]);',
         'export function getMyInstructionDiscriminatorBytes(): ReadonlyUint8Array { return getBytesEncoder().encode(MY_INSTRUCTION_DISCRIMINATOR); }',
         'export const MY_INSTRUCTION_DISCRIMINATOR2: ReadonlyUint8Array = new Uint8Array( [34, 34] );',
@@ -931,10 +931,10 @@ test('it can override the import of a resolver value node', async () => {
     );
 
     // Then we expect the resolver to be exported.
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', ['myResolver(resolverScope)']);
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', ['myResolver(resolverScope)']);
 
     // And its import path to be overridden.
-    await renderMapContainsImports(renderMap, 'instructions/myInstruction.ts', {
+    await renderMapContainsImports(renderMap, 'instructions/my-instruction.ts', {
         someModule: ['myResolver'],
     });
 });
@@ -957,7 +957,7 @@ test('it renders optional config that can override the program address', async (
 
     // Then we expect an optional config parameter with an optional programAddress field accepting address-bearing objects
     // And we expect this to be unwrapped and used to override programAddress if it is set
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', [
         'config?: { programAddress?: TProgramAddress | { readonly address: TProgramAddress }; }',
         'const programAddressInput = config?.programAddress ?? MY_PROGRAM_PROGRAM_ADDRESS;',
         "const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;",
@@ -976,10 +976,10 @@ test('it renders instructions with no accounts and no data', async () => {
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then the instruction input type is generated as an empty object.
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', ['export type MyInstructionInput = {};']);
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', ['export type MyInstructionInput = {};']);
 
     // But the instruction function does not use it as an argument.
-    await renderMapDoesNotContain(renderMap, 'instructions/myInstruction.ts', ['input: MyInstructionInput']);
+    await renderMapDoesNotContain(renderMap, 'instructions/my-instruction.ts', ['input: MyInstructionInput']);
 });
 
 test('it renders instructions with no accounts but with some omitted data', async () => {
@@ -1007,10 +1007,10 @@ test('it renders instructions with no accounts but with some omitted data', asyn
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then the instruction input type is generated as an empty object.
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', ['export type MyInstructionInput = {};']);
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', ['export type MyInstructionInput = {};']);
 
     // But the instruction function does not use it as an argument.
-    await renderMapDoesNotContain(renderMap, 'instructions/myInstruction.ts', ['input: MyInstructionInput']);
+    await renderMapDoesNotContain(renderMap, 'instructions/my-instruction.ts', ['input: MyInstructionInput']);
 });
 
 test('it renders instructions with no accounts but with some arguments', async () => {
@@ -1036,7 +1036,7 @@ test('it renders instructions with no accounts but with some arguments', async (
 
     // Then we expect the following input type to be rendered
     // and used as an argument of the instruction function.
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', [
         "export type MyInstructionInput = { myArgument: MyInstructionInstructionDataArgs['myArgument']; };",
         'input: MyInstructionInput',
     ]);
@@ -1066,7 +1066,7 @@ test('it renders instructions with no arguments but with some accounts', async (
 
     // Then we expect the following input type to be rendered
     // and used as an argument of the instruction function.
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', [
         `export type MyInstructionInput<
             TAccountMyAccount extends InstructionAccountInput = InstructionAccountInput
         > = { myAccount: TAccountMyAccount; };`,
@@ -1118,12 +1118,12 @@ test("it passes the program address for an unset optional account under the defa
     // Then the account meta factory uses the 'programId' strategy and every account keeps
     // its slot in declaration order, so an unset optional account is replaced by the program
     // address rather than dropped.
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', [
         "const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');",
         /accounts:\s*\[\s*getAccountMeta\('group', accounts\.group\),\s*getAccountMeta\('permission', accounts\.permission\)\s*\]/,
     ]);
     // And the accounts array is not filtered, so ordering cannot shift.
-    await renderMapDoesNotContain(renderMap, 'instructions/myInstruction.ts', [/\.filter\(<T>/]);
+    await renderMapDoesNotContain(renderMap, 'instructions/my-instruction.ts', [/\.filter\(<T>/]);
 });
 
 test("it drops an unset optional account under the legacy 'omitted' strategy", async () => {
@@ -1156,7 +1156,7 @@ test("it drops an unset optional account under the legacy 'omitted' strategy", a
 
     // Then the account meta factory uses the 'omitted' strategy, the optional account's type
     // parameter accepts undefined, and the accounts array is filtered to remove unset accounts.
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', [
         "const getAccountMeta = getAccountMetaFactory(programAddress, 'omitted');",
         'TAccountGroup extends string | AccountMeta<string> | undefined = undefined',
         /\.filter\(<T,?>\(x: T \| undefined\): x is T => x !== undefined\)/,
@@ -1180,12 +1180,12 @@ test('it renders remaining accounts that accept the same inputs as instruction a
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the input to accept any instruction account input.
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', [
         'extraAccounts: Array<InstructionAccountInput>;',
     ]);
 
     // And we expect the remaining accounts to go through the account meta helper.
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', [
         "const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');",
         `const remainingAccounts: AccountMeta[] = args.extraAccounts.map( (value) =>
             getNonNullResolvedInstructionInput(
@@ -1218,12 +1218,12 @@ test('it renders optional remaining accounts that may be signers', async () => {
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the input to accept both signer and non-signer inputs.
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', [
         'extraAccounts?: Array<InstructionAccountInput | InstructionSignerInput>;',
     ]);
 
     // And we expect the signer flag to be forwarded to the account meta helper.
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', [
         `(args.extraAccounts ?? []).map( (value) =>
             getNonNullResolvedInstructionInput(
                 'extraAccounts',
@@ -1257,16 +1257,16 @@ test('it renders remaining accounts backed by an instruction argument as plain a
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the argument to keep its data type in the input.
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', [
         "extraAccounts: MyInstructionInstructionDataArgs['extraAccounts'];",
     ]);
 
     // And we expect the remaining accounts to be derived from the IDL flags alone.
-    await renderMapContains(renderMap, 'instructions/myInstruction.ts', [
+    await renderMapContains(renderMap, 'instructions/my-instruction.ts', [
         "const remainingAccounts: AccountMeta[] = args.extraAccounts.map( (value) => ({ address: getAddressFromResolvedInstructionAccount('extraAccounts', value), role: AccountRole.READONLY_SIGNER }) );",
     ]);
     // And we expect the account meta helper to not be declared nor imported since it is not used.
-    await renderMapDoesNotContain(renderMap, 'instructions/myInstruction.ts', ['getAccountMeta']);
+    await renderMapDoesNotContain(renderMap, 'instructions/my-instruction.ts', ['getAccountMeta']);
 });
 
 test('it fails loudly on injected default values that are not provided', () => {

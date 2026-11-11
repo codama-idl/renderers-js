@@ -24,14 +24,14 @@ test('it renders sentinel codecs', async () => {
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the following types and codecs to be exported.
-    await renderMapContains(renderMap, 'types/myType.ts', [
+    await renderMapContains(renderMap, 'types/my-type.ts', [
         'export type MyType = string',
         'addEncoderSentinel( getUtf8Encoder() , new Uint8Array([ 255 ]) )',
         'addDecoderSentinel( getUtf8Decoder() ,  new Uint8Array([ 255 ]) )',
     ]);
 
     // And we expect the following codec imports.
-    await renderMapContainsImports(renderMap, 'types/myType.ts', {
+    await renderMapContainsImports(renderMap, 'types/my-type.ts', {
         '@solana/kit': ['addEncoderSentinel', 'addDecoderSentinel'],
     });
 });

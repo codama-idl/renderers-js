@@ -90,13 +90,13 @@ test('it renders program account enums as const objects when erasableSyntax is e
     const renderMap = visit(splTokenProgramNode, getRenderMapVisitor({ erasableSyntax: true }));
 
     // Then we expect the program account enum to be a const object.
-    await renderMapContains(renderMap, 'programs/splToken.ts', [
+    await renderMapContains(renderMap, 'programs/spl-token.ts', [
         "export const SplTokenAccount = { 0: 'Mint', 1: 'Token', Mint: 0, Token: 1 } as const;",
         'export type SplTokenAccount = (typeof SplTokenAccount)[Exclude< keyof typeof SplTokenAccount, number >];',
     ]);
 
     // And we expect no enum declaration.
-    await renderMapDoesNotContain(renderMap, 'programs/splToken.ts', ['export enum SplTokenAccount']);
+    await renderMapDoesNotContain(renderMap, 'programs/spl-token.ts', ['export enum SplTokenAccount']);
 });
 
 test('it renders program instruction enums as const objects when erasableSyntax is enabled', async () => {
@@ -104,13 +104,13 @@ test('it renders program instruction enums as const objects when erasableSyntax 
     const renderMap = visit(splTokenProgramNode, getRenderMapVisitor({ erasableSyntax: true }));
 
     // Then we expect the program instruction enum to be a const object.
-    await renderMapContains(renderMap, 'programs/splToken.ts', [
+    await renderMapContains(renderMap, 'programs/spl-token.ts', [
         "export const SplTokenInstruction = { 0: 'MintTokens', MintTokens: 0 } as const;",
         'export type SplTokenInstruction = (typeof SplTokenInstruction)[Exclude< keyof typeof SplTokenInstruction, number >];',
     ]);
 
     // And we expect no enum declaration.
-    await renderMapDoesNotContain(renderMap, 'programs/splToken.ts', ['export enum SplTokenInstruction']);
+    await renderMapDoesNotContain(renderMap, 'programs/spl-token.ts', ['export enum SplTokenInstruction']);
 });
 
 test('it queries instruction enum members with typeof when erasableSyntax is enabled', async () => {
@@ -119,12 +119,12 @@ test('it queries instruction enum members with typeof when erasableSyntax is ena
 
     // Then we expect the parsed instruction union to reach members through a typeof query,
     // since a const object only exists in the value space.
-    await renderMapContains(renderMap, 'programs/splToken.ts', [
+    await renderMapContains(renderMap, 'programs/spl-token.ts', [
         'instructionType: typeof SplTokenInstruction.MintTokens;',
     ]);
 
     // And we expect the identifier function to keep returning the member itself.
-    await renderMapContains(renderMap, 'programs/splToken.ts', ['return SplTokenInstruction.MintTokens;']);
+    await renderMapContains(renderMap, 'programs/spl-token.ts', ['return SplTokenInstruction.MintTokens;']);
 });
 
 test('it renders the program plugin object with an as assertion when erasableSyntax is enabled', async () => {
@@ -132,8 +132,8 @@ test('it renders the program plugin object with an as assertion when erasableSyn
     const renderMap = visit(splTokenProgramNode, getRenderMapVisitor({ erasableSyntax: true }));
 
     // Then we expect an `as` assertion, since angle-bracket assertions are not erasable.
-    await renderMapContains(renderMap, 'programs/splToken.ts', ['} as SplTokenPlugin }']);
-    await renderMapDoesNotContain(renderMap, 'programs/splToken.ts', ['<SplTokenPlugin>{']);
+    await renderMapContains(renderMap, 'programs/spl-token.ts', ['} as SplTokenPlugin }']);
+    await renderMapDoesNotContain(renderMap, 'programs/spl-token.ts', ['<SplTokenPlugin>{']);
 });
 
 test('it renders the program plugin object with an angle-bracket assertion by default', async () => {
@@ -141,5 +141,5 @@ test('it renders the program plugin object with an angle-bracket assertion by de
     const renderMap = visit(splTokenProgramNode, getRenderMapVisitor());
 
     // Then we expect the angle-bracket assertion to be preserved.
-    await renderMapContains(renderMap, 'programs/splToken.ts', ['<SplTokenPlugin>{']);
+    await renderMapContains(renderMap, 'programs/spl-token.ts', ['<SplTokenPlugin>{']);
 });

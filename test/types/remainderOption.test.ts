@@ -16,7 +16,7 @@ test('it renders remainder option codecs', async () => {
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the following types and codecs to be exported.
-    await renderMapContains(renderMap, 'types/myType.ts', [
+    await renderMapContains(renderMap, 'types/my-type.ts', [
         'export type MyType = Option<Address>',
         'export type MyTypeArgs = OptionOrNullable<Address | HasAddress>',
         'getOptionEncoder( getAddressEncoder(), { prefix: null } )',
@@ -24,7 +24,7 @@ test('it renders remainder option codecs', async () => {
     ]);
 
     // And we expect the following codec imports.
-    await renderMapContainsImports(renderMap, 'types/myType.ts', {
+    await renderMapContainsImports(renderMap, 'types/my-type.ts', {
         '@solana/kit': [
             'getOptionEncoder',
             'getOptionDecoder',

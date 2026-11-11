@@ -28,12 +28,12 @@ test('it renders the program address constant', async () => {
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the following program address constant.
-    await renderMapContains(renderMap, 'programs/splToken.ts', [
+    await renderMapContains(renderMap, 'programs/spl-token.ts', [
         "export const SPL_TOKEN_PROGRAM_ADDRESS = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address<'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'>;",
     ]);
 
     // And we expect the following imports.
-    await renderMapContainsImports(renderMap, 'programs/splToken.ts', {
+    await renderMapContainsImports(renderMap, 'programs/spl-token.ts', {
         '@solana/kit': ['type Address'],
     });
 });
@@ -50,7 +50,7 @@ test('it renders an enum of all available accounts for a program', async () => {
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the following program account enum.
-    await renderMapContains(renderMap, 'programs/splToken.ts', ['export enum SplTokenAccount { Mint, Token }']);
+    await renderMapContains(renderMap, 'programs/spl-token.ts', ['export enum SplTokenAccount { Mint, Token }']);
 });
 
 test('it renders an function that identifies accounts in a program', async () => {
@@ -89,7 +89,7 @@ test('it renders an function that identifies accounts in a program', async () =>
 
     // Then we expect the following identifier function to be rendered.
     // Notice it does not include the `mint` account because it has no discriminators.
-    await renderMapContains(renderMap, 'programs/splToken.ts', [
+    await renderMapContains(renderMap, 'programs/spl-token.ts', [
         `export function identifySplTokenAccount( account: { data: ReadonlyUint8Array } | ReadonlyUint8Array ): SplTokenAccount { ` +
             `const data = 'data' in account ? account.data : account; ` +
             `if ( containsBytes(data, getU8Encoder().encode(5), 0) ) { return SplTokenAccount.Metadata; } ` +
@@ -99,7 +99,7 @@ test('it renders an function that identifies accounts in a program', async () =>
     ]);
 
     // And we expect the following imports.
-    await renderMapContainsImports(renderMap, 'programs/splToken.ts', {
+    await renderMapContainsImports(renderMap, 'programs/spl-token.ts', {
         '@solana/kit': [
             'containsBytes',
             'type ReadonlyUint8Array',
@@ -125,7 +125,7 @@ test('it renders an enum of all available instructions for a program', async () 
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the following program instruction enum.
-    await renderMapContains(renderMap, 'programs/splToken.ts', [
+    await renderMapContains(renderMap, 'programs/spl-token.ts', [
         'export enum SplTokenInstruction { MintTokens, TransferTokens, UpdateAuthority }',
     ]);
 });
@@ -166,7 +166,7 @@ test('it renders an function that identifies instructions in a program', async (
 
     // Then we expect the following identifier function to be rendered.
     // Notice it does not include the `updateAuthority` instruction because it has no discriminators.
-    await renderMapContains(renderMap, 'programs/splToken.ts', [
+    await renderMapContains(renderMap, 'programs/spl-token.ts', [
         `export function identifySplTokenInstruction ( instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array ): SplTokenInstruction { ` +
             `const data = 'data' in instruction ? instruction.data : instruction; ` +
             `if ( containsBytes(data, getU8Encoder().encode(1), 0) ) { return SplTokenInstruction.MintTokens; } ` +
@@ -176,7 +176,7 @@ test('it renders an function that identifies instructions in a program', async (
     ]);
 
     // And we expect the following imports.
-    await renderMapContainsImports(renderMap, 'programs/splToken.ts', {
+    await renderMapContainsImports(renderMap, 'programs/spl-token.ts', {
         '@solana/kit': ['containsBytes', 'type ReadonlyUint8Array'],
     });
 });
@@ -232,7 +232,7 @@ test('it checks the discriminator of sub-instructions before their parents.', as
     const renderMap = visit(node, getRenderMapVisitor({ renderParentInstructions: true }));
 
     // Then we expect the sub-instruction condition to be rendered before the parent instruction condition.
-    await renderMapContains(renderMap, 'programs/splToken.ts', [
+    await renderMapContains(renderMap, 'programs/spl-token.ts', [
         `if ( containsBytes(data, getU8Encoder().encode(1), 0) && containsBytes(data, getU32Encoder().encode(1), 1) ) ` +
             `{ return SplTokenInstruction.MintTokensV1; } ` +
             `if ( containsBytes(data, getU8Encoder().encode(1), 0) ) ` +
@@ -256,7 +256,7 @@ test('it renders a parsed union type of all available instructions for a program
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the following program parsed instruction union type.
-    await renderMapContains(renderMap, 'programs/splToken.ts', [
+    await renderMapContains(renderMap, 'programs/spl-token.ts', [
         "export type ParsedSplTokenInstruction < TProgram extends string = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' >",
         '| ({ instructionType: SplTokenInstruction.MintTokens; } & ParsedMintTokensInstruction<TProgram>)',
         '| ({ instructionType: SplTokenInstruction.TransferTokens; } & ParsedTransferTokensInstruction<TProgram>)',
@@ -299,7 +299,7 @@ test('it renders a function that parses instructions in a program', async () => 
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the following parse function to be rendered.
-    await renderMapContains(renderMap, 'programs/splToken.ts', [
+    await renderMapContains(renderMap, 'programs/spl-token.ts', [
         'export function parseSplTokenInstruction',
         'TProgram extends string',
         'instruction: Instruction',
@@ -314,7 +314,7 @@ test('it renders a function that parses instructions in a program', async () => 
     ]);
 
     // And we expect the following imports.
-    await renderMapContainsImports(renderMap, 'programs/splToken.ts', {
+    await renderMapContainsImports(renderMap, 'programs/spl-token.ts', {
         '@solana/kit': ['type Instruction', 'type InstructionWithData', 'type ReadonlyUint8Array'],
     });
 });
@@ -356,14 +356,14 @@ test('the program plugin re-exposes identifyAccount, identifyInstruction and par
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then the plugin type wires the helpers as `typeof` references...
-    await renderMapContains(renderMap, 'programs/splToken.ts', [
+    await renderMapContains(renderMap, 'programs/spl-token.ts', [
         'identifyAccount: typeof identifySplTokenAccount;',
         'identifyInstruction: typeof identifySplTokenInstruction;',
         'parseInstruction: typeof parseSplTokenInstruction;',
     ]);
 
     // ...and the plugin function exposes them on the extended client.
-    await renderMapContains(renderMap, 'programs/splToken.ts', [
+    await renderMapContains(renderMap, 'programs/spl-token.ts', [
         'identifyAccount: identifySplTokenAccount',
         'identifyInstruction: identifySplTokenInstruction',
         'parseInstruction: parseSplTokenInstruction',
@@ -410,7 +410,7 @@ test('the program plugin exposes identifyInstruction/parseInstruction when only 
 
     // Then the plugin must expose the helpers even though the top-level
     // instruction itself has no discriminator.
-    await renderMapContains(renderMap, 'programs/splToken.ts', [
+    await renderMapContains(renderMap, 'programs/spl-token.ts', [
         'identifyInstruction: typeof identifySplTokenInstruction;',
         'parseInstruction: typeof parseSplTokenInstruction;',
         'identifyInstruction: identifySplTokenInstruction',
@@ -431,7 +431,7 @@ test('the program plugin omits identify/parse keys when no node carries a discri
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then the program file does not reference any of the new plugin keys.
-    await renderMapDoesNotContain(renderMap, 'programs/splToken.ts', [
+    await renderMapDoesNotContain(renderMap, 'programs/spl-token.ts', [
         'identifyAccount',
         'identifyInstruction',
         'parseInstruction',
@@ -478,7 +478,7 @@ test('the program plugin honors renderParentInstructions when deciding whether t
     const renderMap = visit(node, getRenderMapVisitor({ renderParentInstructions: true }));
 
     // Then the plugin exposes identifyInstruction/parseInstruction.
-    await renderMapContains(renderMap, 'programs/splToken.ts', [
+    await renderMapContains(renderMap, 'programs/spl-token.ts', [
         'identifyInstruction: typeof identifySplTokenInstruction;',
         'parseInstruction: typeof parseSplTokenInstruction;',
         'identifyInstruction: identifySplTokenInstruction',
@@ -501,11 +501,11 @@ test('it does not render parse function when no instructions have discriminators
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the parse function NOT to be rendered.
-    await renderMapContains(renderMap, 'programs/splToken.ts', [
+    await renderMapContains(renderMap, 'programs/spl-token.ts', [
         'export enum SplTokenInstruction { MintTokens, TransferTokens }',
     ]);
 
     // And we do NOT expect the parse function.
-    const programFile = renderMap.get('programs/splToken.ts');
+    const programFile = renderMap.get('programs/spl-token.ts');
     expect(programFile).not.toContain('parseSplTokenInstruction');
 });

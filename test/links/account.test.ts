@@ -23,10 +23,10 @@ test('it imports functions from the linked account', async () => {
     const renderMap = visit(node, getRenderMapVisitor());
 
     // Then we expect the following to be exported.
-    await renderMapContains(renderMap, 'instructions/createCounter.ts', ['getCounterSize()']);
+    await renderMapContains(renderMap, 'instructions/create-counter.ts', ['getCounterSize()']);
 
     // And we expect the following imports.
-    await renderMapContainsImports(renderMap, 'instructions/createCounter.ts', {
+    await renderMapContainsImports(renderMap, 'instructions/create-counter.ts', {
         '../accounts': ['getCounterSize'],
     });
 });
@@ -56,10 +56,10 @@ test('it can override the import of a linked account', async () => {
     );
 
     // Then we expect the following to be exported.
-    await renderMapContains(renderMap, 'instructions/createCounter.ts', ['getCounterSize()']);
+    await renderMapContains(renderMap, 'instructions/create-counter.ts', ['getCounterSize()']);
 
     // And we expect the imports to be overridden.
-    await renderMapContainsImports(renderMap, 'instructions/createCounter.ts', {
+    await renderMapContainsImports(renderMap, 'instructions/create-counter.ts', {
         '../../hooked': ['getCounterSize'],
     });
 });
@@ -89,7 +89,7 @@ test('it matches link overrides regardless of the casing of their keys', async (
     );
 
     // Then we expect the imports to be overridden.
-    await renderMapContainsImports(renderMap, 'instructions/createCounter.ts', {
+    await renderMapContainsImports(renderMap, 'instructions/create-counter.ts', {
         '../../hooked': ['getCounterAccountSize'],
     });
 });
