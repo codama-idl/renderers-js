@@ -1,5 +1,84 @@
 # @codama/renderers-js
 
+## 3.0.0-rc.0
+
+### Major Changes
+
+- [#306](https://github.com/codama-idl/renderers-js/pull/306) [`5438525`](https://github.com/codama-idl/renderers-js/commit/5438525eb6584127fc994e7800450d427c19a1c0) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Require Node.js 22.12.0 or later, as Codama v2 does.
+  
+  **BREAKING CHANGES**
+  
+  **Node.js 20 is no longer supported.** The package now declares `"engines": { "node": ">=22.12.0" }`, the first Node.js 22 release that supports `require(esm)` by default. Node.js 20 reached its end of life in April 2026. This only concerns the environment running the renderer: generated clients are unaffected.
+
+- [#294](https://github.com/codama-idl/renderers-js/pull/294) [`2fad86f`](https://github.com/codama-idl/renderers-js/commit/2fad86f42e46d01227a5379df85fb2ec228659ad) Thanks [@codama-releases](https://github.com/apps/codama-releases)! - Start major 3. Release candidates publish under the `rc` dist-tag while this major is in development.
+
+- [#307](https://github.com/codama-idl/renderers-js/pull/307) [`5acb331`](https://github.com/codama-idl/renderers-js/commit/5acb331bc39d96d17f791bbe44af18f48db98e97) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Render IDLs of the Codama v2 standard. The renderer now depends on the v2 releases of `@codama/nodes`, `@codama/visitors-core` and `@codama/errors`, and on `@codama/fragments` instead of `@codama/renderers-core`.
+  
+  **BREAKING CHANGES**
+  
+  **Codama v2 IDLs are required.** The renderer only accepts trees of the v2 standard. Upgrade v1 IDLs with the `codama upgrade` command, or with the `upgrade` function or `upgradeToLatestVisitor` of `@codama/upgrade`, e.g. as a `before` visitor of your Codama configuration.
+  
+  ```json
+  {
+      "idl": "program/idl.json",
+      "before": ["@codama/upgrade"],
+      "scripts": { "js": { "from": "@codama/renderers-js", "args": ["clients/js"] } }
+  }
+  ```
+  
+  **Names are derived from the spec's word split.** Node identifiers keep their original casing in v2, and every generated name is derived from the words of the identifier as the spec defines them, through the casing helpers of `@codama/fragments/casing`. Identifiers made of consecutive capitals now keep acronyms as single words, e.g. `getURL` becomes `getUrl` rather than `getURL`.
+  
+  **Unrenderable nodes report their path.** Errors thrown for nodes that cannot be rendered carry the `path` of the node in their context instead of the node itself, as Codama v2 errors do, and nodes visited outside of a program throw `CODAMA_ERROR__NODE_PATH_PROGRAM_MISSING`.
+
+- [#308](https://github.com/codama-idl/renderers-js/pull/308) [`d93b590`](https://github.com/codama-idl/renderers-js/commit/d93b5903de4c6b9f86309b2fe576a95e495561a9) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Render the type nodes of the Codama v2 standard. Integers and floats render with the same codecs as v1 numbers, and integer values that a JavaScript number cannot represent exactly render as `bigint` literals. Fixed points render as their underlying integer, except SOL amounts (a scale of 9 with a `SOL` unit), which keep rendering as `Lamports`, and date-times and durations render as their underlying integer. The `transforms` of a type node wrap its codecs in order, the first being the innermost, as the v1 wrapper type nodes did, and sentinel counts render as sentinel-sized arrays, sets and maps.
+  
+  Enum variants render as before when they carry no data, a struct or a tuple, following defined type links to their target. A variant holding a struct through a link spreads its fields, e.g. `{ __kind: 'At' } & Point`, a variant holding a tuple through a link exposes it as its `fields`, and a variant holding any other single type exposes it as a one-item `fields` tuple, e.g. `{ __kind: 'Amount'; fields: readonly [bigint] }`, which encodes to the same bytes. Enum values of such variants pass their value as a one-item tuple, e.g. `command('Amount', [42])`.
+  
+  Struct field defaults injected from a provider are filled in by instruction builders before encoding. The codec of the struct only fills in their `fallback`, when one is given and no value was, so such fields are optional in the input type of the codec when they have a fallback and required otherwise, as v1 instruction arguments with contextual defaults were.
+
+- [#315](https://github.com/codama-idl/renderers-js/pull/315) [`2587c34`](https://github.com/codama-idl/renderers-js/commit/2587c34be6f3119af2e08a51e37c6a4b08eaf9b0) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Name generated files in kebab-case by default, following the identifiers of Codama v2 which keep their original casing.
+  
+  **BREAKING CHANGES**
+  
+  **Generated files are named in kebab-case.** Imports from the generated folder barrels are unaffected, but deep imports of individual files must be updated.
+  
+  ```diff
+  - import { getTransferCheckedInstruction } from './generated/instructions/transferChecked';
+  + import { getTransferCheckedInstruction } from './generated/instructions/transfer-checked';
+  ```
+  
+  To keep the previous camelCase file names, override the `fileName` name transformer.
+  
+  ```ts
+  renderVisitor(packageFolder, {
+      nameTransformers: { fileName: (name, { camelCase }) => camelCase(name) },
+  });
+  ```
+
+- [#313](https://github.com/codama-idl/renderers-js/pull/313) [`fd1e9b6`](https://github.com/codama-idl/renderers-js/commit/fd1e9b6faf80b7431fef737ceb1aee1b1840ca7f) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Render the instructions of the Codama v2 standard. Instruction arguments are read from the fields of the instruction `data`, extra arguments from `codama.extraArgument` plugins, and resolvers from `codama.resolver` plugins on accounts, data fields, extra arguments, remaining accounts and byte deltas, so that IDLs upgraded from v1 render the same instruction builders as before. Defaults injected from the `provides` of an instruction are resolved like any other default, and references to instruction data may point to nested fields, e.g. `args.config?.fee`.
+  
+  **BREAKING CHANGES**
+  
+  **Upgraded defaults that mixed a resolver with other values require a new resolver.** When a v1 default could not be expressed without a resolver, e.g. a conditional value whose condition is a resolver, or a byte delta given by an extra argument, `@codama/upgrade` replaces it with a resolver resolving the whole value, named after the instruction and the input, e.g. `resolveCreateByteDelta`. Generated builders call that resolver, which you must provide alongside your existing ones, e.g. through `linkOverrides.resolvers`.
+  
+  **Malformed plugins and unsupported injections throw.** A `codama.resolver` or `codama.extraArgument` plugin whose payload does not match the spec, instruction data that is neither a struct nor a defined type link, and a value provided for an injected default nested within instruction data, which builders cannot fill in, throw `CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE` with the path of the offending node.
+
+- [#321](https://github.com/codama-idl/renderers-js/pull/321) [`9a87328`](https://github.com/codama-idl/renderers-js/commit/9a87328058ef6c429f27e2be33d2f0bfa4713b99) Thanks [@lorisleiva](https://github.com/lorisleiva)! - Reject IDLs that are not of the Codama v2 standard and resolve the inputs of sub-instructions within their parents.
+  
+  **BREAKING CHANGES**
+  
+  **IDLs of another major version throw.** Rendering a root node whose `version` is not a 2.x version throws `CODAMA_ERROR__VERSION_MISMATCH` instead of failing on the first node it cannot read. Upgrade v1 IDLs with the `upgrade` command of the Codama CLI.
+  
+  ```sh
+  npx @codama/cli upgrade program/idl.json
+  ```
+  
+  **References within the IDL match identifiers exactly.** Field discriminator paths, PDA seed values and remaining accounts backed by a data field now find their target by its exact identifier, as data paths and resolver dependencies already did and as Codama core does. Option keys referencing nodes, such as `linkOverrides` or `internalNodes`, are still compared by their camelCase form.
+  
+  **Sub-instructions see the values provided by their parents.** Injected defaults of a sub-instruction resolve against the `provides` of its parent instructions, rather than only its own.
+  
+  **Data paths entering account data throw.** A default value, resolver dependency or byte delta whose data path enters the data of a linked account, e.g. `mint.data.decimals`, throws `CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE`, as `accountDataValueNode` defaults do, since instruction builders only receive account addresses. Nested data paths are resolved against the instruction data, so a path that does not exist, e.g. `config.typo`, throws `CODAMA_ERROR__CANNOT_RESOLVE_PATH` instead of rendering code that fails to type-check.
+
 ## 2.9.0
 
 ### Minor Changes
