@@ -801,11 +801,7 @@ export function getTypeManifestVisitor(input: {
                             const key = camelCase(f.identifier);
 
                             // If the field has an associated discriminator node, use the constant value instead.
-                            if (
-                                fieldDiscriminators.some(
-                                    d => camelCase(getFieldDiscriminatorIdentifier(d)) === camelCase(f.identifier),
-                                )
-                            ) {
+                            if (fieldDiscriminators.some(d => getFieldDiscriminatorIdentifier(d) === f.identifier)) {
                                 const constantName = nameApi.constant(
                                     camelCase(`${discriminatorPrefix}_${f.identifier}`),
                                 );

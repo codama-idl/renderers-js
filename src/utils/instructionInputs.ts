@@ -32,8 +32,10 @@ import {
     InstructionNode,
     InstructionRemainingAccountsNode,
     isNode,
+    isNodeFilter,
     Node,
     PathString,
+    pathString,
     PluginNode,
     REGISTERED_TYPE_NODE_KINDS,
     REGISTERED_VALUE_NODE_KINDS,
@@ -53,6 +55,7 @@ import {
     NodePath,
     parsePath,
     ProvidedScope,
+    resolveTypePath,
 } from '@codama/visitors-core';
 
 import type { ParsedCustomDataOptions } from './customData';
@@ -205,7 +208,7 @@ export function isRemainingAccountsBackedByArgument(
 ): boolean {
     const name = getRemainingAccountsName(remainingAccounts);
     if (name === undefined) return false;
-    return getAllInstructionDataFields(instructionNode).some(field => camelCase(field.identifier) === camelCase(name));
+    return getAllInstructionDataFields(instructionNode).some(field => field.identifier === name);
 }
 
 /**
@@ -331,6 +334,7 @@ export function getResolvedInstructionInputs(
     const scope = getProvidedScopeFromPath(instructionPath);
     assertNoUnsupportedInjections(instructionPath, scope, linkables);
     const entries = getInputEntries(instructionPath, scope, linkables);
+    assertSupportedDataPaths(instructionPath, entries, linkables);
     // Fields of linked data only order their dependents: they are provided as a whole
     // through the linked type, so they never appear as individual builder inputs.
     const ordered = sortEntriesByDependencies(entries.filter(isBuilderInput), entries, instructionPath).filter(
@@ -584,6 +588,55 @@ function getResolvedAccountFlags(
         default:
             return defaults;
     }
+}
+
+/**
+ * Asserts that every data path an input, byte delta or remaining accounts depends on
+ * resolves within the instruction data or extra arguments. Paths entering the data of a
+ * linked account, e.g. `mint.data.decimals`, are not supported since instruction
+ * builders only receive account addresses.
+ *
+ * @throws `CODAMA_ERROR__CANNOT_RESOLVE_PATH` when a path does not exist.
+ * @throws `CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE` when a path enters account data.
+ */
+function assertSupportedDataPaths(
+    instructionPath: NodePath<InstructionNode>,
+    entries: readonly InputEntry[],
+    linkables: LinkableDictionary,
+): void {
+    const instruction = getLastNodeFromPath(instructionPath);
+    const byteDeltaDependencies = (instruction.byteDeltas ?? []).flatMap(byteDelta => [
+        ...(getByteDeltaResolver(byteDelta)?.dependsOn ?? []),
+        ...(isNode(byteDelta.value, 'dataValueNode') ? [byteDelta.value] : []),
+    ]);
+    const remainingAccountsDependencies = (instruction.remainingAccounts ?? []).flatMap(
+        remainingAccounts => getRemainingAccountsResolver(remainingAccounts)?.dependsOn ?? [],
+    );
+    const dependencies = [
+        ...entries.flatMap(entry => entry.dependsOn),
+        ...byteDeltaDependencies,
+        ...remainingAccountsDependencies,
+    ];
+    dependencies.filter(isNodeFilter('dataValueNode')).forEach(dependency => {
+        const [root, ...rest] = parsePath(dependency.path);
+        if (root?.kind !== 'field' || rest.length === 0) return;
+        const entry = entries.find(
+            (candidate): candidate is Extract<InputEntry, { kind: 'data' }> =>
+                candidate.kind === 'data' && candidate.node.identifier === root.identifier,
+        );
+        // Unknown roots are reported with the input depending on them when ordering inputs.
+        if (!entry) return;
+        const field = structFieldTypeNode({ identifier: entry.node.identifier, type: entry.node.type });
+        const remainingPath = pathString(dependency.path.slice(root.identifier.length).replace(/^\./, ''));
+        const resolved = resolveTypePath([...entry.path.slice(0, -1), field], remainingPath, linkables, {
+            followAccountLinks: true,
+        });
+        if (resolved.some(node => isNode(node, 'accountNode'))) {
+            throw new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, {
+                path: [...instructionPath, dependency],
+            });
+        }
+    });
 }
 
 /**

@@ -146,7 +146,7 @@ Root index generation is centralized in `src/fragments/rootIndexPage.ts`. `inter
 
 Naming is centralized in `src/utils/nameTransformers.ts`. Do not hardcode names in new code if a `nameApi` function already exists.
 
-Codama v2 node identifiers keep their original casing (e.g. `transfer_tokens` from an Anchor IDL), so every name emitted in generated code must go through `nameApi` or the casing helpers of `@codama/fragments/casing`, and option keys referencing nodes (e.g. `linkOverrides`, `internalNodes`) are compared by their camelCase form.
+Codama v2 node identifiers keep their original casing (e.g. `transfer_tokens` from an Anchor IDL), so every name emitted in generated code must go through `nameApi` or the casing helpers of `@codama/fragments/casing`, and option keys referencing nodes (e.g. `linkOverrides`, `internalNodes`) are compared by their camelCase form. References within the IDL (data paths, resolver dependencies, PDA seeds, discriminator paths) match identifiers exactly, as Codama core does.
 
 Important defaults:
 
@@ -357,8 +357,8 @@ Declarations are emitted separately into `dist/types`.
 
 - Changesets drives versioning and changelog generation.
 - Pending release notes live in `.changeset/*.md`.
-- `pnpm publish-package` runs build then `changeset publish`.
-- GitHub Actions handles release PR/publish on pushes to `main`.
+- `pnpm release:version` versions packages and `pnpm release:publish` builds then runs `changeset publish`.
+- The release job of `.github/workflows/main.yml` delegates to the `codama-idl/release-tools` workflow on pushes to `main` and `[0-9]+.x` branches, following the ecosystem release process (pre-mode release candidates under the `rc` dist-tag during a candidacy).
 
 ## CI invariants
 

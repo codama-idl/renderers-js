@@ -121,10 +121,10 @@ export function getInstructionFunctionInputFlags(
     const instructionDependencies = getInstructionDependencies(resolvedInputs, asyncResolvers, useAsync);
     const argDependencies = instructionDependencies
         .filter(isNodeFilter('dataValueNode'))
-        .map(node => camelCase(getDataPathRoot(node.path) ?? ''));
+        .map(node => getDataPathRoot(node.path));
     const argIsNotOmitted = (arg: InstructionDataField) =>
         !(hasInputDefault(arg) && arg.defaultValueStrategy === 'omitted');
-    const argIsDependent = (arg: InstructionDataField) => argDependencies.includes(camelCase(arg.identifier));
+    const argIsDependent = (arg: InstructionDataField) => argDependencies.includes(arg.identifier);
     const argHasDefaultValue = (arg: InstructionDataField) => {
         if (!hasInputDefault(arg)) return false;
         if (useAsync) return true;
