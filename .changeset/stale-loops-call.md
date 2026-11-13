@@ -16,4 +16,4 @@ npx @codama/cli upgrade program/idl.json
 
 **Sub-instructions see the values provided by their parents.** Injected defaults of a sub-instruction resolve against the `provides` of its parent instructions, rather than only its own.
 
-**Data paths entering account data throw.** A default value, resolver dependency or byte delta whose data path enters the data of a linked account, e.g. `mint.data.decimals`, throws `CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE`, as `accountDataValueNode` defaults do, since instruction builders only receive account addresses.
+**Data paths entering account data throw.** A default value, resolver dependency or byte delta whose data path enters the data of a linked account, e.g. `mint.data.decimals`, throws `CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE`, as `accountDataValueNode` defaults do, since instruction builders only receive account addresses. Nested data paths are resolved against the instruction data, so a path that does not exist, e.g. `config.typo`, throws `CODAMA_ERROR__CANNOT_RESOLVE_PATH` instead of rendering code that fails to type-check.

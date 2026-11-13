@@ -32,10 +32,8 @@ import {
     InstructionNode,
     InstructionRemainingAccountsNode,
     isNode,
-    isNodeFilter,
     Node,
     PathString,
-    pathString,
     PluginNode,
     REGISTERED_TYPE_NODE_KINDS,
     REGISTERED_VALUE_NODE_KINDS,
@@ -605,19 +603,24 @@ function assertSupportedDataPaths(
     linkables: LinkableDictionary,
 ): void {
     const instruction = getLastNodeFromPath(instructionPath);
-    const byteDeltaDependencies = (instruction.byteDeltas ?? []).flatMap(byteDelta => [
-        ...(getByteDeltaResolver(byteDelta)?.dependsOn ?? []),
-        ...(isNode(byteDelta.value, 'dataValueNode') ? [byteDelta.value] : []),
-    ]);
-    const remainingAccountsDependencies = (instruction.remainingAccounts ?? []).flatMap(
-        remainingAccounts => getRemainingAccountsResolver(remainingAccounts)?.dependsOn ?? [],
-    );
-    const dependencies = [
-        ...entries.flatMap(entry => entry.dependsOn),
-        ...byteDeltaDependencies,
-        ...remainingAccountsDependencies,
+    // Each dependency is paired with the path of the node owning it, to report errors there.
+    const dependencies: { dependency: InstructionDependency; owner: NodePath }[] = [
+        ...entries.flatMap(entry => entry.dependsOn.map(dependency => ({ dependency, owner: entry.path }))),
+        ...(instruction.byteDeltas ?? []).flatMap(byteDelta =>
+            [
+                ...(getByteDeltaResolver(byteDelta)?.dependsOn ?? []),
+                ...(isNode(byteDelta.value, 'dataValueNode') ? [byteDelta.value] : []),
+            ].map(dependency => ({ dependency, owner: [...instructionPath, byteDelta] })),
+        ),
+        ...(instruction.remainingAccounts ?? []).flatMap(remainingAccounts =>
+            (getRemainingAccountsResolver(remainingAccounts)?.dependsOn ?? []).map(dependency => ({
+                dependency,
+                owner: [...instructionPath, remainingAccounts],
+            })),
+        ),
     ];
-    dependencies.filter(isNodeFilter('dataValueNode')).forEach(dependency => {
+    dependencies.forEach(({ dependency, owner }) => {
+        if (!isNode(dependency, 'dataValueNode')) return;
         const [root, ...rest] = parsePath(dependency.path);
         if (root?.kind !== 'field' || rest.length === 0) return;
         const entry = entries.find(
@@ -626,15 +629,15 @@ function assertSupportedDataPaths(
         );
         // Unknown roots are reported with the input depending on them when ordering inputs.
         if (!entry) return;
-        const field = structFieldTypeNode({ identifier: entry.node.identifier, type: entry.node.type });
-        const remainingPath = pathString(dependency.path.slice(root.identifier.length).replace(/^\./, ''));
-        const resolved = resolveTypePath([...entry.path.slice(0, -1), field], remainingPath, linkables, {
+        // Resolves the whole path against a struct holding only its root field.
+        const source = structTypeNode([
+            structFieldTypeNode({ identifier: entry.node.identifier, type: entry.node.type }),
+        ]);
+        const resolved = resolveTypePath([...entry.path.slice(0, -1), source], dependency.path, linkables, {
             followAccountLinks: true,
         });
         if (resolved.some(node => isNode(node, 'accountNode'))) {
-            throw new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, {
-                path: [...instructionPath, dependency],
-            });
+            throw new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, { path: [...owner, dependency] });
         }
     });
 }

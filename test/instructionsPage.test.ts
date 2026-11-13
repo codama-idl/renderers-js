@@ -1,7 +1,10 @@
 import {
+    CODAMA_ERROR__CANNOT_RESOLVE_PATH,
     CODAMA_ERROR__INJECTED_VALUE_NOT_PROVIDED,
     CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE,
     CodamaError,
+    type CodamaErrorCode,
+    isCodamaError,
 } from '@codama/errors';
 import { getFromRenderMap } from '@codama/fragments';
 import {
@@ -1416,9 +1419,14 @@ test('it resolves the injected defaults of sub-instructions against the values p
     }
 });
 
-test('it fails on data paths that enter the data of a linked account', () => {
-    // Given an account resolver depending on the data of the account a data field links to.
-    const dependency = 'data.mint.data.decimals';
+/** A program with a `vault` account resolver depending on the given data path of a `transfer` instruction. */
+function getProgramWithResolverDependency(dependency: string) {
+    const vault = instructionAccountNode({
+        identifier: 'vault',
+        isSigner: false,
+        isWritable: true,
+        plugins: [pluginNode('codama.resolver', { dependsOn: [dependency], name: 'resolveVault' })],
+    });
     const node = programNode({
         accounts: [
             accountNode({
@@ -1429,14 +1437,7 @@ test('it fails on data paths that enter the data of a linked account', () => {
         identifier: 'myProgram',
         instructions: [
             instructionNode({
-                accounts: [
-                    instructionAccountNode({
-                        identifier: 'vault',
-                        isSigner: false,
-                        isWritable: true,
-                        plugins: [pluginNode('codama.resolver', { dependsOn: [dependency], name: 'resolveVault' })],
-                    }),
-                ],
+                accounts: [vault],
                 data: structTypeNode([
                     structFieldTypeNode({
                         identifier: 'mint',
@@ -1448,11 +1449,35 @@ test('it fails on data paths that enter the data of a linked account', () => {
         ],
         publicKey: '1111',
     });
+    return { node, vault };
+}
 
-    // Then rendering fails on that dependency.
-    expect(() => visit(node, getRenderMapVisitor())).toThrow(
-        expect.objectContaining({
-            context: expect.objectContaining({ __code: CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE }),
-        }),
-    );
+test('it fails on data paths that enter the data of a linked account', () => {
+    // Given an account resolver depending on the data of the account a data field links to.
+    const { node, vault } = getProgramWithResolverDependency('data.mint.data.decimals');
+
+    // Then rendering fails on that dependency, reported on the account owning it.
+    const error = getCodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, () => visit(node, getRenderMapVisitor()));
+    expect(error.context.path.at(-2)).toBe(vault);
+    expect(error.context.path.at(-1)).toStrictEqual(dataValueNode('mint.data.decimals'));
 });
+
+test('it fails on nested data paths that do not exist', () => {
+    // Given an account resolver depending on a nested data path that does not exist.
+    const { node } = getProgramWithResolverDependency('data.mint.typo');
+
+    // Then rendering fails to resolve that path.
+    const error = getCodamaError(CODAMA_ERROR__CANNOT_RESOLVE_PATH, () => visit(node, getRenderMapVisitor()));
+    expect(error.context.pathString).toBe('mint.typo');
+});
+
+/** The Codama error thrown by the given function, failing if it does not throw one with that code. */
+function getCodamaError<TCode extends CodamaErrorCode>(code: TCode, fn: () => unknown) {
+    try {
+        fn();
+    } catch (error) {
+        if (isCodamaError(error, code)) return error;
+        throw error;
+    }
+    throw new Error(`Expected a Codama error with code ${code} to be thrown.`);
+}
