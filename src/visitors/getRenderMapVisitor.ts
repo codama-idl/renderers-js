@@ -1,12 +1,15 @@
+import { CODAMA_ERROR__VERSION_MISMATCH, CodamaError } from '@codama/errors';
 import { createRenderMap, mergeRenderMaps, RenderMap } from '@codama/fragments';
 import { camelCase } from '@codama/fragments/casing';
 import {
+    CODAMA_VERSION,
     getAllAccounts,
     getAllDefinedTypes,
     getAllEvents,
     getAllInstructionsWithSubs,
     getAllPdas,
     getAllPrograms,
+    getCodamaVersionMajor,
 } from '@codama/nodes';
 import {
     extendVisitor,
@@ -148,19 +151,28 @@ export function getRenderMapVisitor(
                     );
                 },
 
-                visitInstruction(node) {
+                visitInstruction(node, { self }) {
+                    // Sub-instructions are visited from their parent so that the `provides`
+                    // of their parents are on the stack when resolving their inputs.
+                    const subInstructions = node.subInstructions ?? [];
+                    const isRendered = subInstructions.length === 0 || renderScope.renderParentInstructions;
                     const instructionPath = stack.getPath('instructionNode');
-                    return createRenderMap(
-                        `instructions/${renderScope.nameApi.fileName(node.identifier)}.ts`,
-                        asPage(
-                            getInstructionPageFragment({
-                                ...renderScope,
-                                instructionPath,
-                                resolvedInputs: getResolvedInstructionInputs(instructionPath, linkables),
-                                size: visit(node, byteSizeVisitor),
-                            }),
-                        ),
-                    );
+                    return mergeRenderMaps([
+                        isRendered
+                            ? createRenderMap(
+                                  `instructions/${renderScope.nameApi.fileName(node.identifier)}.ts`,
+                                  asPage(
+                                      getInstructionPageFragment({
+                                          ...renderScope,
+                                          instructionPath,
+                                          resolvedInputs: getResolvedInstructionInputs(instructionPath, linkables),
+                                          size: visit(node, byteSizeVisitor),
+                                      }),
+                                  ),
+                              )
+                            : createRenderMap<Fragment>(),
+                        ...subInstructions.map(subInstruction => visit(subInstruction, self)),
+                    ]);
                 },
 
                 visitPda(node) {
@@ -202,13 +214,17 @@ export function getRenderMapVisitor(
                         ...(node.events ?? []).map(e => visit(e, self)),
                         ...(node.definedTypes ?? []).map(t => visit(t, self)),
                         ...customDataDefinedType.map(t => visit(t, self)),
-                        ...getAllInstructionsWithSubs(node, { leavesOnly: !renderScope.renderParentInstructions }).map(
-                            i => visit(i, self),
-                        ),
+                        ...(node.instructions ?? []).map(i => visit(i, self)),
                     ]);
                 },
 
                 visitRoot(node, { self }) {
+                    if (getCodamaVersionMajor(node.version) !== getCodamaVersionMajor(CODAMA_VERSION)) {
+                        throw new CodamaError(CODAMA_ERROR__VERSION_MISMATCH, {
+                            codamaVersion: CODAMA_VERSION,
+                            rootVersion: node.version,
+                        });
+                    }
                     const programsToExport = getAllPrograms(node).filter(isNotInternal);
                     const programsWithConstantsToExport = programsToExport.filter(program =>
                         (program.constants ?? []).some(isNotInternal),

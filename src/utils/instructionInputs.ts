@@ -53,6 +53,7 @@ import {
     NodePath,
     parsePath,
     ProvidedScope,
+    resolveTypePath,
 } from '@codama/visitors-core';
 
 import type { ParsedCustomDataOptions } from './customData';
@@ -205,7 +206,7 @@ export function isRemainingAccountsBackedByArgument(
 ): boolean {
     const name = getRemainingAccountsName(remainingAccounts);
     if (name === undefined) return false;
-    return getAllInstructionDataFields(instructionNode).some(field => camelCase(field.identifier) === camelCase(name));
+    return getAllInstructionDataFields(instructionNode).some(field => field.identifier === name);
 }
 
 /**
@@ -331,6 +332,7 @@ export function getResolvedInstructionInputs(
     const scope = getProvidedScopeFromPath(instructionPath);
     assertNoUnsupportedInjections(instructionPath, scope, linkables);
     const entries = getInputEntries(instructionPath, scope, linkables);
+    assertSupportedDataPaths(instructionPath, entries, linkables);
     // Fields of linked data only order their dependents: they are provided as a whole
     // through the linked type, so they never appear as individual builder inputs.
     const ordered = sortEntriesByDependencies(entries.filter(isBuilderInput), entries, instructionPath).filter(
@@ -584,6 +586,60 @@ function getResolvedAccountFlags(
         default:
             return defaults;
     }
+}
+
+/**
+ * Asserts that every data path an input, byte delta or remaining accounts depends on
+ * resolves within the instruction data or extra arguments. Paths entering the data of a
+ * linked account, e.g. `mint.data.decimals`, are not supported since instruction
+ * builders only receive account addresses.
+ *
+ * @throws `CODAMA_ERROR__CANNOT_RESOLVE_PATH` when a path does not exist.
+ * @throws `CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE` when a path enters account data.
+ */
+function assertSupportedDataPaths(
+    instructionPath: NodePath<InstructionNode>,
+    entries: readonly InputEntry[],
+    linkables: LinkableDictionary,
+): void {
+    const instruction = getLastNodeFromPath(instructionPath);
+    // Each dependency is paired with the path of the node owning it, to report errors there.
+    const dependencies: { dependency: InstructionDependency; owner: NodePath }[] = [
+        ...entries.flatMap(entry => entry.dependsOn.map(dependency => ({ dependency, owner: entry.path }))),
+        ...(instruction.byteDeltas ?? []).flatMap(byteDelta =>
+            [
+                ...(getByteDeltaResolver(byteDelta)?.dependsOn ?? []),
+                ...(isNode(byteDelta.value, 'dataValueNode') ? [byteDelta.value] : []),
+            ].map(dependency => ({ dependency, owner: [...instructionPath, byteDelta] })),
+        ),
+        ...(instruction.remainingAccounts ?? []).flatMap(remainingAccounts =>
+            (getRemainingAccountsResolver(remainingAccounts)?.dependsOn ?? []).map(dependency => ({
+                dependency,
+                owner: [...instructionPath, remainingAccounts],
+            })),
+        ),
+    ];
+    dependencies.forEach(({ dependency, owner }) => {
+        if (!isNode(dependency, 'dataValueNode')) return;
+        const [root, ...rest] = parsePath(dependency.path);
+        if (root?.kind !== 'field' || rest.length === 0) return;
+        const entry = entries.find(
+            (candidate): candidate is Extract<InputEntry, { kind: 'data' }> =>
+                candidate.kind === 'data' && candidate.node.identifier === root.identifier,
+        );
+        // Unknown roots are reported with the input depending on them when ordering inputs.
+        if (!entry) return;
+        // Resolves the whole path against a struct holding only its root field.
+        const source = structTypeNode([
+            structFieldTypeNode({ identifier: entry.node.identifier, type: entry.node.type }),
+        ]);
+        const resolved = resolveTypePath([...entry.path.slice(0, -1), source], dependency.path, linkables, {
+            followAccountLinks: true,
+        });
+        if (resolved.some(node => isNode(node, 'accountNode'))) {
+            throw new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, { path: [...owner, dependency] });
+        }
+    });
 }
 
 /**

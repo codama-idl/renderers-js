@@ -4,7 +4,6 @@ import {
     CodamaError,
 } from '@codama/errors';
 import { mapFragmentContent } from '@codama/fragments';
-import { camelCase } from '@codama/fragments/casing';
 import {
     type ConstantDiscriminatorNode,
     constantDiscriminatorNode,
@@ -96,7 +95,7 @@ function getFieldConditionFragment(
     },
 ): Fragment {
     const identifier = getFieldDiscriminatorIdentifier(discriminator);
-    const field = scope.fields.find(f => camelCase(f.identifier) === camelCase(identifier));
+    const field = scope.fields.find(f => f.identifier === identifier);
     if (!field) {
         throw new CodamaError(CODAMA_ERROR__DISCRIMINATOR_FIELD_NOT_FOUND, {
             field: discriminator.path,

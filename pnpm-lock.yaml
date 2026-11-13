@@ -9,16 +9,16 @@ importers:
   .:
     dependencies:
       '@codama/errors':
-        specifier: ^2.0.0-rc.0
+        specifier: 2.0.0-rc.0
         version: 2.0.0-rc.0
       '@codama/fragments':
-        specifier: ^2.0.0-rc.0
+        specifier: 2.0.0-rc.0
         version: 2.0.0-rc.0
       '@codama/nodes':
-        specifier: ^2.0.0-rc.0
+        specifier: 2.0.0-rc.0
         version: 2.0.0-rc.0
       '@codama/visitors-core':
-        specifier: ^2.0.0-rc.0
+        specifier: 2.0.0-rc.0
         version: 2.0.0-rc.0
       '@solana/codecs-strings':
         specifier: ^8.0.0
@@ -37,10 +37,10 @@ importers:
         specifier: ^3.0.0
         version: 3.0.3
       '@codama/cli':
-        specifier: ^2.0.0-rc.0
+        specifier: 2.0.0-rc.0
         version: 2.0.0-rc.0
       '@codama/nodes-from-anchor':
-        specifier: ^2.0.0-rc.0
+        specifier: 2.0.0-rc.0
         version: 2.0.0-rc.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@7.0.2)
       '@codama/release-tools':
         specifier: github:codama-idl/release-tools#v1.3.1

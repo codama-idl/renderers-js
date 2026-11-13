@@ -139,9 +139,7 @@ export function getInstructionInputDefaultFragment(
                     }
                     if (isNode(seed, 'variablePdaSeedNode')) {
                         const typeManifest = visit(seed.type, typeManifestVisitor);
-                        const valueSeed = (defaultValue.seeds ?? []).find(
-                            s => camelCase(s.identifier) === camelCase(seed.identifier),
-                        )?.value;
+                        const valueSeed = (defaultValue.seeds ?? []).find(s => s.identifier === seed.identifier)?.value;
                         if (!valueSeed) return [];
                         if (isNode(valueSeed, 'accountValueNode')) {
                             const name = camelCase(valueSeed.identifier);

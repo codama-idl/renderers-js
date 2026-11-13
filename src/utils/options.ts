@@ -93,7 +93,7 @@ export const DEFAULT_KIT_IMPORT_STRATEGY: KitImportStrategy = 'preferRoot';
  *
  * Relative imports and re-exports normally omit their extension, which requires a bundler
  * or a resolver that can guess it. Setting this option makes those specifiers explicit:
- * generated files are referenced as `./myAccount.<ext>` and generated directories as
+ * generated files are referenced as `./my-account.<ext>` and generated directories as
  * `./accounts/index.<ext>`. Only paths the renderer generates itself are rewritten, so
  * paths provided through {@link GetRenderMapOptions.dependencyMap} or
  * {@link GetRenderMapOptions.linkOverrides} are emitted verbatim and non-relative specifiers —
@@ -114,7 +114,7 @@ export const DEFAULT_KIT_IMPORT_STRATEGY: KitImportStrategy = 'preferRoot';
  * ```ts
  * // With `importExtension: 'js'`.
  * import { type MyType } from '../types/index.js';
- * export * from './myAccount.js';
+ * export * from './my-account.js';
  * ```
  */
 export type ImportExtension = 'js' | 'ts';

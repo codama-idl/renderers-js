@@ -115,7 +115,7 @@ export function getFieldDiscriminatorConstantFragment(
     const { fields, prefix, typeManifestVisitor } = scope;
 
     const identifier = getFieldDiscriminatorIdentifier(discriminatorNode);
-    const field = fields.find(f => camelCase(f.identifier) === camelCase(identifier));
+    const field = fields.find(f => f.identifier === identifier);
     if (!field || !field.defaultValue || !isNode(field.defaultValue, VALUE_NODE_KINDS)) {
         return null;
     }

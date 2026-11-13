@@ -63,10 +63,10 @@
         "test:unit": "vitest run"
     },
     "dependencies": {
-        "@codama/errors": "^2.0.0-rc.0",
-        "@codama/fragments": "^2.0.0-rc.0",
-        "@codama/nodes": "^2.0.0-rc.0",
-        "@codama/visitors-core": "^2.0.0-rc.0",
+        "@codama/errors": "2.0.0-rc.0",
+        "@codama/fragments": "2.0.0-rc.0",
+        "@codama/nodes": "2.0.0-rc.0",
+        "@codama/visitors-core": "2.0.0-rc.0",
         "@solana/codecs-strings": "^8.0.0",
         "prettier": "^3.8.1",
         "semver": "^7.7.3"
@@ -74,8 +74,8 @@
     "devDependencies": {
         "@changesets/changelog-github": "^1.0.0",
         "@changesets/cli": "^3.0.0",
-        "@codama/cli": "^2.0.0-rc.0",
-        "@codama/nodes-from-anchor": "^2.0.0-rc.0",
+        "@codama/cli": "2.0.0-rc.0",
+        "@codama/nodes-from-anchor": "2.0.0-rc.0",
         "@codama/release-tools": "github:codama-idl/release-tools#v1.3.1",
         "@solana-config/oxc": "^0.1.1",
         "@solana/kit": "^8.5.0",

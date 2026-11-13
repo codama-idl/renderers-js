@@ -1,3 +1,4 @@
+import { CODAMA_ERROR__DISCRIMINATOR_FIELD_NOT_FOUND } from '@codama/errors';
 import { getFromRenderMap } from '@codama/fragments';
 import { snakeCase } from '@codama/fragments/casing';
 import {
@@ -254,4 +255,32 @@ test('it emits camelCase names for nodes whose names are not camelCase', () => {
             /\b(token_owner|fee_config|account_state|external_state|max_fee|source_account|transfer_tokens|my_program|transfer_event|close_authority|expected_amount|transfer_amount)\b/,
         );
     });
+});
+
+test('it matches references within the IDL to identifiers exactly', () => {
+    // Given a field discriminator whose path differs from its field only by casing.
+    const node = programNode({
+        accounts: [
+            accountNode({
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: integerValueNode('1'),
+                        identifier: 'account_key',
+                        type: integerTypeNode('u8'),
+                    }),
+                ]),
+                discriminators: [fieldDiscriminatorNode('accountKey')],
+                identifier: 'counter',
+            }),
+        ],
+        identifier: 'myProgram',
+        publicKey: '1111',
+    });
+
+    // Then rendering fails to find the discriminator field, as resolving that path in Codama core would.
+    expect(() => visit(node, getRenderMapVisitor())).toThrow(
+        expect.objectContaining({
+            context: expect.objectContaining({ __code: CODAMA_ERROR__DISCRIMINATOR_FIELD_NOT_FOUND }),
+        }),
+    );
 });

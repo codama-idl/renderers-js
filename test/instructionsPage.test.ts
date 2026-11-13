@@ -1,6 +1,15 @@
-import { CODAMA_ERROR__INJECTED_VALUE_NOT_PROVIDED, CodamaError } from '@codama/errors';
+import {
+    CODAMA_ERROR__CANNOT_RESOLVE_PATH,
+    CODAMA_ERROR__INJECTED_VALUE_NOT_PROVIDED,
+    CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE,
+    CodamaError,
+    type CodamaErrorCode,
+    isCodamaError,
+} from '@codama/errors';
 import { getFromRenderMap } from '@codama/fragments';
 import {
+    accountLinkNode,
+    accountNode,
     accountValueNode,
     addTypeNodeTransforms,
     arrayTypeNode,
@@ -25,6 +34,7 @@ import {
     instructionRemainingAccountsNode,
     integerTypeNode,
     integerValueNode,
+    payerValueNode,
     pdaLinkNode,
     pdaNode,
     pdaSeedValueNode,
@@ -1369,3 +1379,105 @@ test('it passes linked instruction data to resolvers depending on its fields', a
         'data: getTransferArgsEncoder().encode(args as TransferArgsArgs)',
     ]);
 });
+
+test('it resolves the injected defaults of sub-instructions against the values provided by their parents', async () => {
+    // Given a parent instruction providing a value injected into its sub-instruction.
+    const node = rootNode(
+        programNode({
+            identifier: 'myProgram',
+            instructions: [
+                instructionNode({
+                    identifier: 'parent',
+                    provides: [providedNode('authority', payerValueNode())],
+                    subInstructions: [
+                        instructionNode({
+                            accounts: [
+                                instructionAccountNode({
+                                    defaultValue: injectedValueNode({ key: 'authority' }),
+                                    identifier: 'authority',
+                                    isSigner: true,
+                                    isWritable: false,
+                                }),
+                            ],
+                            identifier: 'child',
+                        }),
+                    ],
+                }),
+            ],
+            publicKey: '1111',
+        }),
+    );
+
+    // When we render it, with or without parent instructions.
+    for (const renderParentInstructions of [false, true]) {
+        const renderMap = visit(node, getRenderMapVisitor({ renderParentInstructions }));
+
+        // Then the sub-instruction resolves the value provided by its parent: the payer is a required signer input.
+        await renderMapContains(renderMap, 'instructions/child.ts', ['authority: TAccountAuthority;']);
+        await renderMapDoesNotContain(renderMap, 'instructions/child.ts', ['authority?:']);
+        expect(renderMap.has('instructions/parent.ts')).toBe(renderParentInstructions);
+    }
+});
+
+/** A program with a `vault` account resolver depending on the given data path of a `transfer` instruction. */
+function getProgramWithResolverDependency(dependency: string) {
+    const vault = instructionAccountNode({
+        identifier: 'vault',
+        isSigner: false,
+        isWritable: true,
+        plugins: [pluginNode('codama.resolver', { dependsOn: [dependency], name: 'resolveVault' })],
+    });
+    const node = programNode({
+        accounts: [
+            accountNode({
+                data: structTypeNode([structFieldTypeNode({ identifier: 'decimals', type: integerTypeNode('u8') })]),
+                identifier: 'mint',
+            }),
+        ],
+        identifier: 'myProgram',
+        instructions: [
+            instructionNode({
+                accounts: [vault],
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        identifier: 'mint',
+                        type: publicKeyTypeNode({ accountLink: accountLinkNode('mint') }),
+                    }),
+                ]),
+                identifier: 'transfer',
+            }),
+        ],
+        publicKey: '1111',
+    });
+    return { node, vault };
+}
+
+test('it fails on data paths that enter the data of a linked account', () => {
+    // Given an account resolver depending on the data of the account a data field links to.
+    const { node, vault } = getProgramWithResolverDependency('data.mint.data.decimals');
+
+    // Then rendering fails on that dependency, reported on the account owning it.
+    const error = getCodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, () => visit(node, getRenderMapVisitor()));
+    expect(error.context.path.at(-2)).toBe(vault);
+    expect(error.context.path.at(-1)).toStrictEqual(dataValueNode('mint.data.decimals'));
+});
+
+test('it fails on nested data paths that do not exist', () => {
+    // Given an account resolver depending on a nested data path that does not exist.
+    const { node } = getProgramWithResolverDependency('data.mint.typo');
+
+    // Then rendering fails to resolve that path.
+    const error = getCodamaError(CODAMA_ERROR__CANNOT_RESOLVE_PATH, () => visit(node, getRenderMapVisitor()));
+    expect(error.context.pathString).toBe('mint.typo');
+});
+
+/** The Codama error thrown by the given function, failing if it does not throw one with that code. */
+function getCodamaError<TCode extends CodamaErrorCode>(code: TCode, fn: () => unknown) {
+    try {
+        fn();
+    } catch (error) {
+        if (isCodamaError(error, code)) return error;
+        throw error;
+    }
+    throw new Error(`Expected a Codama error with code ${code} to be thrown.`);
+}
