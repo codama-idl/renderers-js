@@ -5,6 +5,7 @@
  */
 
 import {
+    FloatFormat,
     IntegerFormat,
     IntegerTypeNode,
     isNode,
@@ -18,10 +19,17 @@ import { getLastNodeFromPath, LinkableDictionary, NodePath } from '@codama/visit
 
 /**
  * Whether an integer type is the default one for prefixes and sizes, i.e. a
- * little-endian integer of the given format without any transform.
+ * little-endian integer of the given format without any transform. The byte
+ * order of formats that have none, such as `u8`, is ignored.
  */
 export function isDefaultIntegerType(node: IntegerTypeNode, format: IntegerFormat): boolean {
-    return node.format === format && (node.endian ?? 'le') === 'le' && (node.transforms ?? []).length === 0;
+    const isLittleEndian = !hasByteOrder(node.format) || (node.endian ?? 'le') === 'le';
+    return node.format === format && isLittleEndian && (node.transforms ?? []).length === 0;
+}
+
+/** Whether an integer or float format has a byte order, unlike single-byte and variable-length formats. */
+export function hasByteOrder(format: FloatFormat | IntegerFormat): boolean {
+    return !['i8', 'shortU16', 'u8'].includes(format);
 }
 
 /** The integer formats rendered as `bigint` in TypeScript. */

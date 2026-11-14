@@ -31,6 +31,7 @@ export function getAccountPageFragment(
                 ...scope,
                 discriminatorNodes: node.discriminators ?? [],
                 fields,
+                path: scope.accountPath,
                 prefix: node.identifier,
             }),
             getAccountTypeFragment({ ...scope, typeManifest }),

@@ -12,5 +12,6 @@ export * from './linkOverrides';
 export * from './nameTransformers';
 export * from './options';
 export * from './packageJson';
+export * from './typedValues';
 export * from './typeManifest';
 export * from './typeNodes';
