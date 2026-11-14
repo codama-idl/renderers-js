@@ -6,7 +6,7 @@ import { Fragment, RenderScope } from '../utils';
 import { getPdaFunctionFragment } from './pdaFunction';
 
 export function getPdaPageFragment(
-    scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         pdaPath: NodePath<PdaNode>;
     },
 ): Fragment {

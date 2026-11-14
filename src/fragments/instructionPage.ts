@@ -59,6 +59,7 @@ export function getInstructionPageFragment(
                 ...childScope,
                 discriminatorNodes: node.discriminators ?? [],
                 fields: getInstructionDataFields(node),
+                path: childScope.instructionPath,
                 prefix: node.identifier,
             }),
             getInstructionTypeFragment(childScope),

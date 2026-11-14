@@ -28,7 +28,7 @@ import {
 import {
     extendVisitor,
     findLastNodeFromPath,
-    getLastNodeFromPath,
+    getByteSizeVisitor,
     interceptVisitor,
     LinkableDictionary,
     NodeStack,
@@ -54,12 +54,16 @@ import {
     getInstructionDataLink,
     getInstructionDataNode,
     getIntegerLiteral,
+    getEnumValueType,
     getStructFieldCodecDefault,
+    getTypedValueFragment,
     getTypeNodeTransforms,
     hasCustomEnumVariantDiscriminators,
     type GetImportFromFunction,
+    hasByteOrder,
     isBigIntegerFormat,
     isDefaultIntegerType,
+    isScalarEnumValue,
     isStructFieldCodecDefaultOverridable,
     mergeFragments,
     mergeTypeManifests,
@@ -101,12 +105,13 @@ export function getTypeManifestVisitor(input: {
         erasableSyntax = false,
     } = input;
     const stack = input.stack ?? new NodeStack();
+    const byteSizeVisitor = getByteSizeVisitor(linkables, { stack });
     let parentName: { loose: string; strict: string } | null = null;
 
     /**
-     * Finds the name of the discriminator constant matching the provided constant value,
-     * when visited inside an event whose constant discriminators include it — so codecs
-     * and conditions can render `MY_EVENT_DISCRIMINATOR` instead of inline bytes.
+     * Finds the camel-case name of the discriminator constant matching the provided constant
+     * value, when visited inside an event whose constant discriminators include it — so codecs
+     * and conditions can reference the discriminator constant instead of inline bytes.
      */
     const getEventDiscriminatorConstantName = (constant: ConstantValueNode): string | null => {
         const eventNode = findLastNodeFromPath(stack.getPath(), 'eventNode');
@@ -120,7 +125,7 @@ export function getTypeManifestVisitor(input: {
         );
         if (index < 0) return null;
         const prefix = getEventDiscriminatorPrefix(nameApi, eventNode.identifier);
-        return nameApi.constant(getConstantDiscriminatorName(prefix, index));
+        return getConstantDiscriminatorName(prefix, index);
     };
 
     /**
@@ -299,19 +304,31 @@ export function getTypeManifestVisitor(input: {
                 },
 
                 visitConstantValue(node, { self }) {
-                    const discriminatorConstantName = getEventDiscriminatorConstantName(node);
-                    if (discriminatorConstantName) {
-                        return typeManifest({ value: fragment`${discriminatorConstantName}` });
-                    }
                     // Raw bytes are their own encoding, unless transforms alter it, e.g. a fixed size.
                     const isRawBytes =
-                        isNode(node.type, 'bytesTypeNode') && getTypeNodeTransforms(node.type).length === 0;
-                    if (isRawBytes && isNode(node.value, 'bytesValueNode')) {
+                        isNode(node.type, 'bytesTypeNode') &&
+                        getTypeNodeTransforms(node.type).length === 0 &&
+                        isNode(node.value, 'bytesValueNode');
+                    const discriminatorConstantName = getEventDiscriminatorConstantName(node);
+                    if (discriminatorConstantName) {
+                        // The discriminator constant holds the value, which is only its encoded bytes
+                        // when it encodes as itself; otherwise, its function returns the encoded bytes.
+                        return typeManifest({
+                            value: isConstantEncodedAsItsValue(node)
+                                ? fragment`${nameApi.constant(discriminatorConstantName)}`
+                                : fragment`${nameApi.constantFunction(discriminatorConstantName)}()`,
+                        });
+                    }
+                    if (isRawBytes) {
                         return visit(node.value, self);
                     }
-                    return typeManifest({
-                        value: fragment`${visit(node.type, self).encoder}.encode(${visit(node.value, self).value})`,
+                    const value = getTypedValueFragment(node.value, node.type, {
+                        linkables,
+                        loose: true,
+                        path: stack.getPath(),
+                        typeManifestVisitor: self,
                     });
+                    return typeManifest({ value: fragment`${visit(node.type, self).encoder}.encode(${value})` });
                 },
 
                 visitDateTimeType(dateTimeType, { self }) {
@@ -352,11 +369,19 @@ export function getTypeManifestVisitor(input: {
                     const encoderOptions: Fragment[] = [];
                     const decoderOptions: Fragment[] = [];
                     const variants = enumType.variants ?? [];
+                    // Scalar enums render as native enums named after the defined type, account or
+                    // event they describe. Enums nested within another type have no name to declare,
+                    // so they render as data unions.
+                    const path = stack.getPath();
+                    const isScalar =
+                        isScalarEnum(enumType) &&
+                        currentParentName !== null &&
+                        isNode(path[path.length - 2], ['accountNode', 'definedTypeNode', 'eventNode']);
                     const hasCustomDiscriminators = hasCustomEnumVariantDiscriminators(variants);
                     const discriminators = getEnumVariantDiscriminators(variants);
 
                     const hasDefaultSize = isDefaultIntegerType(enumType.size, 'u8');
-                    if (hasCustomDiscriminators && !isScalarEnum(enumType)) {
+                    if (hasCustomDiscriminators && !isScalar) {
                         // The discriminated union codec writes the position of the variant as its
                         // prefix, so the prefix codec maps that position to the custom discriminator.
                         const sizeManifest = visit(enumType.size, self);
@@ -372,7 +397,7 @@ export function getTypeManifestVisitor(input: {
                         encoderOptions.push(fragment`size: ${sizeManifest.encoder}`);
                         decoderOptions.push(fragment`size: ${sizeManifest.decoder}`);
                     }
-                    if (hasCustomDiscriminators && isScalarEnum(enumType)) {
+                    if (hasCustomDiscriminators && isScalar) {
                         encoderOptions.push(fragment`useValuesAsDiscriminators: true`);
                         decoderOptions.push(fragment`useValuesAsDiscriminators: true`);
                     }
@@ -380,7 +405,7 @@ export function getTypeManifestVisitor(input: {
                     const discriminator = nameApi.discriminatedUnionDiscriminator(
                         camelCase(currentParentName?.strict ?? ''),
                     );
-                    if (!isScalarEnum(enumType) && discriminator !== '__kind') {
+                    if (!isScalar && discriminator !== '__kind') {
                         encoderOptions.push(fragment`discriminator: '${discriminator}'`);
                         decoderOptions.push(fragment`discriminator: '${discriminator}'`);
                     }
@@ -392,14 +417,7 @@ export function getTypeManifestVisitor(input: {
                         cs.length > 0 ? `, { ${cs.join(', ')} }` : '',
                     );
 
-                    if (isScalarEnum(enumType)) {
-                        if (currentParentName === null) {
-                            throw new Error(
-                                'Scalar enums cannot be inlined and must be introduced ' +
-                                    'via a defined type. Ensure you are not inlining a ' +
-                                    'defined type that is a scalar enum through a visitor.',
-                            );
-                        }
+                    if (isScalar && currentParentName !== null) {
                         const variantNames = variants.map(({ identifier }) => nameApi.enumVariant(identifier));
                         const body = getEnumBody(
                             variantNames,
@@ -441,14 +459,8 @@ export function getTypeManifestVisitor(input: {
                     const enumFunction = nameApi.discriminatedUnionFunction(node.enum.identifier);
                     const importFrom = getImportFrom(node.enum);
 
-                    const enumPath = linkables.getPath([...stack.getPath(), node.enum]);
-                    const enumNode = enumPath ? getLastNodeFromPath(enumPath).type : undefined;
-                    const enumType = enumNode && isNode(enumNode, 'enumTypeNode') ? enumNode : undefined;
-                    const isScalar = enumType
-                        ? isScalarEnum(enumType)
-                        : !nonScalarEnums.includes(camelCase(node.enum.identifier));
-
-                    if (!node.value && isScalar) {
+                    const { enumPath, enumType } = getEnumValueType(node, stack.getPath(), linkables) ?? {};
+                    if (isScalarEnumValue(node, stack.getPath(), { linkables, nonScalarEnums })) {
                         const variantName = nameApi.enumVariant(node.variant);
                         return typeManifest({
                             ...manifest,
@@ -480,10 +492,19 @@ export function getTypeManifestVisitor(input: {
                         !!enumType &&
                         !!variant &&
                         getEnumVariantDataShape(variant.data, [...enumPath, enumType, variant], linkables) === 'single';
+                    const payload =
+                        enumPath && variant?.data
+                            ? getTypedValueFragment(node.value, variant.data, {
+                                  linkables,
+                                  loose: true,
+                                  path: enumPath,
+                                  typeManifestVisitor: self,
+                              })
+                            : visit(node.value, self).value;
                     return typeManifest({
                         ...manifest,
                         value: pipe(
-                            visit(node.value, self).value,
+                            payload,
                             f => (isSingleValue ? mapFragmentContent(f, c => `[${c}]`) : f),
                             f => mapFragmentContent(f, c => `${enumFunction}('${variantName}', ${c})`),
                             f => addFragmentImports(f, importFrom, [enumFunction]),
@@ -783,12 +804,13 @@ export function getTypeManifestVisitor(input: {
                         return mergedManifest;
                     }
 
-                    // Check if we are inside an instruction, account or event to use discriminator constants when available.
-                    const parentPath = stack.getPath();
-                    const instructionNode = findLastNodeFromPath(parentPath, 'instructionNode');
-                    const accountNode = findLastNodeFromPath(parentPath, 'accountNode');
-                    const eventNode = findLastNodeFromPath(parentPath, 'eventNode');
-                    const discriminatorParent = instructionNode ?? accountNode ?? eventNode;
+                    // Use discriminator constants when this struct is the data of an instruction, account
+                    // or event, rather than a struct nested within it.
+                    const path = stack.getPath();
+                    const parent = path[path.length - 2];
+                    const discriminatorParent = isNode(parent, ['instructionNode', 'accountNode', 'eventNode'])
+                        ? parent
+                        : undefined;
                     const discriminatorPrefix =
                         discriminatorParent && isNode(discriminatorParent, 'eventNode')
                             ? getEventDiscriminatorPrefix(nameApi, discriminatorParent.identifier)
@@ -811,7 +833,12 @@ export function getTypeManifestVisitor(input: {
                             }
 
                             const defaultValue = getStructFieldCodecDefault(f)!;
-                            const value = visit(defaultValue, self).value;
+                            const value = getTypedValueFragment(defaultValue, f.type, {
+                                linkables,
+                                loose: true,
+                                path: stack.getPath(),
+                                typeManifestVisitor: self,
+                            });
                             return !isStructFieldCodecDefaultOverridable(f)
                                 ? fragment`${key}: ${value}`
                                 : fragment`${key}: value.${key} ?? ${value}`;
@@ -819,9 +846,19 @@ export function getTypeManifestVisitor(input: {
                         cs => cs.join(', '),
                     );
 
+                    // The encoder of a named type gets the type of its value from its return type, whilst
+                    // nested encoders, e.g. within another struct, need their value to be annotated.
+                    const isNamedType = isNode(parent, [
+                        'accountNode',
+                        'definedTypeNode',
+                        'eventNode',
+                        'instructionNode',
+                    ]);
+                    const valueParameter = isNamedType ? fragment`value` : fragment`value: ${mergedManifest.looseType}`;
+
                     return typeManifest({
                         ...mergedManifest,
-                        encoder: fragment`${use('transformEncoder', 'solanaCodecsCore')}(${mergedManifest.encoder}, (value) => ({ ...value, ${defaultValues} }))`,
+                        encoder: fragment`${use('transformEncoder', 'solanaCodecsCore')}(${mergedManifest.encoder}, (${valueParameter}) => ({ ...value, ${defaultValues} }))`,
                     });
                 },
 
@@ -875,13 +912,22 @@ export function getTypeManifestVisitor(input: {
                         cs.length > 0 ? `, { ${cs.join(', ')} }` : '',
                     );
 
-                    return typeManifest({
+                    const manifest = typeManifest({
                         ...childManifest,
                         decoder: fragment`${use('getOptionDecoder', 'solanaOptions')}(${childManifest.decoder}${decoderOptionsFragment})`,
                         encoder: fragment`${use('getOptionEncoder', 'solanaOptions')}(${childManifest.encoder}${encoderOptionsFragment})`,
                         looseType: fragment`${use('type OptionOrNullable', 'solanaOptions')}<${childManifest.looseType}>`,
                         strictType: fragment`${use('type Option', 'solanaOptions')}<${childManifest.strictType}>`,
                     });
+
+                    // Option codecs with a custom none value are typed as variable-size, although they
+                    // have a fixed size when the none value has the size of the item.
+                    if (!node.zeroValue) return manifest;
+                    const itemSize = visit(node.item, byteSizeVisitor);
+                    const zeroValueSize = visit(node.zeroValue, byteSizeVisitor);
+                    return itemSize !== null && itemSize === zeroValueSize
+                        ? applyFixedSize(manifest, itemSize)
+                        : manifest;
                 },
             }),
         // Type nodes carry their transforms, which wrap the codecs of the type itself.
@@ -895,6 +941,18 @@ export function getTypeManifestVisitor(input: {
     );
 }
 
+/**
+ * Whether a constant encodes as its own value: bytes whose only transforms fix their
+ * size to their length, e.g. the 8-byte discriminators of Anchor programs.
+ */
+function isConstantEncodedAsItsValue(node: ConstantValueNode): boolean {
+    if (!isNode(node.type, 'bytesTypeNode') || !isNode(node.value, 'bytesValueNode')) return false;
+    const length = getBytesFromBytesValueNode(node.value).length;
+    return getTypeNodeTransforms(node.type).every(
+        transform => isNode(transform, 'fixedSizeTransformNode') && transform.size === length,
+    );
+}
+
 /** Renders the codecs and types of a number from its format and endianness. */
 function renderNumberType(
     format: FloatFormat | IntegerFormat,
@@ -904,7 +962,11 @@ function renderNumberType(
     const encoderFunction = use(nameApi.encoderFunction(format), 'solanaCodecsNumbers');
     const decoderFunction = use(nameApi.decoderFunction(format), 'solanaCodecsNumbers');
     const isBigNumber = format !== 'f32' && format !== 'f64' && isBigIntegerFormat(format);
-    const endianness = endian === 'be' ? fragment`{ endian: ${use('Endian', 'solanaCodecsNumbers')}.Big }` : '';
+    // Single-byte and variable-length formats have no byte order, so their codecs take no endianness.
+    const endianness =
+        hasByteOrder(format) && endian === 'be'
+            ? fragment`{ endian: ${use('Endian', 'solanaCodecsNumbers')}.Big }`
+            : '';
     return typeManifest({
         decoder: fragment`${decoderFunction}(${endianness})`,
         encoder: fragment`${encoderFunction}(${endianness})`,

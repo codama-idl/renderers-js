@@ -48,7 +48,7 @@
         "build": "rimraf dist && tsup && tsc -p ./tsconfig.declarations.json",
         "build:e2e": "rimraf test/e2e/dist test/e2e/node-esm/dist && tsup --config test/e2e/tsup.config.ts && tsc --noEmit -p test/e2e/tsconfig.json && tsc -p test/e2e/tsconfig.node-esm.json",
         "dev": "vitest --project node",
-        "generate:e2e": "codama run --all --config test/e2e/anchor/codama.json && codama run --all --config test/e2e/dummy/codama.json && codama run --all --config test/e2e/memo/codama.json && codama run --all --config test/e2e/node-esm/codama.json && codama run --all --config test/e2e/system/codama.json && codama run --all --config test/e2e/token/codama.json",
+        "generate:e2e": "codama run --all --config test/e2e/anchor/codama.json && codama run --all --config test/e2e/dummy/codama.json && codama run --all --config test/e2e/memo/codama.json && codama run --all --config test/e2e/node-esm/codama.json && codama run --all --config test/e2e/system/codama.json && codama run --all --config test/e2e/token/codama.json && codama run --all --config test/e2e/types/codama.json",
         "format": "oxfmt --check",
         "format:fix": "oxfmt",
         "lint": "oxlint",

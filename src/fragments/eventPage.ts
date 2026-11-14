@@ -15,7 +15,7 @@ import { getTypeWithCodecFragment } from './typeWithCodec';
  * @returns A {@link Fragment} containing the full event page.
  */
 export function getEventPageFragment(
-    scope: Pick<RenderScope, 'erasableSyntax' | 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<RenderScope, 'erasableSyntax' | 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         eventPath: NodePath<EventNode>;
         size: number | null;
     },
@@ -36,6 +36,7 @@ export function getEventPageFragment(
                 ...scope,
                 discriminatorNodes: node.discriminators ?? [],
                 fields,
+                path: scope.eventPath,
                 prefix: getEventDiscriminatorPrefix(nameApi, node.identifier),
             }),
             getTypeWithCodecFragment({

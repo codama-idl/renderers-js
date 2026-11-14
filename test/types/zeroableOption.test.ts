@@ -60,8 +60,9 @@ test('it renders zeroable option codecs with custom zero values', async () => {
     await renderMapContains(renderMap, 'types/my-type.ts', [
         'export type MyType = Option<number>',
         'export type MyTypeArgs = OptionOrNullable<number>',
-        'getOptionEncoder( getU16Encoder(), { prefix: null, noneValue: new Uint8Array([255, 255]) } )',
-        'getOptionDecoder( getU16Decoder(), { prefix: null, noneValue: new Uint8Array([255, 255]) } )',
+        'export function getMyTypeEncoder(): FixedSizeEncoder<MyTypeArgs>',
+        'fixEncoderSize( getOptionEncoder( getU16Encoder(), { prefix: null, noneValue: new Uint8Array([255, 255]) } ), 2 )',
+        'fixDecoderSize( getOptionDecoder( getU16Decoder(), { prefix: null, noneValue: new Uint8Array([255, 255]) } ), 2 )',
     ]);
 
     // And we expect the following codec imports.

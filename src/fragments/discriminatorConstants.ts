@@ -1,21 +1,20 @@
-import { mapFragmentContent } from '@codama/fragments';
 import { camelCase } from '@codama/fragments/casing';
 import {
     ConstantDiscriminatorNode,
     DiscriminatorNode,
     FieldDiscriminatorNode,
-    isNode,
     isNodeFilter,
     StructFieldTypeNode,
-    VALUE_NODE_KINDS,
+    TypeNode,
+    ValueNode,
 } from '@codama/nodes';
-import { visit } from '@codama/visitors-core';
+import { NodePath, visit } from '@codama/visitors-core';
 
 import {
     Fragment,
     fragment,
-    getBigIntLiteral,
     getFieldDiscriminatorIdentifier,
+    getTypedValueFragment,
     mergeFragments,
     NameApi,
     RenderScope,
@@ -23,9 +22,10 @@ import {
 } from '../utils';
 
 export function getDiscriminatorConstantsFragment(
-    scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         discriminatorNodes: DiscriminatorNode[];
         fields: StructFieldTypeNode[];
+        path: NodePath;
         prefix: string;
     },
 ): Fragment {
@@ -38,9 +38,10 @@ export function getDiscriminatorConstantsFragment(
 
 export function getDiscriminatorConstantFragment(
     discriminatorNode: DiscriminatorNode,
-    scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         discriminatorNodes: DiscriminatorNode[];
         fields: StructFieldTypeNode[];
+        path: NodePath;
         prefix: string;
     },
 ): Fragment | null {
@@ -86,67 +87,56 @@ export function getEventDiscriminatorPrefix(nameApi: NameApi, eventName: string)
 
 export function getConstantDiscriminatorConstantFragment(
     discriminatorNode: ConstantDiscriminatorNode,
-    scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         discriminatorNodes: DiscriminatorNode[];
+        path: NodePath;
         prefix: string;
     },
 ): Fragment | null {
-    const { discriminatorNodes, typeManifestVisitor, prefix } = scope;
+    const { discriminatorNodes, prefix } = scope;
 
     const index = discriminatorNodes.filter(isNodeFilter('constantDiscriminatorNode')).indexOf(discriminatorNode);
     const name = getConstantDiscriminatorName(prefix, index);
-    const typeManifest = visit(discriminatorNode.constant.type, typeManifestVisitor);
-    const encoder = typeManifest.encoder;
-    const { value, valueType } = resolveDiscriminatorValue(
-        visit(discriminatorNode.constant.value, typeManifestVisitor).value,
-        isNode(discriminatorNode.constant.value, 'integerValueNode'),
-        typeManifest.strictType,
-    );
-    return getConstantFragment({ ...scope, encoder, name, value, valueType });
+    const { type, value } = discriminatorNode.constant;
+    return getConstantFragment({ ...scope, name, type, value });
 }
 
 export function getFieldDiscriminatorConstantFragment(
     discriminatorNode: FieldDiscriminatorNode,
-    scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         fields: StructFieldTypeNode[];
+        path: NodePath;
         prefix: string;
     },
 ): Fragment | null {
-    const { fields, prefix, typeManifestVisitor } = scope;
+    const { fields, prefix } = scope;
 
     const identifier = getFieldDiscriminatorIdentifier(discriminatorNode);
     const field = fields.find(f => f.identifier === identifier);
-    if (!field || !field.defaultValue || !isNode(field.defaultValue, VALUE_NODE_KINDS)) {
+    if (!field?.defaultValue) {
         return null;
     }
 
     const name = camelCase(`${prefix}_${identifier}`);
-    const typeManifest = visit(field.type, typeManifestVisitor);
-    const encoder = typeManifest.encoder;
-    const { value, valueType } = resolveDiscriminatorValue(
-        visit(field.defaultValue, typeManifestVisitor).value,
-        isNode(field.defaultValue, 'integerValueNode'),
-        typeManifest.strictType,
-    );
-    return getConstantFragment({ ...scope, encoder, name, value, valueType });
-}
-
-function resolveDiscriminatorValue(rawValue: Fragment, isIntegerValue: boolean, strictType: Fragment) {
-    const value =
-        strictType.content === 'bigint' && isIntegerValue ? mapFragmentContent(rawValue, getBigIntLiteral) : rawValue;
-    const needsTypeAnnotation = !['string', 'number', 'boolean', 'bigint'].includes(strictType.content);
-    return { value, valueType: needsTypeAnnotation ? strictType : undefined };
+    return getConstantFragment({ ...scope, name, type: field.type, value: field.defaultValue });
 }
 
 function getConstantFragment(
-    scope: Pick<RenderScope, 'nameApi'> & {
-        encoder: Fragment;
+    scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         name: string;
-        value: Fragment;
-        valueType?: Fragment;
+        path: NodePath;
+        type: TypeNode;
+        value: ValueNode;
     },
 ): Fragment {
-    const { encoder, name, nameApi, value, valueType } = scope;
+    const { linkables, name, nameApi, path, type, typeManifestVisitor } = scope;
+    const typeManifest = visit(type, typeManifestVisitor);
+    const encoder = typeManifest.encoder;
+    const value = getTypedValueFragment(scope.value, type, { linkables, path, typeManifestVisitor });
+    // Primitive values are inferred, whilst others are annotated with their strict type.
+    const strictType = typeManifest.strictType;
+    const isPrimitive = ['string', 'number', 'boolean', 'bigint'].includes(strictType.content);
+    const valueType = isPrimitive ? undefined : strictType;
     const constantName = nameApi.constant(name);
     const constantFunction = nameApi.constantFunction(name);
     const readonlyUint8Array = use('type ReadonlyUint8Array', 'solanaCodecsCore');
