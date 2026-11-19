@@ -2,6 +2,7 @@ import {
     CODAMA_ERROR__CANNOT_RESOLVE_PATH,
     CODAMA_ERROR__INJECTED_VALUE_NOT_PROVIDED,
     CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE,
+    CODAMA_ERROR__VISITORS__INVALID_PDA_SEED_VALUES,
     CodamaError,
     type CodamaErrorCode,
     isCodamaError,
@@ -30,6 +31,7 @@ import {
     identifierString,
     injectedValueNode,
     instructionAccountNode,
+    instructionByteDeltaNode,
     instructionNode,
     instructionRemainingAccountsNode,
     integerTypeNode,
@@ -52,10 +54,11 @@ import {
     structTypeNode,
     variablePdaSeedNode,
 } from '@codama/nodes';
-import { visit } from '@codama/visitors-core';
+import { getLinkablesFromNode, visit } from '@codama/visitors-core';
 import { expect, test } from 'vitest';
 
 import { getRenderMapVisitor } from '../src';
+import { getResolvedInstructionInputs } from '../src/utils';
 import {
     codeContains,
     codeDoesNotContain,
@@ -209,7 +212,7 @@ test('it renders extra arguments that default on each other', async () => {
     // Then we expect the following code to be rendered.
     await renderMapContains(renderMap, 'instructions/create.ts', [
         'const args = { ...input }',
-        "if (!args.foo) { args.foo = getNonNullResolvedInstructionInput ( 'bar', args.bar ); }",
+        "if (args.foo === undefined) { args.foo = getNonNullResolvedInstructionInput ( 'bar', args.bar ); }",
     ]);
 });
 
@@ -485,7 +488,7 @@ test('it renders instruction arguments with linked PDA default values that forwa
 
     // Then we expect the argument default to use the program address of the instruction.
     await renderMapContains(renderMap, 'instructions/increment.ts', [
-        'if (!args.counterAddress) { args.counterAddress = await findCounterPda({ programAddress }); }',
+        'if (args.counterAddress === undefined) { args.counterAddress = await findCounterPda({ programAddress }); }',
     ]);
 });
 
@@ -1336,7 +1339,7 @@ test('it fills in omitted data fields with their resolver without exposing them 
     // Then the fee is resolved but not part of the input type.
     await renderMapContains(renderMap, 'instructions/transfer.ts', [
         "export type TransferInput = { amount: TransferInstructionDataArgs['amount']; }",
-        'if (!args.fee) { args.fee = resolveFee(resolverScope); }',
+        'if (args.fee === undefined) { args.fee = resolveFee(resolverScope); }',
     ]);
 });
 
@@ -1481,3 +1484,189 @@ function getCodamaError<TCode extends CodamaErrorCode>(code: TCode, fn: () => un
     }
     throw new Error(`Expected a Codama error with code ${code} to be thrown.`);
 }
+
+test('it fails on inline PDA defaults missing a seed value', () => {
+    // Given an account defaulting to an inline PDA without a value for its variable seed.
+    const node = programNode({
+        identifier: 'myProgram',
+        instructions: [
+            instructionNode({
+                accounts: [
+                    instructionAccountNode({
+                        defaultValue: pdaValueNode(
+                            pdaNode({
+                                identifier: 'vault',
+                                seeds: [variablePdaSeedNode('owner', publicKeyTypeNode())],
+                            }),
+                        ),
+                        identifier: 'vault',
+                        isSigner: false,
+                        isWritable: true,
+                    }),
+                ],
+                identifier: 'initialize',
+            }),
+        ],
+        publicKey: '1111',
+    });
+
+    // Then rendering fails rather than deriving another address.
+    expect(() => visit(node, getRenderMapVisitor())).toThrow(
+        expect.objectContaining({
+            context: expect.objectContaining({ __code: CODAMA_ERROR__VISITORS__INVALID_PDA_SEED_VALUES }),
+        }),
+    );
+});
+
+test('it extracts the data of sub-instructions as defined types', async () => {
+    // Given a sub-instruction whose data is extracted as a defined type.
+    const node = rootNode(
+        programNode({
+            identifier: 'myProgram',
+            instructions: [
+                instructionNode({
+                    identifier: 'parent',
+                    subInstructions: [
+                        instructionNode({
+                            data: structTypeNode([
+                                structFieldTypeNode({ identifier: 'amount', type: integerTypeNode('u8') }),
+                            ]),
+                            identifier: 'child',
+                        }),
+                    ],
+                }),
+            ],
+            publicKey: '1111',
+        }),
+    );
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor({ customInstructionData: [{ extract: true, name: 'child' }] }));
+
+    // Then the extracted type is rendered, so that the hooked data of the sub-instruction can import it.
+    await renderMapContains(renderMap, 'types/child-instruction-data.ts', [
+        'export type ChildInstructionData = { amount: number }',
+    ]);
+    await renderMapContains(renderMap, 'instructions/child.ts', ["from '../../hooked'"]);
+});
+
+test('it keeps PDA seeds reading an account and a data field of the same name', () => {
+    // Given a PDA seeded by both the `mint` account and the `mint` data field.
+    const node = programNode({
+        identifier: 'myProgram',
+        instructions: [
+            instructionNode({
+                accounts: [
+                    instructionAccountNode({ identifier: 'mint', isSigner: false, isWritable: false }),
+                    instructionAccountNode({
+                        defaultValue: pdaValueNode(
+                            pdaNode({
+                                identifier: 'vault',
+                                seeds: [
+                                    variablePdaSeedNode('account', publicKeyTypeNode()),
+                                    variablePdaSeedNode('data', publicKeyTypeNode()),
+                                ],
+                            }),
+                            {
+                                seeds: [
+                                    pdaSeedValueNode('account', accountValueNode('mint')),
+                                    pdaSeedValueNode('data', dataValueNode('mint')),
+                                ],
+                            },
+                        ),
+                        identifier: 'vault',
+                        isSigner: false,
+                        isWritable: true,
+                    }),
+                ],
+                data: structTypeNode([structFieldTypeNode({ identifier: 'mint', type: publicKeyTypeNode() })]),
+                identifier: 'initialize',
+            }),
+        ],
+        publicKey: '1111',
+    });
+
+    // When we resolve the dependencies of the vault account.
+    const vault = getResolvedInstructionInputs([node, node.instructions![0]], getLinkablesFromNode(node)).find(
+        input => input.node.identifier === 'vault',
+    );
+
+    // Then both the account and the data field are dependencies.
+    expect(vault?.dependsOn).toStrictEqual([accountValueNode('mint'), dataValueNode('mint')]);
+});
+
+test('it fails on byte deltas of accounts without a fixed size', () => {
+    // Given a byte delta given by an account whose data has a variable size.
+    const byteDelta = instructionByteDeltaNode(accountLinkNode('profile'));
+    const node = programNode({
+        accounts: [
+            accountNode({
+                data: structTypeNode([structFieldTypeNode({ identifier: 'name', type: stringTypeNode('utf8') })]),
+                identifier: 'profile',
+            }),
+        ],
+        identifier: 'myProgram',
+        instructions: [instructionNode({ byteDeltas: [byteDelta], identifier: 'createProfile' })],
+        publicKey: '1111',
+    });
+
+    // Then rendering fails on that byte delta, since no size function exists for the account.
+    const error = getCodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, () => visit(node, getRenderMapVisitor()));
+    expect(error.context.path.slice(-2)).toStrictEqual([byteDelta, byteDelta.value]);
+});
+
+test('it does not rename omitted arguments sharing the name of an account', async () => {
+    // Given an omitted data field named like an account, alongside a regular one.
+    const node = programNode({
+        identifier: 'myProgram',
+        instructions: [
+            instructionNode({
+                accounts: [instructionAccountNode({ identifier: 'mode', isSigner: false, isWritable: false })],
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: integerValueNode('1'),
+                        defaultValueStrategy: 'omitted',
+                        identifier: 'mode',
+                        type: integerTypeNode('u8'),
+                    }),
+                    structFieldTypeNode({ identifier: 'amount', type: integerTypeNode('u8') }),
+                ]),
+                identifier: 'configure',
+            }),
+        ],
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the omitted argument, absent from the input, is not read from a renamed input.
+    await renderMapContains(renderMap, 'instructions/configure.ts', ['const args = { ...input };']);
+    await renderMapDoesNotContain(renderMap, 'instructions/configure.ts', ['modeArg']);
+});
+
+test('it only extracts the data of rendered instructions', () => {
+    // Given a parent instruction whose data is extracted, which is not rendered by default.
+    const node = rootNode(
+        programNode({
+            identifier: 'myProgram',
+            instructions: [
+                instructionNode({
+                    data: structTypeNode([structFieldTypeNode({ identifier: 'amount', type: integerTypeNode('u8') })]),
+                    identifier: 'parent',
+                    subInstructions: [instructionNode({ identifier: 'child' })],
+                }),
+            ],
+            publicKey: '1111',
+        }),
+    );
+    const options = { customInstructionData: [{ extract: true, name: 'parent' }] };
+
+    // Then its data type is only rendered along with the parent instruction.
+    expect(visit(node, getRenderMapVisitor(options)).has('types/parent-instruction-data.ts')).toBe(false);
+    expect(
+        visit(node, getRenderMapVisitor({ ...options, renderParentInstructions: true })).has(
+            'types/parent-instruction-data.ts',
+        ),
+    ).toBe(true);
+});

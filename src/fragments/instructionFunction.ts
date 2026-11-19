@@ -1,7 +1,7 @@
 import { mapFragmentContent } from '@codama/fragments';
 import { camelCase, pascalCase } from '@codama/fragments/casing';
 import { InstructionAccountNode, InstructionNode, isNodeFilter } from '@codama/nodes';
-import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
+import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, pipe, visit } from '@codama/visitors-core';
 
 import {
     Fragment,
@@ -22,6 +22,7 @@ import {
     isAsyncInput,
     mergeFragments,
     RenderScope,
+    ResolvedInstructionDataField,
     ResolvedInstructionInput,
     TypeManifest,
     use,
@@ -45,8 +46,7 @@ export function getInstructionFunctionFragment(
         useAsync: boolean;
     },
 ): Fragment | undefined {
-    const { useAsync, instructionPath, resolvedInputs, renamedArgs, asyncResolvers, nameApi, customInstructionData } =
-        scope;
+    const { useAsync, instructionPath, resolvedInputs, asyncResolvers, nameApi, customInstructionData } = scope;
     const instructionNode = getLastNodeFromPath(instructionPath);
     const programNode = findProgramNodeFromPath(instructionPath)!;
     if (useAsync && !hasAsyncFunction(instructionNode, resolvedInputs, asyncResolvers)) return;
@@ -54,7 +54,7 @@ export function getInstructionFunctionFragment(
     const hasAccounts = (instructionNode.accounts ?? []).length > 0;
     const hasData =
         !!getInstructionDataLink(instructionNode, customInstructionData) || hasInstructionData(instructionNode);
-    const { hasAnyArgs, hasDataArgs, hasInput } = getInstructionFunctionInputFlags(instructionNode, scope);
+    const { hasAnyArgs, hasDataArgs, hasInput, omittedArgs } = getInstructionFunctionInputFlags(instructionNode, scope);
     const programAddressConstant = use(nameApi.programAddressConstant(programNode.identifier), 'generatedPrograms');
 
     const functionName = useAsync
@@ -83,7 +83,7 @@ export function getInstructionFunctionFragment(
             getProgramAddressInitializationFragment(programAddressConstant),
             getAccountMetaHelperFragment(instructionNode, hasAccounts || hasRemainingAccountInputs(instructionNode)),
             getAccountsInitializationFragment(instructionNode, resolvedInputs),
-            getArgumentsInitializationFragment(hasAnyArgs, renamedArgs),
+            getArgumentsInitializationFragment({ ...scope, hasAnyArgs, hasInput, omittedArgs }),
             getResolverScopeInitializationFragment(hasResolver, hasAccounts, hasAnyArgs),
             resolvedInputFragment,
             getReturnStatementFragment({
@@ -107,6 +107,13 @@ export function getInstructionFunctionFragment(
 /**
  * Determines which inputs the sync or async builder of an instruction accepts, so that
  * callers such as the program plugin can invoke it with the same arguments it declares.
+ *
+ * - `hasInput`: whether the builder takes an `input` parameter.
+ * - `hasAnyArgs`: whether the builder declares an `args` variable, read or filled in by
+ *   default values, resolvers, remaining accounts or byte deltas.
+ * - `hasDataArgs`: whether the instruction data is encoded from `args`.
+ * - `omittedArgs`: the data fields and extra arguments omitted from the input but filled
+ *   in by the builder, which `args` must declare.
  */
 export function getInstructionFunctionInputFlags(
     instructionNode: InstructionNode,
@@ -114,11 +121,16 @@ export function getInstructionFunctionInputFlags(
         resolvedInputs: ResolvedInstructionInput[];
         useAsync: boolean;
     },
-): { hasAnyArgs: boolean; hasDataArgs: boolean; hasInput: boolean } {
+): { hasAnyArgs: boolean; hasDataArgs: boolean; hasInput: boolean; omittedArgs: ResolvedInstructionDataField[] } {
     const { asyncResolvers, customInstructionData, resolvedInputs, useAsync } = scope;
     const dataLink = getInstructionDataLink(instructionNode, customInstructionData);
     const hasAccounts = (instructionNode.accounts ?? []).length > 0;
-    const instructionDependencies = getInstructionDependencies(resolvedInputs, asyncResolvers, useAsync);
+    const instructionDependencies = getInstructionDependencies(
+        instructionNode,
+        resolvedInputs,
+        asyncResolvers,
+        useAsync,
+    );
     const argDependencies = instructionDependencies
         .filter(isNodeFilter('dataValueNode'))
         .map(node => getDataPathRoot(node.path));
@@ -131,7 +143,17 @@ export function getInstructionFunctionInputFlags(
         const resolvedArg = findResolvedDataField(resolvedInputs, arg);
         return !resolvedArg || !isAsyncInput(resolvedArg, asyncResolvers);
     };
-    const hasDataArgs = !!dataLink || getInstructionDataFields(instructionNode).filter(argIsNotOmitted).length > 0;
+    const omittedArgs = resolvedInputs.filter(
+        (input): input is ResolvedInstructionDataField =>
+            input.kind === 'data' &&
+            input.node.defaultValueStrategy === 'omitted' &&
+            (useAsync || !isAsyncInput(input, asyncResolvers)),
+    );
+    const hasOmittedDataArgs = omittedArgs.some(input => !input.isExtraArgument);
+    const hasDataArgs =
+        !!dataLink ||
+        hasOmittedDataArgs ||
+        getInstructionDataFields(instructionNode).filter(argIsNotOmitted).length > 0;
     const hasExtraArgs =
         getInstructionExtraArguments(instructionNode).filter(
             field => argIsNotOmitted(field) && (argIsDependent(field) || argHasDefaultValue(field)),
@@ -139,8 +161,13 @@ export function getInstructionFunctionInputFlags(
     const hasRemainingAccountArgs = (instructionNode.remainingAccounts ?? []).some(
         remainingAccounts => getRemainingAccountsName(remainingAccounts) !== undefined,
     );
-    const hasAnyArgs = hasDataArgs || hasExtraArgs || hasRemainingAccountArgs;
-    return { hasAnyArgs, hasDataArgs, hasInput: hasAccounts || hasAnyArgs };
+    const hasInputArgs =
+        !!dataLink ||
+        getInstructionDataFields(instructionNode).filter(argIsNotOmitted).length > 0 ||
+        hasExtraArgs ||
+        hasRemainingAccountArgs;
+    const hasAnyArgs = hasInputArgs || omittedArgs.length > 0;
+    return { hasAnyArgs, hasDataArgs, hasInput: hasAccounts || hasInputArgs, omittedArgs };
 }
 
 function getProgramAddressInitializationFragment(programAddressConstant: Fragment): Fragment {
@@ -202,14 +229,39 @@ function getRuntimeIsSignerFlag(account: InstructionAccountNode, resolvedInputs:
 }
 
 function getArgumentsInitializationFragment(
-    hasAnyArgs: boolean,
-    renamedArgs: Map<string, string>,
+    scope: Pick<RenderScope, 'typeManifestVisitor'> & {
+        hasAnyArgs: boolean;
+        hasInput: boolean;
+        omittedArgs: ResolvedInstructionDataField[];
+        renamedArgs: Map<string, string>;
+    },
 ): Fragment | undefined {
+    const { hasAnyArgs, hasInput, omittedArgs, renamedArgs, typeManifestVisitor } = scope;
     if (!hasAnyArgs) return;
     const renamedArgsText = [...renamedArgs.entries()].map(([k, v]) => `${k}: input.${v}`).join(', ');
 
-    return fragment`// Original args.
+    // Arguments omitted from the input but filled in by the builder are declared on `args`.
+    const omittedArgsType = mergeFragments(
+        omittedArgs.map(input => {
+            const { looseType } = visit(input.node.type, typeManifestVisitor);
+            return fragment`${camelCase(input.node.identifier)}?: ${looseType}`;
+        }),
+        cs => `{ ${cs.join('; ')} }`,
+    );
+
+    if (!hasInput) {
+        return fragment`// Original args.
+const args: ${omittedArgsType} = {};
+`;
+    }
+    if (omittedArgs.length === 0) {
+        return fragment`// Original args.
 const args = { ...input, ${renamedArgsText} };
+`;
+    }
+    return fragment`// Original args.
+const originalArgs = { ...input, ${renamedArgsText} };
+const args: typeof originalArgs & ${omittedArgsType} = originalArgs;
 `;
 }
 

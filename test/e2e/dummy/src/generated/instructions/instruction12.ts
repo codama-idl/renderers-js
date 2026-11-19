@@ -134,7 +134,7 @@ export function getInstruction12Instruction<
     const args = { ...input };
 
     // Resolve default values.
-    if (!args.bump) {
+    if (args.bump === undefined) {
         args.bump = getResolvedInstructionAccountAsProgramDerivedAddress('metadata', accounts.metadata.value)[1];
     }
 

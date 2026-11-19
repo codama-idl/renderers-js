@@ -1,7 +1,12 @@
-import { CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, CodamaError } from '@codama/errors';
+import {
+    CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE,
+    CODAMA_ERROR__VISITORS__INVALID_PDA_SEED_VALUES,
+    CodamaError,
+} from '@codama/errors';
 import { mapFragmentContent, setFragmentContent } from '@codama/fragments';
 import { camelCase } from '@codama/fragments/casing';
 import {
+    IdentifierString,
     InstructionInputValueNode,
     InstructionNode,
     isNode,
@@ -146,7 +151,13 @@ export function getInstructionInputDefaultFragment(
                     if (isNode(seed, 'variablePdaSeedNode')) {
                         const typeManifest = visit(seed.type, typeManifestVisitor);
                         const valueSeed = (defaultValue.seeds ?? []).find(s => s.identifier === seed.identifier)?.value;
-                        if (!valueSeed) return [];
+                        // A missing seed value would derive a different address.
+                        if (!valueSeed) {
+                            throw new CodamaError(CODAMA_ERROR__VISITORS__INVALID_PDA_SEED_VALUES, {
+                                path: instructionPath,
+                                pdaName: defaultValue.pda.identifier as IdentifierString,
+                            });
+                        }
                         if (isNode(valueSeed, 'accountValueNode')) {
                             const name = camelCase(valueSeed.identifier);
                             return [

@@ -5,6 +5,7 @@
  */
 
 import {
+    AccountNode,
     FloatFormat,
     IntegerFormat,
     IntegerTypeNode,
@@ -15,7 +16,14 @@ import {
     TypeNode,
     ValueNode,
 } from '@codama/nodes';
-import { getLastNodeFromPath, LinkableDictionary, NodePath } from '@codama/visitors-core';
+import {
+    getByteSizeVisitor,
+    getLastNodeFromPath,
+    LinkableDictionary,
+    NodePath,
+    NodeStack,
+    visit,
+} from '@codama/visitors-core';
 
 /**
  * Whether an integer type is the default one for prefixes and sizes, i.e. a
@@ -127,4 +135,19 @@ export function getEnumVariantDataShape(
     if (isNode(current, 'structTypeNode')) return 'struct';
     if (isNode(current, 'tupleTypeNode')) return 'tuple';
     return 'single';
+}
+
+/**
+ * The byte size of an account: the `size` it declares, or the size of its data when fixed.
+ * Account pages render a size function from it, and byte deltas reference that function.
+ *
+ * @param accountPath - The path of the account, from which links within its data resolve.
+ * @param linkables - The linkable nodes of the tree.
+ * @return The byte size of the account, or `null` when it is not fixed.
+ */
+export function getAccountSize(accountPath: NodePath<AccountNode>, linkables: LinkableDictionary): number | null {
+    const account = getLastNodeFromPath(accountPath);
+    if (account.size != null) return account.size;
+    const stack = new NodeStack(accountPath.slice(0, -1));
+    return visit(account, getByteSizeVisitor(linkables, { stack }));
 }

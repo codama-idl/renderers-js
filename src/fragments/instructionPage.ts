@@ -8,6 +8,7 @@ import {
     getAllInstructionDataFields,
     getInstructionDataFields,
     getInstructionExtraArgumentsNode,
+    hasInputDefault,
     mergeFragments,
     RenderScope,
     ResolvedInstructionInput,
@@ -74,7 +75,7 @@ export function getInstructionPageFragment(
 }
 
 /**
- * Maps the camelCase name of each argument conflicting with an account of the
+ * Maps the camelCase name of each input argument conflicting with an account of the
  * instruction to the camelCase name it is renamed to in the instruction input type.
  *
  * Names are compared by their camelCase form since that is how they are emitted.
@@ -88,7 +89,11 @@ export function getRenamedArgsMap(instruction: InstructionNode): Map<string, str
         );
     }
 
-    const allNames = [...(instruction.accounts ?? []).map(account => camelCase(account.identifier)), ...argNames];
+    // Omitted arguments are not part of the input type, so they never conflict with accounts there.
+    const inputArgNames = getAllInstructionDataFields(instruction)
+        .filter(arg => !(hasInputDefault(arg) && arg.defaultValueStrategy === 'omitted'))
+        .map(arg => camelCase(arg.identifier));
+    const allNames = [...(instruction.accounts ?? []).map(account => camelCase(account.identifier)), ...inputArgNames];
     const duplicates = allNames.filter((e, i, a) => a.indexOf(e) !== i);
     if (duplicates.length === 0) return new Map();
 

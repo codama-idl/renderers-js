@@ -69,7 +69,7 @@ export function getInstruction9InstructionDataCodec(): FixedSizeCodec<
 
 export type Instruction9Input<TAccountAuthority extends InstructionAccountInput = InstructionAccountInput> = {
     authority: TAccountAuthority;
-    authorityArg?: Instruction9InstructionDataArgs['authority'];
+    authorityArg: Instruction9InstructionDataArgs['authority'];
 };
 
 export function getInstruction9Instruction<

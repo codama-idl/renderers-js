@@ -22,10 +22,11 @@ export function getInstructionInputResolvedFragment(
         });
         if (!inputFragment.content) return [];
         const camelName = camelCase(input.node.identifier);
+        // Only missing arguments get a default value, so falsy values such as `0` or `false` are kept.
         return [
             mapFragmentContent(inputFragment, c =>
                 input.kind === 'data'
-                    ? `if (!args.${camelName}) {\n${c}\n}`
+                    ? `if (args.${camelName} === undefined) {\n${c}\n}`
                     : `if (!accounts.${camelName}.value) {\n${c}\n}`,
             ),
         ];

@@ -1,0 +1,525 @@
+{
+  "kind": "rootNode",
+  "standard": "codama",
+  "version": "2.0.0",
+  "program": {
+    "kind": "programNode",
+    "identifier": "instructions",
+    "publicKey": "Instructions1111111111111111111111111111111",
+    "version": "1.0.0",
+    "accounts": [
+      {
+        "kind": "accountNode",
+        "identifier": "counter",
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "count",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u64",
+                "endian": "le"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "instructions": [
+      {
+        "kind": "instructionNode",
+        "identifier": "allOmitted",
+        "optionalAccountStrategy": "programId",
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "discriminator",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u8",
+                "endian": "le"
+              },
+              "defaultValue": {
+                "kind": "integerValueNode",
+                "value": "0"
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "computed",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u8",
+                "endian": "le"
+              },
+              "plugins": [
+                {
+                  "kind": "pluginNode",
+                  "namespace": "codama.resolver",
+                  "payload": {
+                    "dependsOn": [],
+                    "name": "resolveComputed"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "path": "discriminator",
+            "offset": 0
+          }
+        ],
+        "plugins": [
+          {
+            "kind": "pluginNode",
+            "namespace": "codama.extraArgument",
+            "payload": {
+              "defaultValue": {
+                "kind": "integerValueNode",
+                "value": "3"
+              },
+              "defaultValueStrategy": "omitted",
+              "identifier": "extra",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u8",
+                "endian": "le"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "instructionNode",
+        "identifier": "someOmitted",
+        "optionalAccountStrategy": "programId",
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "discriminator",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u8",
+                "endian": "le"
+              },
+              "defaultValue": {
+                "kind": "integerValueNode",
+                "value": "1"
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "amount",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u64",
+                "endian": "le"
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "computed",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u8",
+                "endian": "le"
+              },
+              "plugins": [
+                {
+                  "kind": "pluginNode",
+                  "namespace": "codama.resolver",
+                  "payload": {
+                    "dependsOn": [],
+                    "name": "resolveComputed"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "path": "discriminator",
+            "offset": 0
+          }
+        ],
+        "plugins": [
+          {
+            "kind": "pluginNode",
+            "namespace": "codama.extraArgument",
+            "payload": {
+              "defaultValue": {
+                "kind": "integerValueNode",
+                "value": "3"
+              },
+              "defaultValueStrategy": "omitted",
+              "identifier": "extra",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u8",
+                "endian": "le"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "instructionNode",
+        "identifier": "resolvedExtras",
+        "optionalAccountStrategy": "programId",
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "discriminator",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u8",
+                "endian": "le"
+              },
+              "defaultValue": {
+                "kind": "integerValueNode",
+                "value": "2"
+              }
+            }
+          ]
+        },
+        "remainingAccounts": [
+          {
+            "kind": "instructionRemainingAccountsNode",
+            "identifier": "remainingAccounts",
+            "plugins": [
+              {
+                "kind": "pluginNode",
+                "namespace": "codama.resolver",
+                "payload": {
+                  "dependsOn": [
+                    "data.signerCount"
+                  ],
+                  "name": "resolveRemainingAccounts"
+                }
+              }
+            ]
+          }
+        ],
+        "byteDeltas": [
+          {
+            "kind": "instructionByteDeltaNode",
+            "withHeader": true,
+            "value": {
+              "kind": "integerValueNode",
+              "value": "0"
+            },
+            "plugins": [
+              {
+                "kind": "pluginNode",
+                "namespace": "codama.resolver",
+                "payload": {
+                  "dependsOn": [
+                    "data.space"
+                  ],
+                  "name": "resolveByteDelta"
+                }
+              }
+            ]
+          }
+        ],
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "path": "discriminator",
+            "offset": 0
+          }
+        ],
+        "plugins": [
+          {
+            "kind": "pluginNode",
+            "namespace": "codama.extraArgument",
+            "payload": {
+              "identifier": "signerCount",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u8",
+                "endian": "le"
+              }
+            }
+          },
+          {
+            "kind": "pluginNode",
+            "namespace": "codama.extraArgument",
+            "payload": {
+              "identifier": "space",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u64",
+                "endian": "le"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "instructionNode",
+        "identifier": "contextualData",
+        "optionalAccountStrategy": "programId",
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "discriminator",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u8",
+                "endian": "le"
+              },
+              "defaultValue": {
+                "kind": "integerValueNode",
+                "value": "3"
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "owner",
+              "type": {
+                "kind": "publicKeyTypeNode"
+              },
+              "defaultValue": {
+                "kind": "injectedValueNode",
+                "key": "owner"
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "authority",
+              "type": {
+                "kind": "publicKeyTypeNode"
+              },
+              "defaultValue": {
+                "kind": "injectedValueNode",
+                "key": "authority"
+              }
+            }
+          ]
+        },
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "path": "discriminator",
+            "offset": 0
+          }
+        ],
+        "provides": [
+          {
+            "kind": "providedNode",
+            "identifier": "owner",
+            "node": {
+              "kind": "payerValueNode"
+            }
+          },
+          {
+            "kind": "providedNode",
+            "identifier": "authority",
+            "node": {
+              "kind": "identityValueNode"
+            }
+          }
+        ],
+        "plugins": [
+          {
+            "kind": "pluginNode",
+            "namespace": "codama.extraArgument",
+            "payload": {
+              "defaultValue": {
+                "kind": "integerValueNode",
+                "value": "5"
+              },
+              "identifier": "count",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u8",
+                "endian": "le"
+              }
+            }
+          },
+          {
+            "kind": "pluginNode",
+            "namespace": "codama.extraArgument",
+            "payload": {
+              "defaultValue": {
+                "kind": "booleanValueNode",
+                "boolean": true
+              },
+              "identifier": "flag",
+              "type": {
+                "kind": "booleanTypeNode",
+                "size": {
+                  "kind": "integerTypeNode",
+                  "format": "u8",
+                  "endian": "le"
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "instructionNode",
+        "identifier": "byteDeltas",
+        "optionalAccountStrategy": "programId",
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "discriminator",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u8",
+                "endian": "le"
+              },
+              "defaultValue": {
+                "kind": "integerValueNode",
+                "value": "4"
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "space",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u64",
+                "endian": "le"
+              },
+              "defaultValue": {
+                "kind": "integerValueNode",
+                "value": "8"
+              }
+            }
+          ]
+        },
+        "byteDeltas": [
+          {
+            "kind": "instructionByteDeltaNode",
+            "withHeader": true,
+            "value": {
+              "kind": "dataValueNode",
+              "path": "space"
+            }
+          },
+          {
+            "kind": "instructionByteDeltaNode",
+            "withHeader": true,
+            "value": {
+              "kind": "accountLinkNode",
+              "identifier": "counter"
+            }
+          }
+        ],
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "path": "discriminator",
+            "offset": 0
+          }
+        ]
+      },
+      {
+        "kind": "instructionNode",
+        "identifier": "parent",
+        "optionalAccountStrategy": "programId",
+        "subInstructions": [
+          {
+            "kind": "instructionNode",
+            "identifier": "child",
+            "optionalAccountStrategy": "programId",
+            "accounts": [
+              {
+                "kind": "instructionAccountNode",
+                "identifier": "authority",
+                "isWritable": false,
+                "isSigner": true,
+                "isOptional": false
+              }
+            ],
+            "data": {
+              "kind": "structTypeNode",
+              "fields": [
+                {
+                  "kind": "structFieldTypeNode",
+                  "identifier": "discriminator",
+                  "defaultValueStrategy": "omitted",
+                  "type": {
+                    "kind": "integerTypeNode",
+                    "format": "u8",
+                    "endian": "le"
+                  },
+                  "defaultValue": {
+                    "kind": "integerValueNode",
+                    "value": "5"
+                  }
+                },
+                {
+                  "kind": "structFieldTypeNode",
+                  "identifier": "amount",
+                  "type": {
+                    "kind": "integerTypeNode",
+                    "format": "u64",
+                    "endian": "le"
+                  },
+                  "defaultValue": {
+                    "kind": "injectedValueNode",
+                    "key": "amount"
+                  }
+                }
+              ]
+            },
+            "discriminators": [
+              {
+                "kind": "fieldDiscriminatorNode",
+                "path": "discriminator",
+                "offset": 0
+              }
+            ]
+          }
+        ],
+        "provides": [
+          {
+            "kind": "providedNode",
+            "identifier": "amount",
+            "node": {
+              "kind": "integerValueNode",
+              "value": "9"
+            }
+          }
+        ]
+      }
+    ],
+    "errors": [
+      {
+        "kind": "errorNode",
+        "identifier": "templated",
+        "code": 1,
+        "message": "Expected ${amount} \\ got `value`."
+      }
+    ]
+  }
+}
