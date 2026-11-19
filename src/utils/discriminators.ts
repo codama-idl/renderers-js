@@ -5,7 +5,7 @@ import {
     CodamaError,
 } from '@codama/errors';
 import { camelCase } from '@codama/fragments/casing';
-import { FieldDiscriminatorNode, StructFieldTypeNode } from '@codama/nodes';
+import { FieldDiscriminatorNode, StructFieldTypeNode, ValueNode } from '@codama/nodes';
 import { parsePath } from '@codama/visitors-core';
 
 import type { NameApi } from './nameTransformers';
@@ -34,7 +34,7 @@ export function getFieldDiscriminatorIdentifier(discriminator: FieldDiscriminato
  *
  * @param discriminator - The field discriminator.
  * @param fields - The top-level fields of the data, e.g. of an account.
- * @return The field, which has a default value its codec fills in.
+ * @return The field and the default value its codec fills in, e.g. the fallback of an injected default.
  * @throws `CODAMA_ERROR__DISCRIMINATOR_FIELD_NOT_FOUND` when no field matches its path.
  * @throws `CODAMA_ERROR__DISCRIMINATOR_FIELD_HAS_NO_DEFAULT_VALUE` when the field has no
  * default value its codec fills in.
@@ -42,7 +42,7 @@ export function getFieldDiscriminatorIdentifier(discriminator: FieldDiscriminato
 export function getFieldDiscriminatorField(
     discriminator: FieldDiscriminatorNode,
     fields: readonly StructFieldTypeNode[],
-): StructFieldTypeNode {
+): { defaultValue: ValueNode; field: StructFieldTypeNode } {
     const identifier = getFieldDiscriminatorIdentifier(discriminator);
     const field = fields.find(f => f.identifier === identifier);
     if (!field) {
@@ -51,10 +51,11 @@ export function getFieldDiscriminatorField(
             path: [discriminator],
         });
     }
-    if (!getStructFieldCodecDefault(field)) {
+    const defaultValue = getStructFieldCodecDefault(field);
+    if (!defaultValue) {
         throw new CodamaError(CODAMA_ERROR__DISCRIMINATOR_FIELD_HAS_NO_DEFAULT_VALUE, { path: [field] });
     }
-    return field;
+    return { defaultValue, field };
 }
 
 /**

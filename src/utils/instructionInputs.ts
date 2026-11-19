@@ -66,6 +66,11 @@ const EXTRA_ARGUMENT_PLUGIN = 'codama.extraArgument';
 /**
  * A resolver dependency: an account, e.g. `accounts.owner`, or a data path, e.g.
  * `data.config.fees[0]`, made of field identifiers and array indices.
+ *
+ * Identifiers and paths follow the grammars of `identifierString` and `pathString` from
+ * `@codama/nodes`, except that data paths must start with a field, since they resolve
+ * from a top-level field of the instruction. Validating the whole reference here reports
+ * every malformed dependency with the same error, on the plugin declaring it.
  */
 const RESOLVER_DEPENDENCY_REGEX =
     /^(accounts\.[A-Za-z_][A-Za-z0-9_]*|data\.[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*|\[(0|[1-9][0-9]*)\])*)$/;

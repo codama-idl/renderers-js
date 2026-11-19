@@ -18,7 +18,6 @@ import {
     Fragment,
     fragment,
     getFieldDiscriminatorField,
-    getStructFieldCodecDefault,
     getTypeNodeTransforms,
     isDefaultIntegerType,
     mergeFragments,
@@ -96,8 +95,7 @@ function getFieldConditionFragment(
         fields: StructFieldTypeNode[];
     },
 ): Fragment {
-    const field = getFieldDiscriminatorField(discriminator, scope.fields);
-    const defaultValue = getStructFieldCodecDefault(field)!;
+    const { defaultValue, field } = getFieldDiscriminatorField(discriminator, scope.fields);
 
     // A fixed-size array of u8 encodes as its items, so it is matched as raw bytes.
     const items = isNode(defaultValue, 'arrayValueNode') ? (defaultValue.items ?? []) : [];

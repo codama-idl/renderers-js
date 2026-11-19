@@ -15,7 +15,6 @@ import {
     getConstantDiscriminatorName,
     getFieldDiscriminatorField,
     getFieldDiscriminatorName,
-    getStructFieldCodecDefault,
     getTypedValueFragment,
     mergeFragments,
     RenderScope,
@@ -92,9 +91,7 @@ function getFieldDiscriminatorConstantFragment(
     },
 ): Fragment {
     const { fields, prefix } = scope;
-    const field = getFieldDiscriminatorField(discriminatorNode, fields);
-    // The value the codec fills in, e.g. the fallback of an injected default.
-    const defaultValue = getStructFieldCodecDefault(field)!;
+    const { defaultValue, field } = getFieldDiscriminatorField(discriminatorNode, fields);
     const name = getFieldDiscriminatorName(prefix, field.identifier);
     return getConstantFragment({ ...scope, name, type: field.type, value: defaultValue });
 }

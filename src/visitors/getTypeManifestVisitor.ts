@@ -129,14 +129,10 @@ export function getTypeManifestVisitor(input: {
      * the given position of the stack, e.g. an enum, if any. Types nested within another type
      * have no such names.
      */
-    const getOwnerNames = (index: number): { identifier: string; loose: string; strict: string } | undefined => {
+    const getOwnerNames = (index: number): { identifier: string; strict: string } | undefined => {
         const owner = stack.getPath()[index - 1];
         if (!owner) return undefined;
-        const names = (identifier: string, typeName: string) => ({
-            identifier,
-            loose: nameApi.dataArgsType(typeName),
-            strict: nameApi.dataType(typeName),
-        });
+        const names = (identifier: string, typeName: string) => ({ identifier, strict: nameApi.dataType(typeName) });
         switch (owner.kind) {
             case 'accountNode':
             case 'definedTypeNode':
