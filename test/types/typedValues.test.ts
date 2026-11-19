@@ -13,6 +13,7 @@ import {
     eventNode,
     fieldDiscriminatorNode,
     fixedPointTypeNode,
+    injectedValueNode,
     integerTypeNode,
     integerValueNode,
     optionTypeNode,
@@ -256,4 +257,32 @@ test('it matches event discriminators by their encoded bytes', async () => {
         "export const NAMED_EVENT_DISCRIMINATOR = 'NAME';",
         'containsBytes(data, getNamedEventDiscriminatorBytes(), 0)',
     ]);
+});
+
+test('it renders the fallback of injected field discriminators for their type', async () => {
+    // Given an account whose u64 field discriminator defaults to an injected value with a fallback.
+    const node = programNode({
+        accounts: [
+            accountNode({
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: injectedValueNode({ fallback: integerValueNode('5'), key: 'discriminator' }),
+                        defaultValueStrategy: 'omitted',
+                        identifier: 'discriminator',
+                        type: u64(),
+                    }),
+                ]),
+                discriminators: [fieldDiscriminatorNode('discriminator')],
+                identifier: 'vault',
+            }),
+        ],
+        identifier: 'myProgram',
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the discriminator constant is the fallback as a bigint.
+    await renderMapContains(renderMap, 'accounts/vault.ts', ['export const VAULT_DISCRIMINATOR = 5n;']);
 });

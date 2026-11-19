@@ -19,7 +19,7 @@ Constants holding a value of a data union, e.g. `command('Wait', [30])`, are typ
 
 **Nested fields named like a field discriminator keep their own default value.** Only the top-level field of the data of an account, event or instruction is filled in with its discriminator constant.
 
-**Event discriminators that are not raw bytes are matched by their encoded bytes.** Codecs and identification helpers call the `get…DiscriminatorBytes()` function of such discriminators, e.g. a `u8` or a string, instead of comparing their value with the event data.
+**Event discriminators that are not raw bytes are matched by their encoded bytes.** Event codecs and parse helpers call the `get…DiscriminatorBytes()` function of such discriminators, e.g. a `u8` or a string, instead of comparing their value with the event data.
 
 **The byte order of single-byte and variable-length integers is ignored.** Big-endian `u8`, `i8` and `shortU16` integers render the same codecs as little-endian ones, which accept no byte order.
 

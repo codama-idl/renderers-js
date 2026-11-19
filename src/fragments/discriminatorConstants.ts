@@ -14,6 +14,7 @@ import {
     Fragment,
     fragment,
     getFieldDiscriminatorIdentifier,
+    getStructFieldCodecDefault,
     getTypedValueFragment,
     mergeFragments,
     NameApi,
@@ -113,12 +114,14 @@ export function getFieldDiscriminatorConstantFragment(
 
     const identifier = getFieldDiscriminatorIdentifier(discriminatorNode);
     const field = fields.find(f => f.identifier === identifier);
-    if (!field?.defaultValue) {
+    // The value the codec fills in, e.g. the fallback of an injected default.
+    const defaultValue = field ? getStructFieldCodecDefault(field) : undefined;
+    if (!field || !defaultValue) {
         return null;
     }
 
     const name = camelCase(`${prefix}_${identifier}`);
-    return getConstantFragment({ ...scope, name, type: field.type, value: field.defaultValue });
+    return getConstantFragment({ ...scope, name, type: field.type, value: defaultValue });
 }
 
 function getConstantFragment(

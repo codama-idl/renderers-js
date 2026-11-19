@@ -9,7 +9,6 @@ import {
     OptionalAccountStrategy,
     PdaNode,
     TypeNode,
-    VALUE_NODE_KINDS,
     ValueNode,
 } from '@codama/nodes';
 import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, pipe, visit } from '@codama/visitors-core';
@@ -160,7 +159,6 @@ export function getInstructionInputDefaultFragment(
                                 fragment`${typeManifest.encoder}.encode(${getNonNullResolvedInstructionInput}("${getDataPathLabel(path)}", ${getDataPathExpression(path)}))`,
                             ];
                         }
-                        if (!isNode(valueSeed, VALUE_NODE_KINDS)) return [];
                         return [fragment`${typeManifest.encoder}.encode(${typedValue(valueSeed, seed.type)})`];
                     }
                     return [];
@@ -194,10 +192,7 @@ export function getInstructionInputDefaultFragment(
                 const pdaSeedType = (pdaPath ? (getLastNodeFromPath(pdaPath).seeds ?? []) : [])
                     .filter(isNodeFilter('variablePdaSeedNode'))
                     .find(pdaSeed => pdaSeed.identifier === seed.identifier)?.type;
-                const seedValue = isNode(seed.value, VALUE_NODE_KINDS)
-                    ? typedValue(seed.value, pdaSeedType)
-                    : visit(seed.value, typeManifestVisitor).value;
-                return pipe(seedValue, f => mapFragmentContent(f, c => `${seedName}: ${c}`));
+                return pipe(typedValue(seed.value, pdaSeedType), f => mapFragmentContent(f, c => `${seedName}: ${c}`));
             });
             const pdaSeedsFragment = pipe(
                 mergeFragments(pdaSeeds, renders => renders.join(', ')),
