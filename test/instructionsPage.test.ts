@@ -1541,7 +1541,10 @@ test('it extracts the data of sub-instructions as defined types', async () => {
     );
 
     // When we render it.
-    const renderMap = visit(node, getRenderMapVisitor({ customInstructionData: [{ extract: true, name: 'child' }] }));
+    const renderMap = visit(
+        node,
+        getRenderMapVisitor({ customInstructionData: [{ extract: true, identifier: 'child' }] }),
+    );
 
     // Then the extracted type is rendered, so that the hooked data of the sub-instruction can import it.
     await renderMapContains(renderMap, 'types/child-instruction-data.ts', [
@@ -1660,7 +1663,7 @@ test('it only extracts the data of rendered instructions', () => {
             publicKey: '1111',
         }),
     );
-    const options = { customInstructionData: [{ extract: true, name: 'parent' }] };
+    const options = { customInstructionData: [{ extract: true, identifier: 'parent' }] };
 
     // Then its data type is only rendered along with the parent instruction.
     expect(visit(node, getRenderMapVisitor(options)).has('types/parent-instruction-data.ts')).toBe(false);

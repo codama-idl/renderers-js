@@ -26,6 +26,7 @@ export function getRootIndexPageFragment(
         scope.programsWithConstantsToExport.length > 0 ||
         scope.eventsToExport.length > 0 ||
         scope.instructionsToExport.length > 0 ||
+        scope.pdasToExport.length > 0 ||
         scope.definedTypesToExport.length > 0;
 
     if (!hasAnythingToExport) {

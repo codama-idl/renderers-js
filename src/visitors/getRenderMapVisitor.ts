@@ -248,7 +248,7 @@ export function getRenderMapVisitor(
                         (program.constants ?? []).some(isNotInternal),
                     );
                     const programsWithErrorsToExport = programsToExport.filter(p => (p.errors ?? []).length > 0);
-                    const pdasToExport = getAllPdas(node);
+                    const pdasToExport = getAllPdas(node).filter(isNotInternal);
                     const accountsToExport = getAllAccounts(node).filter(isNotInternal);
                     const eventsToExport = getAllEvents(node).filter(isNotInternal);
                     const instructionsToExport = getAllInstructionsWithSubs(node, {

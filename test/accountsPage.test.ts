@@ -251,8 +251,8 @@ test('it can extracts account data and import it from another source', async () 
             customAccountData: [
                 {
                     extract: true,
+                    identifier: 'counter',
                     importFrom: 'someModule',
-                    name: 'counter',
                 },
             ],
         }),
