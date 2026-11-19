@@ -2,10 +2,18 @@ import { camelCase } from '@codama/fragments/casing';
 import { isNode, isNodeFilter, PdaNode, PdaSeedNode } from '@codama/nodes';
 import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
 
-import { Fragment, fragment, getDocblockFragment, mergeFragments, RenderScope, use } from '../utils';
+import {
+    Fragment,
+    fragment,
+    getDocblockFragment,
+    getTypedValueFragment,
+    mergeFragments,
+    RenderScope,
+    use,
+} from '../utils';
 
 export function getPdaFunctionFragment(
-    scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         pdaPath: NodePath<PdaNode>;
     },
 ): Fragment {
@@ -74,7 +82,10 @@ type ParsedPdaSeedNode = PdaSeedNode & {
     inputAttribute?: Fragment;
 };
 
-function parsePdaSeedNodes(seeds: PdaSeedNode[], scope: Pick<RenderScope, 'typeManifestVisitor'>): ParsedPdaSeedNode[] {
+function parsePdaSeedNodes(
+    seeds: PdaSeedNode[],
+    scope: Pick<RenderScope, 'linkables' | 'typeManifestVisitor'> & { pdaPath: NodePath<PdaNode> },
+): ParsedPdaSeedNode[] {
     return seeds.map(seed => {
         if (isNode(seed, 'variablePdaSeedNode')) {
             const name = camelCase(seed.identifier);
@@ -93,7 +104,12 @@ function parsePdaSeedNodes(seeds: PdaSeedNode[], scope: Pick<RenderScope, 'typeM
         }
 
         const { encoder } = visit(seed.type, scope.typeManifestVisitor);
-        const { value } = visit(seed.value, scope.typeManifestVisitor);
+        const value = getTypedValueFragment(seed.value, seed.type, {
+            linkables: scope.linkables,
+            loose: true,
+            path: scope.pdaPath,
+            typeManifestVisitor: scope.typeManifestVisitor,
+        });
         return { ...seed, encodedValue: fragment`${encoder}.encode(${value})` };
     });
 }

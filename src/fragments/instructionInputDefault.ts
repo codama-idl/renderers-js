@@ -8,6 +8,8 @@ import {
     isNodeFilter,
     OptionalAccountStrategy,
     PdaNode,
+    TypeNode,
+    ValueNode,
 } from '@codama/nodes';
 import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, pipe, visit } from '@codama/visitors-core';
 
@@ -17,6 +19,7 @@ import {
     fragment,
     getDataPathExpression,
     getDataPathLabel,
+    getTypedValueFragment,
     isAsyncInput,
     isAsyncResolver,
     mergeFragments,
@@ -52,6 +55,10 @@ export function getInstructionInputDefaultFragment(
     if (!useAsync && isAsyncInput(input, asyncResolvers)) {
         return fragment``;
     }
+
+    // Renders a value for the input type of the given type, e.g. `lamports(5000n)` for a SOL amount.
+    const typedValue = (value: ValueNode, type: TypeNode | undefined): Fragment =>
+        getTypedValueFragment(value, type, { linkables, loose: true, path: instructionPath, typeManifestVisitor });
 
     const defaultFragment = (renderedValue: Fragment, isWritable?: boolean): Fragment => {
         const inputName = camelCase(input.node.identifier);
@@ -134,8 +141,7 @@ export function getInstructionInputDefaultFragment(
                     }
                     if (isNode(seed, 'constantPdaSeedNode') && !isNode(seed.value, 'programIdValueNode')) {
                         const typeManifest = visit(seed.type, typeManifestVisitor);
-                        const valueManifest = visit(seed.value, typeManifestVisitor);
-                        return [fragment`${typeManifest.encoder}.encode(${valueManifest.value})`];
+                        return [fragment`${typeManifest.encoder}.encode(${typedValue(seed.value, seed.type)})`];
                     }
                     if (isNode(seed, 'variablePdaSeedNode')) {
                         const typeManifest = visit(seed.type, typeManifestVisitor);
@@ -153,8 +159,7 @@ export function getInstructionInputDefaultFragment(
                                 fragment`${typeManifest.encoder}.encode(${getNonNullResolvedInstructionInput}("${getDataPathLabel(path)}", ${getDataPathExpression(path)}))`,
                             ];
                         }
-                        const valueManifest = visit(valueSeed, typeManifestVisitor);
-                        return [fragment`${typeManifest.encoder}.encode(${valueManifest.value})`];
+                        return [fragment`${typeManifest.encoder}.encode(${typedValue(valueSeed, seed.type)})`];
                     }
                     return [];
                 });
@@ -184,9 +189,10 @@ export function getInstructionInputDefaultFragment(
                     const { path } = seed.value;
                     return fragment`${seedName}: ${getNonNullResolvedInstructionInput}("${getDataPathLabel(path)}", ${getDataPathExpression(path)})`;
                 }
-                return pipe(visit(seed.value, typeManifestVisitor).value, f =>
-                    mapFragmentContent(f, c => `${seedName}: ${c}`),
-                );
+                const pdaSeedType = (pdaPath ? (getLastNodeFromPath(pdaPath).seeds ?? []) : [])
+                    .filter(isNodeFilter('variablePdaSeedNode'))
+                    .find(pdaSeed => pdaSeed.identifier === seed.identifier)?.type;
+                return pipe(typedValue(seed.value, pdaSeedType), f => mapFragmentContent(f, c => `${seedName}: ${c}`));
             });
             const pdaSeedsFragment = pipe(
                 mergeFragments(pdaSeeds, renders => renders.join(', ')),
@@ -289,8 +295,7 @@ export function getInstructionInputDefaultFragment(
             });
 
         default:
-            const valueManifest = visit(defaultValue, typeManifestVisitor).value;
-            return defaultFragment(valueManifest);
+            return defaultFragment(typedValue(defaultValue, input.kind === 'data' ? input.node.type : undefined));
     }
 }
 

@@ -3,7 +3,7 @@ import { env } from 'node:process';
 
 import { defineConfig, type Options } from 'tsup';
 
-const E2E_PROJECTS = ['anchor', 'dummy', 'memo', 'system', 'token'];
+const E2E_PROJECTS = ['anchor', 'dummy', 'memo', 'system', 'token', 'types'];
 
 const SHARED_OPTIONS: Options = {
     define: { __VERSION__: `"${env['npm_package_version']}"` },

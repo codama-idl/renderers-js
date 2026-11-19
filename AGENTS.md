@@ -125,6 +125,7 @@ Page builders mostly compose subfragments rather than embedding all logic inline
 - `async.ts`: decide whether instructions need async variants and compute resolver dependencies.
 - `formatCode.ts`: Prettier integration.
 - `typeManifest.ts`: helpers for building and merging type manifests.
+- `typedValues.ts`: render value nodes for their type, e.g. `42n` for a `u64` or `lamports(5000n)` for a SOL amount. Use it wherever a value has a known type instead of visiting the value alone.
 - `codecs.ts`: codec-related helpers.
 
 ## Output structure
@@ -311,7 +312,7 @@ E2E tests are excluded from these unit-test projects and run through a dedicated
 
 ### E2E tests
 
-`test/e2e/` contains small generated-client fixtures such as `anchor`, `system`, `memo`, `token`, and `dummy`. Their dependencies, build configuration, and test runner are owned by the root package. A shared `test/e2e/_setup.ts` provides one LiteSVM test client composing the generated program plugins of every fixture, which also proves that plugins from independently generated clients compose on a single Kit client.
+`test/e2e/` contains small generated-client fixtures such as `anchor`, `system`, `memo`, `token`, `dummy` and `types`. The `types` fixture is a codegen-only program covering every type and value lowering, so that type-checking the E2E build proves the generated code compiles; extend it when adding or changing type lowerings. Their dependencies, build configuration, and test runner are owned by the root package. A shared `test/e2e/_setup.ts` provides one LiteSVM test client composing the generated program plugins of every fixture, which also proves that plugins from independently generated clients compose on a single Kit client.
 
 `pnpm test:e2e`:
 
