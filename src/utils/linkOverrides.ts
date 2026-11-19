@@ -23,8 +23,18 @@ export type LinkOverrides = {
 type OverridableNodes = AccountLinkNode | DefinedTypeLinkNode | InstructionLinkNode | PdaLinkNode | ProgramLinkNode;
 
 /** Resolves the module a linked node, or a resolver, is imported from. */
-export type GetImportFromFunction = (node: InstructionResolver | OverridableNodes, fallback?: string) => string;
+export type GetImportFromFunction = (node: InstructionResolver | OverridableNodes) => string;
 
+/**
+ * Creates the function returning the module a linked node or resolver is imported from,
+ * according to the `linkOverrides` option and the custom data options. Linked nodes default
+ * to their generated folder, e.g. `generatedAccounts`, and resolvers to the `hooked` folder.
+ *
+ * @param overrides - The `linkOverrides` option.
+ * @param customAccountData - The parsed `customAccountData` option.
+ * @param customInstructionData - The parsed `customInstructionData` option.
+ * @return The function returning the module of a linked node or resolver.
+ */
 export function getImportFromFactory(
     overrides: LinkOverrides,
     customAccountData: ParsedCustomDataOptions,

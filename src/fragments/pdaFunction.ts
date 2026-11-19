@@ -1,17 +1,25 @@
 import { camelCase } from '@codama/fragments/casing';
 import { isNode, isNodeFilter, PdaNode, PdaSeedNode } from '@codama/nodes';
-import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
+import { getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
 
 import {
     Fragment,
     fragment,
     getDocblockFragment,
+    getProgramNodeFromPath,
     getTypedValueFragment,
     mergeFragments,
     RenderScope,
     use,
 } from '../utils';
 
+/**
+ * Renders the seeds type and the function finding a PDA, e.g. `CounterSeeds` and
+ * `findCounterPda`, which accepts a custom program address.
+ *
+ * @param scope - The render scope and the path of the PDA.
+ * @return The fragment of the seeds type and find function.
+ */
 export function getPdaFunctionFragment(
     scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         pdaPath: NodePath<PdaNode>;
@@ -51,7 +59,7 @@ function getFunctionFragment(
     },
 ): Fragment {
     const pdaNode = getLastNodeFromPath(scope.pdaPath);
-    const programNode = findProgramNodeFromPath(scope.pdaPath)!;
+    const programNode = getProgramNodeFromPath(scope.pdaPath);
 
     const addressType = use('type Address', 'solanaAddresses');
     const hasAddressType = use('type HasAddress', 'solanaAddresses');

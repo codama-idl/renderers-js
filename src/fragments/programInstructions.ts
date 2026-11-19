@@ -13,6 +13,13 @@ import {
 import { getDiscriminatorConditionFragment } from './discriminatorCondition';
 import { getEnumDeclarationFragment } from './enumDeclaration';
 
+/**
+ * Renders the enum of the instructions of a program, the function identifying an instruction
+ * from its data, the parsed instruction union and the function parsing any of its instructions.
+ *
+ * @param scope - The render scope and the program.
+ * @return The fragment of the instruction helpers, if the program has rendered instructions.
+ */
 export function getProgramInstructionsFragment(
     scope: Pick<RenderScope, 'erasableSyntax' | 'nameApi' | 'renderParentInstructions' | 'typeManifestVisitor'> & {
         programNode: ProgramNode;

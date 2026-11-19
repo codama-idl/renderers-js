@@ -1,5 +1,6 @@
 import { camelCase, capitalize, kebabCase, pascalCase, snakeCase, titleCase } from '@codama/fragments/casing';
 
+/** The casing helpers given to name transformers, e.g. to write `${pascalCase(name)}Args`. */
 export type NameTransformerHelpers = {
     camelCase: (name: string) => string;
     capitalize: (name: string) => string;
@@ -9,8 +10,17 @@ export type NameTransformerHelpers = {
     titleCase: (name: string) => string;
 };
 
+/**
+ * Derives a generated name from the identifier of a node, given casing helpers.
+ *
+ * @example
+ * ```ts
+ * const dataArgsType: NameTransformer = (name, { pascalCase }) => `${pascalCase(name)}Args`;
+ * ```
+ */
 export type NameTransformer = (name: string, helpers: NameTransformerHelpers) => string;
 
+/** The kinds of names the renderer generates, each derived by its own name transformer. */
 export type NameTransformerKey =
     | 'accountDecodeFunction'
     | 'accountFetchAllFunction'
@@ -76,10 +86,21 @@ export type NameTransformerKey =
     | 'programPluginType'
     | 'resolverFunction';
 
+/** The name transformer of every kind of generated name. See {@link DEFAULT_NAME_TRANSFORMERS}. */
 export type NameTransformers = Record<NameTransformerKey, NameTransformer>;
 
+/**
+ * Derives every kind of generated name from the identifier of a node, e.g.
+ * `nameApi.encoderFunction('point')` for `getPointEncoder`.
+ */
 export type NameApi = Record<NameTransformerKey, (name: string) => string>;
 
+/**
+ * Creates the name API from name transformers, binding each one to the casing helpers.
+ *
+ * @param transformers - The name transformers, e.g. the defaults merged with the `nameTransformers` option.
+ * @return The name API.
+ */
 export function getNameApi(transformers: NameTransformers): NameApi {
     const helpers = {
         camelCase,
@@ -94,6 +115,10 @@ export function getNameApi(transformers: NameTransformers): NameApi {
     ) as NameApi;
 }
 
+/**
+ * The default name transformers, e.g. `getPointEncoder` for encoder functions or `point.ts`
+ * for file names. The `nameTransformers` option overrides any of them.
+ */
 export const DEFAULT_NAME_TRANSFORMERS: NameTransformers = {
     accountDecodeFunction: name => `decode${pascalCase(name)}`,
     accountFetchAllFunction: name => `fetchAll${pascalCase(name)}`,

@@ -1,5 +1,5 @@
 import { mapFragmentContent } from '@codama/fragments';
-import { camelCase, pascalCase } from '@codama/fragments/casing';
+import { camelCase } from '@codama/fragments/casing';
 import { InstructionAccountNode, InstructionNode, isNode } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
@@ -8,6 +8,7 @@ import {
     findResolvedDataField,
     Fragment,
     fragment,
+    getAccountTypeParamName,
     getDocblockFragment,
     getInstructionDataFields,
     getInstructionDataLink,
@@ -25,6 +26,14 @@ import {
     use,
 } from '../utils';
 
+/**
+ * Renders the input type of an instruction builder, e.g. `TransferInput` or `TransferAsyncInput`,
+ * listing its accounts, data arguments, extra arguments and remaining accounts.
+ *
+ * @param scope - The render scope, the path of the instruction, its resolved inputs and
+ * whether the builder is asynchronous.
+ * @return The fragment of the input type.
+ */
 export function getInstructionInputTypeFragment(
     scope: Pick<RenderScope, 'asyncResolvers' | 'customInstructionData' | 'nameApi'> & {
         dataArgsManifest: TypeManifest;
@@ -46,7 +55,7 @@ export function getInstructionInputTypeFragment(
     const accountTypeParams = mergeFragments(
         (instructionNode.accounts ?? []).map(account => {
             const constraint = getInstructionAccountInputConstraintFragment(account);
-            return fragment`TAccount${pascalCase(account.identifier)} extends ${constraint} = ${constraint}`;
+            return fragment`${getAccountTypeParamName(account.identifier)} extends ${constraint} = ${constraint}`;
         }),
         cs => (cs.length > 0 ? `<${cs.join(', ')}>` : ''),
     );
@@ -101,7 +110,7 @@ function getAccountsFragment(
             (useAsync || !isAsyncInput(resolvedAccount, asyncResolvers));
         const docs = getDocblockFragment(account.docs, true);
         const optionalSign = hasDefaultValue || account.isOptional ? '?' : '';
-        return fragment`${docs}${camelCase(account.identifier)}${optionalSign}: TAccount${pascalCase(account.identifier)};`;
+        return fragment`${docs}${camelCase(account.identifier)}${optionalSign}: ${getAccountTypeParamName(account.identifier)};`;
     });
 
     return mergeFragments(fragments, c => c.join('\n'));
@@ -166,8 +175,8 @@ function getArgumentFragment(
     arg: InstructionDataField,
     argsType: string,
     scope: { renamedArgs: Map<string, string>; resolvedInputs: ResolvedInstructionInput[] },
-): Fragment | null {
-    if (hasInputDefault(arg) && arg.defaultValueStrategy === 'omitted') return null;
+): Fragment | undefined {
+    if (hasInputDefault(arg) && arg.defaultValueStrategy === 'omitted') return;
     const argName = camelCase(arg.identifier);
     const renamedName = scope.renamedArgs.get(argName) ?? argName;
     // Arguments defaulting to the payer or the identity have no value in instruction builders,

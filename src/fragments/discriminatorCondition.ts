@@ -1,8 +1,3 @@
-import {
-    CODAMA_ERROR__DISCRIMINATOR_FIELD_HAS_NO_DEFAULT_VALUE,
-    CODAMA_ERROR__DISCRIMINATOR_FIELD_NOT_FOUND,
-    CodamaError,
-} from '@codama/errors';
 import { mapFragmentContent } from '@codama/fragments';
 import {
     type ConstantDiscriminatorNode,
@@ -13,37 +8,43 @@ import {
     type FieldDiscriminatorNode,
     isNode,
     isNodeFilter,
-    type ProgramNode,
     type SizeDiscriminatorNode,
     type StructFieldTypeNode,
 } from '@codama/nodes';
 import { pipe, visit } from '@codama/visitors-core';
 import { getBase64Decoder } from '@solana/codecs-strings';
 
-import { Fragment, fragment, getFieldDiscriminatorIdentifier, mergeFragments, RenderScope, use } from '../utils';
+import {
+    Fragment,
+    fragment,
+    getFieldDiscriminatorField,
+    getTypeNodeTransforms,
+    isDefaultIntegerType,
+    mergeFragments,
+    RenderScope,
+    use,
+} from '../utils';
 
 /**
- * ```
- * if (data.length === 72) {
- *   return splTokenAccounts.TOKEN;
- * }
+ * Renders a condition checking that some data matches every discriminator of an account,
+ * instruction or event, running the given statement when it does.
  *
- * if (containsBytes(data, getU32Encoder().encode(42), offset)) {
- *   return splTokenAccounts.TOKEN;
- * }
+ * @param scope - The name of the data variable, the discriminators, the statement to run
+ * and the top-level fields of the data, which field discriminators refer to.
+ * @return The `if` statement.
  *
- * if (containsBytes(data, new Uint8Array([1, 2, 3]), offset)) {
- *   return splTokenAccounts.TOKEN;
- * }
+ * @example
+ * ```ts
+ * if (data.length === 72) { return SplTokenAccount.Token; }
+ * if (containsBytes(data, getU32Encoder().encode(42), 0)) { return SplTokenAccount.Mint; }
  * ```
  */
 export function getDiscriminatorConditionFragment(
-    scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<RenderScope, 'typeManifestVisitor'> & {
         dataName: string;
         discriminators: DiscriminatorNode[];
-        ifTrue: string;
-        programNode: ProgramNode;
         fields: StructFieldTypeNode[];
+        ifTrue: string;
     },
 ): Fragment {
     return pipe(
@@ -94,32 +95,20 @@ function getFieldConditionFragment(
         fields: StructFieldTypeNode[];
     },
 ): Fragment {
-    const identifier = getFieldDiscriminatorIdentifier(discriminator);
-    const field = scope.fields.find(f => f.identifier === identifier);
-    if (!field) {
-        throw new CodamaError(CODAMA_ERROR__DISCRIMINATOR_FIELD_NOT_FOUND, {
-            field: discriminator.path,
-            path: [discriminator],
-        });
-    }
-    if (!field.defaultValue) {
-        throw new CodamaError(CODAMA_ERROR__DISCRIMINATOR_FIELD_HAS_NO_DEFAULT_VALUE, { path: [field] });
-    }
+    const { defaultValue, field } = getFieldDiscriminatorField(discriminator, scope.fields);
 
-    // This handles the case where a field uses an u8 array to represent its discriminator.
-    // In this case, we can simplify the generated code by delegating to a constantDiscriminatorNode.
-    const defaultValueItems = isNode(field.defaultValue, 'arrayValueNode') ? (field.defaultValue.items ?? []) : [];
+    // A fixed-size array of u8 encodes as its items, so it is matched as raw bytes.
+    const items = isNode(defaultValue, 'arrayValueNode') ? (defaultValue.items ?? []) : [];
     if (
         isNode(field.type, 'arrayTypeNode') &&
+        getTypeNodeTransforms(field.type).length === 0 &&
         isNode(field.type.item, 'integerTypeNode') &&
-        field.type.item.format === 'u8' &&
+        isDefaultIntegerType(field.type.item, 'u8') &&
         isNode(field.type.count, 'fixedCountNode') &&
-        isNode(field.defaultValue, 'arrayValueNode') &&
-        defaultValueItems.every(isNodeFilter('integerValueNode'))
+        isNode(defaultValue, 'arrayValueNode') &&
+        items.every(isNodeFilter('integerValueNode'))
     ) {
-        const base64Bytes = getBase64Decoder().decode(
-            new Uint8Array(defaultValueItems.map(node => Number(node.value))),
-        );
+        const base64Bytes = getBase64Decoder().decode(new Uint8Array(items.map(node => Number(node.value))));
         return getByteConditionFragment(
             constantDiscriminatorNode(constantValueNodeFromBytes('base64', base64Bytes), {
                 offset: discriminator.offset,
@@ -129,7 +118,7 @@ function getFieldConditionFragment(
     }
 
     return getByteConditionFragment(
-        constantDiscriminatorNode(constantValueNode(field.type, field.defaultValue), { offset: discriminator.offset }),
+        constantDiscriminatorNode(constantValueNode(field.type, defaultValue), { offset: discriminator.offset }),
         scope,
     );
 }

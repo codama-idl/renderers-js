@@ -8,6 +8,13 @@ import { getProgramEventsFragment } from './programEvents';
 import { getProgramInstructionsFragment } from './programInstructions';
 import { getProgramPluginFragment } from './programPlugin';
 
+/**
+ * Renders the page of a program: its address constant, account, instruction and event helpers,
+ * and its Kit plugin.
+ *
+ * @param scope - The render scope, the program and its path.
+ * @return The fragment of the program page.
+ */
 export function getProgramPageFragment(
     scope: Pick<
         RenderScope,

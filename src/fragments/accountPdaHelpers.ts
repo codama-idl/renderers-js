@@ -3,6 +3,13 @@ import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
 import { addFragmentImports, Fragment, fragment, getCustomDataOptions, RenderScope, TypeManifest } from '../utils';
 
+/**
+ * Renders the helpers fetching an account from the seeds of its PDA, e.g.
+ * `fetchCounterFromSeeds` and `fetchMaybeCounterFromSeeds`, when the account has a PDA.
+ *
+ * @param scope - The render scope, the path of the account and its type manifest.
+ * @return The fragment of the PDA helpers, if the account has a PDA.
+ */
 export function getAccountPdaHelpersFragment(
     scope: Pick<RenderScope, 'customAccountData' | 'linkables' | 'nameApi'> & {
         accountPath: NodePath<AccountNode>;

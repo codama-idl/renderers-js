@@ -1,14 +1,13 @@
-import { CODAMA_ERROR__NODE_PATH_PROGRAM_MISSING, CodamaError, logWarn } from '@codama/errors';
-import { camelCase } from '@codama/fragments/casing';
+import { logWarn } from '@codama/errors';
 import { definedTypeNode, InstructionNode } from '@codama/nodes';
-import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
+import { getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
 
 import {
     Fragment,
-    getAllInstructionDataFields,
     getInstructionDataFields,
     getInstructionExtraArgumentsNode,
-    hasInputDefault,
+    getProgramNodeFromPath,
+    getRenamedArgsMap,
     mergeFragments,
     RenderScope,
     ResolvedInstructionInput,
@@ -20,6 +19,14 @@ import { getInstructionFunctionFragment } from './instructionFunction';
 import { getInstructionParseFunctionFragment } from './instructionParseFunction';
 import { getInstructionTypeFragment } from './instructionType';
 
+/**
+ * Renders the page of an instruction: its discriminator constants, instruction type, data
+ * type and codecs, extra arguments type, builders and parse function.
+ *
+ * @param scope - The render scope, the path of the instruction, its resolved inputs and data size.
+ * @return The fragment of the instruction page.
+ * @throws `CODAMA_ERROR__NODE_PATH_PROGRAM_MISSING` when the instruction is not within a program.
+ */
 export function getInstructionPageFragment(
     scope: Pick<
         RenderScope,
@@ -37,9 +44,8 @@ export function getInstructionPageFragment(
     },
 ): Fragment {
     const node = getLastNodeFromPath(scope.instructionPath);
-    if (!findProgramNodeFromPath(scope.instructionPath)) {
-        throw new CodamaError(CODAMA_ERROR__NODE_PATH_PROGRAM_MISSING, { path: scope.instructionPath });
-    }
+    // Asserts that the node belongs to a program.
+    getProgramNodeFromPath(scope.instructionPath);
 
     const childScope = {
         ...scope,
@@ -51,8 +57,15 @@ export function getInstructionPageFragment(
             }),
             scope.typeManifestVisitor,
         ),
-        renamedArgs: getRenamedArgsMap(node),
+        renamedArgs: getRenamedArgsMap(scope.instructionPath),
     };
+    if (childScope.renamedArgs.size > 0) {
+        logWarn(
+            `[JavaScript] Accounts and args of instruction [${node.identifier}] have the following ` +
+                `conflicting attributes [${[...childScope.renamedArgs.keys()].join(', ')}]. ` +
+                `Thus, the arguments have been renamed to avoid conflicts in the input type.`,
+        );
+    }
 
     return mergeFragments(
         [
@@ -72,36 +85,4 @@ export function getInstructionPageFragment(
         ],
         cs => cs.join('\n\n'),
     );
-}
-
-/**
- * Maps the camelCase name of each input argument conflicting with an account of the
- * instruction to the camelCase name it is renamed to in the instruction input type.
- *
- * Names are compared by their camelCase form since that is how they are emitted.
- */
-export function getRenamedArgsMap(instruction: InstructionNode): Map<string, string> {
-    const argNames = getAllInstructionDataFields(instruction).map(a => camelCase(a.identifier));
-    const duplicateArgs = argNames.filter((e, i, a) => a.indexOf(e) !== i);
-    if (duplicateArgs.length > 0) {
-        throw new Error(
-            `Duplicate args found: [${duplicateArgs.join(', ')}] in instruction [${instruction.identifier}].`,
-        );
-    }
-
-    // Omitted arguments are not part of the input type, so they never conflict with accounts there.
-    const inputArgNames = getAllInstructionDataFields(instruction)
-        .filter(arg => !(hasInputDefault(arg) && arg.defaultValueStrategy === 'omitted'))
-        .map(arg => camelCase(arg.identifier));
-    const allNames = [...(instruction.accounts ?? []).map(account => camelCase(account.identifier)), ...inputArgNames];
-    const duplicates = allNames.filter((e, i, a) => a.indexOf(e) !== i);
-    if (duplicates.length === 0) return new Map();
-
-    logWarn(
-        `[JavaScript] Accounts and args of instruction [${instruction.identifier}] have the following ` +
-            `conflicting attributes [${duplicates.join(', ')}]. ` +
-            `Thus, the arguments have been renamed to avoid conflicts in the input type.`,
-    );
-
-    return new Map(duplicates.map(name => [name, camelCase(`${name}Arg`)]));
 }

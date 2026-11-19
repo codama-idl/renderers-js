@@ -3,6 +3,13 @@ import { NodePath } from '@codama/visitors-core';
 
 import { Fragment, fragment, getEnumVariantDataShape, mergeFragments, RenderScope, use } from '../utils';
 
+/**
+ * Renders the helpers of a data union, e.g. `command('Move', [1, 2])` to create a variant and
+ * `isCommand('Move', value)` to narrow one.
+ *
+ * @param scope - The render scope, the name of the type, the type and its path.
+ * @return The fragment of the helpers, if the type is a data union.
+ */
 export function getTypeDiscriminatedUnionHelpersFragment(
     scope: Pick<RenderScope, 'linkables' | 'nameApi'> & { name: string; typeNode: TypeNode; typePath: NodePath },
 ): Fragment | undefined {

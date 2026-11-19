@@ -1,10 +1,18 @@
-import { CODAMA_ERROR__NODE_PATH_PROGRAM_MISSING, CodamaError } from '@codama/errors';
 import { EventNode } from '@codama/nodes';
-import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
+import { getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
 
-import { Fragment, fragment, getStructFields, mergeFragments, RenderScope, use } from '../utils';
+import {
+    Fragment,
+    fragment,
+    getEventDiscriminatorPrefix,
+    getProgramNodeFromPath,
+    getStructFields,
+    mergeFragments,
+    RenderScope,
+    use,
+} from '../utils';
 import { getDiscriminatorConditionFragment } from './discriminatorCondition';
-import { getDiscriminatorConstantsFragment, getEventDiscriminatorPrefix } from './discriminatorConstants';
+import { getDiscriminatorConstantsFragment } from './discriminatorConstants';
 import { getTypeWithCodecFragment } from './typeWithCodec';
 
 /**
@@ -21,9 +29,8 @@ export function getEventPageFragment(
     },
 ): Fragment {
     const node = getLastNodeFromPath(scope.eventPath);
-    if (!findProgramNodeFromPath(scope.eventPath)) {
-        throw new CodamaError(CODAMA_ERROR__NODE_PATH_PROGRAM_MISSING, { path: scope.eventPath });
-    }
+    // Asserts that the node belongs to a program.
+    getProgramNodeFromPath(scope.eventPath);
 
     const { nameApi } = scope;
     const typeManifest = visit(node, scope.typeManifestVisitor);
@@ -91,7 +98,6 @@ function getEventParseFunctionFragment(
         discriminators,
         fields: getStructFields(node.data),
         ifTrue: `return ${decoderFunction}().decode(data);`,
-        programNode: findProgramNodeFromPath(scope.eventPath)!,
     });
 
     return fragment`${docblock}export function ${parseFunction}(data: ${readonlyUint8Array} | Uint8Array): ${strictName} {

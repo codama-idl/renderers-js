@@ -57,12 +57,26 @@ type ImportInfo = Readonly<{
     usedIdentifier: UsedIdentifier;
 }>;
 
+/**
+ * The imports of a fragment, by module and by the identifier each import is used as. Modules
+ * may be symbolic, e.g. `solanaAddresses`, and are resolved when rendering import statements.
+ */
 export type ImportMap = ReadonlyMap<Module, ReadonlyMap<UsedIdentifier, ImportInfo>>;
 
+/** Creates an empty import map. */
 export function createImportMap(): ImportMap {
     return Object.freeze(new Map());
 }
 
+/**
+ * Parses an import as given to {@link use}, e.g. `type Address` or `getFoo as getBar`.
+ *
+ * @example
+ * ```ts
+ * parseImportInput('getFoo as getBar');
+ * // { importedIdentifier: 'getFoo', isType: false, usedIdentifier: 'getBar' }
+ * ```
+ */
 export function parseImportInput(input: ImportInput): ImportInfo {
     const matches = input.match(/^(type )?([^ ]+)(?: as (.+))?$/);
     if (!matches) return Object.freeze({ importedIdentifier: input, isType: false, usedIdentifier: input });
@@ -75,11 +89,13 @@ export function parseImportInput(input: ImportInput): ImportInfo {
     });
 }
 
+/** Adds imports from a module to an import map. */
 export function addToImportMap(importMap: ImportMap, module: Module, imports: ImportInput[]): ImportMap {
     const parsedImports = imports.map(parseImportInput).map(i => [i.usedIdentifier, i] as const);
     return mergeImportMaps([importMap, new Map([[module, new Map(parsedImports)]])]);
 }
 
+/** Removes imports from a module of an import map, given the identifiers they are used as. */
 export function removeFromImportMap(
     importMap: ImportMap,
     module: Module,
@@ -98,6 +114,7 @@ export function removeFromImportMap(
     return Object.freeze(newMap);
 }
 
+/** Merges import maps, keeping a value import over a type import of the same identifier. */
 export function mergeImportMaps(importMaps: ImportMap[]): ImportMap {
     if (importMaps.length === 0) return createImportMap();
     if (importMaps.length === 1) return importMaps[0];
@@ -125,6 +142,16 @@ export function mergeImportMaps(importMaps: ImportMap[]): ImportMap {
     return Object.freeze(mergedMap);
 }
 
+/**
+ * Renders the import statements of an import map, resolving symbolic modules with the
+ * dependency map and the Kit import strategy. Relative imports come last.
+ *
+ * @param importMap - The imports to render.
+ * @param dependencyMap - Overrides of the modules symbolic modules resolve to.
+ * @param kitImportStrategy - Whether to import Kit symbols from granular packages or `@solana/kit`.
+ * @param getImportPath - Renders the paths of generated files and folders.
+ * @return The import statements, one per line.
+ */
 export function importMapToString(
     importMap: ImportMap,
     dependencyMap: Record<string, string> = {},
@@ -157,6 +184,15 @@ export function importMapToString(
         .join('\n');
 }
 
+/**
+ * The packages an import map depends on, once symbolic modules are resolved, e.g.
+ * `@solana/kit` for an import from `@solana/kit/program-client-core`.
+ *
+ * @param importMap - The imports.
+ * @param dependencyMap - Overrides of the modules symbolic modules resolve to.
+ * @param kitImportStrategy - Whether to import Kit symbols from granular packages or `@solana/kit`.
+ * @return The names of the packages.
+ */
 export function getExternalDependencies(
     importMap: ImportMap,
     dependencyMap: Record<string, string>,

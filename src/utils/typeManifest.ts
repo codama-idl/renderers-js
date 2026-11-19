@@ -1,5 +1,9 @@
 import { Fragment, fragment, mergeFragments } from './fragment';
 
+/**
+ * How a type or value renders in TypeScript: its strict type, i.e. the decoded one, its loose
+ * type, i.e. the encoder input, its encoder and decoder, or its value.
+ */
 export type TypeManifest = Readonly<{
     decoder: Fragment;
     encoder: Fragment;
@@ -9,6 +13,7 @@ export type TypeManifest = Readonly<{
     value: Fragment;
 }>;
 
+/** Creates a type manifest, with empty fragments for the parts not given. */
 export function typeManifest(input: Partial<TypeManifest> = {}): TypeManifest {
     return Object.freeze({
         decoder: fragment``,
@@ -21,6 +26,14 @@ export function typeManifest(input: Partial<TypeManifest> = {}): TypeManifest {
     });
 }
 
+/**
+ * Merges type manifests into one, combining each of their parts with the given functions, e.g.
+ * the item manifests of a tuple.
+ *
+ * @param manifests - The manifests to merge.
+ * @param options - The functions combining types, codecs and values, which default to an empty content.
+ * @return The merged manifest.
+ */
 export function mergeTypeManifests(
     manifests: TypeManifest[],
     options: {

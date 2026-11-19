@@ -22,6 +22,14 @@ export function isAsyncResolver(resolverName: string, asyncResolvers: string[]):
     return asyncResolvers.includes(camelCase(resolverName));
 }
 
+/**
+ * Whether an instruction needs an asynchronous builder, i.e. when an input, remaining accounts
+ * or byte delta has an asynchronous default value or resolver, e.g. a PDA default.
+ *
+ * @param instructionNode - The instruction.
+ * @param resolvedInputs - The resolved inputs of the instruction.
+ * @param asyncResolvers - The camelCase names of the asynchronous resolvers.
+ */
 export function hasAsyncFunction(
     instructionNode: InstructionNode,
     resolvedInputs: ResolvedInstructionInput[],
@@ -39,7 +47,7 @@ export function hasAsyncFunction(
     return hasAsyncDefaultValues(resolvedInputs, asyncResolvers) || hasByteDeltasAsync || hasRemainingAccountsAsync;
 }
 
-export function hasAsyncDefaultValues(resolvedInputs: ResolvedInstructionInput[], asyncResolvers: string[]): boolean {
+function hasAsyncDefaultValues(resolvedInputs: ResolvedInstructionInput[], asyncResolvers: string[]): boolean {
     return resolvedInputs.some(input => isAsyncInput(input, asyncResolvers));
 }
 
@@ -55,7 +63,7 @@ export function isAsyncInput(
     return !!input.resolvedDefaultValue && isAsyncDefaultValue(input.resolvedDefaultValue);
 }
 
-export function isAsyncDefaultValue(defaultValue: InstructionInputDefaultValue): boolean {
+function isAsyncDefaultValue(defaultValue: InstructionInputDefaultValue): boolean {
     switch (defaultValue.kind) {
         case 'pdaValueNode':
             return true;

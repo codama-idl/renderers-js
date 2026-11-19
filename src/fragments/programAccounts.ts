@@ -5,6 +5,13 @@ import { Fragment, fragment, getStructFields, mergeFragments, RenderScope, use }
 import { getDiscriminatorConditionFragment } from './discriminatorCondition';
 import { getEnumDeclarationFragment } from './enumDeclaration';
 
+/**
+ * Renders the enum of the accounts of a program and the function identifying an account
+ * from its data, e.g. `SplTokenAccount` and `identifySplTokenAccount`.
+ *
+ * @param scope - The render scope and the program.
+ * @return The fragment of the account enum and identify function, if the program has accounts.
+ */
 export function getProgramAccountsFragment(
     scope: Pick<RenderScope, 'erasableSyntax' | 'nameApi' | 'typeManifestVisitor'> & {
         programNode: ProgramNode;

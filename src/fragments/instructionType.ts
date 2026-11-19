@@ -1,12 +1,13 @@
 import { mapFragmentContent } from '@codama/fragments';
-import { pascalCase } from '@codama/fragments/casing';
 import { InstructionNode } from '@codama/nodes';
-import { findProgramNodeFromPath, getLastNodeFromPath, NodePath } from '@codama/visitors-core';
+import { getLastNodeFromPath, NodePath } from '@codama/visitors-core';
 
 import {
     Fragment,
     fragment,
+    getAccountTypeParamName,
     getInstructionDataLink,
+    getProgramNodeFromPath,
     hasInstructionData,
     mergeFragments,
     RenderScope,
@@ -15,6 +16,13 @@ import {
 import { getInstructionAccountMetaFragment } from './instructionAccountMeta';
 import { getInstructionAccountTypeParamFragment } from './instructionAccountTypeParam';
 
+/**
+ * Renders the type of an instruction, e.g. `TransferInstruction`, with one type parameter
+ * per account so that its account metas reflect the values provided for them.
+ *
+ * @param scope - The render scope and the path of the instruction.
+ * @return The fragment of the instruction type.
+ */
 export function getInstructionTypeFragment(
     scope: Pick<RenderScope, 'customInstructionData' | 'linkables' | 'nameApi'> & {
         instructionPath: NodePath<InstructionNode>;
@@ -22,7 +30,7 @@ export function getInstructionTypeFragment(
 ): Fragment {
     const { instructionPath, nameApi, customInstructionData } = scope;
     const instructionNode = getLastNodeFromPath(instructionPath);
-    const programNode = findProgramNodeFromPath(instructionPath)!;
+    const programNode = getProgramNodeFromPath(instructionPath);
     const hasAccounts = (instructionNode.accounts ?? []).length > 0;
     const hasData =
         !!getInstructionDataLink(instructionNode, customInstructionData) || hasInstructionData(instructionNode);
@@ -49,7 +57,7 @@ export function getInstructionTypeFragment(
     const accountMetasFragment = mergeFragments(
         (instructionNode.accounts ?? []).map(account =>
             mapFragmentContent(getInstructionAccountMetaFragment(account), c => {
-                const typeParam = `TAccount${pascalCase(account.identifier)}`;
+                const typeParam = getAccountTypeParamName(account.identifier);
                 const isLegacyOptional = account.isOptional && usesLegacyOptionalAccounts;
                 const type = `${typeParam} extends string ? ${c} : ${typeParam}`;
                 if (!isLegacyOptional) return type;

@@ -6,6 +6,14 @@ import { getLastNodeFromPath, NodePath } from '@codama/visitors-core';
 import { Fragment, fragment, mergeFragments, RenderScope, ResolvedInstructionInput } from '../utils';
 import { getInstructionInputDefaultFragment } from './instructionInputDefault';
 
+/**
+ * Renders the resolution of the default values of the inputs of an instruction builder, in
+ * order, each one only applying when its input is missing.
+ *
+ * @param scope - The render scope, the path of the instruction, its resolved inputs and
+ * whether the builder is asynchronous.
+ * @return The fragment resolving the default values, empty when there are none.
+ */
 export function getInstructionInputResolvedFragment(
     scope: Pick<RenderScope, 'asyncResolvers' | 'getImportFrom' | 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         instructionPath: NodePath<InstructionNode>;

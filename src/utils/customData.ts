@@ -11,6 +11,17 @@ import {
 
 import { getInstructionDataNode } from './instructionInputs';
 
+/**
+ * The data of an account or instruction written manually rather than generated, given by the
+ * identifier of the node or by an object configuring where to import it from.
+ *
+ * - `name`: the identifier of the account or instruction.
+ * - `importFrom`: the module the data type and codecs are imported from, `hooked` by default.
+ * - `importAs`: the identifier of the data type, e.g. `counterAccountData` by default, which
+ *   renders as `CounterAccountData` and `getCounterAccountDataCodec`.
+ * - `extract`: whether to also render the generated data as a defined type, e.g. to build upon it.
+ * - `extractAs`: the identifier of that defined type, the `importAs` one by default.
+ */
 export type CustomDataOptions =
     | string
     | {
@@ -41,7 +52,7 @@ export type ParsedCustomDataOptions = Map<
  * Finds the custom data options of an account or instruction node, if any.
  *
  * @param options - The parsed custom data options.
- * @param node - The account or instruction node, matched by the camelCase form of its name.
+ * @param node - The account or instruction node, matched by the camelCase form of its identifier.
  */
 export function getCustomDataOptions(
     options: ParsedCustomDataOptions,
@@ -50,6 +61,14 @@ export function getCustomDataOptions(
     return options.get(camelCase(node.identifier));
 }
 
+/**
+ * Parses the `customAccountData` or `customInstructionData` option, keyed by the camelCase
+ * identifier of the node, filling in default import modules and names.
+ *
+ * @param customDataOptions - The option, as given by the caller.
+ * @param defaultSuffix - The suffix of default data type names, e.g. `AccountData`.
+ * @return The parsed options, keyed by camelCase identifier.
+ */
 export const parseCustomDataOptions = (
     customDataOptions: CustomDataOptions[],
     defaultSuffix: string,
@@ -72,6 +91,14 @@ export const parseCustomDataOptions = (
         }),
     );
 
+/**
+ * The defined types to render for the custom data of accounts or instructions configured with
+ * `extract: true`, holding the data they would have generated.
+ *
+ * @param nodes - The accounts or instructions, e.g. the ones rendered as pages.
+ * @param parsedCustomDataOptions - The parsed custom data options.
+ * @return The defined types to render.
+ */
 export const getDefinedTypeNodesToExtract = (
     nodes: AccountNode[] | InstructionNode[],
     parsedCustomDataOptions: ParsedCustomDataOptions,

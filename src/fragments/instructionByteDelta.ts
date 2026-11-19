@@ -1,22 +1,29 @@
 import { CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, CodamaError } from '@codama/errors';
 import { mapFragmentContent } from '@codama/fragments';
-import { assertIsNode, InstructionByteDeltaNode, InstructionNode, isNode } from '@codama/nodes';
+import { assertIsNode, InstructionByteDeltaNode, InstructionNode } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
 import {
-    addFragmentFeatures,
     Fragment,
     fragment,
     getAccountSize,
     getByteDeltaResolver,
     getDataPathExpression,
-    InstructionResolver,
-    isAsyncResolver,
     mergeFragments,
     RenderScope,
     use,
 } from '../utils';
+import { getInstructionResolverCallFragment } from './instructionResolver';
 
+/**
+ * Renders the `byteDelta` variable of an instruction builder, summing the bytes each byte
+ * delta of the instruction creates or reallocates.
+ *
+ * @param scope - The render scope, the path of the instruction and whether the builder is asynchronous.
+ * @return The fragment declaring `byteDelta`, if the instruction has byte deltas.
+ * @throws `CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE` when a byte delta is given by an
+ * account without a fixed size.
+ */
 export function getInstructionByteDeltaFragment(
     scope: Pick<RenderScope, 'asyncResolvers' | 'getImportFrom' | 'linkables' | 'nameApi'> & {
         instructionPath: NodePath<InstructionNode>;
@@ -41,24 +48,27 @@ function getByteDeltaFragment(
         useAsync: boolean;
     },
 ): Fragment[] {
-    let bytesFragment = ((): Fragment | null => {
+    let bytesFragment = ((): Fragment | undefined => {
         const resolver = getByteDeltaResolver(byteDelta);
         if (resolver) {
-            return getResolverFragment(resolver, scope);
+            return getInstructionResolverCallFragment(resolver, scope);
         }
-        if (isNode(byteDelta.value, 'integerValueNode')) {
-            return fragment`${byteDelta.value.value}`;
+        switch (byteDelta.value.kind) {
+            case 'integerValueNode':
+                return fragment`${byteDelta.value.value}`;
+            case 'dataValueNode':
+                return fragment`Number(${getDataPathExpression(byteDelta.value.path)})`;
+            case 'accountLinkNode':
+                return getAccountLinkNodeFragment(byteDelta, scope);
+            default:
+                throw new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, {
+                    path: [...scope.instructionPath, byteDelta, byteDelta.value satisfies never],
+                });
         }
-        if (isNode(byteDelta.value, 'dataValueNode')) {
-            return fragment`Number(${getDataPathExpression(byteDelta.value.path)})`;
-        }
-        if (isNode(byteDelta.value, 'accountLinkNode')) {
-            return getAccountLinkNodeFragment(byteDelta, scope);
-        }
-        return null;
     })();
 
-    if (bytesFragment === null) return [];
+    // Asynchronous resolvers have no byte delta in synchronous builders.
+    if (!bytesFragment) return [];
 
     if (byteDelta.withHeader) {
         bytesFragment = fragment`${bytesFragment} + ${use('BASE_ACCOUNT_SIZE', 'solanaAccounts')}`;
@@ -92,20 +102,4 @@ function getAccountLinkNodeFragment(
     }
     const functionName = use(scope.nameApi.accountGetSizeFunction(link.identifier), scope.getImportFrom(link));
     return fragment`${functionName}()`;
-}
-
-function getResolverFragment(
-    resolver: InstructionResolver,
-    scope: Pick<RenderScope, 'asyncResolvers' | 'getImportFrom' | 'nameApi'> & {
-        useAsync: boolean;
-    },
-): Fragment | null {
-    const isAsync = isAsyncResolver(resolver.name, scope.asyncResolvers);
-    if (!scope.useAsync && isAsync) return null;
-
-    const awaitKeyword = scope.useAsync && isAsync ? 'await ' : '';
-    const functionName = use(scope.nameApi.resolverFunction(resolver.name), scope.getImportFrom(resolver));
-    return pipe(fragment`${awaitKeyword}${functionName}(resolverScope)`, f =>
-        addFragmentFeatures(f, ['instruction:resolverScopeVariable']),
-    );
 }

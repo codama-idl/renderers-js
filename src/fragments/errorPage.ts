@@ -3,6 +3,13 @@ import { getTextNodeContent, ProgramNode } from '@codama/nodes';
 
 import { Fragment, fragment, getDocblockFragment, mergeFragments, RenderScope, use } from '../utils';
 
+/**
+ * Renders the error page of a program: a constant per error code, the union of error codes,
+ * their messages in non-production builds, and the `getXErrorMessage` and `isXError` helpers.
+ *
+ * @param scope - The render scope and the program.
+ * @return The fragment of the error page.
+ */
 export function getErrorPageFragment(scope: Pick<RenderScope, 'nameApi'> & { programNode: ProgramNode }): Fragment {
     return mergeFragments(
         [

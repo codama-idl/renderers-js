@@ -1,6 +1,13 @@
 import { DocsInput, Fragment, fragment, getDocblockFragment, RenderScope, TypeManifest } from '../utils';
 import { getEnumDeclarationFromBodyFragment } from './enumDeclaration';
 
+/**
+ * Renders the strict and loose types of a defined type, e.g. `Point` and `PointArgs`, as a
+ * native enum for scalar enums.
+ *
+ * @param scope - The render scope, the name of the type, its type manifest and docs.
+ * @return The fragment of the types.
+ */
 export function getTypeFragment(
     scope: Pick<RenderScope, 'erasableSyntax' | 'nameApi'> & {
         docs?: DocsInput;

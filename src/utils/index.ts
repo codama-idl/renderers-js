@@ -9,6 +9,7 @@ export * from './fragment';
 export * from './importMap';
 export * from './instructionInputs';
 export * from './linkOverrides';
+export * from './nodePaths';
 export * from './nameTransformers';
 export * from './options';
 export * from './packageJson';

@@ -1,18 +1,20 @@
 import { mapFragmentContent } from '@codama/fragments';
-import { camelCase, pascalCase } from '@codama/fragments/casing';
+import { camelCase } from '@codama/fragments/casing';
 import { InstructionAccountNode, InstructionNode, isNodeFilter } from '@codama/nodes';
-import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, pipe, visit } from '@codama/visitors-core';
+import { getLastNodeFromPath, NodePath, pipe, visit } from '@codama/visitors-core';
 
 import {
-    Fragment,
     findResolvedAccount,
     findResolvedDataField,
+    Fragment,
     fragment,
+    getAccountTypeParamName,
     getDataPathRoot,
     getInstructionDataFields,
     getInstructionDataLink,
     getInstructionDependencies,
     getInstructionExtraArguments,
+    getProgramNodeFromPath,
     getRemainingAccountsName,
     hasAsyncFunction,
     hasInputDefault,
@@ -33,6 +35,18 @@ import { getInstructionInputResolvedFragment } from './instructionInputResolved'
 import { getInstructionAccountInputConstraintFragment, getInstructionInputTypeFragment } from './instructionInputType';
 import { getInstructionRemainingAccountsFragment } from './instructionRemainingAccounts';
 
+/**
+ * Renders the synchronous or asynchronous builder of an instruction, e.g.
+ * `getTransferInstruction` or `getTransferInstructionAsync`, along with its input type.
+ *
+ * The builder resolves the default values of its inputs, its remaining accounts and its byte
+ * deltas, then returns the instruction with its account metas and encoded data.
+ *
+ * @param scope - The render scope, the path of the instruction, its resolved inputs and
+ * whether to render the asynchronous builder.
+ * @return The fragment of the builder, or `undefined` for an asynchronous builder the
+ * instruction does not need.
+ */
 export function getInstructionFunctionFragment(
     scope: Pick<
         RenderScope,
@@ -48,7 +62,7 @@ export function getInstructionFunctionFragment(
 ): Fragment | undefined {
     const { useAsync, instructionPath, resolvedInputs, asyncResolvers, nameApi, customInstructionData } = scope;
     const instructionNode = getLastNodeFromPath(instructionPath);
-    const programNode = findProgramNodeFromPath(instructionPath)!;
+    const programNode = getProgramNodeFromPath(instructionPath);
     if (useAsync && !hasAsyncFunction(instructionNode, resolvedInputs, asyncResolvers)) return;
 
     const hasAccounts = (instructionNode.accounts ?? []).length > 0;
@@ -359,7 +373,7 @@ function getTypeParamsFragment(instructionNode: InstructionNode, programAddressC
         [
             ...(instructionNode.accounts ?? []).map(
                 account =>
-                    fragment`TAccount${pascalCase(account.identifier)} extends ${getInstructionAccountInputConstraintFragment(account)}`,
+                    fragment`${getAccountTypeParamName(account.identifier)} extends ${getInstructionAccountInputConstraintFragment(account)}`,
             ),
             fragment`TProgramAddress extends ${use('type Address', 'solanaAddresses')} = typeof ${programAddressConstant}`,
         ],
@@ -382,7 +396,7 @@ function getInstructionTypeFragment(scope: { instructionPath: NodePath<Instructi
     const accountTypeParamsFragments = (instructionNode.accounts ?? []).map(account => {
         const resolvedMeta = use('type ResolvedInstructionAccountMeta', 'solanaProgramClientCore');
         const inputAddress = use('type InstructionAccountInputAddress', 'solanaProgramClientCore');
-        const input = `TAccount${pascalCase(account.identifier)}`;
+        const input = getAccountTypeParamName(account.identifier);
         const address = fragment`${inputAddress}<${input}>`;
 
         if (account.isSigner === 'either') {
@@ -415,7 +429,7 @@ function getInputTypeCallFragment(scope: {
         : nameApi.instructionSyncInputType(instructionNode.identifier);
     if ((instructionNode.accounts ?? []).length === 0) return fragment`${inputTypeName}`;
     const accountTypeParams = (instructionNode.accounts ?? [])
-        .map(account => `TAccount${pascalCase(account.identifier)}`)
+        .map(account => getAccountTypeParamName(account.identifier))
         .join(', ');
 
     return fragment`${inputTypeName}<${accountTypeParams}>`;

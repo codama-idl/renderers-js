@@ -6,19 +6,54 @@ import { PrettierOptions } from './formatCode';
 import type { GetImportFromFunction, LinkOverrides } from './linkOverrides';
 import type { NameApi, NameTransformers } from './nameTransformers';
 
+/**
+ * The options of {@link renderVisitor}: the options of {@link getRenderMapVisitor}, along with
+ * options controlling how files are formatted and written.
+ */
 export type RenderOptions = GetRenderMapOptions & {
+    /**
+     * Whether to delete the generated folder before writing the generated files.
+     *
+     * @defaultValue `true`
+     */
     deleteFolderBeforeRendering?: boolean;
+    /**
+     * Whether to format the generated code with Prettier.
+     *
+     * @defaultValue `true`
+     */
     formatCode?: boolean;
+    /**
+     * The path of the generated folder, relative to the package folder.
+     *
+     * @defaultValue `'src/generated'`
+     */
     generatedFolder?: string;
+    /** Prettier options, overriding the ones of the package folder and the defaults. */
     prettierOptions?: PrettierOptions;
+    /**
+     * Whether to create or update the `package.json` of the package folder with the
+     * dependencies of the generated code, rather than only reporting outdated ones.
+     *
+     * @defaultValue `true`
+     */
     syncPackageJson?: boolean;
 };
 
+/**
+ * The options of {@link getRenderMapVisitor}, controlling the generated code. See the README
+ * for examples of each option.
+ */
 export type GetRenderMapOptions = {
+    /** The names of the resolvers returning promises, which asynchronous builders await. */
     asyncResolvers?: string[];
+    /** The accounts whose data is written manually rather than generated. */
     customAccountData?: CustomDataOptions[];
+    /** The instructions whose data is written manually rather than generated. */
     customInstructionData?: CustomDataOptions[];
+    /** Overrides of the modules that symbolic modules, e.g. `solanaAddresses`, resolve to. */
     dependencyMap?: Record<string, string>;
+    /** Overrides of the version ranges of the packages the generated code depends on. */
     dependencyVersions?: Record<string, string>;
     /**
      * Whether generated code should avoid TypeScript syntax that cannot be erased
@@ -28,15 +63,34 @@ export type GetRenderMapOptions = {
      * @defaultValue `false`
      */
     erasableSyntax?: boolean;
+    /** The extension of relative import paths, e.g. `'js'` for Node ESM resolution. */
     importExtension?: ImportExtension;
+    /** The identifiers of the nodes to render without exporting them from barrels. */
     internalNodes?: string[];
+    /**
+     * Whether to import Kit symbols from granular packages or from `@solana/kit`.
+     *
+     * @defaultValue `'preferRoot'`
+     */
     kitImportStrategy?: KitImportStrategy;
+    /** Overrides of the modules that linked nodes and resolvers are imported from. */
     linkOverrides?: LinkOverrides;
+    /** Overrides of the transformers deriving generated names from node identifiers. */
     nameTransformers?: Partial<NameTransformers>;
+    /** The identifiers of the enums outside the tree whose values are data unions. */
     nonScalarEnums?: string[];
+    /**
+     * Whether to render parent instructions along with their sub-instructions.
+     *
+     * @defaultValue `false`
+     */
     renderParentInstructions?: boolean;
 };
 
+/**
+ * The context shared by the fragments of a render: the parsed options, the name API, the
+ * linkable nodes of the tree and the type manifest visitor.
+ */
 export type RenderScope = {
     asyncResolvers: string[];
     customAccountData: ParsedCustomDataOptions;
@@ -86,6 +140,7 @@ export type GetImportPathFunction = (path: string, type: ImportPathType) => stri
  */
 export type KitImportStrategy = 'granular' | 'preferRoot' | 'rootOnly';
 
+/** The default `kitImportStrategy` option, importing from `@solana/kit` when possible. */
 export const DEFAULT_KIT_IMPORT_STRATEGY: KitImportStrategy = 'preferRoot';
 
 /**
