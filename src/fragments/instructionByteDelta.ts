@@ -1,12 +1,13 @@
 import { CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, CodamaError } from '@codama/errors';
 import { mapFragmentContent } from '@codama/fragments';
 import { assertIsNode, InstructionByteDeltaNode, InstructionNode, isNode } from '@codama/nodes';
-import { getByteSizeVisitor, getLastNodeFromPath, NodeStack, NodePath, pipe, visit } from '@codama/visitors-core';
+import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
 import {
     addFragmentFeatures,
     Fragment,
     fragment,
+    getAccountSize,
     getByteDeltaResolver,
     getDataPathExpression,
     InstructionResolver,
@@ -82,23 +83,14 @@ function getAccountLinkNodeFragment(
         instructionPath: NodePath<InstructionNode>;
     },
 ): Fragment {
-    assertIsNode(byteDelta.value, 'accountLinkNode');
-    const accountPath = scope.linkables.getPath([...scope.instructionPath, byteDelta.value]);
-    if (accountPath) {
-        const account = getLastNodeFromPath(accountPath);
-        const size =
-            account.size ??
-            visit(account, getByteSizeVisitor(scope.linkables, { stack: new NodeStack(accountPath.slice(0, -1)) }));
-        if (size == null) {
-            throw new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, {
-                path: [...scope.instructionPath, byteDelta, byteDelta.value],
-            });
-        }
+    const link = byteDelta.value;
+    assertIsNode(link, 'accountLinkNode');
+    const linkPath = [...scope.instructionPath, byteDelta, link] as const;
+    const accountPath = scope.linkables.getPath(linkPath);
+    if (accountPath && getAccountSize(accountPath, scope.linkables) === null) {
+        throw new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, { path: linkPath });
     }
-    const functionName = use(
-        scope.nameApi.accountGetSizeFunction(byteDelta.value.identifier),
-        scope.getImportFrom(byteDelta.value),
-    );
+    const functionName = use(scope.nameApi.accountGetSizeFunction(link.identifier), scope.getImportFrom(link));
     return fragment`${functionName}()`;
 }
 

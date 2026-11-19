@@ -31,6 +31,7 @@ import {
     identifierString,
     injectedValueNode,
     instructionAccountNode,
+    instructionByteDeltaNode,
     instructionNode,
     instructionRemainingAccountsNode,
     integerTypeNode,
@@ -1592,4 +1593,80 @@ test('it keeps PDA seeds reading an account and a data field of the same name', 
 
     // Then both the account and the data field are dependencies.
     expect(vault?.dependsOn).toStrictEqual([accountValueNode('mint'), dataValueNode('mint')]);
+});
+
+test('it fails on byte deltas of accounts without a fixed size', () => {
+    // Given a byte delta given by an account whose data has a variable size.
+    const byteDelta = instructionByteDeltaNode(accountLinkNode('profile'));
+    const node = programNode({
+        accounts: [
+            accountNode({
+                data: structTypeNode([structFieldTypeNode({ identifier: 'name', type: stringTypeNode('utf8') })]),
+                identifier: 'profile',
+            }),
+        ],
+        identifier: 'myProgram',
+        instructions: [instructionNode({ byteDeltas: [byteDelta], identifier: 'createProfile' })],
+        publicKey: '1111',
+    });
+
+    // Then rendering fails on that byte delta, since no size function exists for the account.
+    const error = getCodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, () => visit(node, getRenderMapVisitor()));
+    expect(error.context.path.slice(-2)).toStrictEqual([byteDelta, byteDelta.value]);
+});
+
+test('it does not rename omitted arguments sharing the name of an account', async () => {
+    // Given an omitted data field named like an account, alongside a regular one.
+    const node = programNode({
+        identifier: 'myProgram',
+        instructions: [
+            instructionNode({
+                accounts: [instructionAccountNode({ identifier: 'mode', isSigner: false, isWritable: false })],
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: integerValueNode('1'),
+                        defaultValueStrategy: 'omitted',
+                        identifier: 'mode',
+                        type: integerTypeNode('u8'),
+                    }),
+                    structFieldTypeNode({ identifier: 'amount', type: integerTypeNode('u8') }),
+                ]),
+                identifier: 'configure',
+            }),
+        ],
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the omitted argument, absent from the input, is not read from a renamed input.
+    await renderMapContains(renderMap, 'instructions/configure.ts', ['const args = { ...input };']);
+    await renderMapDoesNotContain(renderMap, 'instructions/configure.ts', ['modeArg']);
+});
+
+test('it only extracts the data of rendered instructions', () => {
+    // Given a parent instruction whose data is extracted, which is not rendered by default.
+    const node = rootNode(
+        programNode({
+            identifier: 'myProgram',
+            instructions: [
+                instructionNode({
+                    data: structTypeNode([structFieldTypeNode({ identifier: 'amount', type: integerTypeNode('u8') })]),
+                    identifier: 'parent',
+                    subInstructions: [instructionNode({ identifier: 'child' })],
+                }),
+            ],
+            publicKey: '1111',
+        }),
+    );
+    const options = { customInstructionData: [{ extract: true, name: 'parent' }] };
+
+    // Then its data type is only rendered along with the parent instruction.
+    expect(visit(node, getRenderMapVisitor(options)).has('types/parent-instruction-data.ts')).toBe(false);
+    expect(
+        visit(node, getRenderMapVisitor({ ...options, renderParentInstructions: true })).has(
+            'types/parent-instruction-data.ts',
+        ),
+    ).toBe(true);
 });

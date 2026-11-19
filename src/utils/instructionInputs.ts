@@ -341,9 +341,10 @@ export function getResolvedInstructionInputs(
     const readInputs = getByteDeltaAndRemainingAccountsDependencies(instruction).map(({ dependency, owner }) =>
         findDependencyEntry(
             entries,
+            // Byte deltas have no identifier, so errors name them `byteDeltas` and point at them.
             isNode(owner, 'instructionRemainingAccountsNode') ? owner.identifier : 'byteDeltas',
             dependency,
-            instructionPath,
+            [...instructionPath, owner],
         ),
     );
     const roots = [...entries.filter(isBuilderInput), ...readInputs];
@@ -497,7 +498,7 @@ function findDependencyEntry(
     entries: readonly InputEntry[],
     dependent: string,
     dependency: InstructionDependency,
-    instructionPath: NodePath<InstructionNode>,
+    path: NodePath,
 ): InputEntry {
     const isAccount = isNode(dependency, 'accountValueNode');
     const identifier = isAccount ? dependency.identifier : getDataPathRoot(dependency.path);
@@ -509,7 +510,7 @@ function findDependencyEntry(
         dependencyKind: dependency.kind,
         dependencyName: (isAccount ? dependency.identifier : dependency.path) as IdentifierString,
         dependent: dependent as IdentifierString,
-        path: instructionPath,
+        path,
     });
 }
 

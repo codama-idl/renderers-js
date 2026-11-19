@@ -40,6 +40,7 @@ import {
     DEFAULT_KIT_IMPORT_STRATEGY,
     DEFAULT_NAME_TRANSFORMERS,
     Fragment,
+    getAccountSize,
     getDefinedTypeNodesToExtract,
     getImportFromFactory,
     getImportPathFactory,
@@ -111,13 +112,14 @@ export function getRenderMapVisitor(
         v =>
             extendVisitor(v, {
                 visitAccount(node) {
+                    const accountPath = stack.getPath('accountNode');
                     return createRenderMap(
                         `accounts/${renderScope.nameApi.fileName(node.identifier)}.ts`,
                         asPage(
                             getAccountPageFragment({
                                 ...renderScope,
-                                accountPath: stack.getPath('accountNode'),
-                                size: visit(node, byteSizeVisitor),
+                                accountPath,
+                                size: getAccountSize(accountPath, linkables),
                             }),
                         ),
                     );
@@ -186,7 +188,10 @@ export function getRenderMapVisitor(
                     const constantsToExport = (node.constants ?? []).filter(isNotInternal);
                     const customDataDefinedType = [
                         ...getDefinedTypeNodesToExtract(node.accounts ?? [], customAccountData),
-                        ...getDefinedTypeNodesToExtract(getAllInstructionsWithSubs(node), customInstructionData),
+                        ...getDefinedTypeNodesToExtract(
+                            getAllInstructionsWithSubs(node, { leavesOnly: !renderScope.renderParentInstructions }),
+                            customInstructionData,
+                        ),
                     ];
                     const scope = { ...renderScope, programNode: node, programPath: stack.getPath('programNode') };
 

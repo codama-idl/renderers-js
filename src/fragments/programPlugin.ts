@@ -120,7 +120,7 @@ function getProgramPluginTypeFragment(
 }
 
 function getProgramPluginAccountsTypeFragment(
-    scope: Pick<RenderScope, 'nameApi'> & { instructions: InstructionNode[]; programNode: ProgramNode },
+    scope: Pick<RenderScope, 'nameApi'> & { programNode: ProgramNode },
 ): Fragment | undefined {
     const { programNode, nameApi } = scope;
     if ((programNode.accounts ?? []).length === 0) return;
@@ -181,7 +181,7 @@ function getProgramPluginInstructionsTypeFragment(
 }
 
 function getProgramPluginPdasTypeFragment(
-    scope: Pick<RenderScope, 'nameApi'> & { instructions: InstructionNode[]; programNode: ProgramNode },
+    scope: Pick<RenderScope, 'nameApi'> & { programNode: ProgramNode },
 ): Fragment | undefined {
     const { programNode, nameApi } = scope;
     if ((programNode.pdas ?? []).length === 0) return;
@@ -200,7 +200,7 @@ function getProgramPluginPdasTypeFragment(
 }
 
 function getProgramPluginPdasObjectFragment(
-    scope: Pick<RenderScope, 'nameApi'> & { instructions: InstructionNode[]; programNode: ProgramNode },
+    scope: Pick<RenderScope, 'nameApi'> & { programNode: ProgramNode },
 ): Fragment | undefined {
     const { programNode, nameApi } = scope;
     if ((programNode.pdas ?? []).length === 0) return;
@@ -309,7 +309,7 @@ function getProgramPluginFunctionFragment(
 }
 
 function getProgramPluginAccountsObjectFragment(
-    scope: Pick<RenderScope, 'nameApi'> & { instructions: InstructionNode[]; programNode: ProgramNode },
+    scope: Pick<RenderScope, 'nameApi'> & { programNode: ProgramNode },
 ): Fragment | undefined {
     const { programNode, nameApi } = scope;
     if ((programNode.accounts ?? []).length === 0) return;
