@@ -1,4 +1,3 @@
-import { camelCase } from '@codama/fragments/casing';
 import {
     ConstantDiscriminatorNode,
     DiscriminatorNode,
@@ -13,15 +12,26 @@ import { NodePath, visit } from '@codama/visitors-core';
 import {
     Fragment,
     fragment,
-    getFieldDiscriminatorIdentifier,
+    getConstantDiscriminatorName,
+    getFieldDiscriminatorField,
+    getFieldDiscriminatorName,
     getStructFieldCodecDefault,
     getTypedValueFragment,
     mergeFragments,
-    NameApi,
     RenderScope,
     use,
 } from '../utils';
 
+/**
+ * Renders a constant and an encoding function for each constant and field discriminator of
+ * an account, instruction or event, e.g. `COUNTER_DISCRIMINATOR` and `getCounterDiscriminatorBytes`.
+ *
+ * @param scope - The render scope, the discriminators, the top-level fields of the data they
+ * discriminate, the path of their owner and the prefix of the constant names.
+ * @return The fragment of the discriminator constants.
+ * @throws `CODAMA_ERROR__DISCRIMINATOR_FIELD_NOT_FOUND` or
+ * `CODAMA_ERROR__DISCRIMINATOR_FIELD_HAS_NO_DEFAULT_VALUE` for invalid field discriminators.
+ */
 export function getDiscriminatorConstantsFragment(
     scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         discriminatorNodes: DiscriminatorNode[];
@@ -30,14 +40,14 @@ export function getDiscriminatorConstantsFragment(
         prefix: string;
     },
 ): Fragment {
-    const fragments = scope.discriminatorNodes
-        .map(node => getDiscriminatorConstantFragment(node, scope))
-        .filter(Boolean) as Fragment[];
-
+    const fragments = scope.discriminatorNodes.flatMap(node => {
+        const constant = getDiscriminatorConstantFragment(node, scope);
+        return constant ? [constant] : [];
+    });
     return mergeFragments(fragments, c => c.join('\n\n'));
 }
 
-export function getDiscriminatorConstantFragment(
+function getDiscriminatorConstantFragment(
     discriminatorNode: DiscriminatorNode,
     scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         discriminatorNodes: DiscriminatorNode[];
@@ -45,55 +55,26 @@ export function getDiscriminatorConstantFragment(
         path: NodePath;
         prefix: string;
     },
-): Fragment | null {
+): Fragment | undefined {
     switch (discriminatorNode.kind) {
         case 'constantDiscriminatorNode':
             return getConstantDiscriminatorConstantFragment(discriminatorNode, scope);
         case 'fieldDiscriminatorNode':
             return getFieldDiscriminatorConstantFragment(discriminatorNode, scope);
         default:
-            return null;
+            // Size discriminators have no constant.
+            return undefined;
     }
 }
 
-/**
- * Derives the camel-case name of the constant rendered for a constant discriminator.
- *
- * The first constant discriminator of a node gets no index suffix, whilst subsequent
- * ones are numbered from 2 — e.g. `myEventDiscriminator` and `myEventDiscriminator2`,
- * since the whole name goes through `camelCase`.
- *
- * @param prefix - The camel-case name of the node owning the discriminator.
- * @param index - The position of the discriminator amongst the node's constant discriminators.
- * @returns The camel-case constant name, before any {@link NameApi.constant} transformation.
- */
-export function getConstantDiscriminatorName(prefix: string, index: number): string {
-    const suffix = index <= 0 ? '' : `_${index + 1}`;
-    return camelCase(`${prefix}_discriminator${suffix}`);
-}
-
-/**
- * Derives the camel-case prefix used for an event's discriminator constants.
- *
- * Both the constant declarations on the event page and the codecs referencing
- * them derive the prefix through this helper so the two can never drift apart.
- *
- * @param nameApi - The naming API of the current render scope.
- * @param eventName - The name of the event node.
- * @returns The camel-case prefix to combine with {@link getConstantDiscriminatorName}.
- */
-export function getEventDiscriminatorPrefix(nameApi: NameApi, eventName: string): string {
-    return camelCase(nameApi.eventDataType(eventName));
-}
-
-export function getConstantDiscriminatorConstantFragment(
+function getConstantDiscriminatorConstantFragment(
     discriminatorNode: ConstantDiscriminatorNode,
     scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         discriminatorNodes: DiscriminatorNode[];
         path: NodePath;
         prefix: string;
     },
-): Fragment | null {
+): Fragment {
     const { discriminatorNodes, prefix } = scope;
 
     const index = discriminatorNodes.filter(isNodeFilter('constantDiscriminatorNode')).indexOf(discriminatorNode);
@@ -102,25 +83,19 @@ export function getConstantDiscriminatorConstantFragment(
     return getConstantFragment({ ...scope, name, type, value });
 }
 
-export function getFieldDiscriminatorConstantFragment(
+function getFieldDiscriminatorConstantFragment(
     discriminatorNode: FieldDiscriminatorNode,
     scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         fields: StructFieldTypeNode[];
         path: NodePath;
         prefix: string;
     },
-): Fragment | null {
+): Fragment {
     const { fields, prefix } = scope;
-
-    const identifier = getFieldDiscriminatorIdentifier(discriminatorNode);
-    const field = fields.find(f => f.identifier === identifier);
+    const field = getFieldDiscriminatorField(discriminatorNode, fields);
     // The value the codec fills in, e.g. the fallback of an injected default.
-    const defaultValue = field ? getStructFieldCodecDefault(field) : undefined;
-    if (!field || !defaultValue) {
-        return null;
-    }
-
-    const name = camelCase(`${prefix}_${identifier}`);
+    const defaultValue = getStructFieldCodecDefault(field)!;
+    const name = getFieldDiscriminatorName(prefix, field.identifier);
     return getConstantFragment({ ...scope, name, type: field.type, value: defaultValue });
 }
 

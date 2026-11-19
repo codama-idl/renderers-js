@@ -4,6 +4,13 @@ import { getLastNodeFromPath, NodePath } from '@codama/visitors-core';
 import { Fragment, getCustomDataOptions, RenderScope, TypeManifest } from '../utils';
 import { getTypeWithCodecFragment } from './typeWithCodec';
 
+/**
+ * Renders the data type and codecs of an account, unless its data is provided by the
+ * `customAccountData` option.
+ *
+ * @param scope - The render scope, the path of the account, its type manifest and data size.
+ * @return The fragment of the account data type and codecs, if not custom.
+ */
 export function getAccountTypeFragment(
     scope: Pick<RenderScope, 'customAccountData' | 'erasableSyntax' | 'nameApi'> & {
         accountPath: NodePath<AccountNode>;

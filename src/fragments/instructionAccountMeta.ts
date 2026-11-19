@@ -1,10 +1,17 @@
-import { pascalCase } from '@codama/fragments/casing';
 import { InstructionAccountNode } from '@codama/nodes';
 
-import { Fragment, fragment, use } from '../utils';
+import { Fragment, fragment, getAccountTypeParamName, use } from '../utils';
 
+/**
+ * Renders the account meta type of an instruction account in instruction types, e.g.
+ * `TAccountMint extends string ? ReadonlyAccount<TAccountMint> : TAccountMint`, according
+ * to whether the account is a signer and writable.
+ *
+ * @param instructionAccountNode - The instruction account.
+ * @return The fragment of the account meta type.
+ */
 export function getInstructionAccountMetaFragment(instructionAccountNode: InstructionAccountNode): Fragment {
-    const typeParam = `TAccount${pascalCase(instructionAccountNode.identifier)}`;
+    const typeParam = getAccountTypeParamName(instructionAccountNode.identifier);
 
     // Writable, signer.
     if (instructionAccountNode.isSigner === true && instructionAccountNode.isWritable) {

@@ -39,7 +39,6 @@ import {
     type Visitor,
 } from '@codama/visitors-core';
 
-import { getConstantDiscriminatorName, getEventDiscriminatorPrefix } from '../fragments/discriminatorConstants';
 import {
     addFragmentImports,
     Fragment,
@@ -54,7 +53,10 @@ import {
     getInstructionDataLink,
     getInstructionDataNode,
     getIntegerLiteral,
+    getConstantDiscriminatorName,
     getEnumValueType,
+    getEventDiscriminatorPrefix,
+    getFieldDiscriminatorName,
     getStructFieldCodecDefault,
     getTypedValueFragment,
     getTypeNodeTransforms,
@@ -74,8 +76,23 @@ import {
     use,
 } from '../utils';
 
+/** The visitor returning the {@link TypeManifest} of type and value nodes. */
 export type TypeManifestVisitor = ReturnType<typeof getTypeManifestVisitor>;
 
+/**
+ * Creates a visitor lowering type and value nodes into their TypeScript types, codecs and
+ * values, as type manifests. Accounts, defined types, events and instructions return the
+ * manifest of their data.
+ *
+ * @param input - The render scope the lowering depends on, and the node stack to share with
+ * the visitor of the caller, if any.
+ * @return The type manifest visitor.
+ *
+ * @example
+ * ```ts
+ * visit(integerTypeNode('u64'), getTypeManifestVisitor(scope)).strictType.content; // bigint
+ * ```
+ */
 export function getTypeManifestVisitor(input: {
     customAccountData: ParsedCustomDataOptions;
     customInstructionData: ParsedCustomDataOptions;
@@ -106,16 +123,41 @@ export function getTypeManifestVisitor(input: {
     } = input;
     const stack = input.stack ?? new NodeStack();
     const byteSizeVisitor = getByteSizeVisitor(linkables, { stack });
-    let parentName: { loose: string; strict: string } | null = null;
+
+    /**
+     * The names of the account, defined type, event or instruction whose data is the node at
+     * the given position of the stack, e.g. an enum, if any. Types nested within another type
+     * have no such names.
+     */
+    const getOwnerNames = (index: number): { identifier: string; loose: string; strict: string } | undefined => {
+        const owner = stack.getPath()[index - 1];
+        if (!owner) return undefined;
+        const names = (identifier: string, typeName: string) => ({
+            identifier,
+            loose: nameApi.dataArgsType(typeName),
+            strict: nameApi.dataType(typeName),
+        });
+        switch (owner.kind) {
+            case 'accountNode':
+            case 'definedTypeNode':
+                return names(owner.identifier, owner.identifier);
+            case 'eventNode':
+                return names(owner.identifier, nameApi.eventDataType(owner.identifier));
+            case 'instructionNode':
+                return names(owner.identifier, nameApi.instructionDataType(owner.identifier));
+            default:
+                return undefined;
+        }
+    };
 
     /**
      * Finds the camel-case name of the discriminator constant matching the provided constant
      * value, when visited inside an event whose constant discriminators include it — so codecs
      * and conditions can reference the discriminator constant instead of inline bytes.
      */
-    const getEventDiscriminatorConstantName = (constant: ConstantValueNode): string | null => {
+    const getEventDiscriminatorConstantName = (constant: ConstantValueNode): string | undefined => {
         const eventNode = findLastNodeFromPath(stack.getPath(), 'eventNode');
-        if (!eventNode) return null;
+        if (!eventNode) return;
         const constantDiscriminators = (eventNode.discriminators ?? []).filter(
             isNodeFilter('constantDiscriminatorNode'),
         );
@@ -123,7 +165,7 @@ export function getTypeManifestVisitor(input: {
         const index = constantDiscriminators.findIndex(
             discriminator => JSON.stringify(discriminator.constant) === serializedConstant,
         );
-        if (index < 0) return null;
+        if (index < 0) return;
         const prefix = getEventDiscriminatorPrefix(nameApi, eventNode.identifier);
         return getConstantDiscriminatorName(prefix, index);
     };
@@ -137,8 +179,8 @@ export function getTypeManifestVisitor(input: {
         variant: { data: TypeNode | undefined; name: string },
         self: Visitor<TypeManifest, TypeNode['kind']>,
     ): TypeManifest => {
-        const currentParentName = parentName;
-        const discriminator = nameApi.discriminatedUnionDiscriminator(camelCase(currentParentName?.strict ?? ''));
+        const enumIndex = stack.getPath().length - 2;
+        const discriminator = nameApi.discriminatedUnionDiscriminator(getOwnerNames(enumIndex)?.identifier ?? '');
         const name = nameApi.discriminatedUnionVariant(variant.name);
         const kindAttribute = `${discriminator}: "${name}"`;
 
@@ -168,9 +210,7 @@ export function getTypeManifestVisitor(input: {
             ? variant.data
             : structTypeNode([structFieldTypeNode({ identifier: 'fields', type: fields })]);
 
-        parentName = null;
         const structManifest = visit(struct, self);
-        parentName = currentParentName;
 
         return typeManifest({
             ...structManifest,
@@ -235,14 +275,8 @@ export function getTypeManifestVisitor(input: {
         visitor =>
             extendVisitor(visitor, {
                 visitAccount(account, { self }) {
-                    parentName = {
-                        loose: nameApi.dataArgsType(account.identifier),
-                        strict: nameApi.dataType(account.identifier),
-                    };
                     const link = getCustomDataOptions(customAccountData, account)?.linkNode;
-                    const manifest = link ? visit(link, self) : visit(account.data, self);
-                    parentName = null;
-                    return manifest;
+                    return link ? visit(link, self) : visit(account.data, self);
                 },
 
                 visitArrayType(arrayType, { self }) {
@@ -336,13 +370,7 @@ export function getTypeManifestVisitor(input: {
                 },
 
                 visitDefinedType(definedType, { self }) {
-                    parentName = {
-                        loose: nameApi.dataArgsType(definedType.identifier),
-                        strict: nameApi.dataType(definedType.identifier),
-                    };
-                    const manifest = visit(definedType.type, self);
-                    parentName = null;
-                    return manifest;
+                    return visit(definedType.type, self);
                 },
 
                 visitDefinedTypeLink(node) {
@@ -365,7 +393,7 @@ export function getTypeManifestVisitor(input: {
                 },
 
                 visitEnumType(enumType, { self }) {
-                    const currentParentName = parentName;
+                    const owner = getOwnerNames(stack.getPath().length - 1);
                     const encoderOptions: Fragment[] = [];
                     const decoderOptions: Fragment[] = [];
                     const variants = enumType.variants ?? [];
@@ -373,10 +401,12 @@ export function getTypeManifestVisitor(input: {
                     // event they describe. Enums nested within another type have no name to declare,
                     // so they render as data unions.
                     const path = stack.getPath();
-                    const isScalar =
+                    const scalarName =
                         isScalarEnum(enumType) &&
-                        currentParentName !== null &&
-                        isNode(path[path.length - 2], ['accountNode', 'definedTypeNode', 'eventNode']);
+                        isNode(path[path.length - 2], ['accountNode', 'definedTypeNode', 'eventNode'])
+                            ? owner?.strict
+                            : undefined;
+                    const isScalar = scalarName !== undefined;
                     const hasCustomDiscriminators = hasCustomEnumVariantDiscriminators(variants);
                     const discriminators = getEnumVariantDiscriminators(variants);
 
@@ -402,9 +432,7 @@ export function getTypeManifestVisitor(input: {
                         decoderOptions.push(fragment`useValuesAsDiscriminators: true`);
                     }
 
-                    const discriminator = nameApi.discriminatedUnionDiscriminator(
-                        camelCase(currentParentName?.strict ?? ''),
-                    );
+                    const discriminator = nameApi.discriminatedUnionDiscriminator(owner?.identifier ?? '');
                     if (!isScalar && discriminator !== '__kind') {
                         encoderOptions.push(fragment`discriminator: '${discriminator}'`);
                         decoderOptions.push(fragment`discriminator: '${discriminator}'`);
@@ -417,7 +445,7 @@ export function getTypeManifestVisitor(input: {
                         cs.length > 0 ? `, { ${cs.join(', ')} }` : '',
                     );
 
-                    if (isScalar && currentParentName !== null) {
+                    if (scalarName !== undefined) {
                         const variantNames = variants.map(({ identifier }) => nameApi.enumVariant(identifier));
                         const body = getEnumBody(
                             variantNames,
@@ -427,11 +455,11 @@ export function getTypeManifestVisitor(input: {
                         // Reverse mappings would widen the decoder output type. The encoder
                         // can safely accept the wider input type, so only narrow the decoder.
                         const decoderConstructor = erasableSyntax
-                            ? fragment`${currentParentName.strict} as Omit<typeof ${currentParentName.strict}, number>`
-                            : fragment`${currentParentName.strict}`;
+                            ? fragment`${scalarName} as Omit<typeof ${scalarName}, number>`
+                            : fragment`${scalarName}`;
                         return typeManifest({
                             decoder: fragment`${use('getEnumDecoder', 'solanaCodecsDataStructures')}(${decoderConstructor}${decoderOptionsFragment})`,
-                            encoder: fragment`${use('getEnumEncoder', 'solanaCodecsDataStructures')}(${currentParentName.strict}${encoderOptionsFragment})`,
+                            encoder: fragment`${use('getEnumEncoder', 'solanaCodecsDataStructures')}(${scalarName}${encoderOptionsFragment})`,
                             isEnum: true,
                             looseType: fragment`{ ${body} }`,
                             strictType: fragment`{ ${body} }`,
@@ -517,14 +545,7 @@ export function getTypeManifestVisitor(input: {
                 },
 
                 visitEvent(event, { self }) {
-                    const eventDataName = nameApi.eventDataType(event.identifier);
-                    parentName = {
-                        loose: nameApi.dataArgsType(eventDataName),
-                        strict: nameApi.dataType(eventDataName),
-                    };
-                    const manifest = visit(event.data, self);
-                    parentName = null;
-                    return manifest;
+                    return visit(event.data, self);
                 },
 
                 visitFixedPointType(fixedPointType, { self }) {
@@ -557,15 +578,8 @@ export function getTypeManifestVisitor(input: {
                 },
 
                 visitInstruction(instruction, { self }) {
-                    const instructionDataName = nameApi.instructionDataType(instruction.identifier);
-                    parentName = {
-                        loose: nameApi.dataArgsType(instructionDataName),
-                        strict: nameApi.dataType(instructionDataName),
-                    };
                     const link = getInstructionDataLink(instruction, customInstructionData);
-                    const manifest = link ? visit(link, self) : visit(getInstructionDataNode(instruction), self);
-                    parentName = null;
-                    return manifest;
+                    return link ? visit(link, self) : visit(getInstructionDataNode(instruction), self);
                 },
 
                 visitIntegerType(integerType) {
@@ -811,10 +825,11 @@ export function getTypeManifestVisitor(input: {
                     const discriminatorParent = isNode(parent, ['instructionNode', 'accountNode', 'eventNode'])
                         ? parent
                         : undefined;
-                    const discriminatorPrefix =
-                        discriminatorParent && isNode(discriminatorParent, 'eventNode')
-                            ? getEventDiscriminatorPrefix(nameApi, discriminatorParent.identifier)
-                            : discriminatorParent?.identifier;
+                    const discriminatorPrefix = !discriminatorParent
+                        ? ''
+                        : isNode(discriminatorParent, 'eventNode')
+                          ? getEventDiscriminatorPrefix(nameApi, discriminatorParent.identifier)
+                          : discriminatorParent.identifier;
                     const discriminators = discriminatorParent?.discriminators ?? [];
                     const fieldDiscriminators = discriminators.filter(isNodeFilter('fieldDiscriminatorNode'));
 
@@ -825,7 +840,7 @@ export function getTypeManifestVisitor(input: {
                             // If the field has an associated discriminator node, use the constant value instead.
                             if (fieldDiscriminators.some(d => getFieldDiscriminatorIdentifier(d) === f.identifier)) {
                                 const constantName = nameApi.constant(
-                                    camelCase(`${discriminatorPrefix}_${f.identifier}`),
+                                    getFieldDiscriminatorName(discriminatorPrefix, f.identifier),
                                 );
                                 return !isStructFieldCodecDefaultOverridable(f)
                                     ? fragment`${key}: ${constantName}`

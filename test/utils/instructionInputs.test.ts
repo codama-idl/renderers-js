@@ -48,7 +48,6 @@ import {
     getInstructionExtraArgumentsNode,
     getRemainingAccountsName,
     getRemainingAccountsResolver,
-    getResolvedInputName,
     getResolvedInstructionInputs,
     hasInputDefault,
     hasInstructionData,
@@ -238,7 +237,12 @@ test('it orders resolved inputs after the inputs they depend on', () => {
     });
 
     // Then each input comes after its dependencies, and data fields without defaults are left out.
-    expect(resolve(instruction).map(getResolvedInputName)).toStrictEqual(['owner', 'vault', 'useAta', 'destination']);
+    expect(resolve(instruction).map(input => input.node.identifier)).toStrictEqual([
+        'owner',
+        'vault',
+        'useAta',
+        'destination',
+    ]);
 });
 
 test('it fails on inputs that depend on each other', () => {
@@ -316,6 +320,19 @@ test('it fails on malformed resolver and extra argument payloads', () => {
     expect(unsupported(instructionNode({ identifier: 'c', plugins: [typeless] })).at(-1)).toBe(typeless);
 });
 
+test('it fails on resolver dependencies that are not valid references', () => {
+    // Given resolvers depending on an empty account reference and on a malformed data path.
+    const dependencies = ['accounts.', 'accounts.owner.data', 'data.config..fee', 'data.fees[01]'];
+
+    // Then resolving their inputs fails on the offending plugin.
+    dependencies.forEach(dependency => {
+        const plugin = pluginNode('codama.resolver', { dependsOn: [dependency], name: 'resolveVault' });
+        const instruction = instructionNode({ accounts: [account('vault', { plugins: [plugin] })], identifier: 'ix' });
+        const error = getCodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, () => resolve(instruction));
+        expect(error.context.path.at(-1), dependency).toBe(plugin);
+    });
+});
+
 test('it resolves injected account defaults from the provides of the instruction', () => {
     // Given an account defaulting to an injected value provided by the instruction.
     const instruction = instructionNode({
@@ -366,7 +383,7 @@ test('it fails on injected defaults that are not provided', () => {
     );
 });
 
-test('it marks accounts as PDAs when a data field defaults to their bump through an injection', () => {
+test('it resolves data fields defaulting to an injected account bump', () => {
     // Given a bump data field defaulting to an injected bump of the vault account.
     const instruction = instructionNode({
         accounts: [account('vault'), account('owner')],
@@ -381,14 +398,10 @@ test('it marks accounts as PDAs when a data field defaults to their bump through
         provides: [providedNode('bump', accountBumpValueNode('vault'))],
     });
 
-    // Then the vault is a PDA, the bump field depends on it, and the owner is not a PDA.
-    const inputs = resolve(instruction);
-    expect(inputs.map(input => [getResolvedInputName(input), input.kind === 'account' && input.isPda])).toStrictEqual([
-        ['vault', true],
-        ['owner', false],
-        ['bump', false],
-    ]);
-    expect(inputs.find(input => input.kind === 'data')?.dependsOn).toStrictEqual([accountValueNode('vault')]);
+    // Then the bump field resolves to the bump of the vault, which it depends on.
+    const bump = resolve(instruction).find(input => input.kind === 'data');
+    expect(bump?.resolvedDefaultValue).toStrictEqual(accountBumpValueNode('vault'));
+    expect(bump?.dependsOn).toStrictEqual([accountValueNode('vault')]);
 });
 
 test('it fails on provided injections nested within data field defaults', () => {
@@ -448,7 +461,7 @@ test('it lets inputs depend on fields of linked instruction data without listing
 
     // Then the dependency resolves, and the linked field is not listed as an input of its own.
     const inputs = resolve(instruction, { definedTypes: [transferArgs] });
-    expect(inputs.map(getResolvedInputName)).toStrictEqual(['vault']);
+    expect(inputs.map(input => input.node.identifier)).toStrictEqual(['vault']);
     expect(inputs[0].dependsOn).toStrictEqual([dataValueNode('amount')]);
 });
 
@@ -471,6 +484,6 @@ test('it lets inputs depend on nested fields of linked instruction data', () => 
 
     // Then the dependency resolves through its top-level field.
     const inputs = resolve(instruction, { definedTypes: [transferArgs] });
-    expect(inputs.map(getResolvedInputName)).toStrictEqual(['vault']);
+    expect(inputs.map(input => input.node.identifier)).toStrictEqual(['vault']);
     expect(inputs[0].dependsOn).toStrictEqual([dataValueNode('config.fee')]);
 });

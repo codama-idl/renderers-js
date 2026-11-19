@@ -2,6 +2,12 @@ import { isDataEnum, isNode, TypeNode } from '@codama/nodes';
 
 import { DocsInput, Fragment, fragment, getDocblockFragment, RenderScope, TypeManifest, use } from '../utils';
 
+/**
+ * Renders the decoder function of a type, e.g. `getPointDecoder`.
+ *
+ * @param scope - The render scope, the name of the type, its type manifest, byte size and docs.
+ * @return The fragment of the decoder function.
+ */
 export function getTypeDecoderFragment(
     scope: Pick<RenderScope, 'nameApi'> & {
         docs?: DocsInput;

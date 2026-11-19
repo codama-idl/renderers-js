@@ -3,20 +3,24 @@ import { InstructionNode, InstructionRemainingAccountsNode } from '@codama/nodes
 import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
 import {
-    addFragmentFeatures,
     addFragmentImports,
     Fragment,
     fragment,
-    getRemainingAccountsName,
     getRemainingAccountsResolver,
-    InstructionResolver,
-    isAsyncResolver,
     isRemainingAccountsBackedByArgument,
     mergeFragments,
     RenderScope,
     use,
 } from '../utils';
+import { getInstructionResolverCallFragment } from './instructionResolver';
 
+/**
+ * Renders the `remainingAccounts` variable of an instruction builder, gathering the account
+ * metas of each remaining accounts node, from an input or a resolver.
+ *
+ * @param scope - The render scope, the path of the instruction and whether the builder is asynchronous.
+ * @return The fragment declaring `remainingAccounts`, if the instruction has remaining accounts.
+ */
 export function getInstructionRemainingAccountsFragment(
     scope: Pick<RenderScope, 'asyncResolvers' | 'getImportFrom' | 'nameApi'> & {
         instructionPath: NodePath<InstructionNode>;
@@ -44,20 +48,13 @@ function getRemainingAccountsFragment(
         useAsync: boolean;
     },
 ): Fragment[] {
-    const remainingAccountsFragment = ((): Fragment | null => {
-        const resolver = getRemainingAccountsResolver(remainingAccounts);
-        if (resolver) {
-            return getResolverFragment(resolver, scope);
-        }
-        const name = getRemainingAccountsName(remainingAccounts);
-        if (name !== undefined) {
-            return getInputFragment(remainingAccounts, name, scope);
-        }
-        return null;
-    })();
-
-    if (remainingAccountsFragment === null) return [];
-    return [remainingAccountsFragment];
+    const resolver = getRemainingAccountsResolver(remainingAccounts);
+    if (resolver) {
+        // Asynchronous resolvers provide no remaining accounts in synchronous builders.
+        const resolverFragment = getInstructionResolverCallFragment(resolver, scope);
+        return resolverFragment ? [resolverFragment] : [];
+    }
+    return [getInputFragment(remainingAccounts, remainingAccounts.identifier, scope)];
 }
 
 function getInputFragment(
@@ -72,7 +69,7 @@ function getInputFragment(
     const isWritable = remainingAccounts.isWritable ?? false;
     const argumentArray = isOptional ? `(args.${argumentName} ?? [])` : `args.${argumentName}`;
 
-    // The argument already exists as an instruction argument — i.e. an `Array<Address | HasAddress>`
+    // The argument already exists as a data field or extra argument — i.e. an `Array<Address | HasAddress>`
     // encoded in the instruction data — so its role is derived from the IDL flags alone and
     // each item is unwrapped to its address.
     if (isRemainingAccountsBackedByArgument(instructionNode, remainingAccounts)) {
@@ -94,20 +91,4 @@ function getInputFragment(
     const getNonNullResolvedInstructionInput = use('getNonNullResolvedInstructionInput', 'solanaProgramClientCore');
     const isSignerFlag = isSigner === 'either' ? "'either'" : String(isSigner);
     return fragment`${argumentArray}.map((value) => ${getNonNullResolvedInstructionInput}("${argumentName}", getAccountMeta("${argumentName}", { value, isSigner: ${isSignerFlag}, isWritable: ${isWritable} })))`;
-}
-
-function getResolverFragment(
-    resolver: InstructionResolver,
-    scope: Pick<RenderScope, 'asyncResolvers' | 'getImportFrom' | 'nameApi'> & {
-        useAsync: boolean;
-    },
-): Fragment | null {
-    const isAsync = isAsyncResolver(resolver.name, scope.asyncResolvers);
-    if (!scope.useAsync && isAsync) return null;
-
-    const awaitKeyword = scope.useAsync && isAsync ? 'await ' : '';
-    const functionName = use(scope.nameApi.resolverFunction(resolver.name), scope.getImportFrom(resolver));
-    return pipe(fragment`${awaitKeyword}${functionName}(resolverScope)`, f =>
-        addFragmentFeatures(f, ['instruction:resolverScopeVariable']),
-    );
 }

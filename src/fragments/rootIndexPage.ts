@@ -2,6 +2,13 @@ import { AccountNode, DefinedTypeNode, EventNode, InstructionNode, PdaNode, Prog
 
 import { Fragment, fragment, getExportAllFragment, mergeFragments, RenderScope } from '../utils';
 
+/**
+ * Renders the root barrel of the generated folder, re-exporting each generated folder that
+ * has something to export.
+ *
+ * @param scope - The render scope and the nodes to export.
+ * @return The fragment of the root barrel.
+ */
 export function getRootIndexPageFragment(
     scope: Pick<RenderScope, 'getImportPath'> & {
         accountsToExport: AccountNode[];

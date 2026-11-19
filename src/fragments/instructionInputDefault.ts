@@ -19,20 +19,30 @@ import {
 import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, pipe, visit } from '@codama/visitors-core';
 
 import {
-    addFragmentFeatures,
     Fragment,
     fragment,
     getDataPathExpression,
     getDataPathLabel,
     getTypedValueFragment,
     isAsyncInput,
-    isAsyncResolver,
     mergeFragments,
     RenderScope,
     ResolvedInstructionInput,
     use,
 } from '../utils';
+import { getInstructionResolverCallFragment } from './instructionResolver';
 
+/**
+ * Renders the assignment of the default value of an instruction input in a builder, e.g.
+ * `accounts.vault.value = await findVaultPda(...)` or `args.amount = 42`.
+ *
+ * @param scope - The render scope, the resolved input, the path of the instruction, its
+ * optional account strategy and whether the builder is asynchronous.
+ * @return The fragment of the assignment, empty when the input has no default value the
+ * builder can fill in.
+ * @throws `CODAMA_ERROR__VISITORS__INVALID_PDA_SEED_VALUES` when an inline PDA default misses a seed value.
+ * @throws `CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE` for default values the renderer cannot fill in.
+ */
 export function getInstructionInputDefaultFragment(
     scope: Pick<RenderScope, 'asyncResolvers' | 'getImportFrom' | 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         input: ResolvedInstructionInput;
@@ -96,11 +106,8 @@ export function getInstructionInputDefaultFragment(
 
     // Resolved inputs delegate their whole value to a resolver function.
     if (resolver) {
-        const resolverFunction = use(nameApi.resolverFunction(resolver.name), getImportFrom(resolver));
-        const resolverAwait = useAsync && isAsyncResolver(resolver.name, asyncResolvers) ? 'await ' : '';
-        return pipe(defaultFragment(fragment`${resolverAwait}${resolverFunction}(resolverScope)`), f =>
-            addFragmentFeatures(f, ['instruction:resolverScopeVariable']),
-        );
+        // Asynchronous inputs were already left out of synchronous builders above.
+        return defaultFragment(getInstructionResolverCallFragment(resolver, scope)!);
     }
 
     if (!defaultValue) return fragment``;

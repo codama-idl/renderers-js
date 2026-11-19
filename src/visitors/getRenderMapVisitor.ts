@@ -53,6 +53,19 @@ import {
 } from '../utils';
 import { getTypeManifestVisitor } from './getTypeManifestVisitor';
 
+/**
+ * Creates a visitor rendering the files of the generated client of a Codama tree, keyed by
+ * their path relative to the generated folder, e.g. `accounts/counter.ts`.
+ *
+ * @param options - The options controlling the generated code.
+ * @return The visitor returning the render map.
+ * @throws `CODAMA_ERROR__VERSION_MISMATCH` when the root node is not of the Codama v2 standard.
+ *
+ * @example
+ * ```ts
+ * const renderMap = visit(root, getRenderMapVisitor({ kitImportStrategy: 'rootOnly' }));
+ * ```
+ */
 export function getRenderMapVisitor(
     options: GetRenderMapOptions = {},
 ): Visitor<

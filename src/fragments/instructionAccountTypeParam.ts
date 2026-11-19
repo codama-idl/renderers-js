@@ -1,15 +1,16 @@
-import { pascalCase } from '@codama/fragments/casing';
 import { InstructionAccountNode, InstructionInputValueNode } from '@codama/nodes';
-import {
-    findInstructionNodeFromPath,
-    findProgramNodeFromPath,
-    getLastNodeFromPath,
-    LinkableDictionary,
-    NodePath,
-} from '@codama/visitors-core';
+import { findInstructionNodeFromPath, getLastNodeFromPath, LinkableDictionary, NodePath } from '@codama/visitors-core';
 
-import { Fragment, fragment, RenderScope, use } from '../utils';
+import { Fragment, fragment, getAccountTypeParamName, getProgramNodeFromPath, RenderScope, use } from '../utils';
 
+/**
+ * Renders the type parameter of an instruction account in instruction types, defaulting to
+ * the address of the account when it is known statically, e.g. a program or public key default.
+ *
+ * @param scope - The render scope, the path of the instruction account and whether account
+ * metas are accepted as values.
+ * @return The fragment of the type parameter.
+ */
 export function getInstructionAccountTypeParamFragment(
     scope: Pick<RenderScope, 'linkables'> & {
         allowAccountMeta: boolean;
@@ -19,8 +20,8 @@ export function getInstructionAccountTypeParamFragment(
     const { instructionAccountPath, allowAccountMeta, linkables } = scope;
     const instructionAccountNode = getLastNodeFromPath(instructionAccountPath);
     const instructionNode = findInstructionNodeFromPath(instructionAccountPath)!;
-    const programNode = findProgramNodeFromPath(instructionAccountPath)!;
-    const typeParam = `TAccount${pascalCase(instructionAccountNode.identifier)}`;
+    const programNode = getProgramNodeFromPath(instructionAccountPath);
+    const typeParam = getAccountTypeParamName(instructionAccountNode.identifier);
     const accountMeta = allowAccountMeta
         ? fragment` | ${use('type AccountMeta', 'solanaInstructions')}<string>`
         : undefined;

@@ -6,6 +6,7 @@ import {
     Fragment,
     fragment,
     getInstructionDataFields,
+    getRenamedArgsMap,
     getRenderedInstructionPaths,
     getResolvedInstructionInputs,
     hasAsyncFunction,
@@ -15,8 +16,17 @@ import {
     use,
 } from '../utils';
 import { getInstructionFunctionInputFlags } from './instructionFunction';
-import { getRenamedArgsMap } from './instructionPage';
 
+/**
+ * Renders the Kit plugin of a program, e.g. `splTokenProgram()`, which adds the accounts,
+ * instructions and PDAs of the program to a Kit client, along with its plugin types.
+ *
+ * The plugin exposes the instructions rendered as pages, filling in the inputs defaulting to
+ * the payer with the payer of the client.
+ *
+ * @param scope - The render scope, the program and its path.
+ * @return The fragment of the plugin, if the program has accounts, instructions or PDAs.
+ */
 export function getProgramPluginFragment(
     scope: Pick<
         RenderScope,
@@ -57,7 +67,16 @@ export function getProgramPluginFragment(
         )
         .map(i => i.identifier);
 
-    const extendedScope = { ...scope, asyncInstructions, instructions, resolvedInputsByInstruction };
+    const renamedArgsByInstruction = new Map(
+        instructionPaths.map(path => [getLastNodeFromPath(path).identifier, getRenamedArgsMap(path)]),
+    );
+    const extendedScope = {
+        ...scope,
+        asyncInstructions,
+        instructions,
+        renamedArgsByInstruction,
+        resolvedInputsByInstruction,
+    };
     return mergeFragments(
         [
             getProgramPluginTypeFragment(extendedScope),
@@ -146,6 +165,7 @@ function getProgramPluginInstructionsTypeFragment(
         asyncInstructions: string[];
         instructions: InstructionNode[];
         programNode: ProgramNode;
+        renamedArgsByInstruction: RenamedArgsByInstruction;
         resolvedInputsByInstruction: ResolvedInputsByInstruction;
     },
 ): Fragment | undefined {
@@ -166,7 +186,7 @@ function getProgramPluginInstructionsTypeFragment(
                 ? use('type ' + nameApi.instructionAsyncFunction(instruction.identifier), 'generatedInstructions')
                 : use('type ' + nameApi.instructionSyncFunction(instruction.identifier), 'generatedInstructions');
 
-            const payerDefaultValues = getPayerDefaultValues(instruction, scope.resolvedInputsByInstruction);
+            const payerDefaultValues = getPayerDefaultValues(instruction, scope);
             if (payerDefaultValues.length > 0) {
                 const fieldStringUnion = payerDefaultValues.map(({ name }) => `"${name}"`).join(' | ');
                 instructionInputType = fragment`MakeOptional<${instructionInputType}, ${fieldStringUnion}>`;
@@ -224,6 +244,7 @@ function getProgramPluginRequirementsTypeFragment(
     scope: Pick<RenderScope, 'nameApi'> & {
         instructions: InstructionNode[];
         programNode: ProgramNode;
+        renamedArgsByInstruction: RenamedArgsByInstruction;
         resolvedInputsByInstruction: ResolvedInputsByInstruction;
     },
 ): Fragment {
@@ -238,7 +259,7 @@ function getProgramPluginRequirementsTypeFragment(
 
     const requirementList = [
         hasAccounts ? clientWithRpc : undefined,
-        hasPayerDefaultValues(instructions, scope.resolvedInputsByInstruction) ? clientWithPayer : undefined,
+        hasPayerDefaultValues(instructions, scope) ? clientWithPayer : undefined,
         hasInstructions ? clientWithTransactionPlanning : undefined,
         hasInstructions ? clientWithTransactionSending : undefined,
     ].filter((r): r is Fragment => r !== undefined);
@@ -260,6 +281,7 @@ function getProgramPluginFunctionFragment(
         asyncInstructions: string[];
         instructions: InstructionNode[];
         programNode: ProgramNode;
+        renamedArgsByInstruction: RenamedArgsByInstruction;
         resolvedInputsByInstruction: ResolvedInputsByInstruction;
     },
 ): Fragment {
@@ -332,6 +354,7 @@ function getProgramPluginInstructionsObjectFragment(
         asyncInstructions: string[];
         instructions: InstructionNode[];
         programNode: ProgramNode;
+        renamedArgsByInstruction: RenamedArgsByInstruction;
         resolvedInputsByInstruction: ResolvedInputsByInstruction;
     },
 ): Fragment | undefined {
@@ -346,7 +369,7 @@ function getProgramPluginInstructionsObjectFragment(
                 ? use(nameApi.instructionAsyncFunction(instruction.identifier), 'generatedInstructions')
                 : use(nameApi.instructionSyncFunction(instruction.identifier), 'generatedInstructions');
             const addSelfPlanAndSendFunctions = use('addSelfPlanAndSendFunctions', 'solanaProgramClientCore');
-            const payerDefaultValues = getPayerDefaultValues(instruction, scope.resolvedInputsByInstruction);
+            const payerDefaultValues = getPayerDefaultValues(instruction, scope);
 
             let input = fragment`input`;
             if (payerDefaultValues.length > 0) {
@@ -389,19 +412,22 @@ function hasVariableSeeds(pdaNode: PdaNode): boolean {
 
 function getMakeOptionalHelperTypeFragment(scope: {
     instructions: InstructionNode[];
+    renamedArgsByInstruction: RenamedArgsByInstruction;
     resolvedInputsByInstruction: ResolvedInputsByInstruction;
 }): Fragment | undefined {
-    if (!hasPayerDefaultValues(scope.instructions, scope.resolvedInputsByInstruction)) return;
+    if (!hasPayerDefaultValues(scope.instructions, scope)) return;
     return fragment`type MakeOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;`;
 }
 
 type ResolvedInputsByInstruction = Map<string, ResolvedInstructionInput[]>;
+type RenamedArgsByInstruction = Map<string, Map<string, string>>;
+type InstructionInputMaps = {
+    renamedArgsByInstruction: RenamedArgsByInstruction;
+    resolvedInputsByInstruction: ResolvedInputsByInstruction;
+};
 
-function hasPayerDefaultValues(
-    instructions: readonly InstructionNode[],
-    resolvedInputs: ResolvedInputsByInstruction,
-): boolean {
-    return instructions.some(instruction => getPayerDefaultValues(instruction, resolvedInputs).length > 0);
+function hasPayerDefaultValues(instructions: readonly InstructionNode[], maps: InstructionInputMaps): boolean {
+    return instructions.some(instruction => getPayerDefaultValues(instruction, maps).length > 0);
 }
 
 /**
@@ -411,14 +437,14 @@ function hasPayerDefaultValues(
  */
 function getPayerDefaultValues(
     instructionNode: InstructionNode,
-    resolvedInputs: ResolvedInputsByInstruction,
+    maps: InstructionInputMaps,
 ): { name: string; signer: boolean }[] {
-    const inputs = (resolvedInputs.get(instructionNode.identifier) ?? []).filter(input =>
+    const inputs = (maps.resolvedInputsByInstruction.get(instructionNode.identifier) ?? []).filter(input =>
         isNode(input.resolvedDefaultValue, 'payerValueNode'),
     );
     const isPayerInput = (identifier: string, kind: ResolvedInstructionInput['kind']) =>
         inputs.some(input => input.kind === kind && input.node.identifier === identifier);
-    const renamedArgs = getRenamedArgsMap(instructionNode);
+    const renamedArgs = maps.renamedArgsByInstruction.get(instructionNode.identifier) ?? new Map<string, string>();
     return [
         ...(instructionNode.accounts ?? [])
             .filter(account => !account.isOptional && isPayerInput(account.identifier, 'account'))

@@ -11,6 +11,13 @@ import {
 } from '../utils';
 import { getTypeWithCodecFragment } from './typeWithCodec';
 
+/**
+ * Renders the data type and codecs of an instruction, unless its data is linked to a defined
+ * type or provided by the `customInstructionData` option.
+ *
+ * @param scope - The render scope, the path of the instruction, its data type manifest and data size.
+ * @return The fragment of the instruction data type and codecs, if the instruction has its own data.
+ */
 export function getInstructionDataFragment(
     scope: Pick<RenderScope, 'customInstructionData' | 'erasableSyntax' | 'nameApi'> & {
         dataArgsManifest: TypeManifest;

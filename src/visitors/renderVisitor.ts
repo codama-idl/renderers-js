@@ -4,6 +4,20 @@ import { rootNodeVisitor, visit, Visitor } from '@codama/visitors-core';
 import { getCodeFormatter, RenderOptions, syncPackageJson } from '../utils';
 import { getRenderMapVisitor } from './getRenderMapVisitor';
 
+/**
+ * Creates a visitor generating the JavaScript client of a Codama tree into a package folder:
+ * it renders every file, formats them, syncs the `package.json` and writes them into the
+ * generated folder, `src/generated` by default.
+ *
+ * @param packageFolder - The folder of the package, where its `package.json` lives.
+ * @param options - The options controlling the generated code and how it is written.
+ * @return The visitor writing the client.
+ *
+ * @example
+ * ```ts
+ * await visit(root, renderVisitor('clients/js', { kitImportStrategy: 'rootOnly' }));
+ * ```
+ */
 export function renderVisitor(packageFolder: string, options: RenderOptions = {}): Visitor<Promise<void>, 'rootNode'> {
     return rootNodeVisitor(async root => {
         const generatedFolder = joinPath(packageFolder, options.generatedFolder ?? 'src/generated');

@@ -1,6 +1,6 @@
 import { CODAMA_ERROR__RENDERERS__MISSING_DEPENDENCY_VERSIONS, CodamaError, logWarn } from '@codama/errors';
 import { fileExists, joinPath, readJson, RenderMap, writeFile } from '@codama/fragments';
-import { lt as ltVersion, minVersion, subset } from 'semver';
+import { lt as ltVersion, minVersion, subset, validRange } from 'semver';
 
 import type { CodeFormatter } from './formatCode';
 import { Fragment, mergeFragments } from './fragment';
@@ -23,6 +23,10 @@ type PackageJson = {
     version?: string;
 };
 
+/**
+ * The default version range of each package generated code may import, which the
+ * `dependencyVersions` option overrides.
+ */
 export const DEFAULT_DEPENDENCY_VERSIONS: DependencyVersions = {
     '@solana/accounts': '^8.5.0',
     '@solana/addresses': '^8.5.0',
@@ -40,6 +44,16 @@ export const DEFAULT_DEPENDENCY_VERSIONS: DependencyVersions = {
     '@solana/signers': '^8.5.0',
 };
 
+/**
+ * Creates the `package.json` of the package folder, or updates the dependencies of the
+ * existing one, from the packages the generated code imports. When the `syncPackageJson`
+ * option is `false`, outdated or missing dependencies are only reported.
+ *
+ * @param renderMap - The generated files.
+ * @param formatCode - Formats the `package.json`.
+ * @param packageFolder - The folder of the package.
+ * @param options - The dependency and sync options.
+ */
 export async function syncPackageJson(
     renderMap: RenderMap<Fragment>,
     formatCode: CodeFormatter,
@@ -74,6 +88,13 @@ export async function syncPackageJson(
     }
 }
 
+/**
+ * Creates the `package.json` of a new package depending on the given packages, with
+ * `@solana/kit` as a peer dependency.
+ *
+ * @param dependencyVersions - The version range of each package the generated code depends on.
+ * @return The `package.json` content.
+ */
 export function createNewPackageJson(dependencyVersions: DependencyVersions): PackageJson {
     return updateExistingPackageJson(
         // oxlint-disable-next-line sort-keys -- Follows the conventional package.json field order instead.
@@ -91,6 +112,14 @@ export function createNewPackageJson(dependencyVersions: DependencyVersions): Pa
     );
 }
 
+/**
+ * Updates the dependencies of an existing `package.json`, adding missing packages and
+ * raising ranges that allow older versions than the generated code requires.
+ *
+ * @param packageJson - The existing `package.json` content.
+ * @param dependencyVersions - The version range of each package the generated code depends on.
+ * @return The updated `package.json` content.
+ */
 export function updateExistingPackageJson(
     packageJson: PackageJson,
     dependencyVersions: DependencyVersions,
@@ -127,7 +156,7 @@ export function updateExistingPackageJson(
     };
 }
 
-export function checkExistingPackageJson(packageJson: PackageJson, dependencyVersions: DependencyVersions): void {
+function checkExistingPackageJson(packageJson: PackageJson, dependencyVersions: DependencyVersions): void {
     const missingDependencies: string[] = [];
     const dependenciesToUpdate: string[] = [];
     const existingDependencies = {
@@ -155,6 +184,16 @@ export function checkExistingPackageJson(packageJson: PackageJson, dependencyVer
     );
 }
 
+/**
+ * The version range of each package the generated code imports.
+ *
+ * @param renderMap - The generated files.
+ * @param dependencyMap - Overrides of the modules symbolic modules resolve to.
+ * @param dependencyVersions - Overrides of the default version ranges.
+ * @param kitImportStrategy - Whether to import Kit symbols from granular packages or `@solana/kit`.
+ * @return The version range of each imported package.
+ * @throws `CODAMA_ERROR__RENDERERS__MISSING_DEPENDENCY_VERSIONS` when an imported package has no known range.
+ */
 export function getUsedDependencyVersions(
     renderMap: RenderMap<Fragment>,
     dependencyMap: Record<string, string>,
@@ -192,36 +231,33 @@ export function getUsedDependencyVersions(
     return usedDependencyVersion;
 }
 
+/**
+ * Whether the version range of a dependency should be replaced by the range the generated
+ * code requires, i.e. when the current range allows versions older than the required ones.
+ *
+ * Ranges that are not semver ranges, such as `workspace:*`, `latest` or `file:` paths, are
+ * kept as they are, since they are deliberately chosen by the package author.
+ *
+ * @param dependency - The name of the dependency, used in warnings.
+ * @param currentRange - The range of the dependency in the existing `package.json`.
+ * @param requiredRange - The range the generated code requires.
+ * @return Whether the current range should be updated.
+ */
 export function shouldUpdateRange(dependency: string, currentRange: string, requiredRange: string): boolean {
-    try {
-        // Check if currentRange is a subset of requiredRange
-        // If yes, required is looser or equal, no update needed
-        if (subset(currentRange, requiredRange)) {
-            return false;
-        }
-
-        // Get the minimum versions from both ranges.
-        const minRequiredVersion = minVersion(requiredRange);
-        const minCurrentVersion = minVersion(currentRange);
-        if (!minCurrentVersion || !minRequiredVersion) {
-            throw new Error('Could not determine minimum versions.');
-        }
-
-        // Update if the minimum required version is greater than the current minimum version.
-        if (ltVersion(minCurrentVersion, minRequiredVersion)) {
-            return true;
-        }
-
-        // Otherwise, do not update.
-        return false;
-    } catch (error) {
-        console.warn(
-            `Could not parse the following ranges for dependency "${dependency}":` +
-                ` [${currentRange}] and/or [${requiredRange}].` +
-                ` Caused by: ${(error as Error).message}`,
-        );
+    if (!validRange(currentRange)) return false;
+    if (!validRange(requiredRange)) {
+        logWarn(`Could not parse the required range [${requiredRange}] of dependency "${dependency}".`);
         return false;
     }
+
+    // A current range within the required one needs no update.
+    if (subset(currentRange, requiredRange)) return false;
+
+    // Otherwise, update when the current range allows older versions than the required one.
+    const minRequiredVersion = minVersion(requiredRange);
+    const minCurrentVersion = minVersion(currentRange);
+    if (!minCurrentVersion || !minRequiredVersion) return false;
+    return ltVersion(minCurrentVersion, minRequiredVersion);
 }
 
 function updateDependency(dependencyGroup: Record<string, string>, dependency: string, requiredRange: string) {

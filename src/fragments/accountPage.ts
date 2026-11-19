@@ -1,14 +1,21 @@
-import { CODAMA_ERROR__NODE_PATH_PROGRAM_MISSING, CodamaError } from '@codama/errors';
 import { AccountNode } from '@codama/nodes';
-import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
+import { getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
 
-import { Fragment, getStructFields, mergeFragments, RenderScope } from '../utils';
+import { Fragment, getProgramNodeFromPath, getStructFields, mergeFragments, RenderScope } from '../utils';
 import { getAccountFetchHelpersFragment } from './accountFetchHelpers';
 import { getAccountPdaHelpersFragment } from './accountPdaHelpers';
 import { getAccountSizeHelpersFragment } from './accountSizeHelpers';
 import { getAccountTypeFragment } from './accountType';
 import { getDiscriminatorConstantsFragment } from './discriminatorConstants';
 
+/**
+ * Renders the page of an account: its discriminator constants, data type and codecs, decode
+ * and fetch helpers, size function and PDA helpers.
+ *
+ * @param scope - The render scope, the path of the account and the byte size of its data.
+ * @return The fragment of the account page.
+ * @throws `CODAMA_ERROR__NODE_PATH_PROGRAM_MISSING` when the account is not within a program.
+ */
 export function getAccountPageFragment(
     scope: Pick<
         RenderScope,
@@ -19,9 +26,8 @@ export function getAccountPageFragment(
     },
 ): Fragment {
     const node = getLastNodeFromPath(scope.accountPath);
-    if (!findProgramNodeFromPath(scope.accountPath)) {
-        throw new CodamaError(CODAMA_ERROR__NODE_PATH_PROGRAM_MISSING, { path: scope.accountPath });
-    }
+    // Asserts that the node belongs to a program.
+    getProgramNodeFromPath(scope.accountPath);
 
     const typeManifest = visit(node, scope.typeManifestVisitor);
     const fields = getStructFields(node.data);

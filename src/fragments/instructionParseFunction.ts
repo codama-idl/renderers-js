@@ -1,6 +1,6 @@
 import { camelCase } from '@codama/fragments/casing';
 import { InstructionNode } from '@codama/nodes';
-import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
+import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
 import {
     addFragmentImports,
@@ -8,6 +8,7 @@ import {
     fragment,
     getDocblockFragment,
     getInstructionDataLink,
+    getProgramNodeFromPath,
     hasInstructionData,
     mergeFragments,
     RenderScope,
@@ -15,6 +16,13 @@ import {
     use,
 } from '../utils';
 
+/**
+ * Renders the parsed instruction type and the function parsing an instruction into it, e.g.
+ * `ParsedTransferInstruction` and `parseTransferInstruction`.
+ *
+ * @param scope - The render scope, the path of the instruction and its data type manifest.
+ * @return The fragment of the parsed type and parse function.
+ */
 export function getInstructionParseFunctionFragment(
     scope: Pick<RenderScope, 'customInstructionData' | 'nameApi'> & {
         dataArgsManifest: TypeManifest;
@@ -22,7 +30,7 @@ export function getInstructionParseFunctionFragment(
     },
 ): Fragment {
     const instructionNode = getLastNodeFromPath(scope.instructionPath);
-    const programNode = findProgramNodeFromPath(scope.instructionPath)!;
+    const programNode = getProgramNodeFromPath(scope.instructionPath);
     const programAddressConstant = use(
         scope.nameApi.programAddressConstant(programNode.identifier),
         'generatedPrograms',

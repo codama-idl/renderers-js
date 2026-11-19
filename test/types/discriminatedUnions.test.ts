@@ -1,8 +1,10 @@
 import {
+    accountNode,
     definedTypeNode,
     enumTypeNode,
     enumVariantTypeNode,
     integerTypeNode,
+    programNode,
     stringTypeNode,
     structFieldTypeNode,
     structTypeNode,
@@ -150,4 +152,50 @@ test('it exports fixed-size discriminated union helpers with a type cast', async
         'as FixedSizeEncoder< ChoiceArgs >',
         'as FixedSizeDecoder< Choice >',
     ]);
+});
+
+test('it passes the identifier of the owning node to the discriminator name transformer', async () => {
+    // Given an account whose data is a data union, and a struct nesting another data union.
+    const node = programNode({
+        accounts: [
+            accountNode({
+                data: enumTypeNode([
+                    enumVariantTypeNode('a'),
+                    enumVariantTypeNode('b', { data: tupleTypeNode([integerTypeNode('u8')]) }),
+                ]),
+                identifier: 'myAccount',
+            }),
+        ],
+        definedTypes: [
+            definedTypeNode({
+                identifier: 'wrapper',
+                type: structTypeNode([
+                    structFieldTypeNode({
+                        identifier: 'inner',
+                        type: enumTypeNode([
+                            enumVariantTypeNode('c'),
+                            enumVariantTypeNode('d', { data: tupleTypeNode([integerTypeNode('u8')]) }),
+                        ]),
+                    }),
+                ]),
+            }),
+        ],
+        identifier: 'myProgram',
+        publicKey: '1111',
+    });
+
+    // When we name discriminators after the node owning their union.
+    const renderMap = visit(
+        node,
+        getRenderMapVisitor({
+            nameTransformers: { discriminatedUnionDiscriminator: name => (name ? `${name}Kind` : 'nestedKind') },
+        }),
+    );
+
+    // Then the account union uses the account identifier, and the nested union, owned by no node, gets no name.
+    await renderMapContains(renderMap, 'accounts/my-account.ts', [
+        "myAccountKind: 'A'",
+        "discriminator: 'myAccountKind'",
+    ]);
+    await renderMapContains(renderMap, 'types/wrapper.ts', ["nestedKind: 'C'", "discriminator: 'nestedKind'"]);
 });

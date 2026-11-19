@@ -13,6 +13,13 @@ import {
 import { getTypeDecoderFragment } from './typeDecoder';
 import { getTypeEncoderFragment } from './typeEncoder';
 
+/**
+ * Renders the encoder, decoder and codec functions of a type, e.g. `getPointEncoder`,
+ * `getPointDecoder` and `getPointCodec`, typed as fixed-size when the type has a fixed size.
+ *
+ * @param scope - The render scope, the name of the type, its type manifest, byte size and docs.
+ * @return The fragment of the codec functions.
+ */
 export function getTypeCodecFragment(
     scope: Pick<RenderScope, 'nameApi'> & {
         codecDocs?: DocsInput;

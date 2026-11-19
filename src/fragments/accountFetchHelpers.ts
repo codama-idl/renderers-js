@@ -3,6 +3,13 @@ import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
 import { addFragmentImports, Fragment, fragment, getCustomDataOptions, RenderScope, TypeManifest } from '../utils';
 
+/**
+ * Renders the helpers decoding and fetching an account, e.g. `decodeCounter`, `fetchCounter`,
+ * `fetchMaybeCounter`, `fetchAllCounter` and `fetchAllMaybeCounter`.
+ *
+ * @param scope - The render scope, the path of the account and its type manifest.
+ * @return The fragment of the account helpers.
+ */
 export function getAccountFetchHelpersFragment(
     scope: Pick<RenderScope, 'customAccountData' | 'nameApi'> & {
         accountPath: NodePath<AccountNode>;

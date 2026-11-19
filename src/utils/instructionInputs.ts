@@ -16,7 +16,7 @@ import {
     CODAMA_ERROR__VISITORS__INVALID_INSTRUCTION_DEFAULT_VALUE_DEPENDENCY,
     CodamaError,
 } from '@codama/errors';
-import { camelCase } from '@codama/fragments/casing';
+import { camelCase, pascalCase } from '@codama/fragments/casing';
 import {
     AccountValueNode,
     accountValueNode,
@@ -34,6 +34,7 @@ import {
     isNode,
     Node,
     PathString,
+    pathString,
     PluginNode,
     ProgramNode,
     REGISTERED_TYPE_NODE_KINDS,
@@ -61,6 +62,13 @@ import type { ParsedCustomDataOptions } from './customData';
 
 const RESOLVER_PLUGIN = 'codama.resolver';
 const EXTRA_ARGUMENT_PLUGIN = 'codama.extraArgument';
+
+/**
+ * A resolver dependency: an account, e.g. `accounts.owner`, or a data path, e.g.
+ * `data.config.fees[0]`, made of field identifiers and array indices.
+ */
+const RESOLVER_DEPENDENCY_REGEX =
+    /^(accounts\.[A-Za-z_][A-Za-z0-9_]*|data\.[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*|\[(0|[1-9][0-9]*)\])*)$/;
 
 /** A field of the instruction data or an extra argument, as consumed by the renderer. */
 export type InstructionDataField = Readonly<{
@@ -197,7 +205,7 @@ export function getRemainingAccountsName(remainingAccounts: InstructionRemaining
 }
 
 /**
- * Whether the given remaining accounts are backed by an existing instruction argument — i.e.
+ * Whether the given remaining accounts are backed by an existing data field or extra argument — i.e.
  * an array of addresses encoded in the instruction data — as opposed to an argument added
  * to the instruction input for the sole purpose of providing these remaining accounts.
  */
@@ -268,7 +276,6 @@ type ResolvedInputBase = {
 
 /** An instruction account with its resolved default value. */
 export type ResolvedInstructionAccount = ResolvedInputBase & {
-    isPda: boolean;
     kind: 'account';
     node: InstructionAccountNode;
     resolvedIsOptional: boolean;
@@ -284,11 +291,6 @@ export type ResolvedInstructionDataField = ResolvedInputBase & {
 
 /** A resolved instruction input, discriminated by `kind`. */
 export type ResolvedInstructionInput = ResolvedInstructionAccount | ResolvedInstructionDataField;
-
-/** The name of a resolved input, as found in the IDL. */
-export function getResolvedInputName(input: ResolvedInstructionInput): string {
-    return input.node.identifier;
-}
 
 /** Finds the resolved input of an instruction account, if any. */
 export function findResolvedAccount(
@@ -352,7 +354,7 @@ export function getResolvedInstructionInputs(
         entry => !(entry.kind === 'data' && entry.isLinked),
     );
     return ordered.reduce<ResolvedInstructionInput[]>(
-        (resolved, entry) => [...resolved, toResolvedInput(entry, resolved, entries)],
+        (resolved, entry) => [...resolved, toResolvedInput(entry, resolved)],
         [],
     );
 }
@@ -518,11 +520,7 @@ function findDependencyEntry(
  * The resolved input of an entry, given the inputs resolved before it, which include
  * its dependencies since entries are ordered by dependencies.
  */
-function toResolvedInput(
-    entry: InputEntry,
-    previous: readonly ResolvedInstructionInput[],
-    entries: readonly InputEntry[],
-): ResolvedInstructionInput {
+function toResolvedInput(entry: InputEntry, previous: readonly ResolvedInstructionInput[]): ResolvedInstructionInput {
     const { dependsOn, path, resolvedDefaultValue, resolver } = entry;
     const base = {
         dependsOn,
@@ -542,12 +540,6 @@ function toResolvedInput(
     return {
         ...base,
         ...getResolvedAccountFlags(entry, findAccount),
-        isPda: entries.some(
-            candidate =>
-                candidate.kind === 'data' &&
-                isNode(candidate.resolvedDefaultValue, 'accountBumpValueNode') &&
-                candidate.resolvedDefaultValue.identifier === account.identifier,
-        ),
         kind: 'account',
         node: account,
     };
@@ -810,7 +802,7 @@ function getResolverFromPlugins(
         !payload ||
         typeof payload.name !== 'string' ||
         !Array.isArray(dependsOn) ||
-        !dependsOn.every(dependency => typeof dependency === 'string' && /^(accounts|data)\./.test(dependency)) ||
+        !dependsOn.every(dependency => typeof dependency === 'string' && RESOLVER_DEPENDENCY_REGEX.test(dependency)) ||
         (payload.docs !== undefined && typeof payload.docs !== 'string')
     ) {
         throw new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, {
@@ -821,7 +813,7 @@ function getResolverFromPlugins(
         dependsOn: (dependsOn as string[]).map((dependency): InstructionDependency => {
             const [root, ...rest] = dependency.split('.');
             const reference = rest.join('.');
-            return root === 'accounts' ? accountValueNode(reference) : dataValueNode(reference as PathString);
+            return root === 'accounts' ? accountValueNode(reference) : dataValueNode(pathString(reference));
         }),
         ...(payload.docs !== undefined ? { docs: payload.docs } : {}),
         name: payload.name,
@@ -892,4 +884,48 @@ export function getRenderedInstructionPaths(
             return [...(isRendered ? [path] : []), ...visitInstructions(path, subInstructions)];
         });
     return visitInstructions(programPath, getLastNodeFromPath(programPath).instructions ?? []);
+}
+
+/**
+ * Maps the camelCase name of each input argument conflicting with an account of the
+ * instruction to the camelCase name it is renamed to in the instruction input type,
+ * e.g. `authority` to `authorityArg`. Omitted arguments are not part of the input type,
+ * so they never conflict.
+ *
+ * Names are compared by their camelCase form since that is how they are emitted.
+ *
+ * @param instructionPath - The path of the instruction.
+ * @throws `CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE` with the path of the instruction when two
+ * of its data fields or extra arguments share a name.
+ *
+ * @example
+ * ```ts
+ * getRenamedArgsMap(instructionPath); // Map { 'authority' => 'authorityArg' }
+ * ```
+ */
+export function getRenamedArgsMap(instructionPath: NodePath<InstructionNode>): Map<string, string> {
+    const instruction = getLastNodeFromPath(instructionPath);
+    const args = getAllInstructionDataFields(instruction);
+    const argNames = args.map(arg => camelCase(arg.identifier));
+    // Data fields and extra arguments share the input type, so their names must be unique.
+    if (new Set(argNames).size !== argNames.length) {
+        throw new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, { path: instructionPath });
+    }
+
+    const accountNames = new Set((instruction.accounts ?? []).map(account => camelCase(account.identifier)));
+    const conflictingNames = args
+        .filter(arg => !(hasInputDefault(arg) && arg.defaultValueStrategy === 'omitted'))
+        .map(arg => camelCase(arg.identifier))
+        .filter(name => accountNames.has(name));
+    return new Map(conflictingNames.map(name => [name, camelCase(`${name}Arg`)]));
+}
+
+/**
+ * The name of the type parameter holding the input of an instruction account in
+ * instruction types and builders, e.g. `TAccountMint` for the `mint` account.
+ *
+ * @param accountIdentifier - The identifier of the instruction account.
+ */
+export function getAccountTypeParamName(accountIdentifier: string): string {
+    return `TAccount${pascalCase(accountIdentifier)}`;
 }

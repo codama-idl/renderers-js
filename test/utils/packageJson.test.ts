@@ -215,4 +215,10 @@ describe('shouldUpdateRange', () => {
         expect(shouldUpdateRange('module', 'invalid', '^1.0.0')).toBe(false);
         expect(shouldUpdateRange('module', '^1.0.0', 'invalid')).toBe(false);
     });
+
+    test('it keeps ranges that are not semver ranges', () => {
+        expect(shouldUpdateRange('module', 'workspace:*', '^1.0.0')).toBe(false);
+        expect(shouldUpdateRange('module', 'latest', '^1.0.0')).toBe(false);
+        expect(shouldUpdateRange('module', 'file:../module', '^1.0.0')).toBe(false);
+    });
 });

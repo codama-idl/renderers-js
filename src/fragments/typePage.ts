@@ -5,6 +5,12 @@ import { Fragment, mergeFragments, removeFragmentImports, RenderScope } from '..
 import { getTypeDiscriminatedUnionHelpersFragment } from './typeDiscriminatedUnionHelpers';
 import { getTypeWithCodecFragment } from './typeWithCodec';
 
+/**
+ * Renders the page of a defined type: its types, codec functions and data union helpers.
+ *
+ * @param scope - The render scope, the defined type, its path and byte size.
+ * @return The fragment of the type page.
+ */
 export function getTypePageFragment(
     scope: Pick<RenderScope, 'erasableSyntax' | 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         node: DefinedTypeNode;
