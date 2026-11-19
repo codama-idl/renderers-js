@@ -15,4 +15,4 @@ Export the types of the renderer options and apply `internalNodes` to PDAs.
 
 **Internal PDAs are not exported.** PDAs listed in `internalNodes` are rendered but no longer exported from the `pdas` barrel, like other internal nodes. A root barrel exporting nothing but PDAs now exports them too.
 
-The package now exports the `CustomDataOptions`, `LinkOverrides`, `PrettierOptions` and `Fragment` types, along with the types needed to call `getTypeManifestVisitor` directly.
+The package now exports the `CustomDataOptions`, `LinkOverrides`, `PrettierOptions` and `Fragment` types, along with the `ParsedCustomDataOptions` and `GetImportFromFunction` types of its scope.
