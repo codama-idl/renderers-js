@@ -186,7 +186,7 @@ export function getRenderMapVisitor(
                     const constantsToExport = (node.constants ?? []).filter(isNotInternal);
                     const customDataDefinedType = [
                         ...getDefinedTypeNodesToExtract(node.accounts ?? [], customAccountData),
-                        ...getDefinedTypeNodesToExtract(node.instructions ?? [], customInstructionData),
+                        ...getDefinedTypeNodesToExtract(getAllInstructionsWithSubs(node), customInstructionData),
                     ];
                     const scope = { ...renderScope, programNode: node, programPath: stack.getPath('programNode') };
 

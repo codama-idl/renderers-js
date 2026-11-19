@@ -1,5 +1,5 @@
 import { camelCase } from '@codama/fragments/casing';
-import { InstructionNode } from '@codama/nodes';
+import { InstructionNode, isNode } from '@codama/nodes';
 
 import {
     deduplicateInstructionDependencies,
@@ -8,6 +8,7 @@ import {
     getRemainingAccountsResolver,
     InstructionDependency,
     InstructionInputDefaultValue,
+    InstructionResolver,
     ResolvedInstructionInput,
 } from './instructionInputs';
 
@@ -69,19 +70,33 @@ export function isAsyncDefaultValue(defaultValue: InstructionInputDefaultValue):
 }
 
 /**
- * The inputs the default values of an instruction depend on, leaving out the
- * dependencies of asynchronous resolvers when rendering the synchronous builder.
+ * The inputs read by the builder of an instruction: the dependencies of the default values
+ * and resolvers of its inputs, remaining accounts and byte deltas, leaving out those of
+ * asynchronous resolvers when rendering the synchronous builder.
  */
 export function getInstructionDependencies(
+    instructionNode: InstructionNode,
     resolvedInputs: ResolvedInstructionInput[],
     asyncResolvers: string[],
     useAsync: boolean,
 ): InstructionDependency[] {
-    return deduplicateInstructionDependencies(
-        resolvedInputs.flatMap(input => {
-            if (!input.resolver) return getDefaultValueDependencies(input.resolvedDefaultValue);
-            const isSynchronousResolver = !isAsyncResolver(input.resolver.name, asyncResolvers);
-            return useAsync || isSynchronousResolver ? [...input.resolver.dependsOn] : [];
-        }),
-    );
+    const getResolverDependencies = (resolver: InstructionResolver | undefined): InstructionDependency[] => {
+        if (!resolver) return [];
+        const isSynchronousResolver = !isAsyncResolver(resolver.name, asyncResolvers);
+        return useAsync || isSynchronousResolver ? [...resolver.dependsOn] : [];
+    };
+    return deduplicateInstructionDependencies([
+        ...resolvedInputs.flatMap(input =>
+            input.resolver
+                ? getResolverDependencies(input.resolver)
+                : getDefaultValueDependencies(input.resolvedDefaultValue),
+        ),
+        ...(instructionNode.remainingAccounts ?? []).flatMap(remainingAccounts =>
+            getResolverDependencies(getRemainingAccountsResolver(remainingAccounts)),
+        ),
+        ...(instructionNode.byteDeltas ?? []).flatMap(byteDelta => [
+            ...getResolverDependencies(getByteDeltaResolver(byteDelta)),
+            ...(isNode(byteDelta.value, 'dataValueNode') ? [byteDelta.value] : []),
+        ]),
+    ]);
 }

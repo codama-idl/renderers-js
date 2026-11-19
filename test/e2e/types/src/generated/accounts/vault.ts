@@ -155,3 +155,7 @@ export async function fetchAllMaybeVault(
     );
     return maybeAccounts.map(maybeAccount => decodeVault(maybeAccount));
 }
+
+export function getVaultSize(): number {
+    return 21;
+}

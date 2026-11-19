@@ -193,7 +193,7 @@ export function getConfigureInstruction<
     const args = { ...input };
 
     // Resolve default values.
-    if (!args.tip) {
+    if (args.tip === undefined) {
         args.tip = lamports(100n);
     }
 

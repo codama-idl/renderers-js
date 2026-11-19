@@ -1,6 +1,7 @@
+import { CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, CodamaError } from '@codama/errors';
 import { mapFragmentContent } from '@codama/fragments';
 import { assertIsNode, InstructionByteDeltaNode, InstructionNode, isNode } from '@codama/nodes';
-import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
+import { getByteSizeVisitor, getLastNodeFromPath, NodeStack, NodePath, pipe, visit } from '@codama/visitors-core';
 
 import {
     addFragmentFeatures,
@@ -16,7 +17,7 @@ import {
 } from '../utils';
 
 export function getInstructionByteDeltaFragment(
-    scope: Pick<RenderScope, 'asyncResolvers' | 'getImportFrom' | 'nameApi'> & {
+    scope: Pick<RenderScope, 'asyncResolvers' | 'getImportFrom' | 'linkables' | 'nameApi'> & {
         instructionPath: NodePath<InstructionNode>;
         useAsync: boolean;
     },
@@ -34,7 +35,8 @@ export function getInstructionByteDeltaFragment(
 
 function getByteDeltaFragment(
     byteDelta: InstructionByteDeltaNode,
-    scope: Pick<RenderScope, 'asyncResolvers' | 'getImportFrom' | 'nameApi'> & {
+    scope: Pick<RenderScope, 'asyncResolvers' | 'getImportFrom' | 'linkables' | 'nameApi'> & {
+        instructionPath: NodePath<InstructionNode>;
         useAsync: boolean;
     },
 ): Fragment[] {
@@ -68,11 +70,31 @@ function getByteDeltaFragment(
     return [bytesFragment];
 }
 
+/**
+ * Renders the size of a linked account through its size function, e.g. `getCounterSize()`.
+ *
+ * @throws `CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE` when the account is in the tree but
+ * has no fixed size, so no size function is rendered for it.
+ */
 function getAccountLinkNodeFragment(
     byteDelta: InstructionByteDeltaNode,
-    scope: Pick<RenderScope, 'getImportFrom' | 'nameApi'>,
+    scope: Pick<RenderScope, 'getImportFrom' | 'linkables' | 'nameApi'> & {
+        instructionPath: NodePath<InstructionNode>;
+    },
 ): Fragment {
     assertIsNode(byteDelta.value, 'accountLinkNode');
+    const accountPath = scope.linkables.getPath([...scope.instructionPath, byteDelta.value]);
+    if (accountPath) {
+        const account = getLastNodeFromPath(accountPath);
+        const size =
+            account.size ??
+            visit(account, getByteSizeVisitor(scope.linkables, { stack: new NodeStack(accountPath.slice(0, -1)) }));
+        if (size == null) {
+            throw new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, {
+                path: [...scope.instructionPath, byteDelta, byteDelta.value],
+            });
+        }
+    }
     const functionName = use(
         scope.nameApi.accountGetSizeFunction(byteDelta.value.identifier),
         scope.getImportFrom(byteDelta.value),

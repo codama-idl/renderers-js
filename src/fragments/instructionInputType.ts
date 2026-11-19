@@ -5,6 +5,7 @@ import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
 import {
     findResolvedAccount,
+    findResolvedDataField,
     Fragment,
     fragment,
     getDocblockFragment,
@@ -133,7 +134,7 @@ function getDataArgumentsFragments(
     const dataArgsType = nameApi.dataArgsType(instructionDataName);
 
     const fragments = getInstructionDataFields(instructionNode).flatMap(arg => {
-        const argFragment = getArgumentFragment(arg, dataArgsType, scope.renamedArgs);
+        const argFragment = getArgumentFragment(arg, dataArgsType, scope);
         return argFragment ? [argFragment] : [];
     });
 
@@ -153,7 +154,7 @@ function getExtraArgumentsFragment(
     const extraArgsType = nameApi.dataArgsType(instructionExtraName);
 
     const fragments = getInstructionExtraArguments(instructionNode).flatMap(arg => {
-        const argFragment = getArgumentFragment(arg, extraArgsType, scope.renamedArgs);
+        const argFragment = getArgumentFragment(arg, extraArgsType, scope);
         return argFragment ? [argFragment] : [];
     });
     if (fragments.length === 0) return;
@@ -164,12 +165,16 @@ function getExtraArgumentsFragment(
 function getArgumentFragment(
     arg: InstructionDataField,
     argsType: string,
-    renamedArgs: Map<string, string>,
+    scope: { renamedArgs: Map<string, string>; resolvedInputs: ResolvedInstructionInput[] },
 ): Fragment | null {
     if (hasInputDefault(arg) && arg.defaultValueStrategy === 'omitted') return null;
     const argName = camelCase(arg.identifier);
-    const renamedName = renamedArgs.get(argName) ?? argName;
-    const optionalSign = hasInputDefault(arg) ? '?' : '';
+    const renamedName = scope.renamedArgs.get(argName) ?? argName;
+    // Arguments defaulting to the payer or the identity have no value in instruction builders,
+    // so they are required there; the program plugin fills in the payer of its client.
+    const resolvedDefault = findResolvedDataField(scope.resolvedInputs, arg)?.resolvedDefaultValue;
+    const hasBuilderDefault = hasInputDefault(arg) && !isNode(resolvedDefault, ['identityValueNode', 'payerValueNode']);
+    const optionalSign = hasBuilderDefault ? '?' : '';
     return fragment`${renamedName}${optionalSign}: ${argsType}["${argName}"];`;
 }
 

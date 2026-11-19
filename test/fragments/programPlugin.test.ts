@@ -680,3 +680,24 @@ test('it omits the plugin config when nothing uses the program address', async (
     // Then the plugin function takes no config.
     await fragmentContains(fragment, ['export function splTokenProgram() {']);
 });
+
+test('the program plugin exposes the instructions rendered as pages', async () => {
+    // Given a parent instruction with a sub-instruction.
+    const programNode_ = programNode({
+        identifier: 'splToken',
+        instructions: [
+            instructionNode({ identifier: 'parent', subInstructions: [instructionNode({ identifier: 'child' })] }),
+        ],
+        publicKey: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
+    });
+    const scope = { ...getDefaultScope(), programNode: programNode_, programPath: [programNode_] as const };
+
+    // Then by default, only the sub-instruction, whose page is rendered, is exposed.
+    const leavesOnly = getProgramPluginFragment(scope);
+    await fragmentContains(leavesOnly, ['child: (', 'getChildInstruction']);
+    await fragmentDoesNotContain(leavesOnly, ['getParentInstruction']);
+
+    // And with parent instructions, both are exposed.
+    const withParents = getProgramPluginFragment({ ...scope, renderParentInstructions: true });
+    await fragmentContains(withParents, ['getParentInstruction', 'getChildInstruction']);
+});

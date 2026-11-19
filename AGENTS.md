@@ -312,7 +312,7 @@ E2E tests are excluded from these unit-test projects and run through a dedicated
 
 ### E2E tests
 
-`test/e2e/` contains small generated-client fixtures such as `anchor`, `system`, `memo`, `token`, `dummy` and `types`. The `types` fixture is a codegen-only program covering every type and value lowering, so that type-checking the E2E build proves the generated code compiles; extend it when adding or changing type lowerings. Their dependencies, build configuration, and test runner are owned by the root package. A shared `test/e2e/_setup.ts` provides one LiteSVM test client composing the generated program plugins of every fixture, which also proves that plugins from independently generated clients compose on a single Kit client.
+`test/e2e/` contains small generated-client fixtures such as `anchor`, `system`, `memo`, `token`, `dummy`, `types` and `instructions`. The `types` and `instructions` fixtures are codegen-only programs covering every type and value lowering and the edge cases of instruction builders respectively, so that type-checking the E2E build proves the generated code compiles; extend them when adding or changing such renderings. Their dependencies, build configuration, and test runner are owned by the root package. A shared `test/e2e/_setup.ts` provides one LiteSVM test client composing the generated program plugins of every fixture, which also proves that plugins from independently generated clients compose on a single Kit client.
 
 `pnpm test:e2e`:
 

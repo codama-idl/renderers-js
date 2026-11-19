@@ -35,6 +35,7 @@ import {
     Node,
     PathString,
     PluginNode,
+    ProgramNode,
     REGISTERED_TYPE_NODE_KINDS,
     REGISTERED_VALUE_NODE_KINDS,
     StructFieldTypeNode,
@@ -335,7 +336,18 @@ export function getResolvedInstructionInputs(
     assertSupportedDataPaths(instructionPath, entries, linkables);
     // Fields of linked data only order their dependents: they are provided as a whole
     // through the linked type, so they never appear as individual builder inputs.
-    const ordered = sortEntriesByDependencies(entries.filter(isBuilderInput), entries, instructionPath).filter(
+    // Inputs read by byte deltas and remaining accounts are resolved too, e.g. to fill in their defaults.
+    const instruction = getLastNodeFromPath(instructionPath);
+    const readInputs = getByteDeltaAndRemainingAccountsDependencies(instruction).map(({ dependency, owner }) =>
+        findDependencyEntry(
+            entries,
+            isNode(owner, 'instructionRemainingAccountsNode') ? owner.identifier : 'byteDeltas',
+            dependency,
+            instructionPath,
+        ),
+    );
+    const roots = [...entries.filter(isBuilderInput), ...readInputs];
+    const ordered = sortEntriesByDependencies(roots, entries, instructionPath).filter(
         entry => !(entry.kind === 'data' && entry.isLinked),
     );
     return ordered.reduce<ResolvedInstructionInput[]>(
@@ -466,7 +478,7 @@ function sortEntriesByDependencies(
             );
         }
         entry.dependsOn.forEach(dependency =>
-            visit(findDependencyEntry(entries, entry, dependency, instructionPath), [...trail, entry]),
+            visit(findDependencyEntry(entries, entry.node.identifier, dependency, instructionPath), [...trail, entry]),
         );
         ordered.push(entry);
     };
@@ -483,7 +495,7 @@ function sortEntriesByDependencies(
  */
 function findDependencyEntry(
     entries: readonly InputEntry[],
-    dependent: InputEntry,
+    dependent: string,
     dependency: InstructionDependency,
     instructionPath: NodePath<InstructionNode>,
 ): InputEntry {
@@ -496,7 +508,7 @@ function findDependencyEntry(
     throw new CodamaError(CODAMA_ERROR__VISITORS__INVALID_INSTRUCTION_DEFAULT_VALUE_DEPENDENCY, {
         dependencyKind: dependency.kind,
         dependencyName: (isAccount ? dependency.identifier : dependency.path) as IdentifierString,
-        dependent: dependent.node.identifier as IdentifierString,
+        dependent: dependent as IdentifierString,
         path: instructionPath,
     });
 }
@@ -606,18 +618,10 @@ function assertSupportedDataPaths(
     // Each dependency is paired with the path of the node owning it, to report errors there.
     const dependencies: { dependency: InstructionDependency; owner: NodePath }[] = [
         ...entries.flatMap(entry => entry.dependsOn.map(dependency => ({ dependency, owner: entry.path }))),
-        ...(instruction.byteDeltas ?? []).flatMap(byteDelta =>
-            [
-                ...(getByteDeltaResolver(byteDelta)?.dependsOn ?? []),
-                ...(isNode(byteDelta.value, 'dataValueNode') ? [byteDelta.value] : []),
-            ].map(dependency => ({ dependency, owner: [...instructionPath, byteDelta] })),
-        ),
-        ...(instruction.remainingAccounts ?? []).flatMap(remainingAccounts =>
-            (getRemainingAccountsResolver(remainingAccounts)?.dependsOn ?? []).map(dependency => ({
-                dependency,
-                owner: [...instructionPath, remainingAccounts],
-            })),
-        ),
+        ...getByteDeltaAndRemainingAccountsDependencies(instruction).map(({ dependency, owner }) => ({
+            dependency,
+            owner: [...instructionPath, owner],
+        })),
     ];
     dependencies.forEach(({ dependency, owner }) => {
         if (!isNode(dependency, 'dataValueNode')) return;
@@ -640,6 +644,29 @@ function assertSupportedDataPaths(
             throw new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, { path: [...owner, dependency] });
         }
     });
+}
+
+/**
+ * The inputs read by the byte deltas and remaining accounts of an instruction, paired
+ * with the byte delta or remaining accounts reading them.
+ */
+function getByteDeltaAndRemainingAccountsDependencies(
+    instruction: InstructionNode,
+): { dependency: InstructionDependency; owner: InstructionByteDeltaNode | InstructionRemainingAccountsNode }[] {
+    return [
+        ...(instruction.byteDeltas ?? []).flatMap(byteDelta =>
+            [
+                ...(getByteDeltaResolver(byteDelta)?.dependsOn ?? []),
+                ...(isNode(byteDelta.value, 'dataValueNode') ? [byteDelta.value] : []),
+            ].map(dependency => ({ dependency, owner: byteDelta })),
+        ),
+        ...(instruction.remainingAccounts ?? []).flatMap(remainingAccounts =>
+            (getRemainingAccountsResolver(remainingAccounts)?.dependsOn ?? []).map(dependency => ({
+                dependency,
+                owner: remainingAccounts,
+            })),
+        ),
+    ];
 }
 
 /**
@@ -738,10 +765,12 @@ export function getDefaultValueDependencies(
     }
 
     if (isNode(defaultValue, 'pdaValueNode')) {
+        // Keyed by kind too, since an account and a data field may share an identifier.
         const dependencies = new Map<string, InstructionDependency>();
         (defaultValue.seeds ?? []).forEach(seed => {
-            if (isNode(seed.value, 'accountValueNode')) dependencies.set(seed.value.identifier, seed.value);
-            if (isNode(seed.value, 'dataValueNode')) dependencies.set(seed.value.path, seed.value);
+            if (isNode(seed.value, 'accountValueNode'))
+                dependencies.set(`account:${seed.value.identifier}`, seed.value);
+            if (isNode(seed.value, 'dataValueNode')) dependencies.set(`data:${seed.value.path}`, seed.value);
         });
         return [...dependencies.values(), ...(defaultValue.programId ? [defaultValue.programId] : [])];
     }
@@ -837,4 +866,29 @@ function parseExtraArgumentPlugin(plugin: PluginNode, instruction: InstructionNo
         ...(payload.docs !== undefined ? { docs: payload.docs } : {}),
         ...(plugin.plugins ? { plugins: plugin.plugins } : {}),
     });
+}
+
+/**
+ * The paths of the instructions of a program rendered as instruction pages: the leaves of
+ * the instruction tree, along with the parent instructions when `renderParentInstructions`
+ * is enabled. Paths go through parent instructions, so their `provides` remain visible.
+ *
+ * @param programPath - The path of the program.
+ * @param renderParentInstructions - Whether parent instructions are rendered too.
+ */
+export function getRenderedInstructionPaths(
+    programPath: NodePath<ProgramNode>,
+    renderParentInstructions: boolean,
+): NodePath<InstructionNode>[] {
+    const visitInstructions = (
+        parentPath: NodePath,
+        instructions: readonly InstructionNode[],
+    ): NodePath<InstructionNode>[] =>
+        instructions.flatMap(instruction => {
+            const path: NodePath<InstructionNode> = [...parentPath, instruction];
+            const subInstructions = instruction.subInstructions ?? [];
+            const isRendered = subInstructions.length === 0 || renderParentInstructions;
+            return [...(isRendered ? [path] : []), ...visitInstructions(path, subInstructions)];
+        });
+    return visitInstructions(programPath, getLastNodeFromPath(programPath).instructions ?? []);
 }
