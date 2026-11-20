@@ -13,3 +13,4 @@ export * from './options';
 export * from './packageJson';
 export * from './typeManifest';
 export * from './typeNodes';
+export * from './validateRoot';

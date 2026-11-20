@@ -1,6 +1,14 @@
 import { camelCase, getAllInstructionsWithSubs, InstructionNode, ProgramNode } from '@codama/nodes';
 
-import { Fragment, fragment, getInstructionDataNode, mergeFragments, RenderScope, use } from '../utils';
+import {
+    fragment,
+    Fragment,
+    getInstructionDataNode,
+    getStringLiteral,
+    mergeFragments,
+    RenderScope,
+    use,
+} from '../utils';
 import { getDiscriminatorConditionFragment } from './discriminatorCondition';
 import { getEnumDeclarationFragment } from './enumDeclaration';
 
@@ -111,7 +119,7 @@ function getProgramInstructionsParsedUnionTypeFragment(
 
     return mergeFragments(
         [
-            fragment`export type ${programInstructionsType}<TProgram extends string = '${programAddress}'> =`,
+            fragment`export type ${programInstructionsType}<TProgram extends string = ${getStringLiteral(programAddress)}> =`,
             ...typeVariants,
         ],
         c => c.join('\n'),

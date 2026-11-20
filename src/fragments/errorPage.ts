@@ -51,7 +51,8 @@ function getErrorMessagesFragment(scope: Pick<RenderScope, 'nameApi'> & { progra
             .sort((a, b) => camelCase(a.name).localeCompare(camelCase(b.name)))
             .map(error => {
                 const constantName = constantPrefix + scope.nameApi.programErrorConstant(error.name);
-                const escapedMessage = error.message.replace(/`/g, '\\`');
+                // Escapes the message as the content of a template literal.
+                const escapedMessage = error.message.replace(/[\\`]|\$\{/g, c => `\\${c}`);
                 return fragment`[${constantName}]: \`${escapedMessage}\``;
             }),
         cs => cs.join(', '),
