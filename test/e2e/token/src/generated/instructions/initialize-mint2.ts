@@ -118,6 +118,7 @@ export type InitializeMint2Input<TAccountMint extends InstructionAccountInput = 
     freezeAuthority?: InitializeMint2InstructionDataArgs['freezeAuthority'];
 };
 
+/** Like [`InitializeMint`], but does not require the Rent sysvar to be provided. */
 export function getInitializeMint2Instruction<
     TAccountMint extends InstructionAccountInput,
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,

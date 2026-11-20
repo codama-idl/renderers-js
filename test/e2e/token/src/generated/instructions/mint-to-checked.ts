@@ -123,6 +123,13 @@ export type MintToCheckedInput<
     multiSigners?: Array<InstructionSignerInput>;
 };
 
+/**
+ * Mints new tokens to an account. The native mint does not support minting.
+ *
+ * This instruction differs from MintTo in that the decimals value is
+ * checked by the caller. This may be useful when creating transactions
+ * offline or within a hardware wallet.
+ */
 export function getMintToCheckedInstruction<
     TAccountMint extends InstructionAccountInput,
     TAccountToken extends InstructionAccountInput,

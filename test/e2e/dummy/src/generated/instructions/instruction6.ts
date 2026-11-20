@@ -40,6 +40,7 @@ export type Instruction6Input<TAccountMyAccount extends InstructionAccountInput 
     myAccount: TAccountMyAccount;
 };
 
+/** Testing instructions with accounts only */
 export function getInstruction6Instruction<
     TAccountMyAccount extends InstructionAccountInput,
     TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS,

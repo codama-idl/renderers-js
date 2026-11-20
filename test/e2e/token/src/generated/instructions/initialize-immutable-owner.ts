@@ -81,6 +81,15 @@ export type InitializeImmutableOwnerInput<TAccountAccount extends InstructionAcc
     account: TAccountAccount;
 };
 
+/**
+ * Initialize the Immutable Owner extension for the given token account
+ *
+ * Fails if the account has already been initialized, so must be called
+ * before `InitializeAccount`.
+ *
+ * No-ops in this version of the program, but is included for compatibility
+ * with the Associated Token Account program.
+ */
 export function getInitializeImmutableOwnerInstruction<
     TAccountAccount extends InstructionAccountInput,
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,

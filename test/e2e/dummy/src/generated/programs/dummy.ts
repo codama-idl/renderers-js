@@ -195,54 +195,67 @@ export type DummyPlugin = {
 };
 
 export type DummyPluginInstructions = {
+    /** Testing instructions with no accounts or arguments */
     instruction1: (
         input: Instruction1Input,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInstruction1Instruction> & SelfPlanAndSendFunctions;
+    /** Testing instructions with remaining accounts only */
     instruction2: (
         input: Instruction2Input,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInstruction2Instruction> & SelfPlanAndSendFunctions;
+    /** Testing instructions with discriminator only */
     instruction3: (
         input: Instruction3Input,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInstruction3Instruction> & SelfPlanAndSendFunctions;
+    /** Testing instructions with arguments only */
     instruction4: (
         input: Instruction4Input,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInstruction4Instruction> & SelfPlanAndSendFunctions;
+    /** Testing instructions with optional arguments only */
     instruction5: (
         input: Instruction5Input,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInstruction5Instruction> & SelfPlanAndSendFunctions;
+    /** Testing instructions with accounts only */
     instruction6: (
         input: Instruction6Input,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInstruction6Instruction> & SelfPlanAndSendFunctions;
+    /** Testing instructions with optional accounts only */
     instruction7: (
         input: Instruction7Input,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInstruction7Instruction> & SelfPlanAndSendFunctions;
+    /** Testing instructions with remaining accounts that can optionally be signers */
     instruction8: (
         input: Instruction8Input,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInstruction8Instruction> & SelfPlanAndSendFunctions;
+    /** Testing instructions with conflicting account and argument names both set as the payer */
     instruction9: (
         input: MakeOptional<Instruction9Input, 'authority' | 'authorityArg'>,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInstruction9Instruction> & SelfPlanAndSendFunctions;
+    /** Testing instructions with enum field discriminator */
     instruction10: (
         input: Instruction10Input,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInstruction10Instruction> & SelfPlanAndSendFunctions;
+    /** Testing an optional account followed by a required account */
     instruction11: (
         input: Instruction11Input,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInstruction11Instruction> & SelfPlanAndSendFunctions;
+    /** Testing the inputs accepted by instruction accounts, including a PDA whose bump seed is consumed by an argument */
     instruction12: (
         input: Instruction12Input,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInstruction12Instruction> & SelfPlanAndSendFunctions;
+    /** Testing remaining accounts backed by an instruction argument, without any other account */
     instruction13: (
         input: Instruction13Input,
         config?: { programAddress?: Address | HasAddress },

@@ -94,6 +94,14 @@ export type UiAmountToAmountInput<TAccountMint extends InstructionAccountInput =
     uiAmount: UiAmountToAmountInstructionDataArgs['uiAmount'];
 };
 
+/**
+ * Convert a UiAmount of tokens to a little-endian `u64` raw Amount, using
+ * the given mint. In this version of the program, the mint can only
+ * specify the number of decimals.
+ *
+ * Return data can be fetched using `sol_get_return_data` and deserializing
+ * the return data as a little-endian `u64`.
+ */
 export function getUiAmountToAmountInstruction<
     TAccountMint extends InstructionAccountInput,
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,

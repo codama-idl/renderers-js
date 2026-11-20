@@ -7,10 +7,15 @@ import {
     getChildInstruction,
     getContextualDataInstruction,
     getCounterSize,
+    getGetBalanceInstructionReturnDataDecoder,
+    getGetBalanceInstructionReturnDataEncoder,
+    getGetStatsInstructionReturnDataDecoder,
     getInstructionsErrorMessage,
     getResolvedExtrasInstruction,
     getSomeOmittedInstruction,
+    identifyInstructionsInstruction,
     INSTRUCTIONS_ERROR__TEMPLATED,
+    InstructionsInstruction,
 } from '../src/index.js';
 
 const owner = address('11111111111111111111111111111111');
@@ -67,4 +72,24 @@ test('it resolves the injected defaults of sub-instructions against their parent
 test('it renders error messages verbatim', () => {
     // Then template placeholders, backslashes and backticks are kept as is.
     expect(getInstructionsErrorMessage(INSTRUCTIONS_ERROR__TEMPLATED)).toBe('Expected ${amount} \\ got `value`.');
+});
+
+test('it decodes the data returned by instructions', () => {
+    // Given the return data of instructions returning a number and a struct.
+    const balance = getGetBalanceInstructionReturnDataEncoder().encode(42n);
+    const stats = new Uint8Array([7, 1]);
+
+    // Then their decoders read them.
+    expect(getGetBalanceInstructionReturnDataDecoder().decode(balance)).toBe(42n);
+    expect(getGetStatsInstructionReturnDataDecoder().decode(stats)).toStrictEqual({
+        discriminator: 7,
+        mode: { __kind: 'Slow' },
+    });
+});
+
+test('it leaves archived instructions out of the client', () => {
+    // Then archived instructions are neither rendered nor identified.
+    expect(Object.keys(InstructionsInstruction)).not.toContain('AncientTransfer');
+    expect(() => identifyInstructionsInstruction(new Uint8Array([8]))).toThrow();
+    expect(identifyInstructionsInstruction(new Uint8Array([6]))).toBe(InstructionsInstruction.OldTransfer);
 });

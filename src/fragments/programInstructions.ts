@@ -1,10 +1,11 @@
 import { camelCase } from '@codama/fragments/casing';
-import { getAllInstructionsWithSubs, InstructionNode, ProgramNode } from '@codama/nodes';
+import { InstructionNode, ProgramNode } from '@codama/nodes';
 
 import {
     fragment,
     Fragment,
     getInstructionDataNode,
+    getRenderedInstructions,
     getStringLiteral,
     getStructFields,
     mergeFragments,
@@ -26,12 +27,12 @@ export function getProgramInstructionsFragment(
         programNode: ProgramNode;
     },
 ): Fragment | undefined {
-    if ((scope.programNode.instructions ?? []).length === 0) return;
-
-    const allInstructions = getAllInstructionsWithSubs(scope.programNode, {
-        leavesOnly: !scope.renderParentInstructions,
+    // Sub-instructions come first, so that their more specific discriminators are matched first.
+    const allInstructions = getRenderedInstructions(scope.programNode, {
+        renderParentInstructions: scope.renderParentInstructions,
         subInstructionsFirst: true,
     });
+    if (allInstructions.length === 0) return;
     const scopeWithInstructions = { ...scope, allInstructions };
     return mergeFragments(
         [

@@ -1,13 +1,16 @@
 import { camelCase } from '@codama/fragments/casing';
-import { getAllInstructionsWithSubs, InstructionNode, isNode, isNodeFilter, PdaNode, ProgramNode } from '@codama/nodes';
+import { InstructionNode, isNode, isNodeFilter, PdaNode, ProgramNode } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath } from '@codama/visitors-core';
 
 import {
     Fragment,
     fragment,
+    getDocblockFragment,
     getInstructionDataFields,
+    getInstructionDocs,
     getRenamedArgsMap,
     getRenderedInstructionPaths,
+    getRenderedInstructions,
     getResolvedInstructionInputs,
     hasAsyncFunction,
     mergeFragments,
@@ -42,7 +45,9 @@ export function getProgramPluginFragment(
     },
 ): Fragment | undefined {
     // The instructions rendered as pages, i.e. leaves and, when requested, their parents.
-    const instructionPaths = getRenderedInstructionPaths(scope.programPath, scope.renderParentInstructions);
+    const instructionPaths = getRenderedInstructionPaths(scope.programPath, {
+        renderParentInstructions: scope.renderParentInstructions,
+    });
     const instructions = instructionPaths.map(path => getLastNodeFromPath(path));
     if (
         (scope.programNode.accounts ?? []).length === 0 &&
@@ -98,9 +103,8 @@ function hasAccountIdentifier(programNode: ProgramNode): boolean {
 function hasInstructionIdentifier(programNode: ProgramNode, renderParentInstructions: boolean | undefined): boolean {
     // Mirrors getProgramInstructionsFragment so the plugin tracks whichever
     // instructions actually flow into identify*/parse* generation.
-    const allInstructions = getAllInstructionsWithSubs(programNode, {
-        leavesOnly: !renderParentInstructions,
-        subInstructionsFirst: true,
+    const allInstructions = getRenderedInstructions(programNode, {
+        renderParentInstructions: !!renderParentInstructions,
     });
     return allInstructions.some(instruction => (instruction.discriminators ?? []).length > 0);
 }
@@ -192,9 +196,10 @@ function getProgramPluginInstructionsTypeFragment(
                 instructionInputType = fragment`MakeOptional<${instructionInputType}, ${fieldStringUnion}>`;
             }
 
-            return fragment`${name}: (input: ${instructionInputType}, config?: { programAddress?: ${programAddressType} }) => ReturnType<typeof ${instructionFunction}> & ${selfPlanAndSendFunctions};`;
+            const docs = getDocblockFragment(getInstructionDocs(instruction), true);
+            return fragment`${docs}${name}: (input: ${instructionInputType}, config?: { programAddress?: ${programAddressType} }) => ReturnType<typeof ${instructionFunction}> & ${selfPlanAndSendFunctions};`;
         }),
-        c => c.join(' '),
+        c => c.join('\n'),
     );
 
     return fragment`export type ${programPluginInstructionsType} = { ${fields} }`;

@@ -14,6 +14,7 @@ export * from './nameTransformers';
 export * from './options';
 export * from './packageJson';
 export * from './renderedAttributes';
+export * from './renderedInstructions';
 export * from './typedValues';
 export * from './typeManifest';
 export * from './typeNodes';
