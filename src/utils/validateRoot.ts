@@ -4,6 +4,7 @@ import type { Node, NodeKind } from '@codama/nodes';
 type AttributeRule = (value: unknown) => boolean;
 
 const isInteger: AttributeRule = value => Number.isSafeInteger(value);
+const isNonNegativeInteger: AttributeRule = value => Number.isSafeInteger(value) && (value as number) >= 0;
 const isNumber: AttributeRule = value => typeof value === 'number' && Number.isFinite(value);
 const isBoolean: AttributeRule = value => typeof value === 'boolean';
 const isBooleanOrEither: AttributeRule = value => typeof value === 'boolean' || value === 'either';
@@ -25,13 +26,12 @@ const ATTRIBUTE_RULES: Partial<Record<NodeKind, Record<string, AttributeRule>>> 
     accountNode: { size: isInteger },
     amountTypeNode: { decimals: isInteger },
     booleanValueNode: { boolean: isBoolean },
-    bytesTypeNode: {},
     bytesValueNode: { encoding: isOneOf(...BYTES_ENCODINGS) },
     constantDiscriminatorNode: { offset: isInteger },
     enumEmptyVariantTypeNode: { discriminator: isInteger },
     enumStructVariantTypeNode: { discriminator: isInteger },
     enumTupleVariantTypeNode: { discriminator: isInteger },
-    errorNode: { code: isInteger },
+    errorNode: { code: isNonNegativeInteger },
     fieldDiscriminatorNode: { offset: isInteger },
     fixedCountNode: { value: isInteger },
     fixedSizeTypeNode: { size: isInteger },

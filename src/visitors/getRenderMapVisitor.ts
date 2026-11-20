@@ -12,8 +12,8 @@ import { createRenderMap, mergeRenderMaps, RenderMap } from '@codama/renderers-c
 import {
     extendVisitor,
     getByteSizeVisitor,
-    interceptFirstVisitVisitor,
     getResolvedInstructionInputsVisitor,
+    interceptFirstVisitVisitor,
     LinkableDictionary,
     NodeStack,
     pipe,

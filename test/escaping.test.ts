@@ -89,6 +89,7 @@ test('it renders addresses as string literals', async () => {
 test.each([
     ['an account size', () => accountNode({ name: 'counter', size: '1; evil()' as unknown as number })],
     ['an error code', () => errorNode({ code: '1; evil()' as unknown as number, message: 'Oops', name: 'oops' })],
+    ['a negative error code', () => errorNode({ code: -1, message: 'Oops', name: 'oops' })],
     ['a fixed size', () => fixedSizeTypeNode(stringTypeNode('utf8'), '1); evil(' as unknown as number)],
     ['a size discriminator', () => sizeDiscriminatorNode('1 || evil()' as unknown as number)],
     [
