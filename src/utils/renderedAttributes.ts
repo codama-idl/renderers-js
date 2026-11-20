@@ -5,8 +5,11 @@
  */
 
 import { CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, CodamaError } from '@codama/errors';
-import { decimalString, integerString, type Node, type NodeKind } from '@codama/nodes';
+import { decimalString, integerString, isNode, type Node, type NodeKind } from '@codama/nodes';
 import type { NodePath } from '@codama/visitors-core';
+
+import { EXTRA_ARGUMENT_PLUGIN } from './instructionInputs';
+import { isNodeObject } from './nodePaths';
 
 type AttributeRule = (value: unknown) => boolean;
 
@@ -96,12 +99,21 @@ export function assertValidRenderedAttributes(node: Node, path: NodePath = []): 
             throw new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, { path: nodePath });
         }
     });
-    Object.values(node).forEach(value => {
-        const children: unknown[] = Array.isArray(value) ? value : [value];
-        children.filter(isNodeObject).forEach(child => assertValidRenderedAttributes(child, nodePath));
-    });
+    getRenderedChildren(node)
+        .filter(isNodeObject)
+        .forEach(child => assertValidRenderedAttributes(child, nodePath));
 }
 
-function isNodeObject(value: unknown): value is Node {
-    return typeof value === 'object' && value !== null && typeof (value as { kind?: unknown }).kind === 'string';
+/**
+ * The values of a node that may hold child nodes: its attributes and, for the plugins this
+ * renderer renders, their payload. The payloads of other plugins are opaque and left alone.
+ */
+function getRenderedChildren(node: Node): unknown[] {
+    if (isNode(node, 'pluginNode')) {
+        if (node.namespace !== EXTRA_ARGUMENT_PLUGIN) return node.plugins ?? [];
+        // The type and default value of extra arguments are written into instruction builders.
+        const payload = node.payload as { defaultValue?: unknown; type?: unknown } | undefined;
+        return [...(node.plugins ?? []), payload?.type, payload?.defaultValue];
+    }
+    return Object.values(node).flatMap(value => (Array.isArray(value) ? value : [value]));
 }

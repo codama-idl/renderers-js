@@ -1,5 +1,5 @@
 import { CODAMA_ERROR__NODE_PATH_PROGRAM_MISSING, CodamaError } from '@codama/errors';
-import { ProgramNode } from '@codama/nodes';
+import type { Node, ProgramNode } from '@codama/nodes';
 import { findProgramNodeFromPath, NodePath } from '@codama/visitors-core';
 
 /**
@@ -23,4 +23,14 @@ export function getProgramNodeFromPath(path: NodePath): ProgramNode {
         throw new CodamaError(CODAMA_ERROR__NODE_PATH_PROGRAM_MISSING, { path });
     }
     return programNode;
+}
+
+/**
+ * Whether a value is a node, i.e. an object with a `kind`, e.g. within the payload of a plugin
+ * or an IDL loaded from JSON whose shape has not been checked yet.
+ *
+ * @param value - The value to check.
+ */
+export function isNodeObject(value: unknown): value is Node {
+    return typeof value === 'object' && value !== null && typeof (value as { kind?: unknown }).kind === 'string';
 }

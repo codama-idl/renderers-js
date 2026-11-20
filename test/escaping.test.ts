@@ -2,7 +2,9 @@ import { CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE } from '@codama/errors';
 import {
     accountNode,
     addTypeNodeTransforms,
+    arrayTypeNode,
     constantNode,
+    constantValueNodeFromBytes,
     definedTypeNode,
     errorNode,
     fixedSizeTransformNode,
@@ -15,6 +17,7 @@ import {
     integerValueNode,
     type Node,
     pdaNode,
+    pluginNode,
     programNode,
     type ProgramNode,
     publicKeyValueNode,
@@ -25,8 +28,6 @@ import {
     stringValueNode,
     structFieldTypeNode,
     structTypeNode,
-    arrayTypeNode,
-    constantValueNodeFromBytes,
 } from '@codama/nodes';
 import { visit } from '@codama/visitors-core';
 import { expect, test } from 'vitest';
@@ -184,6 +185,41 @@ const invalidNodes: [string, () => Node, (node: never) => Partial<Parameters<typ
         node => ({ instructions: [node] }),
     ],
     [
+        'an extra argument type',
+        () => fixedSizeTransformNode(invalid('1); evil(')),
+        node => ({
+            instructions: [
+                instructionNode({
+                    identifier: 'initialize',
+                    plugins: [
+                        pluginNode('codama.extraArgument', {
+                            identifier: 'memo',
+                            type: addTypeNodeTransforms(stringTypeNode('utf8'), [node]),
+                        }),
+                    ],
+                }),
+            ],
+        }),
+    ],
+    [
+        'an extra argument default value',
+        () => invalid<Node>({ ...integerValueNode('0'), value: '0, evil()' }),
+        node => ({
+            instructions: [
+                instructionNode({
+                    identifier: 'initialize',
+                    plugins: [
+                        pluginNode('codama.extraArgument', {
+                            defaultValue: node,
+                            identifier: 'space',
+                            type: integerTypeNode('u64'),
+                        }),
+                    ],
+                }),
+            ],
+        }),
+    ],
+    [
         'an instruction lifecycle',
         () => instructionStatusNode(invalid('removed')),
         node => ({ instructions: [instructionNode({ identifier: 'initialize', status: node })] }),
@@ -208,4 +244,25 @@ test.each(invalidNodes)('it fails on %s that does not hold a value of its type',
             }),
         }),
     );
+});
+
+test('it leaves the payloads of other plugins alone', () => {
+    // Given a plugin of another namespace whose payload holds a node-like object with an invalid size.
+    const node = rootNode(
+        programNode({
+            identifier: 'myProgram',
+            instructions: [
+                instructionNode({
+                    identifier: 'initialize',
+                    plugins: [
+                        pluginNode('acme.metadata', { kind: 'fixedSizeTransformNode', size: 'not ours to validate' }),
+                    ],
+                }),
+            ],
+            publicKey: '1111',
+        }),
+    );
+
+    // Then it renders, since that payload is opaque to this renderer.
+    expect(visit(node, getRenderMapVisitor()).has('instructions/initialize.ts')).toBe(true);
 });
