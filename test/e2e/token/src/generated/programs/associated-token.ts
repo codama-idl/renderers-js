@@ -122,14 +122,35 @@ export type AssociatedTokenPlugin = {
 };
 
 export type AssociatedTokenPluginInstructions = {
+    /**
+     * Creates an associated token account for the given wallet address and
+     * token mint Returns an error if the account exists.
+     */
     createAssociatedToken: (
         input: MakeOptional<CreateAssociatedTokenAsyncInput, 'payer'>,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getCreateAssociatedTokenInstructionAsync> & SelfPlanAndSendFunctions;
+    /**
+     * Creates an associated token account for the given wallet address and
+     * token mint, if it doesn't already exist. Returns an error if the
+     * account exists, but with a different owner.
+     */
     createAssociatedTokenIdempotent: (
         input: MakeOptional<CreateAssociatedTokenIdempotentAsyncInput, 'payer'>,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getCreateAssociatedTokenIdempotentInstructionAsync> & SelfPlanAndSendFunctions;
+    /**
+     * Transfers from and closes a nested associated token account: an
+     * associated token account owned by an associated token account.
+     *
+     * The tokens are moved from the nested associated token account to the
+     * wallet's associated token account, and the nested account lamports are
+     * moved to the wallet.
+     *
+     * Note: Nested token accounts are an anti-pattern, and almost always
+     * created unintentionally, so this instruction should only be used to
+     * recover from errors.
+     */
     recoverNestedAssociatedToken: (
         input: RecoverNestedAssociatedTokenAsyncInput,
         config?: { programAddress?: Address | HasAddress },

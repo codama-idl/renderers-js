@@ -476,102 +476,240 @@ export type TokenPluginAccounts = {
 };
 
 export type TokenPluginInstructions = {
+    /**
+     * Initializes a new mint and optionally deposits all the newly minted
+     * tokens in an account.
+     *
+     * The `InitializeMint` instruction requires no signers and MUST be
+     * included within the same Transaction as the system program's
+     * `CreateAccount` instruction that creates the account being initialized.
+     * Otherwise another party can acquire ownership of the uninitialized account.
+     */
     initializeMint: (
         input: InitializeMintInput,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInitializeMintInstruction> & SelfPlanAndSendFunctions;
+    /**
+     * Initializes a new account to hold tokens. If this account is associated
+     * with the native mint then the token balance of the initialized account
+     * will be equal to the amount of SOL in the account. If this account is
+     * associated with another mint, that mint must be initialized before this
+     * command can succeed.
+     *
+     * The `InitializeAccount` instruction requires no signers and MUST be
+     * included within the same Transaction as the system program's
+     * `CreateAccount` instruction that creates the account being initialized.
+     * Otherwise another party can acquire ownership of the uninitialized account.
+     */
     initializeAccount: (
         input: InitializeAccountInput,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInitializeAccountInstruction> & SelfPlanAndSendFunctions;
+    /**
+     * Initializes a multisignature account with N provided signers.
+     *
+     * Multisignature accounts can used in place of any single owner/delegate
+     * accounts in any token instruction that require an owner/delegate to be
+     * present. The variant field represents the number of signers (M)
+     * required to validate this multisignature account.
+     *
+     * The `InitializeMultisig` instruction requires no signers and MUST be
+     * included within the same Transaction as the system program's
+     * `CreateAccount` instruction that creates the account being initialized.
+     * Otherwise another party can acquire ownership of the uninitialized account.
+     */
     initializeMultisig: (
         input: InitializeMultisigInput,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInitializeMultisigInstruction> & SelfPlanAndSendFunctions;
+    /**
+     * Transfers tokens from one account to another either directly or via a delegate.
+     * If this account is associated with the native mint then equal amounts
+     * of SOL and Tokens will be transferred to the destination account.
+     */
     transfer: (
         input: TransferInput,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getTransferInstruction> & SelfPlanAndSendFunctions;
+    /**
+     * Approves a delegate. A delegate is given the authority over tokens on
+     * behalf of the source account's owner.
+     */
     approve: (
         input: ApproveInput,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getApproveInstruction> & SelfPlanAndSendFunctions;
+    /** Revokes the delegate's authority. */
     revoke: (
         input: RevokeInput,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getRevokeInstruction> & SelfPlanAndSendFunctions;
+    /** Sets a new authority of a mint or account. */
     setAuthority: (
         input: SetAuthorityInput,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getSetAuthorityInstruction> & SelfPlanAndSendFunctions;
+    /** Mints new tokens to an account. The native mint does not support minting. */
     mintTo: (
         input: MintToInput,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getMintToInstruction> & SelfPlanAndSendFunctions;
+    /**
+     * Burns tokens by removing them from an account. `Burn` does not support
+     * accounts associated with the native mint, use `CloseAccount` instead.
+     */
     burn: (
         input: BurnInput,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getBurnInstruction> & SelfPlanAndSendFunctions;
+    /**
+     * Close an account by transferring all its SOL to the destination account.
+     * Non-native accounts may only be closed if its token amount is zero.
+     */
     closeAccount: (
         input: CloseAccountInput,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getCloseAccountInstruction> & SelfPlanAndSendFunctions;
+    /** Freeze an Initialized account using the Mint's freeze_authority (if set). */
     freezeAccount: (
         input: FreezeAccountInput,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getFreezeAccountInstruction> & SelfPlanAndSendFunctions;
+    /** Thaw a Frozen account using the Mint's freeze_authority (if set). */
     thawAccount: (
         input: ThawAccountInput,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getThawAccountInstruction> & SelfPlanAndSendFunctions;
+    /**
+     * Transfers tokens from one account to another either directly or via a
+     * delegate. If this account is associated with the native mint then equal
+     * amounts of SOL and Tokens will be transferred to the destination account.
+     *
+     * This instruction differs from Transfer in that the token mint and
+     * decimals value is checked by the caller. This may be useful when
+     * creating transactions offline or within a hardware wallet.
+     */
     transferChecked: (
         input: TransferCheckedInput,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getTransferCheckedInstruction> & SelfPlanAndSendFunctions;
+    /**
+     * Approves a delegate. A delegate is given the authority over tokens on
+     * behalf of the source account's owner.
+     *
+     * This instruction differs from Approve in that the token mint and
+     * decimals value is checked by the caller. This may be useful when
+     * creating transactions offline or within a hardware wallet.
+     */
     approveChecked: (
         input: ApproveCheckedInput,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getApproveCheckedInstruction> & SelfPlanAndSendFunctions;
+    /**
+     * Mints new tokens to an account. The native mint does not support minting.
+     *
+     * This instruction differs from MintTo in that the decimals value is
+     * checked by the caller. This may be useful when creating transactions
+     * offline or within a hardware wallet.
+     */
     mintToChecked: (
         input: MintToCheckedInput,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getMintToCheckedInstruction> & SelfPlanAndSendFunctions;
+    /**
+     * Burns tokens by removing them from an account. `BurnChecked` does not
+     * support accounts associated with the native mint, use `CloseAccount` instead.
+     *
+     * This instruction differs from Burn in that the decimals value is checked
+     * by the caller. This may be useful when creating transactions offline or
+     * within a hardware wallet.
+     */
     burnChecked: (
         input: BurnCheckedInput,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getBurnCheckedInstruction> & SelfPlanAndSendFunctions;
+    /**
+     * Like InitializeAccount, but the owner pubkey is passed via instruction
+     * data rather than the accounts list. This variant may be preferable
+     * when using Cross Program Invocation from an instruction that does
+     * not need the owner's `AccountInfo` otherwise.
+     */
     initializeAccount2: (
         input: InitializeAccount2Input,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInitializeAccount2Instruction> & SelfPlanAndSendFunctions;
+    /**
+     * Given a wrapped / native token account (a token account containing SOL)
+     * updates its amount field based on the account's underlying `lamports`.
+     * This is useful if a non-wrapped SOL account uses
+     * `system_instruction::transfer` to move lamports to a wrapped token
+     * account, and needs to have its token `amount` field updated.
+     */
     syncNative: (
         input: SyncNativeInput,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getSyncNativeInstruction> & SelfPlanAndSendFunctions;
+    /** Like InitializeAccount2, but does not require the Rent sysvar to be provided. */
     initializeAccount3: (
         input: InitializeAccount3Input,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInitializeAccount3Instruction> & SelfPlanAndSendFunctions;
+    /** Like InitializeMultisig, but does not require the Rent sysvar to be provided. */
     initializeMultisig2: (
         input: InitializeMultisig2Input,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInitializeMultisig2Instruction> & SelfPlanAndSendFunctions;
+    /** Like [`InitializeMint`], but does not require the Rent sysvar to be provided. */
     initializeMint2: (
         input: InitializeMint2Input,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInitializeMint2Instruction> & SelfPlanAndSendFunctions;
+    /**
+     * Gets the required size of an account for the given mint as a
+     * little-endian `u64`.
+     *
+     * Return data can be fetched using `sol_get_return_data` and deserializing
+     * the return data as a little-endian `u64`.
+     */
     getAccountDataSize: (
         input: GetAccountDataSizeInput,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getGetAccountDataSizeInstruction> & SelfPlanAndSendFunctions;
+    /**
+     * Initialize the Immutable Owner extension for the given token account
+     *
+     * Fails if the account has already been initialized, so must be called
+     * before `InitializeAccount`.
+     *
+     * No-ops in this version of the program, but is included for compatibility
+     * with the Associated Token Account program.
+     */
     initializeImmutableOwner: (
         input: InitializeImmutableOwnerInput,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getInitializeImmutableOwnerInstruction> & SelfPlanAndSendFunctions;
+    /**
+     * Convert an Amount of tokens to a UiAmount `string`, using the given
+     * mint. In this version of the program, the mint can only specify the
+     * number of decimals.
+     *
+     * Fails on an invalid mint.
+     *
+     * Return data can be fetched using `sol_get_return_data` and deserialized
+     * with `String::from_utf8`.
+     */
     amountToUiAmount: (
         input: AmountToUiAmountInput,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getAmountToUiAmountInstruction> & SelfPlanAndSendFunctions;
+    /**
+     * Convert a UiAmount of tokens to a little-endian `u64` raw Amount, using
+     * the given mint. In this version of the program, the mint can only
+     * specify the number of decimals.
+     *
+     * Return data can be fetched using `sol_get_return_data` and deserializing
+     * the return data as a little-endian `u64`.
+     */
     uiAmountToAmount: (
         input: UiAmountToAmountInput,
         config?: { programAddress?: Address | HasAddress },

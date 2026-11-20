@@ -47,6 +47,7 @@ export type Instruction11Input<
     requiredAccount: TAccountRequiredAccount;
 };
 
+/** Testing an optional account followed by a required account */
 export function getInstruction11Instruction<
     TAccountOptionalAccount extends InstructionAccountInput,
     TAccountRequiredAccount extends InstructionAccountInput,

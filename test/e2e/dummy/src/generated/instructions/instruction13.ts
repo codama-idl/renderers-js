@@ -59,6 +59,7 @@ export type Instruction13Input = {
     addresses: Instruction13InstructionDataArgs['addresses'];
 };
 
+/** Testing remaining accounts backed by an instruction argument, without any other account */
 export function getInstruction13Instruction<TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS>(
     input: Instruction13Input,
     config?: { programAddress?: TProgramAddress | { readonly address: TProgramAddress } },

@@ -100,6 +100,7 @@ export type ThawAccountInput<
     multiSigners?: Array<InstructionSignerInput>;
 };
 
+/** Thaw a Frozen account using the Mint's freeze_authority (if set). */
 export function getThawAccountInstruction<
     TAccountAccount extends InstructionAccountInput,
     TAccountMint extends InstructionAccountInput,

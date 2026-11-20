@@ -22,6 +22,7 @@ export * from './instructionPage';
 export * from './instructionParseFunction';
 export * from './instructionRemainingAccounts';
 export * from './instructionResolver';
+export * from './instructionReturnData';
 export * from './instructionType';
 export * from './pdaFunction';
 export * from './pdaPage';

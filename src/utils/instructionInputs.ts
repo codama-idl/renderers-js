@@ -36,7 +36,6 @@ import {
     PathString,
     pathString,
     PluginNode,
-    ProgramNode,
     REGISTERED_TYPE_NODE_KINDS,
     REGISTERED_VALUE_NODE_KINDS,
     StructFieldTypeNode,
@@ -862,31 +861,6 @@ function parseExtraArgumentPlugin(plugin: PluginNode, instruction: InstructionNo
         ...(payload.docs !== undefined ? { docs: payload.docs } : {}),
         ...(plugin.plugins ? { plugins: plugin.plugins } : {}),
     });
-}
-
-/**
- * The paths of the instructions of a program rendered as instruction pages: the leaves of
- * the instruction tree, along with the parent instructions when `renderParentInstructions`
- * is enabled. Paths go through parent instructions, so their `provides` remain visible.
- *
- * @param programPath - The path of the program.
- * @param renderParentInstructions - Whether parent instructions are rendered too.
- */
-export function getRenderedInstructionPaths(
-    programPath: NodePath<ProgramNode>,
-    renderParentInstructions: boolean,
-): NodePath<InstructionNode>[] {
-    const visitInstructions = (
-        parentPath: NodePath,
-        instructions: readonly InstructionNode[],
-    ): NodePath<InstructionNode>[] =>
-        instructions.flatMap(instruction => {
-            const path: NodePath<InstructionNode> = [...parentPath, instruction];
-            const subInstructions = instruction.subInstructions ?? [];
-            const isRendered = subInstructions.length === 0 || renderParentInstructions;
-            return [...(isRendered ? [path] : []), ...visitInstructions(path, subInstructions)];
-        });
-    return visitInstructions(programPath, getLastNodeFromPath(programPath).instructions ?? []);
 }
 
 /**

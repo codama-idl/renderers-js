@@ -444,6 +444,216 @@
       },
       {
         "kind": "instructionNode",
+        "identifier": "oldTransfer",
+        "optionalAccountStrategy": "programId",
+        "docs": "Transfers tokens the old way.",
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "discriminator",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u8",
+                "endian": "le"
+              },
+              "defaultValue": {
+                "kind": "integerValueNode",
+                "value": "6"
+              }
+            }
+          ]
+        },
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "path": "discriminator",
+            "offset": 0
+          }
+        ],
+        "status": {
+          "kind": "instructionStatusNode",
+          "lifecycle": "deprecated",
+          "message": "Use `newTransfer` instead."
+        }
+      },
+      {
+        "kind": "instructionNode",
+        "identifier": "newTransfer",
+        "optionalAccountStrategy": "programId",
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "discriminator",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u8",
+                "endian": "le"
+              },
+              "defaultValue": {
+                "kind": "integerValueNode",
+                "value": "7"
+              }
+            }
+          ]
+        },
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "path": "discriminator",
+            "offset": 0
+          }
+        ],
+        "status": {
+          "kind": "instructionStatusNode",
+          "lifecycle": "draft"
+        }
+      },
+      {
+        "kind": "instructionNode",
+        "identifier": "ancientTransfer",
+        "optionalAccountStrategy": "programId",
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "discriminator",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u8",
+                "endian": "le"
+              },
+              "defaultValue": {
+                "kind": "integerValueNode",
+                "value": "8"
+              }
+            }
+          ]
+        },
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "path": "discriminator",
+            "offset": 0
+          }
+        ],
+        "status": {
+          "kind": "instructionStatusNode",
+          "lifecycle": "archived"
+        }
+      },
+      {
+        "kind": "instructionNode",
+        "identifier": "getBalance",
+        "optionalAccountStrategy": "programId",
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "discriminator",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u8",
+                "endian": "le"
+              },
+              "defaultValue": {
+                "kind": "integerValueNode",
+                "value": "9"
+              }
+            }
+          ]
+        },
+        "returnData": {
+          "kind": "integerTypeNode",
+          "format": "u64",
+          "endian": "le"
+        },
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "path": "discriminator",
+            "offset": 0
+          }
+        ]
+      },
+      {
+        "kind": "instructionNode",
+        "identifier": "getStats",
+        "optionalAccountStrategy": "programId",
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "discriminator",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u8",
+                "endian": "le"
+              },
+              "defaultValue": {
+                "kind": "integerValueNode",
+                "value": "10"
+              }
+            }
+          ]
+        },
+        "returnData": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "discriminator",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u8",
+                "endian": "le"
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "mode",
+              "type": {
+                "kind": "enumTypeNode",
+                "variants": [
+                  {
+                    "kind": "enumVariantTypeNode",
+                    "identifier": "fast"
+                  },
+                  {
+                    "kind": "enumVariantTypeNode",
+                    "identifier": "slow"
+                  }
+                ],
+                "size": {
+                  "kind": "integerTypeNode",
+                  "format": "u8",
+                  "endian": "le"
+                }
+              }
+            }
+          ]
+        },
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "path": "discriminator",
+            "offset": 0
+          }
+        ]
+      },
+      {
+        "kind": "instructionNode",
         "identifier": "parent",
         "optionalAccountStrategy": "programId",
         "subInstructions": [

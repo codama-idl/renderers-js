@@ -17,11 +17,12 @@ import { getInstructionDataFragment } from './instructionData';
 import { getInstructionExtraArgsFragment } from './instructionExtraArgs';
 import { getInstructionFunctionFragment } from './instructionFunction';
 import { getInstructionParseFunctionFragment } from './instructionParseFunction';
+import { getInstructionReturnDataFragment } from './instructionReturnData';
 import { getInstructionTypeFragment } from './instructionType';
 
 /**
  * Renders the page of an instruction: its discriminator constants, instruction type, data
- * type and codecs, extra arguments type, builders and parse function.
+ * type and codecs, extra arguments type, return data type and codecs, builders and parse function.
  *
  * @param scope - The render scope, the path of the instruction, its resolved inputs and data size.
  * @return The fragment of the instruction page.
@@ -79,6 +80,7 @@ export function getInstructionPageFragment(
             getInstructionTypeFragment(childScope),
             getInstructionDataFragment(childScope),
             getInstructionExtraArgsFragment(childScope),
+            getInstructionReturnDataFragment(childScope),
             getInstructionFunctionFragment({ ...childScope, useAsync: true }),
             getInstructionFunctionFragment({ ...childScope, useAsync: false }),
             getInstructionParseFunctionFragment(childScope),

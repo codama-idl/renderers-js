@@ -59,6 +59,7 @@ export function getInstruction10InstructionDataCodec(): FixedSizeCodec<
 
 export type Instruction10Input = {};
 
+/** Testing instructions with enum field discriminator */
 export function getInstruction10Instruction<TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS>(config?: {
     programAddress?: TProgramAddress | { readonly address: TProgramAddress };
 }): Instruction10Instruction<TProgramAddress> {

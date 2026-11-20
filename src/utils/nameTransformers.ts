@@ -49,6 +49,7 @@ export type NameTransformerKey =
     | 'instructionDataType'
     | 'instructionExtraType'
     | 'instructionParsedType'
+    | 'instructionReturnDataType'
     | 'instructionParseFunction'
     | 'instructionSyncFunction'
     | 'instructionSyncInputType'
@@ -148,6 +149,7 @@ export const DEFAULT_NAME_TRANSFORMERS: NameTransformers = {
     instructionExtraType: name => `${pascalCase(name)}InstructionExtra`,
     instructionParseFunction: name => `parse${pascalCase(name)}Instruction`,
     instructionParsedType: name => `Parsed${pascalCase(name)}Instruction`,
+    instructionReturnDataType: name => `${pascalCase(name)}InstructionReturnData`,
     instructionSyncFunction: name => `get${pascalCase(name)}Instruction`,
     instructionSyncInputType: name => `${pascalCase(name)}Input`,
     instructionType: name => `${pascalCase(name)}Instruction`,

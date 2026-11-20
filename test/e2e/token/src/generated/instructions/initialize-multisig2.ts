@@ -94,6 +94,7 @@ export type InitializeMultisig2Input<TAccountMultisig extends InstructionAccount
     signers: Array<InstructionAccountInput>;
 };
 
+/** Like InitializeMultisig, but does not require the Rent sysvar to be provided. */
 export function getInitializeMultisig2Instruction<
     TAccountMultisig extends InstructionAccountInput,
     TProgramAddress extends Address = typeof TOKEN_PROGRAM_ADDRESS,
