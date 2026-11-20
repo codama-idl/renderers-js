@@ -19,10 +19,11 @@ import {
 import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, pipe, visit } from '@codama/visitors-core';
 
 import {
-    Fragment,
     fragment,
+    Fragment,
     getDataPathExpression,
     getDataPathLabel,
+    getStringLiteral,
     getTypedValueFragment,
     isAsyncInput,
     mergeFragments,
@@ -145,7 +146,7 @@ export function getInstructionInputDefaultFragment(
                 if (pdaProgramValue) {
                     pdaProgram = pdaProgramValue;
                 } else if (defaultValue.pda.programId) {
-                    pdaProgram = fragment`'${defaultValue.pda.programId}' as ${addressType}<'${defaultValue.pda.programId}'>`;
+                    pdaProgram = fragment`${getStringLiteral(defaultValue.pda.programId)} as ${addressType}<${getStringLiteral(defaultValue.pda.programId)}>`;
                 }
                 const pdaSeeds = (defaultValue.pda.seeds ?? []).flatMap((seed): Fragment[] => {
                     if (isNode(seed, 'constantPdaSeedNode') && isNode(seed.value, 'programIdValueNode')) {
@@ -228,7 +229,7 @@ export function getInstructionInputDefaultFragment(
 
         case 'publicKeyValueNode':
             return defaultFragment(
-                fragment`'${defaultValue.publicKey}' as ${addressType}<'${defaultValue.publicKey}'>`,
+                fragment`${getStringLiteral(defaultValue.publicKey)} as ${addressType}<${getStringLiteral(defaultValue.publicKey)}>`,
             );
 
         case 'programLinkNode':

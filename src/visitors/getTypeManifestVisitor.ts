@@ -41,28 +41,29 @@ import {
 
 import {
     addFragmentImports,
-    Fragment,
     fragment,
+    Fragment,
     getBytesFromBytesValueNode,
+    getConstantDiscriminatorName,
     getCustomDataOptions,
     getDocblockFragment,
     getEnumBody,
-    getFieldDiscriminatorIdentifier,
+    getEnumValueType,
     getEnumVariantDataShape,
     getEnumVariantDiscriminators,
+    getEventDiscriminatorPrefix,
+    getFieldDiscriminatorIdentifier,
+    getFieldDiscriminatorName,
+    type GetImportFromFunction,
     getInstructionDataLink,
     getInstructionDataNode,
     getIntegerLiteral,
-    getConstantDiscriminatorName,
-    getEnumValueType,
-    getEventDiscriminatorPrefix,
-    getFieldDiscriminatorName,
+    getStringLiteral,
     getStructFieldCodecDefault,
     getTypedValueFragment,
     getTypeNodeTransforms,
-    hasCustomEnumVariantDiscriminators,
-    type GetImportFromFunction,
     hasByteOrder,
+    hasCustomEnumVariantDiscriminators,
     isBigIntegerFormat,
     isDefaultIntegerType,
     isScalarEnumValue,
@@ -670,7 +671,7 @@ export function getTypeManifestVisitor(input: {
 
                 visitPublicKeyValue(node) {
                     return typeManifest({
-                        value: fragment`${use('address', 'solanaAddresses')}("${node.publicKey}")`,
+                        value: fragment`${use('address', 'solanaAddresses')}(${getStringLiteral(node.publicKey)})`,
                     });
                 },
 
@@ -750,7 +751,7 @@ export function getTypeManifestVisitor(input: {
 
                 visitStringValue(node) {
                     return typeManifest({
-                        value: fragment`${JSON.stringify(node.string)}`,
+                        value: fragment`${getStringLiteral(node.string)}`,
                     });
                 },
 

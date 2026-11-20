@@ -2,9 +2,10 @@ import { camelCase } from '@codama/fragments/casing';
 import { getAllInstructionsWithSubs, InstructionNode, ProgramNode } from '@codama/nodes';
 
 import {
-    Fragment,
     fragment,
+    Fragment,
     getInstructionDataNode,
+    getStringLiteral,
     getStructFields,
     mergeFragments,
     RenderScope,
@@ -129,7 +130,7 @@ function getProgramInstructionsParsedUnionTypeFragment(
 
     return mergeFragments(
         [
-            fragment`export type ${programInstructionsType}<TProgram extends string = '${programAddress}'> =`,
+            fragment`export type ${programInstructionsType}<TProgram extends string = ${getStringLiteral(programAddress)}> =`,
             ...typeVariants,
         ],
         c => c.join('\n'),

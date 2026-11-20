@@ -45,14 +45,17 @@ export type WenTransferGuardError =
 let wenTransferGuardErrorMessages: Record<WenTransferGuardError, string> | undefined;
 if (process.env['NODE_ENV'] !== 'production') {
     wenTransferGuardErrorMessages = {
-        [WEN_TRANSFER_GUARD_ERROR__CPI_RULE_ENFORCEMENT_FAILED]: `Cpi Rule Enforcement Failed`,
-        [WEN_TRANSFER_GUARD_ERROR__GUARD_TOKEN_AMOUNT_SHOULD_BE_AT_LEAST_ONE]: `Guard token amount should be at least 1`,
-        [WEN_TRANSFER_GUARD_ERROR__METADATA_FIELD_DOES_NOT_EXIST]: `Metadata Field Does Not Exist`,
-        [WEN_TRANSFER_GUARD_ERROR__METADATA_FIELD_DOES_NOT_PASS]: `Metadata Field Does Not Pass`,
-        [WEN_TRANSFER_GUARD_ERROR__MINT_ASSIGNED_TRANSFER_HOOK_PROGRAM_IS_NOT_THIS_ONE]: `Mint's assigned Transfer Hook Program is not this one`,
-        [WEN_TRANSFER_GUARD_ERROR__MUST_BE_INITIALIZED_BY_TRANSFER_HOOK_AUTHORITY]: `Must be initialized by Transfer Hook Authority`,
-        [WEN_TRANSFER_GUARD_ERROR__NOT_OWNED_BY_TOKEN2022_PROGRAM]: `Not owned by token 2022 program`,
-        [WEN_TRANSFER_GUARD_ERROR__TRANSFER_AMOUNT_RULE_ENFORCE_FAILED]: `Transfer Amount Rule Enforce Failed`,
+        [WEN_TRANSFER_GUARD_ERROR__CPI_RULE_ENFORCEMENT_FAILED]: 'Cpi Rule Enforcement Failed',
+        [WEN_TRANSFER_GUARD_ERROR__GUARD_TOKEN_AMOUNT_SHOULD_BE_AT_LEAST_ONE]:
+            'Guard token amount should be at least 1',
+        [WEN_TRANSFER_GUARD_ERROR__METADATA_FIELD_DOES_NOT_EXIST]: 'Metadata Field Does Not Exist',
+        [WEN_TRANSFER_GUARD_ERROR__METADATA_FIELD_DOES_NOT_PASS]: 'Metadata Field Does Not Pass',
+        [WEN_TRANSFER_GUARD_ERROR__MINT_ASSIGNED_TRANSFER_HOOK_PROGRAM_IS_NOT_THIS_ONE]:
+            "Mint's assigned Transfer Hook Program is not this one",
+        [WEN_TRANSFER_GUARD_ERROR__MUST_BE_INITIALIZED_BY_TRANSFER_HOOK_AUTHORITY]:
+            'Must be initialized by Transfer Hook Authority',
+        [WEN_TRANSFER_GUARD_ERROR__NOT_OWNED_BY_TOKEN2022_PROGRAM]: 'Not owned by token 2022 program',
+        [WEN_TRANSFER_GUARD_ERROR__TRANSFER_AMOUNT_RULE_ENFORCE_FAILED]: 'Transfer Amount Rule Enforce Failed',
     };
 }
 

@@ -1,7 +1,7 @@
 import { camelCase } from '@codama/fragments/casing';
 import { getTextNodeContent, ProgramNode } from '@codama/nodes';
 
-import { Fragment, fragment, getDocblockFragment, mergeFragments, RenderScope, use } from '../utils';
+import { fragment, Fragment, getDocblockFragment, getStringLiteral, mergeFragments, RenderScope, use } from '../utils';
 
 /**
  * Renders the error page of a program: a constant per error code, the union of error codes,
@@ -59,9 +59,7 @@ function getErrorMessagesFragment(scope: Pick<RenderScope, 'nameApi'> & { progra
             .sort((a, b) => camelCase(a.identifier).localeCompare(camelCase(b.identifier)))
             .map(error => {
                 const constantName = constantPrefix + scope.nameApi.programErrorConstant(error.identifier);
-                // Escapes the message as the content of a template literal.
-                const escapedMessage = getTextNodeContent(error.message).replace(/[\\`]|\$\{/g, c => `\\${c}`);
-                return fragment`[${constantName}]: \`${escapedMessage}\``;
+                return fragment`[${constantName}]: ${getStringLiteral(getTextNodeContent(error.message))}`;
             }),
         cs => cs.join(', '),
     );

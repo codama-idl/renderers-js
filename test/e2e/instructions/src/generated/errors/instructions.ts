@@ -21,7 +21,7 @@ export type InstructionsError = typeof INSTRUCTIONS_ERROR__TEMPLATED;
 
 let instructionsErrorMessages: Record<InstructionsError, string> | undefined;
 if (process.env['NODE_ENV'] !== 'production') {
-    instructionsErrorMessages = { [INSTRUCTIONS_ERROR__TEMPLATED]: `Expected \${amount} \\ got \`value\`.` };
+    instructionsErrorMessages = { [INSTRUCTIONS_ERROR__TEMPLATED]: 'Expected ${amount} \\ got `value`.' };
 }
 
 export function getInstructionsErrorMessage(code: InstructionsError): string {

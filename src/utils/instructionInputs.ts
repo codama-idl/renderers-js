@@ -59,9 +59,11 @@ import {
 } from '@codama/visitors-core';
 
 import type { ParsedCustomDataOptions } from './customData';
+import { isNodeObject } from './nodePaths';
 
 const RESOLVER_PLUGIN = 'codama.resolver';
-const EXTRA_ARGUMENT_PLUGIN = 'codama.extraArgument';
+/** The namespace of the plugins declaring the extra arguments of an instruction. */
+export const EXTRA_ARGUMENT_PLUGIN = 'codama.extraArgument';
 
 /**
  * A resolver dependency: an account, e.g. `accounts.owner`, or a data path, e.g.
@@ -731,10 +733,6 @@ function assertNoProvidedInjectionsWithin(
             }
         });
     });
-}
-
-function isNodeObject(value: unknown): value is Node {
-    return typeof value === 'object' && value !== null && typeof (value as { kind?: unknown }).kind === 'string';
 }
 
 function isValueLike(node: Node): boolean {

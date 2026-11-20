@@ -48,15 +48,16 @@ export type SystemError =
 let systemErrorMessages: Record<SystemError, string> | undefined;
 if (process.env['NODE_ENV'] !== 'production') {
     systemErrorMessages = {
-        [SYSTEM_ERROR__ACCOUNT_ALREADY_IN_USE]: `an account with the same address already exists`,
-        [SYSTEM_ERROR__ADDRESS_WITH_SEED_MISMATCH]: `provided address does not match addressed derived from seed`,
-        [SYSTEM_ERROR__INVALID_ACCOUNT_DATA_LENGTH]: `cannot allocate account data of this length`,
-        [SYSTEM_ERROR__INVALID_PROGRAM_ID]: `cannot assign account to this program id`,
-        [SYSTEM_ERROR__MAX_SEED_LENGTH_EXCEEDED]: `length of requested seed is too long`,
-        [SYSTEM_ERROR__NONCE_BLOCKHASH_NOT_EXPIRED]: `stored nonce is still in recent_blockhashes`,
-        [SYSTEM_ERROR__NONCE_NO_RECENT_BLOCKHASHES]: `advancing stored nonce requires a populated RecentBlockhashes sysvar`,
-        [SYSTEM_ERROR__NONCE_UNEXPECTED_BLOCKHASH_VALUE]: `specified nonce does not match stored nonce`,
-        [SYSTEM_ERROR__RESULT_WITH_NEGATIVE_LAMPORTS]: `account does not have enough SOL to perform the operation`,
+        [SYSTEM_ERROR__ACCOUNT_ALREADY_IN_USE]: 'an account with the same address already exists',
+        [SYSTEM_ERROR__ADDRESS_WITH_SEED_MISMATCH]: 'provided address does not match addressed derived from seed',
+        [SYSTEM_ERROR__INVALID_ACCOUNT_DATA_LENGTH]: 'cannot allocate account data of this length',
+        [SYSTEM_ERROR__INVALID_PROGRAM_ID]: 'cannot assign account to this program id',
+        [SYSTEM_ERROR__MAX_SEED_LENGTH_EXCEEDED]: 'length of requested seed is too long',
+        [SYSTEM_ERROR__NONCE_BLOCKHASH_NOT_EXPIRED]: 'stored nonce is still in recent_blockhashes',
+        [SYSTEM_ERROR__NONCE_NO_RECENT_BLOCKHASHES]:
+            'advancing stored nonce requires a populated RecentBlockhashes sysvar',
+        [SYSTEM_ERROR__NONCE_UNEXPECTED_BLOCKHASH_VALUE]: 'specified nonce does not match stored nonce',
+        [SYSTEM_ERROR__RESULT_WITH_NEGATIVE_LAMPORTS]: 'account does not have enough SOL to perform the operation',
     };
 }
 

@@ -11,6 +11,8 @@ import {
 } from '@codama/nodes';
 import { getLastNodeFromPath, LinkableDictionary, NodePath } from '@codama/visitors-core';
 
+import { isNodeObject } from './nodePaths';
+
 /**
  * Resolves the discriminator value of each variant: its explicit `discriminator` when set,
  * otherwise its position in the enum, starting at zero.
@@ -90,8 +92,4 @@ export function containsDataUnionValue(
             item => isNodeObject(item) && isNode(item, VALUE_NODE_KINDS) && containsDataUnionValue(item, path, scope),
         ),
     );
-}
-
-function isNodeObject(value: unknown): value is Node {
-    return typeof value === 'object' && value !== null && typeof (value as { kind?: unknown }).kind === 'string';
 }
