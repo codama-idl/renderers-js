@@ -5,13 +5,19 @@ import {
     pdaNode,
     programNode,
     publicKeyTypeNode,
+    rootNode,
     variablePdaSeedNode,
 } from '@codama/nodes';
 import { visit } from '@codama/visitors-core';
-import { test } from 'vitest';
+import { expect, test } from 'vitest';
 
 import { getRenderMapVisitor } from '../src';
-import { renderMapContains, renderMapContainsImports, renderMapDoesNotContainImports } from './_setup';
+import {
+    renderMapContains,
+    renderMapContainsImports,
+    renderMapDoesNotContain,
+    renderMapDoesNotContainImports,
+} from './_setup';
 
 test('it renders a PDA helper function and its input type', async () => {
     // Given the following PDA node.
@@ -113,4 +119,40 @@ test('it does not import strict types for variable seeds', async () => {
     await renderMapContainsImports(renderMap, 'pdas/foo.ts', {
         '@solana/kit': ['type OptionOrNullable'],
     });
+});
+
+test('it renders internal PDAs without exporting them', async () => {
+    // Given a program with a public and an internal PDA.
+    const node = rootNode(
+        programNode({
+            identifier: 'myProgram',
+            pdas: [pdaNode({ identifier: 'publicPda', seeds: [] }), pdaNode({ identifier: 'secretPda', seeds: [] })],
+            publicKey: '1111',
+        }),
+    );
+
+    // When we render it with the second PDA marked as internal.
+    const renderMap = visit(node, getRenderMapVisitor({ internalNodes: ['secretPda'] }));
+
+    // Then the internal PDA is rendered but not exported.
+    expect(renderMap.has('pdas/secret-pda.ts')).toBe(true);
+    await renderMapContains(renderMap, 'pdas/index.ts', "export * from './public-pda';");
+    await renderMapDoesNotContain(renderMap, 'pdas/index.ts', 'secret-pda');
+});
+
+test('it exports PDAs from the root barrel when they are the only nodes to export', async () => {
+    // Given an internal program holding a single PDA.
+    const node = rootNode(
+        programNode({
+            identifier: 'myProgram',
+            pdas: [pdaNode({ identifier: 'counter', seeds: [] })],
+            publicKey: '1111',
+        }),
+    );
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor({ internalNodes: ['myProgram'] }));
+
+    // Then the root barrel exports the PDAs.
+    await renderMapContains(renderMap, 'index.ts', "export * from './pdas';");
 });

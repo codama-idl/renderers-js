@@ -15,7 +15,7 @@ import { getInstructionDataNode } from './instructionInputs';
  * The data of an account or instruction written manually rather than generated, given by the
  * identifier of the node or by an object configuring where to import it from.
  *
- * - `name`: the identifier of the account or instruction.
+ * - `identifier`: the identifier of the account or instruction.
  * - `importFrom`: the module the data type and codecs are imported from, `hooked` by default.
  * - `importAs`: the identifier of the data type, e.g. `counterAccountData` by default, which
  *   renders as `CounterAccountData` and `getCounterAccountDataCodec`.
@@ -27,15 +27,15 @@ export type CustomDataOptions =
     | {
           extract?: boolean;
           extractAs?: string;
+          identifier: string;
           importAs?: string;
           importFrom?: string;
-          name: string;
       };
 
 /**
- * The custom data options of accounts or instructions, keyed by the camelCase name of the
+ * The custom data options of accounts or instructions, keyed by the camelCase identifier of the
  * node they apply to. Use {@link getCustomDataOptions} rather than reading the map directly,
- * so that nodes are matched regardless of the casing of their name.
+ * so that nodes are matched regardless of the casing of their identifier.
  */
 export type ParsedCustomDataOptions = Map<
     string,
@@ -75,11 +75,11 @@ export const parseCustomDataOptions = (
 ): ParsedCustomDataOptions =>
     new Map(
         customDataOptions.map(o => {
-            const options = typeof o === 'string' ? { name: o } : o;
-            const importAs = camelCase(options.importAs ?? `${options.name}${defaultSuffix}`);
+            const options = typeof o === 'string' ? { identifier: o } : o;
+            const importAs = camelCase(options.importAs ?? `${options.identifier}${defaultSuffix}`);
             const importFrom = options.importFrom ?? 'hooked';
             return [
-                camelCase(options.name),
+                camelCase(options.identifier),
                 {
                     extract: options.extract ?? false,
                     extractAs: options.extractAs ? camelCase(options.extractAs) : importAs,
