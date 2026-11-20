@@ -3,10 +3,11 @@ import { isNode, isNodeFilter, PdaNode, PdaSeedNode } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
 
 import {
-    Fragment,
     fragment,
+    Fragment,
     getDocblockFragment,
     getProgramNodeFromPath,
+    getStringLiteral,
     getTypedValueFragment,
     mergeFragments,
     RenderScope,
@@ -79,7 +80,7 @@ function getFunctionFragment(
     );
 
     return fragment`${docs}export async function ${findPdaFunction}(${seedArgument}config: { programAddress?: ${addressType} | ${hasAddressType} | undefined } = {}): Promise<${pdaType}> {
-  const { programAddress: programAddressInput = '${programAddress}' as ${addressType}<'${programAddress}'> } = config;
+  const { programAddress: programAddressInput = ${getStringLiteral(programAddress)} as ${addressType}<${getStringLiteral(programAddress)}> } = config;
   const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;
   return await ${getPdaFunction}({ programAddress, seeds: [${encodedSeeds}]});
 }`;

@@ -1,7 +1,7 @@
 import { ProgramNode } from '@codama/nodes';
 import { pipe } from '@codama/visitors-core';
 
-import { addFragmentImports, Fragment, fragment, RenderScope } from '../utils';
+import { addFragmentImports, fragment, Fragment, getStringLiteral, RenderScope } from '../utils';
 
 /**
  * Renders the constant holding the address of a program, e.g. `SPL_TOKEN_PROGRAM_ADDRESS`.
@@ -16,7 +16,7 @@ export function getProgramConstantFragment(
     const programAddressConstant = nameApi.programAddressConstant(programNode.identifier);
 
     return pipe(
-        fragment`export const ${programAddressConstant} = '${programNode.publicKey}' as Address<'${programNode.publicKey}'>;`,
+        fragment`export const ${programAddressConstant} = ${getStringLiteral(programNode.publicKey)} as Address<${getStringLiteral(programNode.publicKey)}>;`,
         f => addFragmentImports(f, 'solanaAddresses', ['type Address']),
     );
 }

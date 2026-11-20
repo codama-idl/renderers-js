@@ -1,7 +1,15 @@
 import { InstructionAccountNode, InstructionInputValueNode } from '@codama/nodes';
 import { findInstructionNodeFromPath, getLastNodeFromPath, LinkableDictionary, NodePath } from '@codama/visitors-core';
 
-import { Fragment, fragment, getAccountTypeParamName, getProgramNodeFromPath, RenderScope, use } from '../utils';
+import {
+    fragment,
+    Fragment,
+    getAccountTypeParamName,
+    getProgramNodeFromPath,
+    getStringLiteral,
+    RenderScope,
+    use,
+} from '../utils';
 
 /**
  * Renders the type parameter of an instruction account in instruction types, defaulting to
@@ -41,12 +49,12 @@ function getDefaultAddress(
 ): string {
     switch (defaultValue?.kind) {
         case 'publicKeyValueNode':
-            return `"${defaultValue.publicKey}"`;
+            return getStringLiteral(defaultValue.publicKey);
         case 'programLinkNode':
             const programNode = linkables.get([defaultValue]);
-            return programNode ? `"${programNode.publicKey}"` : 'string';
+            return programNode ? getStringLiteral(programNode.publicKey) : 'string';
         case 'programIdValueNode':
-            return `"${programId}"`;
+            return getStringLiteral(programId);
         default:
             return 'string';
     }

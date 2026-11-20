@@ -10,10 +10,12 @@ import {
     getAllPdas,
     getAllPrograms,
     getCodamaVersionMajor,
+    isNode,
 } from '@codama/nodes';
 import {
     extendVisitor,
     getByteSizeVisitor,
+    interceptFirstVisitVisitor,
     LinkableDictionary,
     NodeStack,
     pipe,
@@ -37,6 +39,7 @@ import {
     getTypePageFragment,
 } from '../fragments';
 import {
+    assertValidRenderedAttributes,
     DEFAULT_KIT_IMPORT_STRATEGY,
     DEFAULT_NAME_TRANSFORMERS,
     Fragment,
@@ -237,12 +240,6 @@ export function getRenderMapVisitor(
                 },
 
                 visitRoot(node, { self }) {
-                    if (getCodamaVersionMajor(node.version) !== getCodamaVersionMajor(CODAMA_VERSION)) {
-                        throw new CodamaError(CODAMA_ERROR__VERSION_MISMATCH, {
-                            codamaVersion: CODAMA_VERSION,
-                            rootVersion: node.version,
-                        });
-                    }
                     const programsToExport = getAllPrograms(node).filter(isNotInternal);
                     const programsWithConstantsToExport = programsToExport.filter(program =>
                         (program.constants ?? []).some(isNotInternal),
@@ -287,5 +284,22 @@ export function getRenderMapVisitor(
             }),
         v => recordNodeStackVisitor(v, stack),
         v => recordLinkablesOnFirstVisitVisitor(v, linkables),
+        // Rejects attributes that would be written into generated code as they are, e.g. sizes
+        // that are not numbers, before rendering anything.
+        v =>
+            interceptFirstVisitVisitor(v, (node, next) => {
+                // Trees of another major version have other attributes, so they are rejected first.
+                if (
+                    isNode(node, 'rootNode') &&
+                    getCodamaVersionMajor(node.version) !== getCodamaVersionMajor(CODAMA_VERSION)
+                ) {
+                    throw new CodamaError(CODAMA_ERROR__VERSION_MISMATCH, {
+                        codamaVersion: CODAMA_VERSION,
+                        rootVersion: node.version,
+                    });
+                }
+                assertValidRenderedAttributes(node);
+                return next(node);
+            }),
     );
 }
