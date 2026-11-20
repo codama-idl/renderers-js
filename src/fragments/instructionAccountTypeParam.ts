@@ -7,7 +7,7 @@ import {
     NodePath,
 } from '@codama/visitors-core';
 
-import { Fragment, fragment, RenderScope, use } from '../utils';
+import { fragment, Fragment, getStringLiteral, RenderScope, use } from '../utils';
 
 export function getInstructionAccountTypeParamFragment(
     scope: Pick<RenderScope, 'linkables'> & {
@@ -39,12 +39,12 @@ function getDefaultAddress(
 ): string {
     switch (defaultValue?.kind) {
         case 'publicKeyValueNode':
-            return `"${defaultValue.publicKey}"`;
+            return getStringLiteral(defaultValue.publicKey);
         case 'programLinkNode':
             const programNode = linkables.get([defaultValue]);
-            return programNode ? `"${programNode.publicKey}"` : 'string';
+            return programNode ? getStringLiteral(programNode.publicKey) : 'string';
         case 'programIdValueNode':
-            return `"${programId}"`;
+            return getStringLiteral(programId);
         default:
             return 'string';
     }

@@ -1,7 +1,7 @@
 import { ProgramNode } from '@codama/nodes';
 import { pipe } from '@codama/visitors-core';
 
-import { addFragmentImports, Fragment, fragment, RenderScope } from '../utils';
+import { addFragmentImports, fragment, Fragment, getStringLiteral, RenderScope } from '../utils';
 
 export function getProgramConstantFragment(
     scope: Pick<RenderScope, 'nameApi'> & { programNode: ProgramNode },
@@ -10,7 +10,7 @@ export function getProgramConstantFragment(
     const programAddressConstant = nameApi.programAddressConstant(programNode.name);
 
     return pipe(
-        fragment`export const ${programAddressConstant} = '${programNode.publicKey}' as Address<'${programNode.publicKey}'>;`,
+        fragment`export const ${programAddressConstant} = ${getStringLiteral(programNode.publicKey)} as Address<${getStringLiteral(programNode.publicKey)}>;`,
         f => addFragmentImports(f, 'solanaAddresses', ['type Address']),
     );
 }

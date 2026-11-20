@@ -12,6 +12,7 @@ import { createRenderMap, mergeRenderMaps, RenderMap } from '@codama/renderers-c
 import {
     extendVisitor,
     getByteSizeVisitor,
+    interceptFirstVisitVisitor,
     getResolvedInstructionInputsVisitor,
     LinkableDictionary,
     NodeStack,
@@ -36,6 +37,7 @@ import {
     getTypePageFragment,
 } from '../fragments';
 import {
+    assertValidRenderedAttributes,
     DEFAULT_KIT_IMPORT_STRATEGY,
     DEFAULT_NAME_TRANSFORMERS,
     Fragment,
@@ -248,5 +250,12 @@ export function getRenderMapVisitor(
             }),
         v => recordNodeStackVisitor(v, stack),
         v => recordLinkablesOnFirstVisitVisitor(v, linkables),
+        // Rejects attributes that would be written into generated code as they are, e.g. sizes
+        // that are not numbers, before rendering anything.
+        v =>
+            interceptFirstVisitVisitor(v, (node, next) => {
+                assertValidRenderedAttributes(node);
+                return next(node);
+            }),
     );
 }

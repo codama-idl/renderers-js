@@ -86,11 +86,19 @@ export function getDocblockFragment(docs: DocsInput, withLineJump = false): Frag
     return fragment`/**\n${prefixedLines.join('\n')}\n */${lineJump}`;
 }
 
-/** The lines of the given documentation, splitting items on line breaks. */
+/**
+ * The lines of the given documentation, splitting items on line breaks. Comment
+ * terminators are escaped, e.g. `src/**\/*.ts`, so that lines cannot end the docblock.
+ */
 export function getDocsLines(docs: DocsInput): string[] {
     if (docs === undefined) return [];
     const items = typeof docs === 'string' ? [docs] : docs;
-    return items.flatMap(item => item.replace(/\r?\n$/, '').split(/\r?\n/));
+    return items.flatMap(item =>
+        item
+            .replace(/\r?\n$/, '')
+            .split(/\r?\n/)
+            .map(line => line.replace(/\*\//g, '*\\/')),
+    );
 }
 
 export function getPageFragment(
@@ -114,4 +122,17 @@ export function getPageFragment(
                   scope.getImportPath,
               )}`;
     return mergeFragments([header, imports, page], cs => cs.join('\n\n'));
+}
+
+/**
+ * Renders a string as a TypeScript string literal, escaping quotes, backslashes and line
+ * breaks, so that values from the IDL, e.g. addresses, cannot end the literal.
+ *
+ * @example
+ * ```ts
+ * getStringLiteral("It's"); // "It's"
+ * ```
+ */
+export function getStringLiteral(value: string): string {
+    return JSON.stringify(value);
 }

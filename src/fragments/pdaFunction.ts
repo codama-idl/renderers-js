@@ -1,7 +1,7 @@
 import { camelCase, isNode, isNodeFilter, PdaNode, PdaSeedNode } from '@codama/nodes';
 import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
 
-import { Fragment, fragment, getDocblockFragment, mergeFragments, RenderScope, use } from '../utils';
+import { fragment, Fragment, getDocblockFragment, getStringLiteral, mergeFragments, RenderScope, use } from '../utils';
 
 export function getPdaFunctionFragment(
     scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
@@ -62,7 +62,7 @@ function getFunctionFragment(
     );
 
     return fragment`${docs}export async function ${findPdaFunction}(${seedArgument}config: { programAddress?: ${addressType} | ${hasAddressType} | undefined } = {}): Promise<${pdaType}> {
-  const { programAddress: programAddressInput = '${programAddress}' as ${addressType}<'${programAddress}'> } = config;
+  const { programAddress: programAddressInput = ${getStringLiteral(programAddress)} as ${addressType}<${getStringLiteral(programAddress)}> } = config;
   const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;
   return await ${getPdaFunction}({ programAddress, seeds: [${encodedSeeds}]});
 }`;

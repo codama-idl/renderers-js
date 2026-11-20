@@ -34,17 +34,18 @@ import {
 import { getConstantDiscriminatorName, getEventDiscriminatorPrefix } from '../fragments/discriminatorConstants';
 import {
     addFragmentImports,
-    Fragment,
     fragment,
+    Fragment,
     getBytesFromBytesValueNode,
     getCustomDataOptions,
     getDocblockFragment,
     getEnumBody,
     getEnumVariantDiscriminators,
+    type GetImportFromFunction,
     getInnerTypeNode,
     getInstructionDataNode,
+    getStringLiteral,
     hasCustomEnumVariantDiscriminators,
-    type GetImportFromFunction,
     isBigNumberFormat,
     isDefaultNumberType,
     mergeFragments,
@@ -576,7 +577,7 @@ export function getTypeManifestVisitor(input: {
 
                 visitPublicKeyValue(node) {
                     return typeManifest({
-                        value: fragment`${use('address', 'solanaAddresses')}("${node.publicKey}")`,
+                        value: fragment`${use('address', 'solanaAddresses')}(${getStringLiteral(node.publicKey)})`,
                     });
                 },
 
