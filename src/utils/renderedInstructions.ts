@@ -1,5 +1,6 @@
 /**
- * Which instructions of a program the generated client includes.
+ * Which instructions of a program the generated client includes, and how their lifecycle
+ * is documented.
  *
  * Every part of the client listing instructions, e.g. pages, barrels, program helpers and
  * the program plugin, goes through these helpers so that they always agree.
