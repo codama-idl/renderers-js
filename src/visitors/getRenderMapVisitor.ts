@@ -6,7 +6,6 @@ import {
     getAllAccounts,
     getAllDefinedTypes,
     getAllEvents,
-    getAllInstructionsWithSubs,
     getAllPdas,
     getAllPrograms,
     getCodamaVersionMajor,
@@ -49,8 +48,10 @@ import {
     getImportPathFactory,
     getNameApi,
     getPageFragment,
+    getRenderedInstructions,
     getResolvedInstructionInputs,
     GetRenderMapOptions,
+    isArchivedInstruction,
     parseCustomDataOptions,
     RenderScope,
 } from '../utils';
@@ -172,6 +173,8 @@ export function getRenderMapVisitor(
                 visitInstruction(node, { self }) {
                     // Sub-instructions are visited from their parent so that the `provides`
                     // of their parents are on the stack when resolving their inputs.
+                    // Archived instructions are left out of the client, along with their sub-instructions.
+                    if (isArchivedInstruction(node)) return createRenderMap<Fragment>();
                     const subInstructions = node.subInstructions ?? [];
                     const isRendered = subInstructions.length === 0 || renderScope.renderParentInstructions;
                     const instructionPath = stack.getPath('instructionNode');
@@ -205,7 +208,9 @@ export function getRenderMapVisitor(
                     const customDataDefinedType = [
                         ...getDefinedTypeNodesToExtract(node.accounts ?? [], customAccountData),
                         ...getDefinedTypeNodesToExtract(
-                            getAllInstructionsWithSubs(node, { leavesOnly: !renderScope.renderParentInstructions }),
+                            getRenderedInstructions(node, {
+                                renderParentInstructions: renderScope.renderParentInstructions,
+                            }),
                             customInstructionData,
                         ),
                     ];
@@ -248,9 +253,13 @@ export function getRenderMapVisitor(
                     const pdasToExport = getAllPdas(node).filter(isNotInternal);
                     const accountsToExport = getAllAccounts(node).filter(isNotInternal);
                     const eventsToExport = getAllEvents(node).filter(isNotInternal);
-                    const instructionsToExport = getAllInstructionsWithSubs(node, {
-                        leavesOnly: !renderScope.renderParentInstructions,
-                    }).filter(isNotInternal);
+                    const instructionsToExport = getAllPrograms(node)
+                        .flatMap(program =>
+                            getRenderedInstructions(program, {
+                                renderParentInstructions: renderScope.renderParentInstructions,
+                            }),
+                        )
+                        .filter(isNotInternal);
                     const definedTypesToExport = getAllDefinedTypes(node).filter(isNotInternal);
 
                     const scope = {

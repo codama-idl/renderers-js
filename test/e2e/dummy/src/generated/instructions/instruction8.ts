@@ -24,6 +24,7 @@ export type Instruction8Input = {
     remainingAccounts?: Array<InstructionAccountInput | InstructionSignerInput>;
 };
 
+/** Testing instructions with remaining accounts that can optionally be signers */
 export function getInstruction8Instruction<TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS>(
     input: Instruction8Input,
     config?: { programAddress?: TProgramAddress | { readonly address: TProgramAddress } },

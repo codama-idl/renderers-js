@@ -113,6 +113,10 @@ export type ApproveInput<
     multiSigners?: Array<InstructionSignerInput>;
 };
 
+/**
+ * Approves a delegate. A delegate is given the authority over tokens on
+ * behalf of the source account's owner.
+ */
 export function getApproveInstruction<
     TAccountSource extends InstructionAccountInput,
     TAccountDelegate extends InstructionAccountInput,

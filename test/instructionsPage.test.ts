@@ -34,6 +34,7 @@ import {
     instructionByteDeltaNode,
     instructionNode,
     instructionRemainingAccountsNode,
+    instructionStatusNode,
     integerTypeNode,
     integerValueNode,
     payerValueNode,
@@ -1672,4 +1673,106 @@ test('it only extracts the data of rendered instructions', () => {
             'types/parent-instruction-data.ts',
         ),
     ).toBe(true);
+});
+
+test('it documents instruction builders with their docs and lifecycle status', async () => {
+    // Given a documented, deprecated instruction and a draft one.
+    const node = programNode({
+        identifier: 'myProgram',
+        instructions: [
+            instructionNode({
+                docs: 'Transfers tokens.',
+                identifier: 'oldTransfer',
+                status: instructionStatusNode('deprecated', { message: 'Use `newTransfer` instead.' }),
+            }),
+            instructionNode({ identifier: 'newTransfer', status: instructionStatusNode('draft') }),
+        ],
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the builders carry the docs and TSDoc tags of their status.
+    await renderMapContains(renderMap, 'instructions/old-transfer.ts', [
+        /\/\*\*\s*\* Transfers tokens\.\s*\*\s*\* @deprecated Use `newTransfer` instead\.\s*\*\/\s*export function getOldTransferInstruction/,
+    ]);
+    await renderMapContains(renderMap, 'instructions/new-transfer.ts', [
+        /\* This instruction is a draft and may change\.\s*\*\s*\* @experimental\s*\*\/\s*export function getNewTransferInstruction/,
+    ]);
+});
+
+test('it leaves archived instructions and their sub-instructions out of the client', async () => {
+    // Given an archived instruction, with a sub-instruction, next to a live one.
+    const node = rootNode(
+        programNode({
+            identifier: 'myProgram',
+            instructions: [
+                instructionNode({
+                    identifier: 'oldParent',
+                    status: instructionStatusNode('archived'),
+                    subInstructions: [instructionNode({ identifier: 'oldChild' })],
+                }),
+                instructionNode({ identifier: 'transfer' }),
+            ],
+            publicKey: '1111',
+        }),
+    );
+
+    // When we render it, with or without parent instructions.
+    for (const renderParentInstructions of [false, true]) {
+        const renderMap = visit(node, getRenderMapVisitor({ renderParentInstructions }));
+
+        // Then neither the archived instruction nor its sub-instruction is rendered, exported or exposed.
+        expect([...renderMap.keys()].filter(key => key.startsWith('instructions/')).sort()).toStrictEqual([
+            'instructions/index.ts',
+            'instructions/transfer.ts',
+        ]);
+        await renderMapDoesNotContain(renderMap, 'programs/my-program.ts', [
+            'OldParent',
+            'OldChild',
+            'oldParent',
+            'oldChild',
+        ]);
+    }
+});
+
+test('it renders the type and codecs of the data returned by instructions', async () => {
+    // Given an instruction returning a struct with a field named like its discriminator.
+    const node = programNode({
+        identifier: 'myProgram',
+        instructions: [
+            instructionNode({
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: integerValueNode('1'),
+                        defaultValueStrategy: 'omitted',
+                        identifier: 'discriminator',
+                        type: integerTypeNode('u8'),
+                    }),
+                ]),
+                discriminators: [fieldDiscriminatorNode('discriminator')],
+                identifier: 'getStats',
+                returnData: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: integerValueNode('99'),
+                        identifier: 'discriminator',
+                        type: integerTypeNode('u8'),
+                    }),
+                    structFieldTypeNode({ identifier: 'count', type: integerTypeNode('u64') }),
+                ]),
+            }),
+        ],
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the return data has its own type and codecs, filling in its own default rather than the instruction discriminator.
+    await renderMapContains(renderMap, 'instructions/get-stats.ts', [
+        'export type GetStatsInstructionReturnData = { discriminator: number; count: bigint; }',
+        'export function getGetStatsInstructionReturnDataDecoder(): FixedSizeDecoder<GetStatsInstructionReturnData>',
+        'discriminator: value.discriminator ?? 99',
+    ]);
 });

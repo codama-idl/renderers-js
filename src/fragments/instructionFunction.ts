@@ -6,13 +6,15 @@ import { getLastNodeFromPath, NodePath, pipe, visit } from '@codama/visitors-cor
 import {
     findResolvedAccount,
     findResolvedDataField,
-    Fragment,
     fragment,
+    Fragment,
     getAccountTypeParamName,
     getDataPathRoot,
+    getDocblockFragment,
     getInstructionDataFields,
     getInstructionDataLink,
     getInstructionDependencies,
+    getInstructionDocs,
     getInstructionExtraArguments,
     getProgramNodeFromPath,
     getRemainingAccountsName,
@@ -113,7 +115,8 @@ export function getInstructionFunctionFragment(
         cs => cs.join('\n\n'),
     );
 
-    return fragment`${inputType}\n\nexport ${useAsync ? 'async ' : ''}function ${functionName}${typeParams}(${inputArg}config?: { programAddress?: TProgramAddress | { readonly address: TProgramAddress } } ): ${returnType} {
+    const docs = getDocblockFragment(getInstructionDocs(instructionNode), true);
+    return fragment`${inputType}\n\n${docs}export ${useAsync ? 'async ' : ''}function ${functionName}${typeParams}(${inputArg}config?: { programAddress?: TProgramAddress | { readonly address: TProgramAddress } } ): ${returnType} {
   ${functionBody}
 }`;
 }

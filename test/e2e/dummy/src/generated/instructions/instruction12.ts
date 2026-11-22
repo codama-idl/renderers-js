@@ -93,6 +93,7 @@ export type Instruction12Input<
     bump?: Instruction12InstructionDataArgs['bump'];
 };
 
+/** Testing the inputs accepted by instruction accounts, including a PDA whose bump seed is consumed by an argument */
 export function getInstruction12Instruction<
     TAccountAuthority extends InstructionSignerInput,
     TAccountDelegate extends InstructionAccountInput | InstructionSignerInput,

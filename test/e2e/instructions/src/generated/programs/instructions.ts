@@ -39,22 +39,38 @@ import {
     getByteDeltasInstruction,
     getChildInstruction,
     getContextualDataInstruction,
+    getGetBalanceInstruction,
+    getGetStatsInstruction,
+    getNewTransferInstruction,
+    getOldTransferInstruction,
     getResolvedExtrasInstruction,
     getSomeOmittedInstruction,
     parseAllOmittedInstruction,
     parseByteDeltasInstruction,
     parseChildInstruction,
     parseContextualDataInstruction,
+    parseGetBalanceInstruction,
+    parseGetStatsInstruction,
+    parseNewTransferInstruction,
+    parseOldTransferInstruction,
     parseResolvedExtrasInstruction,
     parseSomeOmittedInstruction,
     type AllOmittedInput,
     type ByteDeltasInput,
     type ChildInput,
     type ContextualDataInput,
+    type GetBalanceInput,
+    type GetStatsInput,
+    type NewTransferInput,
+    type OldTransferInput,
     type ParsedAllOmittedInstruction,
     type ParsedByteDeltasInstruction,
     type ParsedChildInstruction,
     type ParsedContextualDataInstruction,
+    type ParsedGetBalanceInstruction,
+    type ParsedGetStatsInstruction,
+    type ParsedNewTransferInstruction,
+    type ParsedOldTransferInstruction,
     type ParsedResolvedExtrasInstruction,
     type ParsedSomeOmittedInstruction,
     type ResolvedExtrasInput,
@@ -74,6 +90,10 @@ export enum InstructionsInstruction {
     ResolvedExtras,
     ContextualData,
     ByteDeltas,
+    OldTransfer,
+    NewTransfer,
+    GetBalance,
+    GetStats,
     Child,
 }
 
@@ -96,6 +116,18 @@ export function identifyInstructionsInstruction(
     if (containsBytes(data, getU8Encoder().encode(4), 0)) {
         return InstructionsInstruction.ByteDeltas;
     }
+    if (containsBytes(data, getU8Encoder().encode(6), 0)) {
+        return InstructionsInstruction.OldTransfer;
+    }
+    if (containsBytes(data, getU8Encoder().encode(7), 0)) {
+        return InstructionsInstruction.NewTransfer;
+    }
+    if (containsBytes(data, getU8Encoder().encode(9), 0)) {
+        return InstructionsInstruction.GetBalance;
+    }
+    if (containsBytes(data, getU8Encoder().encode(10), 0)) {
+        return InstructionsInstruction.GetStats;
+    }
     if (containsBytes(data, getU8Encoder().encode(5), 0)) {
         return InstructionsInstruction.Child;
     }
@@ -111,6 +143,10 @@ export type ParsedInstructionsInstruction<TProgram extends string = 'Instruction
     | ({ instructionType: InstructionsInstruction.ResolvedExtras } & ParsedResolvedExtrasInstruction<TProgram>)
     | ({ instructionType: InstructionsInstruction.ContextualData } & ParsedContextualDataInstruction<TProgram>)
     | ({ instructionType: InstructionsInstruction.ByteDeltas } & ParsedByteDeltasInstruction<TProgram>)
+    | ({ instructionType: InstructionsInstruction.OldTransfer } & ParsedOldTransferInstruction<TProgram>)
+    | ({ instructionType: InstructionsInstruction.NewTransfer } & ParsedNewTransferInstruction<TProgram>)
+    | ({ instructionType: InstructionsInstruction.GetBalance } & ParsedGetBalanceInstruction<TProgram>)
+    | ({ instructionType: InstructionsInstruction.GetStats } & ParsedGetStatsInstruction<TProgram>)
     | ({ instructionType: InstructionsInstruction.Child } & ParsedChildInstruction<TProgram>);
 
 export function parseInstructionsInstruction<TProgram extends string>(
@@ -141,6 +177,24 @@ export function parseInstructionsInstruction<TProgram extends string>(
         }
         case InstructionsInstruction.ByteDeltas: {
             return { instructionType: InstructionsInstruction.ByteDeltas, ...parseByteDeltasInstruction(instruction) };
+        }
+        case InstructionsInstruction.OldTransfer: {
+            return {
+                instructionType: InstructionsInstruction.OldTransfer,
+                ...parseOldTransferInstruction(instruction),
+            };
+        }
+        case InstructionsInstruction.NewTransfer: {
+            return {
+                instructionType: InstructionsInstruction.NewTransfer,
+                ...parseNewTransferInstruction(instruction),
+            };
+        }
+        case InstructionsInstruction.GetBalance: {
+            return { instructionType: InstructionsInstruction.GetBalance, ...parseGetBalanceInstruction(instruction) };
+        }
+        case InstructionsInstruction.GetStats: {
+            return { instructionType: InstructionsInstruction.GetStats, ...parseGetStatsInstruction(instruction) };
         }
         case InstructionsInstruction.Child: {
             assertIsInstructionWithAccounts(instruction);
@@ -186,6 +240,32 @@ export type InstructionsPluginInstructions = {
         input: ByteDeltasInput,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getByteDeltasInstruction> & SelfPlanAndSendFunctions;
+    /**
+     * Transfers tokens the old way.
+     *
+     * @deprecated Use `newTransfer` instead.
+     */
+    oldTransfer: (
+        input: OldTransferInput,
+        config?: { programAddress?: Address | HasAddress },
+    ) => ReturnType<typeof getOldTransferInstruction> & SelfPlanAndSendFunctions;
+    /**
+     * This instruction is a draft and may change.
+     *
+     * @experimental
+     */
+    newTransfer: (
+        input: NewTransferInput,
+        config?: { programAddress?: Address | HasAddress },
+    ) => ReturnType<typeof getNewTransferInstruction> & SelfPlanAndSendFunctions;
+    getBalance: (
+        input: GetBalanceInput,
+        config?: { programAddress?: Address | HasAddress },
+    ) => ReturnType<typeof getGetBalanceInstruction> & SelfPlanAndSendFunctions;
+    getStats: (
+        input: GetStatsInput,
+        config?: { programAddress?: Address | HasAddress },
+    ) => ReturnType<typeof getGetStatsInstruction> & SelfPlanAndSendFunctions;
     child: (
         input: ChildInput,
         config?: { programAddress?: Address | HasAddress },
@@ -238,6 +318,34 @@ export function instructionsProgram(config: { programAddress?: Address | HasAddr
                         addSelfPlanAndSendFunctions(
                             client,
                             getByteDeltasInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
+                        ),
+                    oldTransfer: (_input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getOldTransferInstruction({
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
+                        ),
+                    newTransfer: (_input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getNewTransferInstruction({
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
+                        ),
+                    getBalance: (_input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getGetBalanceInstruction({
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
+                        ),
+                    getStats: (_input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getGetStatsInstruction({
                                 programAddress: instructionConfig?.programAddress ?? config.programAddress,
                             }),
                         ),

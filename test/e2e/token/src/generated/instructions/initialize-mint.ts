@@ -129,6 +129,15 @@ export type InitializeMintInput<
     freezeAuthority?: InitializeMintInstructionDataArgs['freezeAuthority'];
 };
 
+/**
+ * Initializes a new mint and optionally deposits all the newly minted
+ * tokens in an account.
+ *
+ * The `InitializeMint` instruction requires no signers and MUST be
+ * included within the same Transaction as the system program's
+ * `CreateAccount` instruction that creates the account being initialized.
+ * Otherwise another party can acquire ownership of the uninitialized account.
+ */
 export function getInitializeMintInstruction<
     TAccountMint extends InstructionAccountInput,
     TAccountRent extends InstructionAccountInput,

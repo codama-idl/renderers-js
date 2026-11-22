@@ -266,3 +266,27 @@ test('it leaves the payloads of other plugins alone', () => {
     // Then it renders, since that payload is opaque to this renderer.
     expect(visit(node, getRenderMapVisitor()).has('instructions/initialize.ts')).toBe(true);
 });
+
+test('it escapes comment terminators in instruction docs and status messages', async () => {
+    // Given a deprecated instruction whose docs and status message contain glob patterns.
+    const node = programNode({
+        identifier: 'myProgram',
+        instructions: [
+            instructionNode({
+                docs: 'Closes accounts matching src/**/*.ts',
+                identifier: 'close',
+                status: instructionStatusNode('deprecated', { message: 'Use `drain` for lib/**/*.ts instead.' }),
+            }),
+        ],
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then neither the docs nor the status message end the docblock.
+    await renderMapContains(renderMap, 'instructions/close.ts', [
+        'Closes accounts matching src/**\\/*.ts',
+        '@deprecated Use `drain` for lib/**\\/*.ts instead.',
+    ]);
+});

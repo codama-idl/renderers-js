@@ -72,6 +72,7 @@ export type Instruction9Input<TAccountAuthority extends InstructionAccountInput 
     authorityArg: Instruction9InstructionDataArgs['authority'];
 };
 
+/** Testing instructions with conflicting account and argument names both set as the payer */
 export function getInstruction9Instruction<
     TAccountAuthority extends InstructionAccountInput,
     TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS,

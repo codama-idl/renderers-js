@@ -92,6 +92,7 @@ export type RevokeInput<
     multiSigners?: Array<InstructionSignerInput>;
 };
 
+/** Revokes the delegate's authority. */
 export function getRevokeInstruction<
     TAccountSource extends InstructionAccountInput,
     TAccountOwner extends InstructionAccountInput | InstructionSignerInput,

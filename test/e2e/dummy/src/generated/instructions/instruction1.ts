@@ -16,6 +16,7 @@ export type Instruction1Instruction<
 
 export type Instruction1Input = {};
 
+/** Testing instructions with no accounts or arguments */
 export function getInstruction1Instruction<TProgramAddress extends Address = typeof DUMMY_PROGRAM_ADDRESS>(config?: {
     programAddress?: TProgramAddress | { readonly address: TProgramAddress };
 }): Instruction1Instruction<TProgramAddress> {
