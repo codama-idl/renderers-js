@@ -1,5 +1,5 @@
-import { InstructionAccountNode, InstructionInputValueNode } from '@codama/nodes';
-import { findInstructionNodeFromPath, getLastNodeFromPath, LinkableDictionary, NodePath } from '@codama/visitors-core';
+import { InstructionAccountNode, InstructionInputValueNode, InstructionNode } from '@codama/nodes';
+import { getLastNodeFromPath, LinkableDictionary, NodePath } from '@codama/visitors-core';
 
 import {
     fragment,
@@ -12,27 +12,23 @@ import {
 } from '../utils';
 
 /**
- * Renders the type parameter of an instruction account in instruction types, defaulting to
- * the address of the account when it is known statically, e.g. a program or public key default.
+ * Renders the type parameter of an instruction account in instruction types, accepting
+ * account metas and defaulting to the address of the account when it is known statically,
+ * e.g. a program or public key default.
  *
- * @param scope - The render scope, the path of the instruction account and whether account
- * metas are accepted as values.
+ * @param instructionAccountNode - The instruction account.
+ * @param scope - The render scope and the path of the instruction.
  * @return The fragment of the type parameter.
  */
 export function getInstructionAccountTypeParamFragment(
-    scope: Pick<RenderScope, 'linkables'> & {
-        allowAccountMeta: boolean;
-        instructionAccountPath: NodePath<InstructionAccountNode>;
-    },
+    instructionAccountNode: InstructionAccountNode,
+    scope: Pick<RenderScope, 'linkables'> & { instructionPath: NodePath<InstructionNode> },
 ): Fragment {
-    const { instructionAccountPath, allowAccountMeta, linkables } = scope;
-    const instructionAccountNode = getLastNodeFromPath(instructionAccountPath);
-    const instructionNode = findInstructionNodeFromPath(instructionAccountPath)!;
-    const programNode = getProgramNodeFromPath(instructionAccountPath);
+    const { instructionPath, linkables } = scope;
+    const instructionNode = getLastNodeFromPath(instructionPath);
+    const programNode = getProgramNodeFromPath(instructionPath);
     const typeParam = getAccountTypeParamName(instructionAccountNode.identifier);
-    const accountMeta = allowAccountMeta
-        ? fragment` | ${use('type AccountMeta', 'solanaInstructions')}<string>`
-        : undefined;
+    const accountMeta = fragment` | ${use('type AccountMeta', 'solanaInstructions')}<string>`;
 
     if (instructionNode.optionalAccountStrategy === 'omitted' && instructionAccountNode.isOptional) {
         return fragment`${typeParam} extends string${accountMeta} | undefined = undefined`;

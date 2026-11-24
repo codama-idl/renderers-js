@@ -27,7 +27,9 @@ import {
     getDataPathLabel,
     getStringLiteral,
     getTypedValueFragment,
+    hasVariablePdaSeeds,
     isAsyncInput,
+    isPdaDerivedFromProgram,
     isScalarEnumValue,
     mergeFragments,
     RenderScope,
@@ -113,8 +115,9 @@ export function getInstructionInputDefaultFragment(
 
     // Resolved inputs delegate their whole value to a resolver function.
     if (resolver) {
-        // Asynchronous inputs were already left out of synchronous builders above.
-        return defaultFragment(getInstructionResolverCallFragment(resolver, scope)!);
+        // Synchronous builders cannot call asynchronous resolvers, as for the inputs above.
+        const resolverCall = getInstructionResolverCallFragment(resolver, scope);
+        return resolverCall ? defaultFragment(resolverCall) : fragment``;
     }
 
     if (!defaultValue) return fragment``;
@@ -223,7 +226,9 @@ export function getInstructionInputDefaultFragment(
                 mergeFragments(pdaSeeds, renders => renders.join(', ')),
                 f => mapFragmentContent(f, c => `{ ${c} }`),
             );
-            if (pdaSeeds.length > 0 || hasVariablePdaSeeds(pdaPath)) {
+            // The seeds argument comes first, so it is rendered even without seed values for
+            // the program address that follows to land in the right position.
+            if (pdaSeeds.length > 0 || (!!pdaPath && hasVariablePdaSeeds(getLastNodeFromPath(pdaPath)))) {
                 pdaArgs.push(pdaSeedsFragment);
             }
             if (pdaProgramValue) {
@@ -344,28 +349,22 @@ function renderNestedInstructionDefault(
  *
  * When it is, the generated find function bakes in that program's address as its default,
  * so the instruction must forward its own — possibly overridden — program address to keep
- * the derivation in sync with the program the instruction is sent to. PDAs owned by another
- * program, or pinned to an explicit program ID, keep their own default instead.
+ * the derivation in sync with the program the instruction is sent to. That includes PDAs
+ * pinned to the address of their own program, as program plugins do. PDAs owned by another
+ * program, or pinned to another program ID, keep their own default instead.
  */
 function isPdaDerivedFromInstructionProgram(
     pdaPath: NodePath<PdaNode> | undefined,
     instructionPath: NodePath<InstructionNode>,
 ): boolean {
-    if (!pdaPath || getLastNodeFromPath(pdaPath).programId) return false;
+    if (!pdaPath) return false;
     const pdaProgram = findProgramNodeFromPath(pdaPath);
     const instructionProgram = findProgramNodeFromPath(instructionPath);
-    return !!pdaProgram && !!instructionProgram && pdaProgram.identifier === instructionProgram.identifier;
-}
-
-/**
- * Whether a linked PDA takes a seeds argument on its generated find function.
- *
- * The seeds argument comes first, so it must be rendered — even with no seed values to fill
- * it — for any following argument to land in the right position.
- */
-function hasVariablePdaSeeds(pdaPath: NodePath<PdaNode> | undefined): boolean {
-    if (!pdaPath) return false;
-    return (getLastNodeFromPath(pdaPath).seeds ?? []).some(isNodeFilter('variablePdaSeedNode'));
+    return (
+        !!pdaProgram &&
+        pdaProgram.identifier === instructionProgram?.identifier &&
+        isPdaDerivedFromProgram(getLastNodeFromPath(pdaPath), pdaProgram)
+    );
 }
 
 /**

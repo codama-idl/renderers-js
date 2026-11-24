@@ -4,7 +4,7 @@ import {
     ImportExtension,
     ImportPathType,
     KitImportStrategy,
-} from '.';
+} from './options';
 
 const DEFAULT_EXTERNAL_MODULE_MAP: Readonly<Record<string, string>> = Object.freeze({
     solanaAccounts: '@solana/kit',
@@ -258,7 +258,6 @@ function getDefaultInternalModuleMap(getImportPath: GetImportPathFunction): Reco
         generatedPrograms: getImportPath('../programs', 'directory'),
         generatedTypes: getImportPath('../types', 'directory'),
         hooked: getImportPath('../../hooked', 'directory'),
-        shared: getImportPath('../shared', 'directory'),
         types: getImportPath('../types', 'directory'),
     };
 }

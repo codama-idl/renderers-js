@@ -6,6 +6,7 @@
 
 import {
     AccountNode,
+    FixedPointTypeNode,
     FloatFormat,
     IntegerFormat,
     IntegerTypeNode,
@@ -89,6 +90,7 @@ export function getIntegerLiteral(value: string): string {
  * @param type - The type, e.g. the data of an account.
  * @param path - The path the type was found at, from which its links resolve.
  * @param linkables - The linkable nodes of the tree.
+ * @param followed - The links already followed, which guard against cyclic links.
  */
 export function getStructFields(
     type: TypeNode | undefined,
@@ -166,4 +168,14 @@ export function getAccountSize(accountPath: NodePath<AccountNode>, linkables: Li
     if (account.size != null) return account.size;
     const stack = new NodeStack(accountPath.slice(0, -1));
     return visit(account, getByteSizeVisitor(linkables, { stack }));
+}
+
+/**
+ * Whether a fixed point type is a SOL amount, i.e. 9 decimal places in base 10 with a `SOL`
+ * unit, which renders as Kit `Lamports`.
+ *
+ * @param node - The fixed point type.
+ */
+export function isSolAmountType(node: FixedPointTypeNode): boolean {
+    return node.scale === 9 && (node.base ?? 10) === 10 && node.unit === 'SOL';
 }

@@ -122,13 +122,21 @@ Page builders mostly compose subfragments rather than embedding all logic inline
 - `packageJson.ts`: derive dependency requirements from actual imports and sync/create package.json.
 - `customData.ts`: support extracting or importing account/instruction data types from elsewhere.
 - `linkOverrides.ts`: remap generated/internal import targets.
-- `async.ts`: decide whether instructions need async variants and compute resolver dependencies.
+- `async.ts`: decide whether instructions need async variants, which arguments their builders take as input (`isInputArgument`, `getInstructionFunctionInputFlags`) and compute resolver dependencies.
 - `formatCode.ts`: Prettier integration.
-- `typeManifest.ts`: helpers for building and merging type manifests.
+- `typeManifest.ts`: helpers for building and merging type manifests, and the node kinds the type manifest visitor accepts.
 - `generatedModules.ts`: decide the module a generated node is imported from, i.e. its folder barrel, or its own file for nodes listed in `internalNodes`, which barrels leave out. Use it wherever a generated node is imported instead of hardcoding a `generated*` module.
 - `renderedInstructions.ts`: decide which instructions the client includes, e.g. leaves, parents with `renderParentInstructions` and never archived ones, and document their lifecycle. Use it wherever instructions are listed instead of traversing the program.
 - `typedValues.ts`: render value nodes for their type, e.g. `42n` for a `u64` or `lamports(5000n)` for a SOL amount. Use it wherever a value has a known type instead of visiting the value alone.
 - `codecs.ts`: codec-related helpers.
+- `instructionInputs.ts`: read and resolve instruction inputs, see "Instruction rendering behavior".
+- `typeNodes.ts`: type node helpers, e.g. codec defaults of struct fields, link-following struct fields, account sizes and SOL amounts.
+- `enums.ts`: enum variant discriminators, and whether enum values are scalar or contain data unions.
+- `discriminators.ts`: names and fields of discriminators.
+- `pdas.ts`: whether a PDA takes variable seeds or is derived from a given program.
+- `nodePaths.ts`: find the program of a node path, and recognise nodes in unchecked JSON.
+- `renderedAttributes.ts`: validate the IDL attributes rendered raw in generated code, e.g. identifiers and numbers, before rendering.
+- `erasableSyntax.ts`: render enums compatible with `erasableSyntaxOnly`.
 
 ## Output structure
 

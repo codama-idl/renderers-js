@@ -1,39 +1,30 @@
 import { mapFragmentContent } from '@codama/fragments';
 import { camelCase } from '@codama/fragments/casing';
-import { InstructionAccountNode, InstructionNode, isNodeFilter } from '@codama/nodes';
+import { InstructionAccountNode, InstructionNode, parseOptionalAccountStrategy } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath, pipe, visit } from '@codama/visitors-core';
 
 import {
     findResolvedAccount,
-    findResolvedDataField,
-    fragment,
     Fragment,
+    fragment,
     getAccountTypeParamName,
-    getDataPathRoot,
     getDocblockFragment,
     getGeneratedNodeModule,
-    getInstructionDataFields,
     getInstructionDataLink,
-    getInstructionDependencies,
     getInstructionDocs,
-    getInstructionExtraArguments,
+    getInstructionFunctionInputFlags,
     getProgramNodeFromPath,
-    getRemainingAccountsName,
     hasAsyncFunction,
-    hasInputDefault,
     hasInstructionData,
     hasRemainingAccountInputs,
-    InstructionDataField,
-    isAsyncInput,
-    isInputArgument,
     mergeFragments,
+    NameApi,
     RenderScope,
     ResolvedInstructionDataField,
     ResolvedInstructionInput,
     TypeManifest,
     use,
 } from '../utils';
-import { NameApi } from '../utils/nameTransformers';
 import { getInstructionByteDeltaFragment } from './instructionByteDelta';
 import { getInstructionInputResolvedFragment } from './instructionInputResolved';
 import { getInstructionAccountInputConstraintFragment, getInstructionInputTypeFragment } from './instructionInputType';
@@ -78,8 +69,7 @@ export function getInstructionFunctionFragment(
     if (useAsync && !hasAsyncFunction(instructionNode, resolvedInputs, asyncResolvers)) return;
 
     const hasAccounts = (instructionNode.accounts ?? []).length > 0;
-    const hasData =
-        !!getInstructionDataLink(instructionNode, customInstructionData) || hasInstructionData(instructionNode);
+    const hasData = hasInstructionData(instructionNode, customInstructionData);
     const { hasAnyArgs, hasDataArgs, hasInput, omittedArgs } = getInstructionFunctionInputFlags(instructionNode, scope);
     const programAddressConstant = use(
         nameApi.programAddressConstant(programNode.identifier),
@@ -134,71 +124,6 @@ export function getInstructionFunctionFragment(
 }`;
 }
 
-/**
- * Determines which inputs the sync or async builder of an instruction accepts, so that
- * callers such as the program plugin can invoke it with the same arguments it declares.
- *
- * - `hasInput`: whether the builder takes an `input` parameter.
- * - `hasAnyArgs`: whether the builder declares an `args` variable, read or filled in by
- *   default values, resolvers, remaining accounts or byte deltas.
- * - `hasDataArgs`: whether the instruction data is encoded from `args`.
- * - `omittedArgs`: the data fields and extra arguments omitted from the input but filled
- *   in by the builder, which `args` must declare.
- */
-export function getInstructionFunctionInputFlags(
-    instructionNode: InstructionNode,
-    scope: Pick<RenderScope, 'asyncResolvers' | 'customInstructionData'> & {
-        resolvedInputs: ResolvedInstructionInput[];
-        useAsync: boolean;
-    },
-): { hasAnyArgs: boolean; hasDataArgs: boolean; hasInput: boolean; omittedArgs: ResolvedInstructionDataField[] } {
-    const { asyncResolvers, customInstructionData, resolvedInputs, useAsync } = scope;
-    const dataLink = getInstructionDataLink(instructionNode, customInstructionData);
-    const hasAccounts = (instructionNode.accounts ?? []).length > 0;
-    const instructionDependencies = getInstructionDependencies(
-        instructionNode,
-        resolvedInputs,
-        asyncResolvers,
-        useAsync,
-    );
-    const argDependencies = instructionDependencies
-        .filter(isNodeFilter('dataValueNode'))
-        .map(node => getDataPathRoot(node.path));
-    const argIsNotOmitted = (arg: InstructionDataField) => isInputArgument(arg, scope);
-    const argIsDependent = (arg: InstructionDataField) => argDependencies.includes(arg.identifier);
-    const argHasDefaultValue = (arg: InstructionDataField) => {
-        if (!hasInputDefault(arg)) return false;
-        if (useAsync) return true;
-        const resolvedArg = findResolvedDataField(resolvedInputs, arg);
-        return !resolvedArg || !isAsyncInput(resolvedArg, asyncResolvers);
-    };
-    const omittedArgs = resolvedInputs.filter(
-        (input): input is ResolvedInstructionDataField =>
-            input.kind === 'data' &&
-            input.node.defaultValueStrategy === 'omitted' &&
-            (useAsync || !isAsyncInput(input, asyncResolvers)),
-    );
-    const hasOmittedDataArgs = omittedArgs.some(input => !input.isExtraArgument);
-    const hasDataArgs =
-        !!dataLink ||
-        hasOmittedDataArgs ||
-        getInstructionDataFields(instructionNode).filter(argIsNotOmitted).length > 0;
-    const hasExtraArgs =
-        getInstructionExtraArguments(instructionNode).filter(
-            field => argIsNotOmitted(field) && (argIsDependent(field) || argHasDefaultValue(field)),
-        ).length > 0;
-    const hasRemainingAccountArgs = (instructionNode.remainingAccounts ?? []).some(
-        remainingAccounts => getRemainingAccountsName(remainingAccounts) !== undefined,
-    );
-    const hasInputArgs =
-        !!dataLink ||
-        getInstructionDataFields(instructionNode).filter(argIsNotOmitted).length > 0 ||
-        hasExtraArgs ||
-        hasRemainingAccountArgs;
-    const hasAnyArgs = hasInputArgs || omittedArgs.length > 0;
-    return { hasAnyArgs, hasDataArgs, hasInput: hasAccounts || hasInputArgs, omittedArgs };
-}
-
 function getProgramAddressInitializationFragment(programAddressConstant: Fragment): Fragment {
     return fragment`// Program address.
 const programAddressInput = config?.programAddress ?? ${programAddressConstant};
@@ -214,7 +139,7 @@ function getAccountMetaHelperFragment(
     hasAccountMetas: boolean,
 ): Fragment | undefined {
     if (!hasAccountMetas) return;
-    const optionalAccountStrategy = instructionNode.optionalAccountStrategy ?? 'programId';
+    const optionalAccountStrategy = parseOptionalAccountStrategy(instructionNode.optionalAccountStrategy);
     return fragment`// Account meta helper.
 const getAccountMeta = ${use('getAccountMetaFactory', 'solanaProgramClientCore')}(programAddress, '${optionalAccountStrategy}');`;
 }

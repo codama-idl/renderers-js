@@ -7,7 +7,6 @@ import {
     fragment,
     getAccountTypeParamName,
     getGeneratedNodeModule,
-    getInstructionDataLink,
     getProgramNodeFromPath,
     hasInstructionData,
     mergeFragments,
@@ -33,8 +32,7 @@ export function getInstructionTypeFragment(
     const instructionNode = getLastNodeFromPath(instructionPath);
     const programNode = getProgramNodeFromPath(instructionPath);
     const hasAccounts = (instructionNode.accounts ?? []).length > 0;
-    const hasData =
-        !!getInstructionDataLink(instructionNode, customInstructionData) || hasInstructionData(instructionNode);
+    const hasData = hasInstructionData(instructionNode, customInstructionData);
 
     const instructionType = nameApi.instructionType(instructionNode.identifier);
     const programAddressConstant = use(
@@ -43,13 +41,7 @@ export function getInstructionTypeFragment(
     );
 
     const accountTypeParams = mergeFragments(
-        (instructionNode.accounts ?? []).map(account =>
-            getInstructionAccountTypeParamFragment({
-                ...scope,
-                allowAccountMeta: true,
-                instructionAccountPath: [...instructionPath, account],
-            }),
-        ),
+        (instructionNode.accounts ?? []).map(account => getInstructionAccountTypeParamFragment(account, scope)),
         cs => (cs.length > 0 ? `${cs.join(', ')}, ` : ''),
     );
 

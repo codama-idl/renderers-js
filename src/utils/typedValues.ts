@@ -15,7 +15,7 @@ import { getLastNodeFromPath, LinkableDictionary, NodePath, visit, Visitor } fro
 
 import { Fragment, fragment, mergeFragments, use } from './fragment';
 import type { TypeManifest } from './typeManifest';
-import { getBigIntLiteral, isBigIntegerFormat } from './typeNodes';
+import { getBigIntLiteral, isBigIntegerFormat, isSolAmountType } from './typeNodes';
 
 /**
  * Renders a value node as a TypeScript value of the given type, e.g. `42n` for an
@@ -64,8 +64,7 @@ export function getTypedValueFragment(
                 : untyped();
         case 'fixedPointTypeNode': {
             const number = typed(value, valueType.number);
-            const isSolAmount = valueType.scale === 9 && (valueType.base ?? 10) === 10 && valueType.unit === 'SOL';
-            if (!isSolAmount || !isNode(value, 'integerValueNode')) return number;
+            if (!isSolAmountType(valueType) || !isNode(value, 'integerValueNode')) return number;
             return fragment`${use('lamports', 'solanaRpcTypes')}(${mapFragmentContent(number, getBigIntLiteral)})`;
         }
         case 'dateTimeTypeNode':

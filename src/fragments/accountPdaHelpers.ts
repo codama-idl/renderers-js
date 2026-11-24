@@ -1,7 +1,15 @@
-import { AccountNode, isNodeFilter } from '@codama/nodes';
+import { AccountNode } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
-import { addFragmentImports, Fragment, fragment, getCustomDataOptions, RenderScope, TypeManifest } from '../utils';
+import {
+    addFragmentImports,
+    Fragment,
+    fragment,
+    getCustomDataOptions,
+    hasVariablePdaSeeds,
+    RenderScope,
+    TypeManifest,
+} from '../utils';
 
 /**
  * Renders the helpers fetching an account from the seeds of its PDA, e.g.
@@ -31,7 +39,7 @@ export function getAccountPdaHelpersFragment(
     const importFrom = scope.getImportFrom(pdaLink);
     const pdaSeedsType = nameApi.pdaSeedsType(pdaNode.identifier);
     const findPdaFunction = nameApi.pdaFindFunction(pdaNode.identifier);
-    const hasVariableSeeds = (pdaNode.seeds ?? []).filter(isNodeFilter('variablePdaSeedNode')).length > 0;
+    const hasVariableSeeds = hasVariablePdaSeeds(pdaNode);
 
     const fetchFromSeedsFunction = nameApi.accountFetchFromSeedsFunction(accountNode.identifier);
     const fetchMaybeFromSeedsFunction = nameApi.accountFetchMaybeFromSeedsFunction(accountNode.identifier);

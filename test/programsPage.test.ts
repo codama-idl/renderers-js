@@ -1,8 +1,13 @@
 import {
     accountNode,
+    addTypeNodeTransforms,
+    arrayTypeNode,
+    arrayValueNode,
     constantDiscriminatorNode,
     constantValueNodeFromBytes,
     fieldDiscriminatorNode,
+    fixedCountNode,
+    hiddenPrefixTransformNode,
     instructionNode,
     integerTypeNode,
     integerValueNode,
@@ -10,6 +15,7 @@ import {
     sizeDiscriminatorNode,
     structFieldTypeNode,
     structTypeNode,
+    type TypeNode,
 } from '@codama/nodes';
 import { visit } from '@codama/visitors-core';
 import { expect, test } from 'vitest';
@@ -508,4 +514,47 @@ test('it does not render parse function when no instructions have discriminators
     // And we do NOT expect the parse function.
     const programFile = renderMap.get('programs/spl-token.ts');
     expect(programFile).not.toContain('parseSplTokenInstruction');
+});
+
+test('it matches u8 array discriminators as raw bytes unless their type is transformed', async () => {
+    // Given accounts discriminated by a fixed u8 array, one of which is transformed.
+    const discriminatorField = (type: TypeNode) =>
+        structFieldTypeNode({
+            defaultValue: arrayValueNode([integerValueNode('1'), integerValueNode('2')]),
+            defaultValueStrategy: 'omitted',
+            identifier: 'discriminator',
+            type,
+        });
+    const u8Array = arrayTypeNode(integerTypeNode('u8'), fixedCountNode(2));
+    const node = programNode({
+        accounts: [
+            accountNode({
+                data: structTypeNode([discriminatorField(u8Array)]),
+                discriminators: [fieldDiscriminatorNode('discriminator')],
+                identifier: 'plain',
+            }),
+            accountNode({
+                data: structTypeNode([
+                    discriminatorField(
+                        addTypeNodeTransforms(u8Array, [
+                            hiddenPrefixTransformNode([constantValueNodeFromBytes('base16', 'ff')]),
+                        ]),
+                    ),
+                ]),
+                discriminators: [fieldDiscriminatorNode('discriminator')],
+                identifier: 'prefixed',
+            }),
+        ],
+        identifier: 'myProgram',
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the plain array is matched as raw bytes whilst the transformed one is encoded with its codec.
+    await renderMapContains(renderMap, 'programs/my-program.ts', [
+        'if (containsBytes(data, new Uint8Array([1, 2]), 0)) { return MyProgramAccount.Plain; }',
+        'containsBytes( data, getHiddenPrefixEncoder(getArrayEncoder(getU8Encoder(), { size: 2 }), [ getConstantEncoder(new Uint8Array([255])) ]).encode([1, 2]), 0 )',
+    ]);
 });
