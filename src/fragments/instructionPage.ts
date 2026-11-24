@@ -9,6 +9,7 @@ import {
     getProgramNodeFromPath,
     getRenamedArgsMap,
     getStructFields,
+    isInputArgument,
     mergeFragments,
     RenderScope,
     ResolvedInstructionInput,
@@ -62,7 +63,10 @@ export function getInstructionPageFragment(
             }),
             scope.typeManifestVisitor,
         ),
-        renamedArgs: getRenamedArgsMap(scope.instructionPath),
+        // Synchronous builders accept every input asynchronous ones do, and more.
+        renamedArgs: getRenamedArgsMap(scope.instructionPath, arg =>
+            isInputArgument(arg, { ...scope, useAsync: false }),
+        ),
     };
     if (childScope.renamedArgs.size > 0) {
         logWarn(

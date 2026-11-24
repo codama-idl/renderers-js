@@ -21,6 +21,7 @@ export function getAccountPageFragment(
         RenderScope,
         | 'customAccountData'
         | 'erasableSyntax'
+        | 'getImportFrom'
         | 'getImportPath'
         | 'isInternalNode'
         | 'linkables'

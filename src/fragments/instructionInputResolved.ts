@@ -15,7 +15,10 @@ import { getInstructionInputDefaultFragment } from './instructionInputDefault';
  * @return The fragment resolving the default values, empty when there are none.
  */
 export function getInstructionInputResolvedFragment(
-    scope: Pick<RenderScope, 'asyncResolvers' | 'getImportFrom' | 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<
+        RenderScope,
+        'asyncResolvers' | 'getImportFrom' | 'linkables' | 'nameApi' | 'nonScalarEnums' | 'typeManifestVisitor'
+    > & {
         instructionPath: NodePath<InstructionNode>;
         resolvedInputs: ResolvedInstructionInput[];
         useAsync: boolean;

@@ -747,6 +747,119 @@
       },
       {
         "kind": "instructionNode",
+        "identifier": "claimOwnership",
+        "optionalAccountStrategy": "programId",
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "discriminator",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u8",
+                "endian": "le"
+              },
+              "defaultValue": {
+                "kind": "integerValueNode",
+                "value": "14"
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "newOwner",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "publicKeyTypeNode"
+              },
+              "defaultValue": {
+                "kind": "injectedValueNode",
+                "key": "newOwner"
+              }
+            }
+          ]
+        },
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "path": "discriminator",
+            "offset": 0
+          }
+        ],
+        "provides": [
+          {
+            "kind": "providedNode",
+            "identifier": "newOwner",
+            "node": {
+              "kind": "payerValueNode"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "instructionNode",
+        "identifier": "setDelegate",
+        "optionalAccountStrategy": "programId",
+        "accounts": [
+          {
+            "kind": "instructionAccountNode",
+            "identifier": "delegate",
+            "isWritable": false,
+            "isSigner": false,
+            "isOptional": false
+          }
+        ],
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "discriminator",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u8",
+                "endian": "le"
+              },
+              "defaultValue": {
+                "kind": "integerValueNode",
+                "value": "15"
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "delegate",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "publicKeyTypeNode"
+              },
+              "defaultValue": {
+                "kind": "injectedValueNode",
+                "key": "delegate"
+              }
+            }
+          ]
+        },
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "path": "discriminator",
+            "offset": 0
+          }
+        ],
+        "provides": [
+          {
+            "kind": "providedNode",
+            "identifier": "delegate",
+            "node": {
+              "kind": "payerValueNode"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "instructionNode",
         "identifier": "useSecret",
         "optionalAccountStrategy": "programId",
         "accounts": [

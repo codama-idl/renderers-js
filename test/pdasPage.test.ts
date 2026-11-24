@@ -177,3 +177,21 @@ test('it imports internal PDAs from their own file and leaves them out of the pr
     await renderMapContains(renderMap, 'accounts/vault.ts', ["from '../pdas/secret-pda'"]);
     await renderMapDoesNotContain(renderMap, 'programs/my-program.ts', ['secretPda', "from '../pdas'"]);
 });
+
+test('it imports the PDAs of accounts through their link overrides', async () => {
+    // Given an account whose PDA is imported from another module.
+    const node = rootNode(
+        programNode({
+            accounts: [accountNode({ identifier: 'vault', pda: pdaLinkNode('vault') })],
+            identifier: 'myProgram',
+            pdas: [pdaNode({ identifier: 'vault', seeds: [] })],
+            publicKey: '1111',
+        }),
+    );
+
+    // When we render it with a link override for that PDA.
+    const renderMap = visit(node, getRenderMapVisitor({ linkOverrides: { pdas: { vault: 'hooked' } } }));
+
+    // Then the account PDA helpers import it from that module.
+    await renderMapContains(renderMap, 'accounts/vault.ts', ["import { findVaultPda } from '../../hooked'"]);
+});

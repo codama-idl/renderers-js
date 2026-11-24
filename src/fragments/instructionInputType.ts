@@ -1,22 +1,22 @@
 import { mapFragmentContent } from '@codama/fragments';
 import { camelCase } from '@codama/fragments/casing';
-import { InstructionAccountNode, InstructionNode, isNode } from '@codama/nodes';
+import { InstructionAccountNode, InstructionNode } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
 import {
     findResolvedAccount,
-    findResolvedDataField,
-    Fragment,
     fragment,
+    Fragment,
     getAccountTypeParamName,
     getDocblockFragment,
     getInstructionDataFields,
     getInstructionDataLink,
     getInstructionExtraArguments,
     getRemainingAccountsName,
-    hasInputDefault,
     InstructionDataField,
-    isAsyncInput,
+    isArgumentFilledIn,
+    isFilledInByBuilder,
+    isInputArgument,
     isRemainingAccountsBackedByArgument,
     mergeFragmentImports,
     mergeFragments,
@@ -180,33 +180,11 @@ function getArgumentFragment(
         useAsync: boolean;
     },
 ): Fragment | undefined {
-    const hasCodecDefault = hasInputDefault(arg) && !findResolvedDataField(scope.resolvedInputs, arg);
-    const isFilledIn = hasCodecDefault || isFilledInByBuilder(findResolvedDataField(scope.resolvedInputs, arg), scope);
-    // Omitted arguments are left out of the input when something fills them in. Otherwise,
-    // e.g. when defaulting to the payer, they are required, since nothing else provides them.
-    if (isFilledIn && arg.defaultValueStrategy === 'omitted') return;
+    if (!isInputArgument(arg, scope)) return;
     const argName = camelCase(arg.identifier);
     const renamedName = scope.renamedArgs.get(argName) ?? argName;
-    const optionalSign = isFilledIn ? '?' : '';
+    const optionalSign = isArgumentFilledIn(arg, scope) ? '?' : '';
     return fragment`${renamedName}${optionalSign}: ${argsType}["${argName}"];`;
-}
-
-/**
- * Whether a builder fills in an input when it is not provided: it has a default value or a
- * resolver, which is not asynchronous for synchronous builders, and does not default to the
- * payer or the identity, which builders have no value for. The program plugin fills in the
- * payer of its client instead.
- */
-function isFilledInByBuilder(
-    input: ResolvedInstructionInput | undefined,
-    scope: Pick<RenderScope, 'asyncResolvers'> & { useAsync: boolean },
-): boolean {
-    return (
-        !!input &&
-        (!!input.resolver || !!input.resolvedDefaultValue) &&
-        !isNode(input.resolvedDefaultValue, ['identityValueNode', 'payerValueNode']) &&
-        (scope.useAsync || !isAsyncInput(input, scope.asyncResolvers))
-    );
 }
 
 function getRemainingAccountsFragment(instructionNode: InstructionNode): Fragment | undefined {

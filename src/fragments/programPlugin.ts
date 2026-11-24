@@ -13,6 +13,7 @@ import {
     getRenderedInstructions,
     getResolvedInstructionInputs,
     hasAsyncFunction,
+    isInputArgument,
     mergeFragments,
     RenderScope,
     ResolvedInstructionInput,
@@ -73,7 +74,14 @@ export function getProgramPluginFragment(
         .map(i => i.identifier);
 
     const renamedArgsByInstruction = new Map(
-        instructionPaths.map(path => [getLastNodeFromPath(path).identifier, getRenamedArgsMap(path)]),
+        instructionPaths.map(path => {
+            const { identifier } = getLastNodeFromPath(path);
+            const resolvedInputs = resolvedInputsByInstruction.get(identifier)!;
+            const renamedArgs = getRenamedArgsMap(path, arg =>
+                isInputArgument(arg, { asyncResolvers: scope.asyncResolvers, resolvedInputs, useAsync: false }),
+            );
+            return [identifier, renamedArgs];
+        }),
     );
     const extendedScope = {
         ...scope,

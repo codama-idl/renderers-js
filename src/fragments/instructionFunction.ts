@@ -6,8 +6,8 @@ import { getLastNodeFromPath, NodePath, pipe, visit } from '@codama/visitors-cor
 import {
     findResolvedAccount,
     findResolvedDataField,
-    Fragment,
     fragment,
+    Fragment,
     getAccountTypeParamName,
     getDataPathRoot,
     getDocblockFragment,
@@ -25,6 +25,7 @@ import {
     hasRemainingAccountInputs,
     InstructionDataField,
     isAsyncInput,
+    isInputArgument,
     mergeFragments,
     RenderScope,
     ResolvedInstructionDataField,
@@ -60,6 +61,7 @@ export function getInstructionFunctionFragment(
         | 'isInternalNode'
         | 'linkables'
         | 'nameApi'
+        | 'nonScalarEnums'
         | 'typeManifestVisitor'
     > & {
         dataArgsManifest: TypeManifest;
@@ -162,8 +164,7 @@ export function getInstructionFunctionInputFlags(
     const argDependencies = instructionDependencies
         .filter(isNodeFilter('dataValueNode'))
         .map(node => getDataPathRoot(node.path));
-    const argIsNotOmitted = (arg: InstructionDataField) =>
-        !(hasInputDefault(arg) && arg.defaultValueStrategy === 'omitted');
+    const argIsNotOmitted = (arg: InstructionDataField) => isInputArgument(arg, scope);
     const argIsDependent = (arg: InstructionDataField) => argDependencies.includes(arg.identifier);
     const argHasDefaultValue = (arg: InstructionDataField) => {
         if (!hasInputDefault(arg)) return false;

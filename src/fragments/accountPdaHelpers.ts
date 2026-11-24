@@ -1,15 +1,7 @@
 import { AccountNode, isNodeFilter } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
-import {
-    addFragmentImports,
-    Fragment,
-    fragment,
-    getCustomDataOptions,
-    getGeneratedNodeModule,
-    RenderScope,
-    TypeManifest,
-} from '../utils';
+import { addFragmentImports, Fragment, fragment, getCustomDataOptions, RenderScope, TypeManifest } from '../utils';
 
 /**
  * Renders the helpers fetching an account from the seeds of its PDA, e.g.
@@ -19,23 +11,24 @@ import {
  * @return The fragment of the PDA helpers, if the account has a PDA.
  */
 export function getAccountPdaHelpersFragment(
-    scope: Pick<RenderScope, 'customAccountData' | 'getImportPath' | 'isInternalNode' | 'linkables' | 'nameApi'> & {
+    scope: Pick<RenderScope, 'customAccountData' | 'getImportFrom' | 'linkables' | 'nameApi'> & {
         accountPath: NodePath<AccountNode>;
         typeManifest: TypeManifest;
     },
 ): Fragment | undefined {
     const { accountPath, nameApi, linkables, customAccountData, typeManifest } = scope;
     const accountNode = getLastNodeFromPath(accountPath);
-    const pdaNode = accountNode.pda ? linkables.get([...accountPath, accountNode.pda]) : undefined;
-    if (!pdaNode) return;
+    const pdaLink = accountNode.pda;
+    const pdaNode = pdaLink ? linkables.get([...accountPath, pdaLink]) : undefined;
+    if (!pdaLink || !pdaNode) return;
 
     const accountType = getCustomDataOptions(customAccountData, accountNode)
         ? typeManifest.strictType
         : nameApi.dataType(accountNode.identifier);
 
-    // The PDA is resolved rather than imported through its link, since its seeds decide
-    // whether a `seeds` argument is rendered.
-    const importFrom = getGeneratedNodeModule('pda', pdaNode.identifier, scope);
+    // The PDA is resolved for its seeds, which decide whether a `seeds` argument is rendered,
+    // and imported through its link, honouring link overrides and internal nodes.
+    const importFrom = scope.getImportFrom(pdaLink);
     const pdaSeedsType = nameApi.pdaSeedsType(pdaNode.identifier);
     const findPdaFunction = nameApi.pdaFindFunction(pdaNode.identifier);
     const hasVariableSeeds = (pdaNode.seeds ?? []).filter(isNodeFilter('variablePdaSeedNode')).length > 0;
