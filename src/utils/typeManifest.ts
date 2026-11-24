@@ -61,8 +61,9 @@ export function mergeTypeManifests(
  * The kinds of nodes the type manifest visitor accepts: type and value nodes, as well as
  * accounts, defined types, events and instructions, which return the manifest of their data.
  *
- * The visitor is typed `Visitor<TypeManifest, TypeManifestNodeKind>` rather than through an
- * alias, so that `visit` can infer it returns a {@link TypeManifest}.
+ * The render scope spells out the visitor type as `Visitor<TypeManifest, TypeManifestNodeKind>`
+ * rather than importing `TypeManifestVisitor` from the visitors, which would reintroduce an
+ * import cycle.
  *
  * @see `getTypeManifestVisitor`
  */

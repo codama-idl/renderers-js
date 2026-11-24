@@ -226,6 +226,8 @@ export function getInstructionInputDefaultFragment(
                 mergeFragments(pdaSeeds, renders => renders.join(', ')),
                 f => mapFragmentContent(f, c => `{ ${c} }`),
             );
+            // The seeds argument comes first, so it is rendered even without seed values for
+            // the program address that follows to land in the right position.
             if (pdaSeeds.length > 0 || (!!pdaPath && hasVariablePdaSeeds(getLastNodeFromPath(pdaPath)))) {
                 pdaArgs.push(pdaSeedsFragment);
             }
@@ -347,8 +349,9 @@ function renderNestedInstructionDefault(
  *
  * When it is, the generated find function bakes in that program's address as its default,
  * so the instruction must forward its own — possibly overridden — program address to keep
- * the derivation in sync with the program the instruction is sent to. PDAs owned by another
- * program, or pinned to an explicit program ID, keep their own default instead.
+ * the derivation in sync with the program the instruction is sent to. That includes PDAs
+ * pinned to the address of their own program, as program plugins do. PDAs owned by another
+ * program, or pinned to another program ID, keep their own default instead.
  */
 function isPdaDerivedFromInstructionProgram(
     pdaPath: NodePath<PdaNode> | undefined,
