@@ -286,3 +286,27 @@ test('it renders the fallback of injected field discriminators for their type', 
     // Then the discriminator constant is the fallback as a bigint.
     await renderMapContains(renderMap, 'accounts/vault.ts', ['export const VAULT_DISCRIMINATOR = 5n;']);
 });
+
+test('it imports Kit number codecs under their own names regardless of name transformers', async () => {
+    // Given a type using a u64, rendered with custom encoder and decoder function names.
+    const node = definedTypeNode({ identifier: 'amount', type: u64() });
+
+    // When we render it.
+    const renderMap = visit(
+        node,
+        getRenderMapVisitor({
+            nameTransformers: {
+                decoderFunction: (name, { pascalCase }) => `read${pascalCase(name)}`,
+                encoderFunction: (name, { pascalCase }) => `write${pascalCase(name)}`,
+            },
+        }),
+    );
+
+    // Then the generated codecs use the custom names, whilst Kit codecs keep theirs.
+    await renderMapContains(renderMap, 'types/amount.ts', [
+        'export function writeAmount()',
+        'return getU64Encoder();',
+        'export function readAmount()',
+        'return getU64Decoder();',
+    ]);
+});

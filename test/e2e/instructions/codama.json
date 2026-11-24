@@ -6,8 +6,10 @@
             "args": [
                 "test/e2e/instructions",
                 {
+                    "asyncResolvers": ["resolveFeeAsync"],
                     "kitImportStrategy": "rootOnly",
-                    "syncPackageJson": false
+                    "syncPackageJson": false,
+                    "internalNodes": ["secretCounter", "secretVault", "secretReset"]
                 }
             ]
         }

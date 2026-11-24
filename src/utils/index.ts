@@ -6,6 +6,7 @@ export * from './enums';
 export * from './erasableSyntax';
 export * from './formatCode';
 export * from './fragment';
+export * from './generatedModules';
 export * from './importMap';
 export * from './instructionInputs';
 export * from './linkOverrides';

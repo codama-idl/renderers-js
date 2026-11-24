@@ -7,6 +7,7 @@ import {
     Fragment,
     fragment,
     getDocblockFragment,
+    getGeneratedNodeModule,
     getInstructionDataLink,
     getProgramNodeFromPath,
     hasInstructionData,
@@ -24,7 +25,7 @@ import {
  * @return The fragment of the parsed type and parse function.
  */
 export function getInstructionParseFunctionFragment(
-    scope: Pick<RenderScope, 'customInstructionData' | 'nameApi'> & {
+    scope: Pick<RenderScope, 'customInstructionData' | 'getImportPath' | 'isInternalNode' | 'nameApi'> & {
         dataArgsManifest: TypeManifest;
         instructionPath: NodePath<InstructionNode>;
     },
@@ -33,7 +34,7 @@ export function getInstructionParseFunctionFragment(
     const programNode = getProgramNodeFromPath(scope.instructionPath);
     const programAddressConstant = use(
         scope.nameApi.programAddressConstant(programNode.identifier),
-        'generatedPrograms',
+        getGeneratedNodeModule('program', programNode.identifier, scope),
     );
     const childScope = { ...scope, instructionNode, programAddressConstant };
 

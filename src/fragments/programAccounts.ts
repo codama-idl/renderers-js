@@ -13,7 +13,7 @@ import { getEnumDeclarationFragment } from './enumDeclaration';
  * @return The fragment of the account enum and identify function, if the program has accounts.
  */
 export function getProgramAccountsFragment(
-    scope: Pick<RenderScope, 'erasableSyntax' | 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<RenderScope, 'erasableSyntax' | 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         programNode: ProgramNode;
     },
 ): Fragment | undefined {
@@ -40,7 +40,7 @@ function getProgramAccountsEnumFragment(
 }
 
 function getProgramAccountsIdentifierFunctionFragment(
-    scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         programNode: ProgramNode;
     },
 ): Fragment | undefined {
@@ -61,7 +61,7 @@ function getProgramAccountsIdentifierFunctionFragment(
                 ...scope,
                 dataName: 'data',
                 discriminators: account.discriminators ?? [],
-                fields: getStructFields(account.data),
+                fields: getStructFields(account.data, [programNode, account], scope.linkables),
                 ifTrue: `return ${programAccountsEnum}.${variant};`,
             });
         }),

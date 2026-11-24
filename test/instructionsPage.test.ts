@@ -16,6 +16,7 @@ import {
     arrayTypeNode,
     booleanTypeNode,
     booleanValueNode,
+    conditionalValueNode,
     constantDiscriminatorNode,
     constantPdaSeedNodeFromString,
     constantValueNode,
@@ -48,7 +49,9 @@ import {
     programNode,
     providedNode,
     publicKeyTypeNode,
+    publicKeyValueNode,
     rootNode,
+    someValueNode,
     stringTypeNode,
     stringValueNode,
     structFieldTypeNode,
@@ -1775,4 +1778,204 @@ test('it renders the type and codecs of the data returned by instructions', asyn
         'export function getGetStatsInstructionReturnDataDecoder(): FixedSizeDecoder<GetStatsInstructionReturnData>',
         'discriminator: value.discriminator ?? 99',
     ]);
+});
+
+test('it renders parents whose sub-instructions are all archived as leaves', () => {
+    // Given a live parent instruction whose only sub-instruction is archived.
+    const node = rootNode(
+        programNode({
+            identifier: 'myProgram',
+            instructions: [
+                instructionNode({
+                    identifier: 'transfer',
+                    subInstructions: [
+                        instructionNode({ identifier: 'transferV1', status: instructionStatusNode('archived') }),
+                    ],
+                }),
+            ],
+            publicKey: '1111',
+        }),
+    );
+
+    // When we render it without parent instructions.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the parent is rendered as a leaf, and the archived sub-instruction is left out.
+    expect(renderMap.has('instructions/transfer.ts')).toBe(true);
+    expect(renderMap.has('instructions/transfer-v1.ts')).toBe(false);
+});
+
+test('it compares integer conditions of default values as bigints', async () => {
+    // Given an account defaulting to another one when a u64 argument equals 5.
+    const node = programNode({
+        identifier: 'myProgram',
+        instructions: [
+            instructionNode({
+                accounts: [
+                    instructionAccountNode({ identifier: 'fallback', isSigner: false, isWritable: false }),
+                    instructionAccountNode({
+                        defaultValue: conditionalValueNode({
+                            condition: dataValueNode('amount'),
+                            ifTrue: accountValueNode('fallback'),
+                            value: integerValueNode('5'),
+                        }),
+                        identifier: 'target',
+                        isSigner: false,
+                        isWritable: false,
+                    }),
+                ],
+                data: structTypeNode([structFieldTypeNode({ identifier: 'amount', type: integerTypeNode('u64') })]),
+                identifier: 'transfer',
+            }),
+        ],
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the condition holds whether the argument is given as a number or a bigint, and not when it is absent.
+    await renderMapContains(renderMap, 'instructions/transfer.ts', [
+        'if (args.amount != null && BigInt(args.amount) === 5n)',
+    ]);
+});
+
+test('it compares account conditions of default values by address', async () => {
+    // Given an account defaulting to another one when the authority is a given address.
+    const node = programNode({
+        identifier: 'myProgram',
+        instructions: [
+            instructionInputAccounts(
+                conditionalValueNode({
+                    condition: accountValueNode('authority'),
+                    ifTrue: accountValueNode('fallback'),
+                    value: publicKeyValueNode('11111111111111111111111111111111'),
+                }),
+            ),
+        ],
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the authority, which may be a signer or absent, is compared by its address when present.
+    await renderMapContains(renderMap, 'instructions/transfer.ts', [
+        /accounts\.authority\.value != null &&/,
+        /getAddressFromResolvedInstructionAccount\(\s*'authority',\s*accounts\.authority\.value\s*\) === address\(/,
+    ]);
+});
+
+test('it fails on conditions of default values that cannot be compared', () => {
+    // Given an account defaulting to another one when the authority equals an option, which is never identical.
+    const conditional = conditionalValueNode({
+        condition: accountValueNode('authority'),
+        ifTrue: accountValueNode('fallback'),
+        value: someValueNode(integerValueNode('5')),
+    });
+    const node = programNode({
+        identifier: 'myProgram',
+        instructions: [instructionInputAccounts(conditional)],
+        publicKey: '1111',
+    });
+
+    // Then rendering fails on that conditional value.
+    const error = getCodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, () => visit(node, getRenderMapVisitor()));
+    expect(error.context.path.at(-1)).toBe(conditional);
+});
+
+/** A `transfer` instruction whose `target` account defaults to the given conditional value. */
+function instructionInputAccounts(defaultValue: ReturnType<typeof conditionalValueNode>) {
+    return instructionNode({
+        accounts: [
+            instructionAccountNode({ identifier: 'authority', isSigner: 'either', isWritable: false }),
+            instructionAccountNode({ identifier: 'fallback', isSigner: false, isWritable: false }),
+            instructionAccountNode({ defaultValue, identifier: 'target', isSigner: false, isWritable: false }),
+        ],
+        identifier: 'transfer',
+    });
+}
+
+test('it compares scalar enum conditions of default values as native enum members', async () => {
+    // Given an account defaulting to another one when a scalar enum argument holds a given variant.
+    const node = programNode({
+        definedTypes: [
+            definedTypeNode({
+                identifier: 'tokenStandard',
+                type: enumTypeNode([enumVariantTypeNode('fungible'), enumVariantTypeNode('programmable')]),
+            }),
+        ],
+        identifier: 'myProgram',
+        instructions: [
+            instructionNode({
+                accounts: [
+                    instructionAccountNode({ identifier: 'fallback', isSigner: false, isWritable: false }),
+                    instructionAccountNode({
+                        defaultValue: conditionalValueNode({
+                            condition: dataValueNode('standard'),
+                            ifTrue: accountValueNode('fallback'),
+                            value: enumValueNode('tokenStandard', 'programmable'),
+                        }),
+                        identifier: 'record',
+                        isSigner: false,
+                        isWritable: false,
+                    }),
+                ],
+                data: structTypeNode([
+                    structFieldTypeNode({ identifier: 'standard', type: definedTypeLinkNode('tokenStandard') }),
+                ]),
+                identifier: 'mint',
+            }),
+        ],
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the argument is compared with the enum member.
+    await renderMapContains(renderMap, 'instructions/mint.ts', ['if (args.standard === TokenStandard.Programmable)']);
+});
+
+test('it fails on data union conditions of default values', () => {
+    // Given a condition comparing an argument with a variant of a data union, whose instances are never identical.
+    const conditional = conditionalValueNode({
+        condition: dataValueNode('command'),
+        ifTrue: accountValueNode('fallback'),
+        value: enumValueNode('command', 'wait', { value: integerValueNode('5') }),
+    });
+    const node = programNode({
+        definedTypes: [
+            definedTypeNode({
+                identifier: 'command',
+                type: enumTypeNode([
+                    enumVariantTypeNode('stop'),
+                    enumVariantTypeNode('wait', { data: integerTypeNode('u8') }),
+                ]),
+            }),
+        ],
+        identifier: 'myProgram',
+        instructions: [
+            instructionNode({
+                accounts: [
+                    instructionAccountNode({ identifier: 'fallback', isSigner: false, isWritable: false }),
+                    instructionAccountNode({
+                        defaultValue: conditional,
+                        identifier: 'target',
+                        isSigner: false,
+                        isWritable: false,
+                    }),
+                ],
+                data: structTypeNode([
+                    structFieldTypeNode({ identifier: 'command', type: definedTypeLinkNode('command') }),
+                ]),
+                identifier: 'run',
+            }),
+        ],
+        publicKey: '1111',
+    });
+
+    // Then rendering fails on that conditional value.
+    const error = getCodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, () => visit(node, getRenderMapVisitor()));
+    expect(error.context.path.at(-1)).toBe(conditional);
 });

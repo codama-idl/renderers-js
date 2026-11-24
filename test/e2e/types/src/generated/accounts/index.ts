@@ -6,4 +6,7 @@
  * @see https://github.com/codama-idl/codama
  */
 
+export * from './linked-account';
+export * from './order';
+export * from './profile';
 export * from './vault';

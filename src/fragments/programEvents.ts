@@ -13,7 +13,7 @@ import { getEnumDeclarationFragment } from './enumDeclaration';
  * @returns A {@link Fragment} with the event helpers, or `undefined` when the program has no events.
  */
 export function getProgramEventsFragment(
-    scope: Pick<RenderScope, 'erasableSyntax' | 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<RenderScope, 'erasableSyntax' | 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         programNode: ProgramNode;
     },
 ): Fragment | undefined {
@@ -37,7 +37,7 @@ function getProgramEventsEnumFragment(
 }
 
 function getProgramEventsIdentifierFunctionFragment(
-    scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         programNode: ProgramNode;
     },
 ): Fragment | undefined {
@@ -57,7 +57,7 @@ function getProgramEventsIdentifierFunctionFragment(
                 ...scope,
                 dataName: 'data',
                 discriminators: event.discriminators ?? [],
-                fields: getStructFields(event.data),
+                fields: getStructFields(event.data, [programNode, event], scope.linkables),
                 ifTrue: `return ${programEventsEnum}.${variant};`,
             });
         }),

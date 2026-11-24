@@ -17,3 +17,8 @@ export function resolveRemainingAccounts(scope: { args: { signerCount: number } 
 export function resolveByteDelta(scope: { args: { space: number | bigint } }): number {
     return Number(scope.args.space);
 }
+
+/** Resolves a fee asynchronously, e.g. from an RPC call. */
+export async function resolveFeeAsync(_scope: object): Promise<number> {
+    return await Promise.resolve(5000);
+}

@@ -6,6 +6,7 @@ import {
 import { mapFragmentContent, setFragmentContent } from '@codama/fragments';
 import { camelCase } from '@codama/fragments/casing';
 import {
+    ConditionalValueNode,
     IdentifierString,
     InstructionInputValueNode,
     InstructionNode,
@@ -19,13 +20,15 @@ import {
 import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, pipe, visit } from '@codama/visitors-core';
 
 import {
-    fragment,
     Fragment,
+    fragment,
+    getBigIntLiteral,
     getDataPathExpression,
     getDataPathLabel,
     getStringLiteral,
     getTypedValueFragment,
     isAsyncInput,
+    isScalarEnumValue,
     mergeFragments,
     RenderScope,
     ResolvedInstructionInput,
@@ -45,7 +48,10 @@ import { getInstructionResolverCallFragment } from './instructionResolver';
  * @throws `CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE` for default values the renderer cannot fill in.
  */
 export function getInstructionInputDefaultFragment(
-    scope: Pick<RenderScope, 'asyncResolvers' | 'getImportFrom' | 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<
+        RenderScope,
+        'asyncResolvers' | 'getImportFrom' | 'linkables' | 'nameApi' | 'nonScalarEnums' | 'typeManifestVisitor'
+    > & {
         input: ResolvedInstructionInput;
         instructionPath: NodePath<InstructionNode>;
         optionalAccountStrategy: OptionalAccountStrategy;
@@ -285,10 +291,12 @@ export function getInstructionInputDefaultFragment(
                 ? `accounts.${camelCase(defaultValue.condition.identifier)}.value`
                 : getDataPathExpression(defaultValue.condition.path);
             if (defaultValue.value) {
-                const comparedValue = visit(defaultValue.value, typeManifestVisitor).value;
-                conditionalFragment = mergeFragments([conditionalFragment, comparedValue], c => c[0]);
-                const operator = negatedCondition ? '!==' : '===';
-                condition = `${comparedInputName} ${operator} ${comparedValue.content}`;
+                const comparison = getConditionComparisonFragment(defaultValue, defaultValue.value, comparedInputName, {
+                    ...scope,
+                    getAddressFromResolvedInstructionAccount,
+                });
+                conditionalFragment = mergeFragments([conditionalFragment, comparison], c => c[0]);
+                condition = negatedCondition ? `!(${comparison.content})` : comparison.content;
             } else {
                 condition = negatedCondition ? `!${comparedInputName}` : comparedInputName;
             }
@@ -358,4 +366,53 @@ function isPdaDerivedFromInstructionProgram(
 function hasVariablePdaSeeds(pdaPath: NodePath<PdaNode> | undefined): boolean {
     if (!pdaPath) return false;
     return (getLastNodeFromPath(pdaPath).seeds ?? []).some(isNodeFilter('variablePdaSeedNode'));
+}
+
+/**
+ * The condition of a conditional default value comparing its input with a value, e.g.
+ * `args.amount !== undefined && BigInt(args.amount) === 5n`. An absent input never equals
+ * the value. Integers are compared as `bigint`s, since inputs accept both numbers and bigints,
+ * accounts by address, since they may be signers, and strings, booleans, addresses and
+ * members of native enums as they are.
+ *
+ * @throws `CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE` for values that cannot be compared with
+ * `===`, e.g. options, structs or data unions, whose instances are never identical.
+ */
+function getConditionComparisonFragment(
+    conditional: ConditionalValueNode,
+    value: ValueNode,
+    comparedInputName: string,
+    scope: Pick<RenderScope, 'linkables' | 'nonScalarEnums' | 'typeManifestVisitor'> & {
+        getAddressFromResolvedInstructionAccount: Fragment;
+        input: ResolvedInstructionInput;
+    },
+): Fragment {
+    const isPresent = `${comparedInputName} != null`;
+    if (isNode(conditional.condition, 'accountValueNode')) {
+        if (!isNode(value, 'publicKeyValueNode')) return throwUnsupportedComparison(conditional, scope);
+        const name = camelCase(conditional.condition.identifier);
+        const renderedValue = visit(value, scope.typeManifestVisitor).value;
+        return fragment`${isPresent} && ${scope.getAddressFromResolvedInstructionAccount}("${name}", ${comparedInputName}) === ${renderedValue}`;
+    }
+    switch (value.kind) {
+        case 'integerValueNode':
+            return fragment`${isPresent} && BigInt(${comparedInputName}) === ${getBigIntLiteral(value.value)}`;
+        case 'enumValueNode':
+            if (!isScalarEnumValue(value, scope.input.path, scope))
+                return throwUnsupportedComparison(conditional, scope);
+            return fragment`${comparedInputName} === ${visit(value, scope.typeManifestVisitor).value}`;
+        case 'booleanValueNode':
+        case 'publicKeyValueNode':
+        case 'stringValueNode':
+            return fragment`${comparedInputName} === ${visit(value, scope.typeManifestVisitor).value}`;
+        default:
+            return throwUnsupportedComparison(conditional, scope);
+    }
+}
+
+function throwUnsupportedComparison(
+    conditional: ConditionalValueNode,
+    scope: { input: ResolvedInstructionInput },
+): never {
+    throw new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, { path: [...scope.input.path, conditional] });
 }

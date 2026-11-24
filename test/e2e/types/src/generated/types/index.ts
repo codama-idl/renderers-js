@@ -10,6 +10,7 @@ export * from './amount';
 export * from './collections';
 export * from './command';
 export * from './direction';
+export * from './linked-data';
 export * from './numbers';
 export * from './options';
 export * from './settings';

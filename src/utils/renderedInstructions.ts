@@ -22,9 +22,27 @@ export function isArchivedInstruction(instruction: InstructionNode): boolean {
 }
 
 /**
+ * Whether an instruction is rendered as an instruction page: unless archived, when it is a
+ * leaf of the instruction tree, i.e. it has no sub-instructions that are not archived, or
+ * when parent instructions are rendered too. Its sub-instructions are decided separately.
+ *
+ * @param instruction - The instruction.
+ * @param options - Whether parent instructions are rendered.
+ */
+export function isRenderedInstruction(
+    instruction: InstructionNode,
+    options: { renderParentInstructions: boolean },
+): boolean {
+    if (isArchivedInstruction(instruction)) return false;
+    const isLeaf = (instruction.subInstructions ?? []).every(isArchivedInstruction);
+    return isLeaf || options.renderParentInstructions;
+}
+
+/**
  * The paths of the instructions of a program rendered as instruction pages: the leaves of
  * the instruction tree, along with the parent instructions when `renderParentInstructions`
- * is enabled. Archived instructions are left out, along with their sub-instructions. Paths
+ * is enabled, as decided by {@link isRenderedInstruction}. Archived instructions are left
+ * out, along with their sub-instructions. Paths
  * go through parent instructions, so their `provides` remain visible.
  *
  * @param programPath - The path of the program.
@@ -50,10 +68,8 @@ export function getRenderedInstructionPaths(
             .filter(instruction => !isArchivedInstruction(instruction))
             .flatMap(instruction => {
                 const path: NodePath<InstructionNode> = [...parentPath, instruction];
-                const subInstructions = instruction.subInstructions ?? [];
-                const isRendered = subInstructions.length === 0 || options.renderParentInstructions;
-                const self = isRendered ? [path] : [];
-                const subPaths = visitInstructions(path, subInstructions);
+                const self = isRenderedInstruction(instruction, options) ? [path] : [];
+                const subPaths = visitInstructions(path, instruction.subInstructions ?? []);
                 return options.subInstructionsFirst ? [...subPaths, ...self] : [...self, ...subPaths];
             });
     return visitInstructions(programPath, getLastNodeFromPath(programPath).instructions ?? []);

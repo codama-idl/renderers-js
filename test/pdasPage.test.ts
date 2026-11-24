@@ -1,7 +1,9 @@
 import {
+    accountNode,
     constantPdaSeedNodeFromString,
     integerTypeNode,
     optionTypeNode,
+    pdaLinkNode,
     pdaNode,
     programNode,
     publicKeyTypeNode,
@@ -155,4 +157,41 @@ test('it exports PDAs from the root barrel when they are the only nodes to expor
 
     // Then the root barrel exports the PDAs.
     await renderMapContains(renderMap, 'index.ts', "export * from './pdas';");
+});
+
+test('it imports internal PDAs from their own file and leaves them out of the program plugin', async () => {
+    // Given an account whose PDA is internal.
+    const node = rootNode(
+        programNode({
+            accounts: [accountNode({ identifier: 'vault', pda: pdaLinkNode('secretPda') })],
+            identifier: 'myProgram',
+            pdas: [pdaNode({ identifier: 'secretPda', seeds: [] })],
+            publicKey: '1111',
+        }),
+    );
+
+    // When we render it with the PDA marked as internal.
+    const renderMap = visit(node, getRenderMapVisitor({ internalNodes: ['secretPda'] }));
+
+    // Then the account imports the PDA from its own file, and the plugin does not expose it.
+    await renderMapContains(renderMap, 'accounts/vault.ts', ["from '../pdas/secret-pda'"]);
+    await renderMapDoesNotContain(renderMap, 'programs/my-program.ts', ['secretPda', "from '../pdas'"]);
+});
+
+test('it imports the PDAs of accounts through their link overrides', async () => {
+    // Given an account whose PDA is imported from another module.
+    const node = rootNode(
+        programNode({
+            accounts: [accountNode({ identifier: 'vault', pda: pdaLinkNode('vault') })],
+            identifier: 'myProgram',
+            pdas: [pdaNode({ identifier: 'vault', seeds: [] })],
+            publicKey: '1111',
+        }),
+    );
+
+    // When we render it with a link override for that PDA.
+    const renderMap = visit(node, getRenderMapVisitor({ linkOverrides: { pdas: { vault: 'hooked' } } }));
+
+    // Then the account PDA helpers import it from that module.
+    await renderMapContains(renderMap, 'accounts/vault.ts', ["import { findVaultPda } from '../../hooked'"]);
 });

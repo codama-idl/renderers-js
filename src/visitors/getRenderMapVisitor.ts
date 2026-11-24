@@ -42,16 +42,17 @@ import {
     DEFAULT_KIT_IMPORT_STRATEGY,
     DEFAULT_NAME_TRANSFORMERS,
     Fragment,
-    getAccountSize,
     getDefinedTypeNodesToExtract,
     getImportFromFactory,
     getImportPathFactory,
+    getIsInternalNodeFactory,
     getNameApi,
     getPageFragment,
     getRenderedInstructions,
     getResolvedInstructionInputs,
     GetRenderMapOptions,
     isArchivedInstruction,
+    isRenderedInstruction,
     parseCustomDataOptions,
     RenderScope,
 } from '../utils';
@@ -81,6 +82,9 @@ export function getRenderMapVisitor(
 
     const customAccountData = parseCustomDataOptions(options.customAccountData ?? [], 'AccountData');
     const customInstructionData = parseCustomDataOptions(options.customInstructionData ?? [], 'InstructionData');
+    const getImportPath = getImportPathFactory(options.importExtension);
+    const isInternalNode = getIsInternalNodeFactory(options.internalNodes ?? []);
+    const nameApi = getNameApi({ ...DEFAULT_NAME_TRANSFORMERS, ...options.nameTransformers });
     const renderScopeWithTypeManifestVisitor: Omit<RenderScope, 'typeManifestVisitor'> = {
         asyncResolvers: (options.asyncResolvers ?? []).map(camelCase),
         customAccountData,
@@ -88,11 +92,16 @@ export function getRenderMapVisitor(
         dependencyMap: options.dependencyMap ?? {},
         dependencyVersions: options.dependencyVersions ?? {},
         erasableSyntax: options.erasableSyntax ?? false,
-        getImportFrom: getImportFromFactory(options.linkOverrides ?? {}, customAccountData, customInstructionData),
-        getImportPath: getImportPathFactory(options.importExtension),
+        getImportFrom: getImportFromFactory(options.linkOverrides ?? {}, customAccountData, customInstructionData, {
+            getImportPath,
+            isInternalNode,
+            nameApi,
+        }),
+        getImportPath,
+        isInternalNode,
         kitImportStrategy: options.kitImportStrategy ?? DEFAULT_KIT_IMPORT_STRATEGY,
         linkables,
-        nameApi: getNameApi({ ...DEFAULT_NAME_TRANSFORMERS, ...options.nameTransformers }),
+        nameApi,
         nonScalarEnums: (options.nonScalarEnums ?? []).map(camelCase),
         renderParentInstructions: options.renderParentInstructions ?? false,
     };
@@ -100,8 +109,7 @@ export function getRenderMapVisitor(
     const typeManifestVisitor = getTypeManifestVisitor({ ...renderScopeWithTypeManifestVisitor, stack });
     const renderScope: RenderScope = { ...renderScopeWithTypeManifestVisitor, typeManifestVisitor };
 
-    const internalNodes = (options.internalNodes ?? []).map(camelCase);
-    const isNotInternal = (node: { identifier: string }) => !internalNodes.includes(camelCase(node.identifier));
+    const isNotInternal = (node: { identifier: string }) => !isInternalNode(node.identifier);
     const byteSizeVisitor = getByteSizeVisitor(linkables, { stack });
     const asPage = <TFragment extends Fragment | undefined>(
         fragment: TFragment,
@@ -129,14 +137,14 @@ export function getRenderMapVisitor(
         v =>
             extendVisitor(v, {
                 visitAccount(node) {
-                    const accountPath = stack.getPath('accountNode');
                     return createRenderMap(
                         `accounts/${renderScope.nameApi.fileName(node.identifier)}.ts`,
                         asPage(
                             getAccountPageFragment({
                                 ...renderScope,
-                                accountPath,
-                                size: getAccountSize(accountPath, linkables),
+                                accountPath: stack.getPath('accountNode'),
+                                // The size of the data, typing its codecs, rather than the declared account size.
+                                size: visit(node.data, byteSizeVisitor),
                             }),
                         ),
                     );
@@ -176,7 +184,7 @@ export function getRenderMapVisitor(
                     // Archived instructions are left out of the client, along with their sub-instructions.
                     if (isArchivedInstruction(node)) return createRenderMap<Fragment>();
                     const subInstructions = node.subInstructions ?? [];
-                    const isRendered = subInstructions.length === 0 || renderScope.renderParentInstructions;
+                    const isRendered = isRenderedInstruction(node, renderScope);
                     const instructionPath = stack.getPath('instructionNode');
                     return mergeRenderMaps([
                         isRendered

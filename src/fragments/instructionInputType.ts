@@ -1,22 +1,22 @@
 import { mapFragmentContent } from '@codama/fragments';
 import { camelCase } from '@codama/fragments/casing';
-import { InstructionAccountNode, InstructionNode, isNode } from '@codama/nodes';
+import { InstructionAccountNode, InstructionNode } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
 import {
     findResolvedAccount,
-    findResolvedDataField,
-    Fragment,
     fragment,
+    Fragment,
     getAccountTypeParamName,
     getDocblockFragment,
     getInstructionDataFields,
     getInstructionDataLink,
     getInstructionExtraArguments,
     getRemainingAccountsName,
-    hasInputDefault,
     InstructionDataField,
-    isAsyncInput,
+    isArgumentFilledIn,
+    isFilledInByBuilder,
+    isInputArgument,
     isRemainingAccountsBackedByArgument,
     mergeFragmentImports,
     mergeFragments,
@@ -102,12 +102,10 @@ function getAccountsFragment(
     const instructionNode = getLastNodeFromPath(instructionPath);
 
     const fragments = (instructionNode.accounts ?? []).map(account => {
-        const resolvedAccount = findResolvedAccount(resolvedInputs, account);
-        const hasDefaultValue =
-            !!resolvedAccount &&
-            (!!resolvedAccount.resolver || !!resolvedAccount.resolvedDefaultValue) &&
-            !isNode(resolvedAccount.resolvedDefaultValue, ['identityValueNode', 'payerValueNode']) &&
-            (useAsync || !isAsyncInput(resolvedAccount, asyncResolvers));
+        const hasDefaultValue = isFilledInByBuilder(findResolvedAccount(resolvedInputs, account), {
+            asyncResolvers,
+            useAsync,
+        });
         const docs = getDocblockFragment(account.docs, true);
         const optionalSign = hasDefaultValue || account.isOptional ? '?' : '';
         return fragment`${docs}${camelCase(account.identifier)}${optionalSign}: ${getAccountTypeParamName(account.identifier)};`;
@@ -117,11 +115,12 @@ function getAccountsFragment(
 }
 
 function getDataArgumentsFragments(
-    scope: Pick<RenderScope, 'customInstructionData' | 'nameApi'> & {
+    scope: Pick<RenderScope, 'asyncResolvers' | 'customInstructionData' | 'nameApi'> & {
         dataArgsManifest: TypeManifest;
         instructionPath: NodePath<InstructionNode>;
         renamedArgs: Map<string, string>;
         resolvedInputs: ResolvedInstructionInput[];
+        useAsync: boolean;
     },
 ): [Fragment | undefined, Fragment] {
     const { instructionPath, nameApi } = scope;
@@ -151,10 +150,11 @@ function getDataArgumentsFragments(
 }
 
 function getExtraArgumentsFragment(
-    scope: Pick<RenderScope, 'nameApi'> & {
+    scope: Pick<RenderScope, 'asyncResolvers' | 'nameApi'> & {
         instructionPath: NodePath<InstructionNode>;
         renamedArgs: Map<string, string>;
         resolvedInputs: ResolvedInstructionInput[];
+        useAsync: boolean;
     },
 ): Fragment | undefined {
     const { instructionPath, nameApi } = scope;
@@ -174,16 +174,16 @@ function getExtraArgumentsFragment(
 function getArgumentFragment(
     arg: InstructionDataField,
     argsType: string,
-    scope: { renamedArgs: Map<string, string>; resolvedInputs: ResolvedInstructionInput[] },
+    scope: Pick<RenderScope, 'asyncResolvers'> & {
+        renamedArgs: Map<string, string>;
+        resolvedInputs: ResolvedInstructionInput[];
+        useAsync: boolean;
+    },
 ): Fragment | undefined {
-    if (hasInputDefault(arg) && arg.defaultValueStrategy === 'omitted') return;
+    if (!isInputArgument(arg, scope)) return;
     const argName = camelCase(arg.identifier);
     const renamedName = scope.renamedArgs.get(argName) ?? argName;
-    // Arguments defaulting to the payer or the identity have no value in instruction builders,
-    // so they are required there; the program plugin fills in the payer of its client.
-    const resolvedDefault = findResolvedDataField(scope.resolvedInputs, arg)?.resolvedDefaultValue;
-    const hasBuilderDefault = hasInputDefault(arg) && !isNode(resolvedDefault, ['identityValueNode', 'payerValueNode']);
-    const optionalSign = hasBuilderDefault ? '?' : '';
+    const optionalSign = isArgumentFilledIn(arg, scope) ? '?' : '';
     return fragment`${renamedName}${optionalSign}: ${argsType}["${argName}"];`;
 }
 

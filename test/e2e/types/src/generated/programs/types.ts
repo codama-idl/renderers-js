@@ -36,27 +36,53 @@ import {
     type SelfFetchFunctions,
     type SelfPlanAndSendFunctions,
 } from '@solana/kit/program-client-core';
-import { getVaultCodec, type Vault, type VaultArgs } from '../accounts';
+import {
+    getLinkedAccountCodec,
+    getOrderCodec,
+    getProfileCodec,
+    getVaultCodec,
+    type LinkedAccount,
+    type LinkedAccountArgs,
+    type Order,
+    type OrderArgs,
+    type Profile,
+    type ProfileArgs,
+    type Vault,
+    type VaultArgs,
+} from '../accounts';
 import {
     getConfigureInstruction,
+    getLinkedInstructionInstruction,
     parseConfigureInstruction,
+    parseLinkedInstructionInstruction,
     type ConfigureInput,
+    type LinkedInstructionInput,
     type ParsedConfigureInstruction,
+    type ParsedLinkedInstructionInstruction,
 } from '../instructions';
 import { findBudgetPda } from '../pdas';
-import { getAmountEncoder } from '../types';
+import { command, getAmountEncoder, getCommandEncoder } from '../types';
 
 export const TYPES_PROGRAM_ADDRESS =
     'Types11111111111111111111111111111111111111' as Address<'Types11111111111111111111111111111111111111'>;
 
 export enum TypesAccount {
     Vault,
+    LinkedAccount,
+    Order,
+    Profile,
 }
 
 export function identifyTypesAccount(account: { data: ReadonlyUint8Array } | ReadonlyUint8Array): TypesAccount {
     const data = 'data' in account ? account.data : account;
     if (containsBytes(data, getAmountEncoder().encode(3), 0)) {
         return TypesAccount.Vault;
+    }
+    if (containsBytes(data, getU8Encoder().encode(42), 0)) {
+        return TypesAccount.LinkedAccount;
+    }
+    if (containsBytes(data, getCommandEncoder().encode(command('Wait', [30])), 0)) {
+        return TypesAccount.Order;
     }
     throw new SolanaError(SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_ACCOUNT, {
         accountData: data,
@@ -68,6 +94,7 @@ export enum TypesEvent {
     Pinged,
     Named,
     Hashed,
+    LinkedEvent,
 }
 
 export function identifyTypesEvent(event: { data: ReadonlyUint8Array } | ReadonlyUint8Array): TypesEvent {
@@ -81,10 +108,14 @@ export function identifyTypesEvent(event: { data: ReadonlyUint8Array } | Readonl
     if (containsBytes(data, fixEncoderSize(getBytesEncoder(), 8).encode(new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8])), 0)) {
         return TypesEvent.Hashed;
     }
+    if (containsBytes(data, getU8Encoder().encode(42), 0)) {
+        return TypesEvent.LinkedEvent;
+    }
     throw new Error('The provided event could not be identified as a types event.');
 }
 
 export enum TypesInstruction {
+    LinkedInstruction,
     Configure,
 }
 
@@ -92,6 +123,9 @@ export function identifyTypesInstruction(
     instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array,
 ): TypesInstruction {
     const data = 'data' in instruction ? instruction.data : instruction;
+    if (containsBytes(data, getU8Encoder().encode(42), 0)) {
+        return TypesInstruction.LinkedInstruction;
+    }
     if (containsBytes(data, getU8Encoder().encode(1), 0)) {
         return TypesInstruction.Configure;
     }
@@ -101,15 +135,21 @@ export function identifyTypesInstruction(
     });
 }
 
-export type ParsedTypesInstruction<TProgram extends string = 'Types11111111111111111111111111111111111111'> = {
-    instructionType: TypesInstruction.Configure;
-} & ParsedConfigureInstruction<TProgram>;
+export type ParsedTypesInstruction<TProgram extends string = 'Types11111111111111111111111111111111111111'> =
+    | ({ instructionType: TypesInstruction.LinkedInstruction } & ParsedLinkedInstructionInstruction<TProgram>)
+    | ({ instructionType: TypesInstruction.Configure } & ParsedConfigureInstruction<TProgram>);
 
 export function parseTypesInstruction<TProgram extends string>(
     instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
 ): ParsedTypesInstruction<TProgram> {
     const instructionType = identifyTypesInstruction(instruction);
     switch (instructionType) {
+        case TypesInstruction.LinkedInstruction: {
+            return {
+                instructionType: TypesInstruction.LinkedInstruction,
+                ...parseLinkedInstructionInstruction(instruction),
+            };
+        }
         case TypesInstruction.Configure: {
             assertIsInstructionWithAccounts(instruction);
             return { instructionType: TypesInstruction.Configure, ...parseConfigureInstruction(instruction) };
@@ -131,9 +171,18 @@ export type TypesPlugin = {
     parseInstruction: typeof parseTypesInstruction;
 };
 
-export type TypesPluginAccounts = { vault: ReturnType<typeof getVaultCodec> & SelfFetchFunctions<VaultArgs, Vault> };
+export type TypesPluginAccounts = {
+    vault: ReturnType<typeof getVaultCodec> & SelfFetchFunctions<VaultArgs, Vault>;
+    linkedAccount: ReturnType<typeof getLinkedAccountCodec> & SelfFetchFunctions<LinkedAccountArgs, LinkedAccount>;
+    order: ReturnType<typeof getOrderCodec> & SelfFetchFunctions<OrderArgs, Order>;
+    profile: ReturnType<typeof getProfileCodec> & SelfFetchFunctions<ProfileArgs, Profile>;
+};
 
 export type TypesPluginInstructions = {
+    linkedInstruction: (
+        input: LinkedInstructionInput,
+        config?: { programAddress?: Address | HasAddress },
+    ) => ReturnType<typeof getLinkedInstructionInstruction> & SelfPlanAndSendFunctions;
     configure: (
         input: ConfigureInput,
         config?: { programAddress?: Address | HasAddress },
@@ -150,8 +199,20 @@ export function typesProgram(config: { programAddress?: Address | HasAddress } =
     return <T extends TypesPluginRequirements>(client: T): ExtendedClient<T, { types: TypesPlugin }> => {
         return extendClient(client, {
             types: <TypesPlugin>{
-                accounts: { vault: addSelfFetchFunctions(client, getVaultCodec()) },
+                accounts: {
+                    vault: addSelfFetchFunctions(client, getVaultCodec()),
+                    linkedAccount: addSelfFetchFunctions(client, getLinkedAccountCodec()),
+                    order: addSelfFetchFunctions(client, getOrderCodec()),
+                    profile: addSelfFetchFunctions(client, getProfileCodec()),
+                },
                 instructions: {
+                    linkedInstruction: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getLinkedInstructionInstruction(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
+                        ),
                     configure: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,

@@ -21,6 +21,8 @@ export function getProgramPageFragment(
         | 'asyncResolvers'
         | 'customInstructionData'
         | 'erasableSyntax'
+        | 'getImportPath'
+        | 'isInternalNode'
         | 'linkables'
         | 'nameApi'
         | 'renderParentInstructions'

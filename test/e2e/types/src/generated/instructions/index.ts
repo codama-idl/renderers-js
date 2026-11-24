@@ -7,3 +7,4 @@
  */
 
 export * from './configure';
+export * from './linked-instruction';

@@ -82,10 +82,26 @@ export function getIntegerLiteral(value: string): string {
 }
 
 /**
- * The fields of a type when it is a struct, or no fields otherwise, e.g. to find
- * the field a field discriminator of an account, event or instruction refers to.
+ * The fields of a type when it is a struct, following defined type links, or no fields
+ * otherwise, e.g. to find the field a field discriminator of an account, event or
+ * instruction refers to.
+ *
+ * @param type - The type, e.g. the data of an account.
+ * @param path - The path the type was found at, from which its links resolve.
+ * @param linkables - The linkable nodes of the tree.
  */
-export function getStructFields(type: TypeNode | undefined): StructFieldTypeNode[] {
+export function getStructFields(
+    type: TypeNode | undefined,
+    path: NodePath,
+    linkables: LinkableDictionary,
+    followed: ReadonlySet<TypeNode> = new Set(),
+): StructFieldTypeNode[] {
+    if (type && isNode(type, 'definedTypeLinkNode')) {
+        const definedTypePath = linkables.getPath([...path, type]);
+        if (!definedTypePath || followed.has(type)) return [];
+        const linkedType = getLastNodeFromPath(definedTypePath).type;
+        return getStructFields(linkedType, definedTypePath, linkables, new Set([...followed, type]));
+    }
     return type && isNode(type, 'structTypeNode') ? (type.fields ?? []) : [];
 }
 

@@ -38,26 +38,35 @@ import {
     getAllOmittedInstruction,
     getByteDeltasInstruction,
     getChildInstruction,
+    getClaimOwnershipInstruction,
     getContextualDataInstruction,
     getGetBalanceInstruction,
     getGetStatsInstruction,
     getNewTransferInstruction,
     getOldTransferInstruction,
     getResolvedExtrasInstruction,
+    getSetDelegateInstruction,
     getSomeOmittedInstruction,
+    getSyncLimitsInstructionAsync,
+    getUseSecretInstructionAsync,
     parseAllOmittedInstruction,
     parseByteDeltasInstruction,
     parseChildInstruction,
+    parseClaimOwnershipInstruction,
     parseContextualDataInstruction,
     parseGetBalanceInstruction,
     parseGetStatsInstruction,
     parseNewTransferInstruction,
     parseOldTransferInstruction,
     parseResolvedExtrasInstruction,
+    parseSetDelegateInstruction,
     parseSomeOmittedInstruction,
+    parseSyncLimitsInstruction,
+    parseUseSecretInstruction,
     type AllOmittedInput,
     type ByteDeltasInput,
     type ChildInput,
+    type ClaimOwnershipInput,
     type ContextualDataInput,
     type GetBalanceInput,
     type GetStatsInput,
@@ -66,22 +75,31 @@ import {
     type ParsedAllOmittedInstruction,
     type ParsedByteDeltasInstruction,
     type ParsedChildInstruction,
+    type ParsedClaimOwnershipInstruction,
     type ParsedContextualDataInstruction,
     type ParsedGetBalanceInstruction,
     type ParsedGetStatsInstruction,
     type ParsedNewTransferInstruction,
     type ParsedOldTransferInstruction,
     type ParsedResolvedExtrasInstruction,
+    type ParsedSetDelegateInstruction,
     type ParsedSomeOmittedInstruction,
+    type ParsedSyncLimitsInstruction,
+    type ParsedUseSecretInstruction,
     type ResolvedExtrasInput,
+    type SetDelegateInput,
     type SomeOmittedInput,
+    type SyncLimitsAsyncInput,
+    type UseSecretAsyncInput,
 } from '../instructions';
+import { parseSecretResetInstruction, type ParsedSecretResetInstruction } from '../instructions/secret-reset';
 
 export const INSTRUCTIONS_PROGRAM_ADDRESS =
     'Instructions1111111111111111111111111111111' as Address<'Instructions1111111111111111111111111111111'>;
 
 export enum InstructionsAccount {
     Counter,
+    SecretVault,
 }
 
 export enum InstructionsInstruction {
@@ -94,6 +112,11 @@ export enum InstructionsInstruction {
     NewTransfer,
     GetBalance,
     GetStats,
+    SyncLimits,
+    ClaimOwnership,
+    SetDelegate,
+    UseSecret,
+    SecretReset,
     Child,
 }
 
@@ -128,6 +151,21 @@ export function identifyInstructionsInstruction(
     if (containsBytes(data, getU8Encoder().encode(10), 0)) {
         return InstructionsInstruction.GetStats;
     }
+    if (containsBytes(data, getU8Encoder().encode(13), 0)) {
+        return InstructionsInstruction.SyncLimits;
+    }
+    if (containsBytes(data, getU8Encoder().encode(14), 0)) {
+        return InstructionsInstruction.ClaimOwnership;
+    }
+    if (containsBytes(data, getU8Encoder().encode(15), 0)) {
+        return InstructionsInstruction.SetDelegate;
+    }
+    if (containsBytes(data, getU8Encoder().encode(11), 0)) {
+        return InstructionsInstruction.UseSecret;
+    }
+    if (containsBytes(data, getU8Encoder().encode(12), 0)) {
+        return InstructionsInstruction.SecretReset;
+    }
     if (containsBytes(data, getU8Encoder().encode(5), 0)) {
         return InstructionsInstruction.Child;
     }
@@ -147,6 +185,11 @@ export type ParsedInstructionsInstruction<TProgram extends string = 'Instruction
     | ({ instructionType: InstructionsInstruction.NewTransfer } & ParsedNewTransferInstruction<TProgram>)
     | ({ instructionType: InstructionsInstruction.GetBalance } & ParsedGetBalanceInstruction<TProgram>)
     | ({ instructionType: InstructionsInstruction.GetStats } & ParsedGetStatsInstruction<TProgram>)
+    | ({ instructionType: InstructionsInstruction.SyncLimits } & ParsedSyncLimitsInstruction<TProgram>)
+    | ({ instructionType: InstructionsInstruction.ClaimOwnership } & ParsedClaimOwnershipInstruction<TProgram>)
+    | ({ instructionType: InstructionsInstruction.SetDelegate } & ParsedSetDelegateInstruction<TProgram>)
+    | ({ instructionType: InstructionsInstruction.UseSecret } & ParsedUseSecretInstruction<TProgram>)
+    | ({ instructionType: InstructionsInstruction.SecretReset } & ParsedSecretResetInstruction<TProgram>)
     | ({ instructionType: InstructionsInstruction.Child } & ParsedChildInstruction<TProgram>);
 
 export function parseInstructionsInstruction<TProgram extends string>(
@@ -195,6 +238,32 @@ export function parseInstructionsInstruction<TProgram extends string>(
         }
         case InstructionsInstruction.GetStats: {
             return { instructionType: InstructionsInstruction.GetStats, ...parseGetStatsInstruction(instruction) };
+        }
+        case InstructionsInstruction.SyncLimits: {
+            return { instructionType: InstructionsInstruction.SyncLimits, ...parseSyncLimitsInstruction(instruction) };
+        }
+        case InstructionsInstruction.ClaimOwnership: {
+            return {
+                instructionType: InstructionsInstruction.ClaimOwnership,
+                ...parseClaimOwnershipInstruction(instruction),
+            };
+        }
+        case InstructionsInstruction.SetDelegate: {
+            assertIsInstructionWithAccounts(instruction);
+            return {
+                instructionType: InstructionsInstruction.SetDelegate,
+                ...parseSetDelegateInstruction(instruction),
+            };
+        }
+        case InstructionsInstruction.UseSecret: {
+            assertIsInstructionWithAccounts(instruction);
+            return { instructionType: InstructionsInstruction.UseSecret, ...parseUseSecretInstruction(instruction) };
+        }
+        case InstructionsInstruction.SecretReset: {
+            return {
+                instructionType: InstructionsInstruction.SecretReset,
+                ...parseSecretResetInstruction(instruction),
+            };
         }
         case InstructionsInstruction.Child: {
             assertIsInstructionWithAccounts(instruction);
@@ -266,6 +335,22 @@ export type InstructionsPluginInstructions = {
         input: GetStatsInput,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getGetStatsInstruction> & SelfPlanAndSendFunctions;
+    syncLimits: (
+        input: MakeOptional<SyncLimitsAsyncInput, 'owner'>,
+        config?: { programAddress?: Address | HasAddress },
+    ) => ReturnType<typeof getSyncLimitsInstructionAsync> & SelfPlanAndSendFunctions;
+    claimOwnership: (
+        input: MakeOptional<ClaimOwnershipInput, 'newOwner'>,
+        config?: { programAddress?: Address | HasAddress },
+    ) => ReturnType<typeof getClaimOwnershipInstruction> & SelfPlanAndSendFunctions;
+    setDelegate: (
+        input: MakeOptional<SetDelegateInput, 'delegateArg'>,
+        config?: { programAddress?: Address | HasAddress },
+    ) => ReturnType<typeof getSetDelegateInstruction> & SelfPlanAndSendFunctions;
+    useSecret: (
+        input: UseSecretAsyncInput,
+        config?: { programAddress?: Address | HasAddress },
+    ) => ReturnType<typeof getUseSecretInstructionAsync> & SelfPlanAndSendFunctions;
     child: (
         input: ChildInput,
         config?: { programAddress?: Address | HasAddress },
@@ -346,6 +431,37 @@ export function instructionsProgram(config: { programAddress?: Address | HasAddr
                         addSelfPlanAndSendFunctions(
                             client,
                             getGetStatsInstruction({
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
+                        ),
+                    syncLimits: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getSyncLimitsInstructionAsync(
+                                { ...input, owner: input.owner ?? client.payer.address },
+                                { programAddress: instructionConfig?.programAddress ?? config.programAddress },
+                            ),
+                        ),
+                    claimOwnership: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getClaimOwnershipInstruction(
+                                { ...input, newOwner: input.newOwner ?? client.payer.address },
+                                { programAddress: instructionConfig?.programAddress ?? config.programAddress },
+                            ),
+                        ),
+                    setDelegate: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getSetDelegateInstruction(
+                                { ...input, delegateArg: input.delegateArg ?? client.payer.address },
+                                { programAddress: instructionConfig?.programAddress ?? config.programAddress },
+                            ),
+                        ),
+                    useSecret: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getUseSecretInstructionAsync(input, {
                                 programAddress: instructionConfig?.programAddress ?? config.programAddress,
                             }),
                         ),

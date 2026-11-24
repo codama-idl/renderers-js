@@ -11,6 +11,7 @@ import {
     getAccountTypeParamName,
     getDataPathRoot,
     getDocblockFragment,
+    getGeneratedNodeModule,
     getInstructionDataFields,
     getInstructionDataLink,
     getInstructionDependencies,
@@ -24,6 +25,7 @@ import {
     hasRemainingAccountInputs,
     InstructionDataField,
     isAsyncInput,
+    isInputArgument,
     mergeFragments,
     RenderScope,
     ResolvedInstructionDataField,
@@ -52,7 +54,15 @@ import { getInstructionRemainingAccountsFragment } from './instructionRemainingA
 export function getInstructionFunctionFragment(
     scope: Pick<
         RenderScope,
-        'asyncResolvers' | 'customInstructionData' | 'getImportFrom' | 'linkables' | 'nameApi' | 'typeManifestVisitor'
+        | 'asyncResolvers'
+        | 'customInstructionData'
+        | 'getImportFrom'
+        | 'getImportPath'
+        | 'isInternalNode'
+        | 'linkables'
+        | 'nameApi'
+        | 'nonScalarEnums'
+        | 'typeManifestVisitor'
     > & {
         dataArgsManifest: TypeManifest;
         extraArgsManifest: TypeManifest;
@@ -71,7 +81,10 @@ export function getInstructionFunctionFragment(
     const hasData =
         !!getInstructionDataLink(instructionNode, customInstructionData) || hasInstructionData(instructionNode);
     const { hasAnyArgs, hasDataArgs, hasInput, omittedArgs } = getInstructionFunctionInputFlags(instructionNode, scope);
-    const programAddressConstant = use(nameApi.programAddressConstant(programNode.identifier), 'generatedPrograms');
+    const programAddressConstant = use(
+        nameApi.programAddressConstant(programNode.identifier),
+        getGeneratedNodeModule('program', programNode.identifier, scope),
+    );
 
     const functionName = useAsync
         ? nameApi.instructionAsyncFunction(instructionNode.identifier)
@@ -151,8 +164,7 @@ export function getInstructionFunctionInputFlags(
     const argDependencies = instructionDependencies
         .filter(isNodeFilter('dataValueNode'))
         .map(node => getDataPathRoot(node.path));
-    const argIsNotOmitted = (arg: InstructionDataField) =>
-        !(hasInputDefault(arg) && arg.defaultValueStrategy === 'omitted');
+    const argIsNotOmitted = (arg: InstructionDataField) => isInputArgument(arg, scope);
     const argIsDependent = (arg: InstructionDataField) => argDependencies.includes(arg.identifier);
     const argHasDefaultValue = (arg: InstructionDataField) => {
         if (!hasInputDefault(arg)) return false;

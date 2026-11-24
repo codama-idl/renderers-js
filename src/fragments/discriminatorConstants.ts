@@ -10,8 +10,9 @@ import {
 import { NodePath, visit } from '@codama/visitors-core';
 
 import {
-    Fragment,
+    containsDataUnionValue,
     fragment,
+    Fragment,
     getConstantDiscriminatorName,
     getFieldDiscriminatorField,
     getFieldDiscriminatorName,
@@ -32,7 +33,7 @@ import {
  * `CODAMA_ERROR__DISCRIMINATOR_FIELD_HAS_NO_DEFAULT_VALUE` for invalid field discriminators.
  */
 export function getDiscriminatorConstantsFragment(
-    scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'nonScalarEnums' | 'typeManifestVisitor'> & {
         discriminatorNodes: DiscriminatorNode[];
         fields: StructFieldTypeNode[];
         path: NodePath;
@@ -48,7 +49,7 @@ export function getDiscriminatorConstantsFragment(
 
 function getDiscriminatorConstantFragment(
     discriminatorNode: DiscriminatorNode,
-    scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'nonScalarEnums' | 'typeManifestVisitor'> & {
         discriminatorNodes: DiscriminatorNode[];
         fields: StructFieldTypeNode[];
         path: NodePath;
@@ -68,7 +69,7 @@ function getDiscriminatorConstantFragment(
 
 function getConstantDiscriminatorConstantFragment(
     discriminatorNode: ConstantDiscriminatorNode,
-    scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'nonScalarEnums' | 'typeManifestVisitor'> & {
         discriminatorNodes: DiscriminatorNode[];
         path: NodePath;
         prefix: string;
@@ -84,7 +85,7 @@ function getConstantDiscriminatorConstantFragment(
 
 function getFieldDiscriminatorConstantFragment(
     discriminatorNode: FieldDiscriminatorNode,
-    scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'nonScalarEnums' | 'typeManifestVisitor'> & {
         fields: StructFieldTypeNode[];
         path: NodePath;
         prefix: string;
@@ -97,7 +98,7 @@ function getFieldDiscriminatorConstantFragment(
 }
 
 function getConstantFragment(
-    scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'nonScalarEnums' | 'typeManifestVisitor'> & {
         name: string;
         path: NodePath;
         type: TypeNode;
@@ -108,10 +109,15 @@ function getConstantFragment(
     const typeManifest = visit(type, typeManifestVisitor);
     const encoder = typeManifest.encoder;
     const value = getTypedValueFragment(scope.value, type, { linkables, path, typeManifestVisitor });
-    // Primitive values are inferred, whilst others are annotated with their strict type.
+    // Primitive values are inferred, whilst others are annotated with their type: the loose one
+    // for values of data unions, whose helpers return it, and the strict one otherwise.
     const strictType = typeManifest.strictType;
     const isPrimitive = ['string', 'number', 'boolean', 'bigint'].includes(strictType.content);
-    const valueType = isPrimitive ? undefined : strictType;
+    const valueType = isPrimitive
+        ? undefined
+        : containsDataUnionValue(scope.value, path, scope)
+          ? typeManifest.looseType
+          : strictType;
     const constantName = nameApi.constant(name);
     const constantFunction = nameApi.constantFunction(name);
     const readonlyUint8Array = use('type ReadonlyUint8Array', 'solanaCodecsCore');

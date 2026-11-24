@@ -872,15 +872,21 @@ function parseExtraArgumentPlugin(plugin: PluginNode, instruction: InstructionNo
  * Names are compared by their camelCase form since that is how they are emitted.
  *
  * @param instructionPath - The path of the instruction.
+ * @param isInputArgument - Whether an argument is part of the input of the builders, which
+ * should be the input of the synchronous builder, since it accepts every input the
+ * asynchronous one does, and more.
  * @throws `CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE` with the path of the instruction when two
  * of its data fields or extra arguments share a name.
  *
  * @example
  * ```ts
- * getRenamedArgsMap(instructionPath); // Map { 'authority' => 'authorityArg' }
+ * getRenamedArgsMap(instructionPath, arg => isInputArgument(arg, scope)); // Map { 'authority' => 'authorityArg' }
  * ```
  */
-export function getRenamedArgsMap(instructionPath: NodePath<InstructionNode>): Map<string, string> {
+export function getRenamedArgsMap(
+    instructionPath: NodePath<InstructionNode>,
+    isInputArgument: (arg: InstructionDataField) => boolean,
+): Map<string, string> {
     const instruction = getLastNodeFromPath(instructionPath);
     const args = getAllInstructionDataFields(instruction);
     const argNames = args.map(arg => camelCase(arg.identifier));
@@ -891,7 +897,7 @@ export function getRenamedArgsMap(instructionPath: NodePath<InstructionNode>): M
 
     const accountNames = new Set((instruction.accounts ?? []).map(account => camelCase(account.identifier)));
     const conflictingNames = args
-        .filter(arg => !(hasInputDefault(arg) && arg.defaultValueStrategy === 'omitted'))
+        .filter(isInputArgument)
         .map(arg => camelCase(arg.identifier))
         .filter(name => accountNames.has(name));
     return new Map(conflictingNames.map(name => [name, camelCase(`${name}Arg`)]));

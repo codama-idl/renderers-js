@@ -464,3 +464,16 @@ describe('importMapToString with an import extension', () => {
         );
     });
 });
+
+test('it does not mutate the import maps it merges', () => {
+    // Given two import maps sharing a module.
+    const first = addToImportMap(createImportMap(), 'module', ['a']);
+    const second = addToImportMap(createImportMap(), 'module', ['b']);
+
+    // When we merge them.
+    const merged = mergeImportMaps([first, second]);
+
+    // Then the merged map holds both imports whilst the first map is left untouched.
+    expect([...merged.get('module')!.keys()]).toStrictEqual(['a', 'b']);
+    expect([...first.get('module')!.keys()]).toStrictEqual(['a']);
+});

@@ -1,5 +1,5 @@
 import { camelCase } from '@codama/fragments/casing';
-import { InstructionNode, isNode, isNodeFilter, PdaNode, ProgramNode } from '@codama/nodes';
+import { AccountNode, InstructionNode, isNode, isNodeFilter, PdaNode, ProgramNode } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath } from '@codama/visitors-core';
 
 import {
@@ -13,6 +13,7 @@ import {
     getRenderedInstructions,
     getResolvedInstructionInputs,
     hasAsyncFunction,
+    isInputArgument,
     mergeFragments,
     RenderScope,
     ResolvedInstructionInput,
@@ -36,6 +37,7 @@ export function getProgramPluginFragment(
         | 'asyncResolvers'
         | 'customInstructionData'
         | 'erasableSyntax'
+        | 'isInternalNode'
         | 'linkables'
         | 'nameApi'
         | 'renderParentInstructions'
@@ -44,17 +46,16 @@ export function getProgramPluginFragment(
         programPath: NodePath<ProgramNode>;
     },
 ): Fragment | undefined {
-    // The instructions rendered as pages, i.e. leaves and, when requested, their parents.
+    // The plugin exposes the public accounts, PDAs and rendered instructions of the program,
+    // leaving out the ones listed in the `internalNodes` option.
+    const isPublic = (node: { identifier: string }) => !scope.isInternalNode(node.identifier);
     const instructionPaths = getRenderedInstructionPaths(scope.programPath, {
         renderParentInstructions: scope.renderParentInstructions,
-    });
+    }).filter(path => isPublic(getLastNodeFromPath(path)));
     const instructions = instructionPaths.map(path => getLastNodeFromPath(path));
-    if (
-        (scope.programNode.accounts ?? []).length === 0 &&
-        instructions.length === 0 &&
-        (scope.programNode.pdas ?? []).length === 0
-    )
-        return;
+    const accounts = (scope.programNode.accounts ?? []).filter(isPublic);
+    const pdas = (scope.programNode.pdas ?? []).filter(isPublic);
+    if (accounts.length === 0 && instructions.length === 0 && pdas.length === 0) return;
 
     const resolvedInputsByInstruction = new Map(
         instructionPaths.map(path => [
@@ -73,12 +74,21 @@ export function getProgramPluginFragment(
         .map(i => i.identifier);
 
     const renamedArgsByInstruction = new Map(
-        instructionPaths.map(path => [getLastNodeFromPath(path).identifier, getRenamedArgsMap(path)]),
+        instructionPaths.map(path => {
+            const { identifier } = getLastNodeFromPath(path);
+            const resolvedInputs = resolvedInputsByInstruction.get(identifier)!;
+            const renamedArgs = getRenamedArgsMap(path, arg =>
+                isInputArgument(arg, { asyncResolvers: scope.asyncResolvers, resolvedInputs, useAsync: false }),
+            );
+            return [identifier, renamedArgs];
+        }),
     );
     const extendedScope = {
         ...scope,
+        accounts,
         asyncInstructions,
         instructions,
+        pdas,
         renamedArgsByInstruction,
         resolvedInputsByInstruction,
     };
@@ -112,10 +122,12 @@ function hasInstructionIdentifier(programNode: ProgramNode, renderParentInstruct
 function getProgramPluginTypeFragment(
     scope: Pick<RenderScope, 'nameApi' | 'renderParentInstructions'> & {
         instructions: InstructionNode[];
+        accounts: AccountNode[];
+        pdas: PdaNode[];
         programNode: ProgramNode;
     },
 ): Fragment {
-    const { instructions, programNode, nameApi, renderParentInstructions } = scope;
+    const { pdas, accounts, instructions, programNode, nameApi, renderParentInstructions } = scope;
     const programPluginType = nameApi.programPluginType(programNode.identifier);
     const programPluginAccountsType = nameApi.programPluginAccountsType(programNode.identifier);
     const programPluginInstructionsType = nameApi.programPluginInstructionsType(programNode.identifier);
@@ -126,9 +138,9 @@ function getProgramPluginTypeFragment(
 
     const fields = mergeFragments(
         [
-            (programNode.accounts ?? []).length > 0 ? fragment`accounts: ${programPluginAccountsType};` : undefined,
+            accounts.length > 0 ? fragment`accounts: ${programPluginAccountsType};` : undefined,
             instructions.length > 0 ? fragment`instructions: ${programPluginInstructionsType};` : undefined,
-            (programNode.pdas ?? []).length > 0 ? fragment`pdas: ${programPluginPdasType};` : undefined,
+            pdas.length > 0 ? fragment`pdas: ${programPluginPdasType};` : undefined,
             hasAccountIdentifier(programNode)
                 ? fragment`identifyAccount: typeof ${accountsIdentifierFunction};`
                 : undefined,
@@ -143,15 +155,15 @@ function getProgramPluginTypeFragment(
 }
 
 function getProgramPluginAccountsTypeFragment(
-    scope: Pick<RenderScope, 'nameApi'> & { programNode: ProgramNode },
+    scope: Pick<RenderScope, 'nameApi'> & { accounts: AccountNode[]; programNode: ProgramNode },
 ): Fragment | undefined {
-    const { programNode, nameApi } = scope;
-    if ((programNode.accounts ?? []).length === 0) return;
+    const { accounts, programNode, nameApi } = scope;
+    if (accounts.length === 0) return;
     const programPluginAccountsType = nameApi.programPluginAccountsType(programNode.identifier);
     const selfFetchFunctions = use('type SelfFetchFunctions', 'solanaProgramClientCore');
 
     const fields = mergeFragments(
-        (programNode.accounts ?? []).map(account => {
+        accounts.map(account => {
             const name = nameApi.programPluginAccountKey(account.identifier);
             const codecFunction = use('type ' + nameApi.codecFunction(account.identifier), 'generatedAccounts');
             const fromType = use('type ' + nameApi.dataArgsType(account.identifier), 'generatedAccounts');
@@ -206,14 +218,14 @@ function getProgramPluginInstructionsTypeFragment(
 }
 
 function getProgramPluginPdasTypeFragment(
-    scope: Pick<RenderScope, 'nameApi'> & { programNode: ProgramNode },
+    scope: Pick<RenderScope, 'nameApi'> & { pdas: PdaNode[]; programNode: ProgramNode },
 ): Fragment | undefined {
-    const { programNode, nameApi } = scope;
-    if ((programNode.pdas ?? []).length === 0) return;
+    const { pdas, programNode, nameApi } = scope;
+    if (pdas.length === 0) return;
     const programPluginPdasType = nameApi.programPluginPdasType(programNode.identifier);
 
     const fields = mergeFragments(
-        (programNode.pdas ?? []).map(pda => {
+        pdas.map(pda => {
             const name = nameApi.programPluginPdaKey(pda.identifier);
             const pdaFindFunction = use('type ' + nameApi.pdaFindFunction(pda.identifier), 'generatedPdas');
             return fragment`${name}: typeof ${pdaFindFunction};`;
@@ -225,13 +237,13 @@ function getProgramPluginPdasTypeFragment(
 }
 
 function getProgramPluginPdasObjectFragment(
-    scope: Pick<RenderScope, 'nameApi'> & { programNode: ProgramNode },
+    scope: Pick<RenderScope, 'nameApi'> & { pdas: PdaNode[]; programNode: ProgramNode },
 ): Fragment | undefined {
-    const { programNode, nameApi } = scope;
-    if ((programNode.pdas ?? []).length === 0) return;
+    const { pdas, programNode, nameApi } = scope;
+    if (pdas.length === 0) return;
 
     const fields = mergeFragments(
-        (programNode.pdas ?? []).map(pda => {
+        pdas.map(pda => {
             const name = nameApi.programPluginPdaKey(pda.identifier);
             const pdaFindFunction = use(nameApi.pdaFindFunction(pda.identifier), 'generatedPdas');
             if (!isPdaDerivedFromProgram(pda, programNode)) return fragment`${name}: ${pdaFindFunction}`;
@@ -248,18 +260,19 @@ function getProgramPluginPdasObjectFragment(
 function getProgramPluginRequirementsTypeFragment(
     scope: Pick<RenderScope, 'nameApi'> & {
         instructions: InstructionNode[];
+        accounts: AccountNode[];
         programNode: ProgramNode;
         renamedArgsByInstruction: RenamedArgsByInstruction;
         resolvedInputsByInstruction: ResolvedInputsByInstruction;
     },
 ): Fragment {
-    const { instructions, programNode, nameApi } = scope;
+    const { accounts, instructions, programNode, nameApi } = scope;
     const programRequirementsType = nameApi.programPluginRequirementsType(programNode.identifier);
     const clientWithRpc = fragment`${use('type ClientWithRpc', 'solanaPluginInterfaces')}<${use('type GetAccountInfoApi', 'solanaRpcApi')} & ${use('type GetMultipleAccountsApi', 'solanaRpcApi')}>`;
     const clientWithPayer = use('type ClientWithPayer', 'solanaPluginInterfaces');
     const clientWithTransactionPlanning = use('type ClientWithTransactionPlanning', 'solanaPluginInterfaces');
     const clientWithTransactionSending = use('type ClientWithTransactionSending', 'solanaPluginInterfaces');
-    const hasAccounts = (programNode.accounts ?? []).length > 0;
+    const hasAccounts = accounts.length > 0;
     const hasInstructions = instructions.length > 0;
 
     const requirementList = [
@@ -283,14 +296,16 @@ function getProgramPluginFunctionFragment(
         RenderScope,
         'asyncResolvers' | 'customInstructionData' | 'erasableSyntax' | 'nameApi' | 'renderParentInstructions'
     > & {
+        accounts: AccountNode[];
         asyncInstructions: string[];
         instructions: InstructionNode[];
+        pdas: PdaNode[];
         programNode: ProgramNode;
         renamedArgsByInstruction: RenamedArgsByInstruction;
         resolvedInputsByInstruction: ResolvedInputsByInstruction;
     },
 ): Fragment {
-    const { instructions, programNode, nameApi, renderParentInstructions, erasableSyntax } = scope;
+    const { pdas, instructions, programNode, nameApi, renderParentInstructions, erasableSyntax } = scope;
     const programPluginFunction = nameApi.programPluginFunction(programNode.identifier);
     const programPluginType = nameApi.programPluginType(programNode.identifier);
     const programPluginRequirementsType = nameApi.programPluginRequirementsType(programNode.identifier);
@@ -323,7 +338,7 @@ function getProgramPluginFunctionFragment(
         : fragment`<${programPluginType}>{ ${fields} }`;
 
     const hasProgramAddressConfig =
-        instructions.length > 0 || (programNode.pdas ?? []).some(pda => isPdaDerivedFromProgram(pda, programNode));
+        instructions.length > 0 || pdas.some(pda => isPdaDerivedFromProgram(pda, programNode));
     const configParameter = hasProgramAddressConfig
         ? fragment`config: { programAddress?: ${programAddressType} } = {}`
         : '';
@@ -336,13 +351,13 @@ function getProgramPluginFunctionFragment(
 }
 
 function getProgramPluginAccountsObjectFragment(
-    scope: Pick<RenderScope, 'nameApi'> & { programNode: ProgramNode },
+    scope: Pick<RenderScope, 'nameApi'> & { accounts: AccountNode[] },
 ): Fragment | undefined {
-    const { programNode, nameApi } = scope;
-    if ((programNode.accounts ?? []).length === 0) return;
+    const { accounts, nameApi } = scope;
+    if (accounts.length === 0) return;
 
     const fields = mergeFragments(
-        (programNode.accounts ?? []).map(account => {
+        accounts.map(account => {
             const name = nameApi.programPluginAccountKey(account.identifier);
             const addSelfFetchFunctions = use('addSelfFetchFunctions', 'solanaProgramClientCore');
             const codecFunction = use(nameApi.codecFunction(account.identifier), 'generatedAccounts');

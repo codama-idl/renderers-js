@@ -3,7 +3,10 @@ import { camelCase } from '@codama/fragments/casing';
 import { AccountLinkNode, DefinedTypeLinkNode, InstructionLinkNode, PdaLinkNode, ProgramLinkNode } from '@codama/nodes';
 
 import { ParsedCustomDataOptions } from './customData';
+import { getGeneratedNodeModule, type IsInternalNodeFunction } from './generatedModules';
 import { InstructionResolver, isInstructionResolver } from './instructionInputs';
+import type { NameApi } from './nameTransformers';
+import type { GetImportPathFunction } from './options';
 
 /**
  * Maps the names of linked nodes to the module they should be imported from.
@@ -39,6 +42,7 @@ export function getImportFromFactory(
     overrides: LinkOverrides,
     customAccountData: ParsedCustomDataOptions,
     customInstructionData: ParsedCustomDataOptions,
+    scope: { getImportPath: GetImportPathFunction; isInternalNode: IsInternalNodeFunction; nameApi: NameApi },
 ): GetImportFromFunction {
     const customDataOverrides = Object.fromEntries(
         [...customAccountData.values(), ...customInstructionData.values()].map(({ importFrom, importAs }) => [
@@ -63,15 +67,19 @@ export function getImportFromFactory(
         const kind = node.kind;
         switch (kind) {
             case 'accountLinkNode':
-                return linkOverrides.accounts[name] ?? 'generatedAccounts';
+                return linkOverrides.accounts[name] ?? getGeneratedNodeModule('account', node.identifier, scope);
             case 'definedTypeLinkNode':
-                return linkOverrides.definedTypes[name] ?? 'generatedTypes';
+                return (
+                    linkOverrides.definedTypes[name] ?? getGeneratedNodeModule('definedType', node.identifier, scope)
+                );
             case 'instructionLinkNode':
-                return linkOverrides.instructions[name] ?? 'generatedInstructions';
+                return (
+                    linkOverrides.instructions[name] ?? getGeneratedNodeModule('instruction', node.identifier, scope)
+                );
             case 'pdaLinkNode':
-                return linkOverrides.pdas[name] ?? 'generatedPdas';
+                return linkOverrides.pdas[name] ?? getGeneratedNodeModule('pda', node.identifier, scope);
             case 'programLinkNode':
-                return linkOverrides.programs[name] ?? 'generatedPrograms';
+                return linkOverrides.programs[name] ?? getGeneratedNodeModule('program', node.identifier, scope);
             default:
                 throw new CodamaError(CODAMA_ERROR__UNEXPECTED_NODE_KIND, {
                     expectedKinds: [

@@ -4,10 +4,12 @@ import { getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
 
 import {
     Fragment,
-    getInstructionDataFields,
+    getInstructionDataNode,
     getInstructionExtraArgumentsNode,
     getProgramNodeFromPath,
     getRenamedArgsMap,
+    getStructFields,
+    isInputArgument,
     mergeFragments,
     RenderScope,
     ResolvedInstructionInput,
@@ -35,8 +37,11 @@ export function getInstructionPageFragment(
         | 'customInstructionData'
         | 'erasableSyntax'
         | 'getImportFrom'
+        | 'getImportPath'
+        | 'isInternalNode'
         | 'linkables'
         | 'nameApi'
+        | 'nonScalarEnums'
         | 'typeManifestVisitor'
     > & {
         instructionPath: NodePath<InstructionNode>;
@@ -58,7 +63,10 @@ export function getInstructionPageFragment(
             }),
             scope.typeManifestVisitor,
         ),
-        renamedArgs: getRenamedArgsMap(scope.instructionPath),
+        // Synchronous builders accept every input asynchronous ones do, and more.
+        renamedArgs: getRenamedArgsMap(scope.instructionPath, arg =>
+            isInputArgument(arg, { ...scope, useAsync: false }),
+        ),
     };
     if (childScope.renamedArgs.size > 0) {
         logWarn(
@@ -73,7 +81,7 @@ export function getInstructionPageFragment(
             getDiscriminatorConstantsFragment({
                 ...childScope,
                 discriminatorNodes: node.discriminators ?? [],
-                fields: getInstructionDataFields(node),
+                fields: getStructFields(getInstructionDataNode(node), scope.instructionPath, scope.linkables),
                 path: childScope.instructionPath,
                 prefix: node.identifier,
             }),
