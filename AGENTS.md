@@ -125,6 +125,7 @@ Page builders mostly compose subfragments rather than embedding all logic inline
 - `async.ts`: decide whether instructions need async variants and compute resolver dependencies.
 - `formatCode.ts`: Prettier integration.
 - `typeManifest.ts`: helpers for building and merging type manifests.
+- `generatedModules.ts`: decide the module a generated node is imported from, i.e. its folder barrel, or its own file for nodes listed in `internalNodes`, which barrels leave out. Use it wherever a generated node is imported instead of hardcoding a `generated*` module.
 - `renderedInstructions.ts`: decide which instructions the client includes, e.g. leaves, parents with `renderParentInstructions` and never archived ones, and document their lifecycle. Use it wherever instructions are listed instead of traversing the program.
 - `typedValues.ts`: render value nodes for their type, e.g. `42n` for a `u64` or `lamports(5000n)` for a SOL amount. Use it wherever a value has a known type instead of visiting the value alone.
 - `codecs.ts`: codec-related helpers.

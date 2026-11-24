@@ -14,6 +14,7 @@ export function getAccountSizeHelpersFragment(
 ): Fragment | undefined {
     const { accountPath, nameApi } = scope;
     const accountNode = getLastNodeFromPath(accountPath);
+    // The declared size of the account, which may exceed the size of its data, e.g. for padding.
     const size = accountNode.size ?? scope.size;
     if (size == null) return;
 

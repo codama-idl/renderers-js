@@ -3,6 +3,7 @@ import type { LinkableDictionary } from '@codama/visitors-core';
 import type { TypeManifestVisitor } from '../visitors';
 import type { CustomDataOptions, ParsedCustomDataOptions } from './customData';
 import { PrettierOptions } from './formatCode';
+import type { IsInternalNodeFunction } from './generatedModules';
 import type { GetImportFromFunction, LinkOverrides } from './linkOverrides';
 import type { NameApi, NameTransformers } from './nameTransformers';
 
@@ -101,6 +102,8 @@ export type RenderScope = {
     erasableSyntax: boolean;
     getImportFrom: GetImportFromFunction;
     getImportPath: GetImportPathFunction;
+    /** Whether a node is listed in the `internalNodes` option, and thus left out of barrels. */
+    isInternalNode: IsInternalNodeFunction;
     kitImportStrategy: KitImportStrategy;
     linkables: LinkableDictionary;
     nameApi: NameApi;

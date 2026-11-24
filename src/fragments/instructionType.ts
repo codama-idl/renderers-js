@@ -6,6 +6,7 @@ import {
     Fragment,
     fragment,
     getAccountTypeParamName,
+    getGeneratedNodeModule,
     getInstructionDataLink,
     getProgramNodeFromPath,
     hasInstructionData,
@@ -24,7 +25,7 @@ import { getInstructionAccountTypeParamFragment } from './instructionAccountType
  * @return The fragment of the instruction type.
  */
 export function getInstructionTypeFragment(
-    scope: Pick<RenderScope, 'customInstructionData' | 'linkables' | 'nameApi'> & {
+    scope: Pick<RenderScope, 'customInstructionData' | 'getImportPath' | 'isInternalNode' | 'linkables' | 'nameApi'> & {
         instructionPath: NodePath<InstructionNode>;
     },
 ): Fragment {
@@ -36,7 +37,10 @@ export function getInstructionTypeFragment(
         !!getInstructionDataLink(instructionNode, customInstructionData) || hasInstructionData(instructionNode);
 
     const instructionType = nameApi.instructionType(instructionNode.identifier);
-    const programAddressConstant = use(nameApi.programAddressConstant(programNode.identifier), 'generatedPrograms');
+    const programAddressConstant = use(
+        nameApi.programAddressConstant(programNode.identifier),
+        getGeneratedNodeModule('program', programNode.identifier, scope),
+    );
 
     const accountTypeParams = mergeFragments(
         (instructionNode.accounts ?? []).map(account =>

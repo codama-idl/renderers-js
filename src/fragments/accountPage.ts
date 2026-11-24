@@ -19,7 +19,14 @@ import { getDiscriminatorConstantsFragment } from './discriminatorConstants';
 export function getAccountPageFragment(
     scope: Pick<
         RenderScope,
-        'customAccountData' | 'erasableSyntax' | 'linkables' | 'nameApi' | 'typeManifestVisitor'
+        | 'customAccountData'
+        | 'erasableSyntax'
+        | 'getImportPath'
+        | 'isInternalNode'
+        | 'linkables'
+        | 'nameApi'
+        | 'nonScalarEnums'
+        | 'typeManifestVisitor'
     > & {
         accountPath: NodePath<AccountNode>;
         size: number | null;
@@ -30,7 +37,7 @@ export function getAccountPageFragment(
     getProgramNodeFromPath(scope.accountPath);
 
     const typeManifest = visit(node, scope.typeManifestVisitor);
-    const fields = getStructFields(node.data);
+    const fields = getStructFields(node.data, scope.accountPath, scope.linkables);
     return mergeFragments(
         [
             getDiscriminatorConstantsFragment({

@@ -23,7 +23,7 @@ import { getTypeWithCodecFragment } from './typeWithCodec';
  * @returns A {@link Fragment} containing the full event page.
  */
 export function getEventPageFragment(
-    scope: Pick<RenderScope, 'erasableSyntax' | 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<RenderScope, 'erasableSyntax' | 'linkables' | 'nameApi' | 'nonScalarEnums' | 'typeManifestVisitor'> & {
         eventPath: NodePath<EventNode>;
         size: number | null;
     },
@@ -35,7 +35,7 @@ export function getEventPageFragment(
     const { nameApi } = scope;
     const typeManifest = visit(node, scope.typeManifestVisitor);
     const eventDataName = nameApi.eventDataType(node.identifier);
-    const fields = getStructFields(node.data);
+    const fields = getStructFields(node.data, scope.eventPath, scope.linkables);
 
     return mergeFragments(
         [
@@ -72,7 +72,7 @@ export function getEventPageFragment(
  * @returns A {@link Fragment} containing the parse function.
  */
 function getEventParseFunctionFragment(
-    scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         eventPath: NodePath<EventNode>;
         node: EventNode;
     },
@@ -96,7 +96,7 @@ function getEventParseFunctionFragment(
         ...scope,
         dataName: 'data',
         discriminators,
-        fields: getStructFields(node.data),
+        fields: getStructFields(node.data, scope.eventPath, scope.linkables),
         ifTrue: `return ${decoderFunction}().decode(data);`,
     });
 

@@ -6,11 +6,12 @@ import { getLastNodeFromPath, NodePath, pipe, visit } from '@codama/visitors-cor
 import {
     findResolvedAccount,
     findResolvedDataField,
-    fragment,
     Fragment,
+    fragment,
     getAccountTypeParamName,
     getDataPathRoot,
     getDocblockFragment,
+    getGeneratedNodeModule,
     getInstructionDataFields,
     getInstructionDataLink,
     getInstructionDependencies,
@@ -52,7 +53,14 @@ import { getInstructionRemainingAccountsFragment } from './instructionRemainingA
 export function getInstructionFunctionFragment(
     scope: Pick<
         RenderScope,
-        'asyncResolvers' | 'customInstructionData' | 'getImportFrom' | 'linkables' | 'nameApi' | 'typeManifestVisitor'
+        | 'asyncResolvers'
+        | 'customInstructionData'
+        | 'getImportFrom'
+        | 'getImportPath'
+        | 'isInternalNode'
+        | 'linkables'
+        | 'nameApi'
+        | 'typeManifestVisitor'
     > & {
         dataArgsManifest: TypeManifest;
         extraArgsManifest: TypeManifest;
@@ -71,7 +79,10 @@ export function getInstructionFunctionFragment(
     const hasData =
         !!getInstructionDataLink(instructionNode, customInstructionData) || hasInstructionData(instructionNode);
     const { hasAnyArgs, hasDataArgs, hasInput, omittedArgs } = getInstructionFunctionInputFlags(instructionNode, scope);
-    const programAddressConstant = use(nameApi.programAddressConstant(programNode.identifier), 'generatedPrograms');
+    const programAddressConstant = use(
+        nameApi.programAddressConstant(programNode.identifier),
+        getGeneratedNodeModule('program', programNode.identifier, scope),
+    );
 
     const functionName = useAsync
         ? nameApi.instructionAsyncFunction(instructionNode.identifier)

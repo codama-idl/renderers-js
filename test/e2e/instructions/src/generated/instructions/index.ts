@@ -16,3 +16,5 @@ export * from './new-transfer';
 export * from './old-transfer';
 export * from './resolved-extras';
 export * from './some-omitted';
+export * from './sync-limits';
+export * from './use-secret';

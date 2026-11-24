@@ -102,12 +102,10 @@ function getAccountsFragment(
     const instructionNode = getLastNodeFromPath(instructionPath);
 
     const fragments = (instructionNode.accounts ?? []).map(account => {
-        const resolvedAccount = findResolvedAccount(resolvedInputs, account);
-        const hasDefaultValue =
-            !!resolvedAccount &&
-            (!!resolvedAccount.resolver || !!resolvedAccount.resolvedDefaultValue) &&
-            !isNode(resolvedAccount.resolvedDefaultValue, ['identityValueNode', 'payerValueNode']) &&
-            (useAsync || !isAsyncInput(resolvedAccount, asyncResolvers));
+        const hasDefaultValue = isFilledInByBuilder(findResolvedAccount(resolvedInputs, account), {
+            asyncResolvers,
+            useAsync,
+        });
         const docs = getDocblockFragment(account.docs, true);
         const optionalSign = hasDefaultValue || account.isOptional ? '?' : '';
         return fragment`${docs}${camelCase(account.identifier)}${optionalSign}: ${getAccountTypeParamName(account.identifier)};`;
@@ -117,11 +115,12 @@ function getAccountsFragment(
 }
 
 function getDataArgumentsFragments(
-    scope: Pick<RenderScope, 'customInstructionData' | 'nameApi'> & {
+    scope: Pick<RenderScope, 'asyncResolvers' | 'customInstructionData' | 'nameApi'> & {
         dataArgsManifest: TypeManifest;
         instructionPath: NodePath<InstructionNode>;
         renamedArgs: Map<string, string>;
         resolvedInputs: ResolvedInstructionInput[];
+        useAsync: boolean;
     },
 ): [Fragment | undefined, Fragment] {
     const { instructionPath, nameApi } = scope;
@@ -151,10 +150,11 @@ function getDataArgumentsFragments(
 }
 
 function getExtraArgumentsFragment(
-    scope: Pick<RenderScope, 'nameApi'> & {
+    scope: Pick<RenderScope, 'asyncResolvers' | 'nameApi'> & {
         instructionPath: NodePath<InstructionNode>;
         renamedArgs: Map<string, string>;
         resolvedInputs: ResolvedInstructionInput[];
+        useAsync: boolean;
     },
 ): Fragment | undefined {
     const { instructionPath, nameApi } = scope;
@@ -174,17 +174,39 @@ function getExtraArgumentsFragment(
 function getArgumentFragment(
     arg: InstructionDataField,
     argsType: string,
-    scope: { renamedArgs: Map<string, string>; resolvedInputs: ResolvedInstructionInput[] },
+    scope: Pick<RenderScope, 'asyncResolvers'> & {
+        renamedArgs: Map<string, string>;
+        resolvedInputs: ResolvedInstructionInput[];
+        useAsync: boolean;
+    },
 ): Fragment | undefined {
-    if (hasInputDefault(arg) && arg.defaultValueStrategy === 'omitted') return;
+    const hasCodecDefault = hasInputDefault(arg) && !findResolvedDataField(scope.resolvedInputs, arg);
+    const isFilledIn = hasCodecDefault || isFilledInByBuilder(findResolvedDataField(scope.resolvedInputs, arg), scope);
+    // Omitted arguments are left out of the input when something fills them in. Otherwise,
+    // e.g. when defaulting to the payer, they are required, since nothing else provides them.
+    if (isFilledIn && arg.defaultValueStrategy === 'omitted') return;
     const argName = camelCase(arg.identifier);
     const renamedName = scope.renamedArgs.get(argName) ?? argName;
-    // Arguments defaulting to the payer or the identity have no value in instruction builders,
-    // so they are required there; the program plugin fills in the payer of its client.
-    const resolvedDefault = findResolvedDataField(scope.resolvedInputs, arg)?.resolvedDefaultValue;
-    const hasBuilderDefault = hasInputDefault(arg) && !isNode(resolvedDefault, ['identityValueNode', 'payerValueNode']);
-    const optionalSign = hasBuilderDefault ? '?' : '';
+    const optionalSign = isFilledIn ? '?' : '';
     return fragment`${renamedName}${optionalSign}: ${argsType}["${argName}"];`;
+}
+
+/**
+ * Whether a builder fills in an input when it is not provided: it has a default value or a
+ * resolver, which is not asynchronous for synchronous builders, and does not default to the
+ * payer or the identity, which builders have no value for. The program plugin fills in the
+ * payer of its client instead.
+ */
+function isFilledInByBuilder(
+    input: ResolvedInstructionInput | undefined,
+    scope: Pick<RenderScope, 'asyncResolvers'> & { useAsync: boolean },
+): boolean {
+    return (
+        !!input &&
+        (!!input.resolver || !!input.resolvedDefaultValue) &&
+        !isNode(input.resolvedDefaultValue, ['identityValueNode', 'payerValueNode']) &&
+        (scope.useAsync || !isAsyncInput(input, scope.asyncResolvers))
+    );
 }
 
 function getRemainingAccountsFragment(instructionNode: InstructionNode): Fragment | undefined {

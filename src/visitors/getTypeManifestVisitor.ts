@@ -556,7 +556,7 @@ export function getTypeManifestVisitor(input: {
                 },
 
                 visitFloatType(floatType) {
-                    return renderNumberType(floatType.format, floatType.endian, nameApi);
+                    return renderNumberType(floatType.format, floatType.endian);
                 },
 
                 visitFloatValue(node) {
@@ -580,7 +580,7 @@ export function getTypeManifestVisitor(input: {
                 },
 
                 visitIntegerType(integerType) {
-                    return renderNumberType(integerType.format, integerType.endian, nameApi);
+                    return renderNumberType(integerType.format, integerType.endian);
                 },
 
                 visitIntegerValue(node) {
@@ -966,13 +966,12 @@ function isConstantEncodedAsItsValue(node: ConstantValueNode): boolean {
 }
 
 /** Renders the codecs and types of a number from its format and endianness. */
-function renderNumberType(
-    format: FloatFormat | IntegerFormat,
-    endian: 'be' | 'le' | undefined,
-    nameApi: NameApi,
-): TypeManifest {
-    const encoderFunction = use(nameApi.encoderFunction(format), 'solanaCodecsNumbers');
-    const decoderFunction = use(nameApi.decoderFunction(format), 'solanaCodecsNumbers');
+function renderNumberType(format: FloatFormat | IntegerFormat, endian: 'be' | 'le' | undefined): TypeManifest {
+    // Kit names its number codecs after their format, e.g. `getU64Encoder`, regardless of the
+    // name transformers, which only name the codecs this renderer generates.
+    const kitName = format === 'shortU16' ? 'ShortU16' : format.toUpperCase();
+    const encoderFunction = use(`get${kitName}Encoder`, 'solanaCodecsNumbers');
+    const decoderFunction = use(`get${kitName}Decoder`, 'solanaCodecsNumbers');
     const isBigNumber = format !== 'f32' && format !== 'f64' && isBigIntegerFormat(format);
     // Single-byte and variable-length formats have no byte order, so their codecs take no endianness.
     const endianness =

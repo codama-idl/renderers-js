@@ -13,6 +13,9 @@ import {
     getInstructionsErrorMessage,
     getResolvedExtrasInstruction,
     getSomeOmittedInstruction,
+    getSyncLimitsInstruction,
+    getSyncLimitsInstructionAsync,
+    getSyncLimitsInstructionDataDecoder,
     identifyInstructionsInstruction,
     INSTRUCTIONS_ERROR__TEMPLATED,
     InstructionsInstruction,
@@ -92,4 +95,14 @@ test('it leaves archived instructions out of the client', () => {
     expect(Object.keys(InstructionsInstruction)).not.toContain('AncientTransfer');
     expect(() => identifyInstructionsInstruction(new Uint8Array([8]))).toThrow();
     expect(identifyInstructionsInstruction(new Uint8Array([6]))).toBe(InstructionsInstruction.OldTransfer);
+});
+
+test('it requires the inputs synchronous builders cannot fill in', async () => {
+    // Given an owner defaulting to the payer and a fee resolved asynchronously.
+    const syncInstruction = getSyncLimitsInstruction({ fee: 7, owner });
+    const asyncInstruction = await getSyncLimitsInstructionAsync({ owner });
+
+    // Then the synchronous builder encodes the given fee, and the asynchronous one resolves it.
+    expect(getSyncLimitsInstructionDataDecoder().decode(syncInstruction.data).fee).toBe(7n);
+    expect(getSyncLimitsInstructionDataDecoder().decode(asyncInstruction.data).fee).toBe(5000n);
 });

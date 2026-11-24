@@ -7,5 +7,6 @@
  */
 
 export * from './hashed';
+export * from './linked-event';
 export * from './named';
 export * from './pinged';

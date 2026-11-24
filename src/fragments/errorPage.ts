@@ -1,7 +1,16 @@
 import { camelCase } from '@codama/fragments/casing';
 import { getTextNodeContent, ProgramNode } from '@codama/nodes';
 
-import { fragment, Fragment, getDocblockFragment, getStringLiteral, mergeFragments, RenderScope, use } from '../utils';
+import {
+    Fragment,
+    fragment,
+    getDocblockFragment,
+    getGeneratedNodeModule,
+    getStringLiteral,
+    mergeFragments,
+    RenderScope,
+    use,
+} from '../utils';
 
 /**
  * Renders the error page of a program: a constant per error code, the union of error codes,
@@ -10,7 +19,9 @@ import { fragment, Fragment, getDocblockFragment, getStringLiteral, mergeFragmen
  * @param scope - The render scope and the program.
  * @return The fragment of the error page.
  */
-export function getErrorPageFragment(scope: Pick<RenderScope, 'nameApi'> & { programNode: ProgramNode }): Fragment {
+export function getErrorPageFragment(
+    scope: Pick<RenderScope, 'getImportPath' | 'isInternalNode' | 'nameApi'> & { programNode: ProgramNode },
+): Fragment {
     return mergeFragments(
         [
             getConstantsFragment(scope),
@@ -84,9 +95,14 @@ function getErrorMessageFunctionFragment(scope: Pick<RenderScope, 'nameApi'> & {
 }`;
 }
 
-function getIsErrorFunctionFragment(scope: Pick<RenderScope, 'nameApi'> & { programNode: ProgramNode }): Fragment {
+function getIsErrorFunctionFragment(
+    scope: Pick<RenderScope, 'getImportPath' | 'isInternalNode' | 'nameApi'> & { programNode: ProgramNode },
+): Fragment {
     const { programNode, nameApi } = scope;
-    const programAddressConstant = use(nameApi.programAddressConstant(programNode.identifier), 'generatedPrograms');
+    const programAddressConstant = use(
+        nameApi.programAddressConstant(programNode.identifier),
+        getGeneratedNodeModule('program', programNode.identifier, scope),
+    );
     const functionName = nameApi.programIsErrorFunction(programNode.identifier);
     const programErrorUnion = nameApi.programErrorUnion(programNode.identifier);
     const addressType = use('type Address', 'solanaAddresses');

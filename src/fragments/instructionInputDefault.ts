@@ -6,6 +6,7 @@ import {
 import { mapFragmentContent, setFragmentContent } from '@codama/fragments';
 import { camelCase } from '@codama/fragments/casing';
 import {
+    ConditionalValueNode,
     IdentifierString,
     InstructionInputValueNode,
     InstructionNode,
@@ -19,8 +20,9 @@ import {
 import { findProgramNodeFromPath, getLastNodeFromPath, NodePath, pipe, visit } from '@codama/visitors-core';
 
 import {
-    fragment,
     Fragment,
+    fragment,
+    getBigIntLiteral,
     getDataPathExpression,
     getDataPathLabel,
     getStringLiteral,
@@ -285,10 +287,21 @@ export function getInstructionInputDefaultFragment(
                 ? `accounts.${camelCase(defaultValue.condition.identifier)}.value`
                 : getDataPathExpression(defaultValue.condition.path);
             if (defaultValue.value) {
-                const comparedValue = visit(defaultValue.value, typeManifestVisitor).value;
-                conditionalFragment = mergeFragments([conditionalFragment, comparedValue], c => c[0]);
+                const comparison = getConditionComparisonFragments(
+                    defaultValue,
+                    defaultValue.value,
+                    comparedInputName,
+                    {
+                        ...scope,
+                        getAddressFromResolvedInstructionAccount,
+                    },
+                );
+                conditionalFragment = mergeFragments(
+                    [conditionalFragment, comparison.input, comparison.value],
+                    c => c[0],
+                );
                 const operator = negatedCondition ? '!==' : '===';
-                condition = `${comparedInputName} ${operator} ${comparedValue.content}`;
+                condition = `${comparison.input.content} ${operator} ${comparison.value.content}`;
             } else {
                 condition = negatedCondition ? `!${comparedInputName}` : comparedInputName;
             }
@@ -358,4 +371,50 @@ function isPdaDerivedFromInstructionProgram(
 function hasVariablePdaSeeds(pdaPath: NodePath<PdaNode> | undefined): boolean {
     if (!pdaPath) return false;
     return (getLastNodeFromPath(pdaPath).seeds ?? []).some(isNodeFilter('variablePdaSeedNode'));
+}
+
+/**
+ * The expressions compared by a conditional default value with `===`: the input it reads and
+ * the value it compares it with. Integers are compared as `bigint`s, since inputs accept both
+ * numbers and bigints, accounts are compared by address, and strings, booleans and addresses
+ * as they are.
+ *
+ * @throws `CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE` for values that cannot be compared with
+ * `===`, e.g. options or structs, whose instances are never identical.
+ */
+function getConditionComparisonFragments(
+    conditional: ConditionalValueNode,
+    value: ValueNode,
+    comparedInputName: string,
+    scope: Pick<RenderScope, 'typeManifestVisitor'> & {
+        getAddressFromResolvedInstructionAccount: Fragment;
+        input: ResolvedInstructionInput;
+    },
+): { input: Fragment; value: Fragment } {
+    const renderedValue = visit(value, scope.typeManifestVisitor).value;
+    if (isNode(conditional.condition, 'accountValueNode')) {
+        if (!isNode(value, 'publicKeyValueNode')) throwUnsupportedComparison(conditional, scope);
+        const name = camelCase(conditional.condition.identifier);
+        return {
+            input: fragment`${scope.getAddressFromResolvedInstructionAccount}("${name}", ${comparedInputName})`,
+            value: renderedValue,
+        };
+    }
+    switch (value.kind) {
+        case 'integerValueNode':
+            return { input: fragment`BigInt(${comparedInputName})`, value: fragment`${getBigIntLiteral(value.value)}` };
+        case 'booleanValueNode':
+        case 'publicKeyValueNode':
+        case 'stringValueNode':
+            return { input: fragment`${comparedInputName}`, value: renderedValue };
+        default:
+            return throwUnsupportedComparison(conditional, scope);
+    }
+}
+
+function throwUnsupportedComparison(
+    conditional: ConditionalValueNode,
+    scope: { input: ResolvedInstructionInput },
+): never {
+    throw new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, { path: [...scope.input.path, conditional] });
 }

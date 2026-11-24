@@ -121,7 +121,8 @@ export function mergeImportMaps(importMaps: ImportMap[]): ImportMap {
     const mergedMap = new Map(importMaps[0]);
     for (const map of importMaps.slice(1)) {
         for (const [module, imports] of map) {
-            const mergedModuleMap = (mergedMap.get(module) ?? new Map()) as Map<UsedIdentifier, ImportInfo>;
+            // Copied rather than mutated, since it may belong to one of the given import maps.
+            const mergedModuleMap = new Map<UsedIdentifier, ImportInfo>(mergedMap.get(module) ?? []);
             for (const [usedIdentifier, importInfo] of imports) {
                 const existingImportInfo = mergedModuleMap.get(usedIdentifier);
                 // If two identical imports exist such that

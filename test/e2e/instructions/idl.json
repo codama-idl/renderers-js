@@ -25,6 +25,28 @@
             }
           ]
         }
+      },
+      {
+        "kind": "accountNode",
+        "identifier": "secretVault",
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "amount",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u64",
+                "endian": "le"
+              }
+            }
+          ]
+        },
+        "pda": {
+          "kind": "pdaLinkNode",
+          "identifier": "secretCounter"
+        }
       }
     ],
     "instructions": [
@@ -654,6 +676,172 @@
       },
       {
         "kind": "instructionNode",
+        "identifier": "syncLimits",
+        "optionalAccountStrategy": "programId",
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "discriminator",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u8",
+                "endian": "le"
+              },
+              "defaultValue": {
+                "kind": "integerValueNode",
+                "value": "13"
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "owner",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "publicKeyTypeNode"
+              },
+              "defaultValue": {
+                "kind": "injectedValueNode",
+                "key": "owner"
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "fee",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u64",
+                "endian": "le"
+              },
+              "plugins": [
+                {
+                  "kind": "pluginNode",
+                  "namespace": "codama.resolver",
+                  "payload": {
+                    "dependsOn": [],
+                    "name": "resolveFeeAsync"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "path": "discriminator",
+            "offset": 0
+          }
+        ],
+        "provides": [
+          {
+            "kind": "providedNode",
+            "identifier": "owner",
+            "node": {
+              "kind": "payerValueNode"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "instructionNode",
+        "identifier": "useSecret",
+        "optionalAccountStrategy": "programId",
+        "accounts": [
+          {
+            "kind": "instructionAccountNode",
+            "identifier": "owner",
+            "isWritable": false,
+            "isSigner": true,
+            "isOptional": false
+          },
+          {
+            "kind": "instructionAccountNode",
+            "identifier": "vault",
+            "isWritable": true,
+            "isSigner": false,
+            "isOptional": false,
+            "defaultValue": {
+              "kind": "pdaValueNode",
+              "pda": {
+                "kind": "pdaLinkNode",
+                "identifier": "secretCounter"
+              },
+              "seeds": [
+                {
+                  "kind": "pdaSeedValueNode",
+                  "identifier": "owner",
+                  "value": {
+                    "kind": "accountValueNode",
+                    "identifier": "owner"
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "discriminator",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u8",
+                "endian": "le"
+              },
+              "defaultValue": {
+                "kind": "integerValueNode",
+                "value": "11"
+              }
+            }
+          ]
+        },
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "path": "discriminator",
+            "offset": 0
+          }
+        ]
+      },
+      {
+        "kind": "instructionNode",
+        "identifier": "secretReset",
+        "optionalAccountStrategy": "programId",
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "discriminator",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u8",
+                "endian": "le"
+              },
+              "defaultValue": {
+                "kind": "integerValueNode",
+                "value": "12"
+              }
+            }
+          ]
+        },
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "path": "discriminator",
+            "offset": 0
+          }
+        ]
+      },
+      {
+        "kind": "instructionNode",
         "identifier": "parent",
         "optionalAccountStrategy": "programId",
         "subInstructions": [
@@ -718,6 +906,21 @@
             "node": {
               "kind": "integerValueNode",
               "value": "9"
+            }
+          }
+        ]
+      }
+    ],
+    "pdas": [
+      {
+        "kind": "pdaNode",
+        "identifier": "secretCounter",
+        "seeds": [
+          {
+            "kind": "variablePdaSeedNode",
+            "identifier": "owner",
+            "type": {
+              "kind": "publicKeyTypeNode"
             }
           }
         ]

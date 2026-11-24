@@ -1,7 +1,15 @@
 import { AccountNode, isNodeFilter } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
-import { addFragmentImports, Fragment, fragment, getCustomDataOptions, RenderScope, TypeManifest } from '../utils';
+import {
+    addFragmentImports,
+    Fragment,
+    fragment,
+    getCustomDataOptions,
+    getGeneratedNodeModule,
+    RenderScope,
+    TypeManifest,
+} from '../utils';
 
 /**
  * Renders the helpers fetching an account from the seeds of its PDA, e.g.
@@ -11,7 +19,7 @@ import { addFragmentImports, Fragment, fragment, getCustomDataOptions, RenderSco
  * @return The fragment of the PDA helpers, if the account has a PDA.
  */
 export function getAccountPdaHelpersFragment(
-    scope: Pick<RenderScope, 'customAccountData' | 'linkables' | 'nameApi'> & {
+    scope: Pick<RenderScope, 'customAccountData' | 'getImportPath' | 'isInternalNode' | 'linkables' | 'nameApi'> & {
         accountPath: NodePath<AccountNode>;
         typeManifest: TypeManifest;
     },
@@ -25,10 +33,9 @@ export function getAccountPdaHelpersFragment(
         ? typeManifest.strictType
         : nameApi.dataType(accountNode.identifier);
 
-    // Here we cannot use the `getImportFrom` function because
-    // we need to know the seeds of the PDA in order to know
-    // if we need to render a `seeds` argument or not.
-    const importFrom = 'generatedPdas';
+    // The PDA is resolved rather than imported through its link, since its seeds decide
+    // whether a `seeds` argument is rendered.
+    const importFrom = getGeneratedNodeModule('pda', pdaNode.identifier, scope);
     const pdaSeedsType = nameApi.pdaSeedsType(pdaNode.identifier);
     const findPdaFunction = nameApi.pdaFindFunction(pdaNode.identifier);
     const hasVariableSeeds = (pdaNode.seeds ?? []).filter(isNodeFilter('variablePdaSeedNode')).length > 0;

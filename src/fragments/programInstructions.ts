@@ -2,8 +2,9 @@ import { camelCase } from '@codama/fragments/casing';
 import { InstructionNode, ProgramNode } from '@codama/nodes';
 
 import {
-    fragment,
     Fragment,
+    fragment,
+    getGeneratedNodeModule,
     getInstructionDataNode,
     getRenderedInstructions,
     getStringLiteral,
@@ -23,7 +24,16 @@ import { getEnumDeclarationFragment } from './enumDeclaration';
  * @return The fragment of the instruction helpers, if the program has rendered instructions.
  */
 export function getProgramInstructionsFragment(
-    scope: Pick<RenderScope, 'erasableSyntax' | 'nameApi' | 'renderParentInstructions' | 'typeManifestVisitor'> & {
+    scope: Pick<
+        RenderScope,
+        | 'erasableSyntax'
+        | 'getImportPath'
+        | 'isInternalNode'
+        | 'linkables'
+        | 'nameApi'
+        | 'renderParentInstructions'
+        | 'typeManifestVisitor'
+    > & {
         programNode: ProgramNode;
     },
 ): Fragment | undefined {
@@ -62,7 +72,7 @@ function getProgramInstructionsEnumFragment(
 }
 
 function getProgramInstructionsIdentifierFunctionFragment(
-    scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         allInstructions: InstructionNode[];
         programNode: ProgramNode;
     },
@@ -83,7 +93,11 @@ function getProgramInstructionsIdentifierFunctionFragment(
                 ...scope,
                 dataName: 'data',
                 discriminators: instruction.discriminators ?? [],
-                fields: getStructFields(getInstructionDataNode(instruction)),
+                fields: getStructFields(
+                    getInstructionDataNode(instruction),
+                    [programNode, instruction],
+                    scope.linkables,
+                ),
                 ifTrue: `return ${programInstructionsEnum}.${variant};`,
             });
         }),
@@ -102,7 +116,7 @@ function getProgramInstructionsIdentifierFunctionFragment(
 }
 
 function getProgramInstructionsParsedUnionTypeFragment(
-    scope: Pick<RenderScope, 'erasableSyntax' | 'nameApi'> & {
+    scope: Pick<RenderScope, 'erasableSyntax' | 'getImportPath' | 'isInternalNode' | 'nameApi'> & {
         allInstructions: InstructionNode[];
         programNode: ProgramNode;
     },
@@ -117,7 +131,7 @@ function getProgramInstructionsParsedUnionTypeFragment(
         const instructionEnumVariant = nameApi.programInstructionsEnumVariant(instruction.identifier);
         const parsedInstructionType = use(
             `type ${nameApi.instructionParsedType(instruction.identifier)}`,
-            'generatedInstructions',
+            getGeneratedNodeModule('instruction', instruction.identifier, scope),
         );
 
         // A const object only lives in the value space, so its members need a `typeof` query
@@ -139,7 +153,7 @@ function getProgramInstructionsParsedUnionTypeFragment(
 }
 
 function getProgramInstructionsParseFunctionFragment(
-    scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<RenderScope, 'getImportPath' | 'isInternalNode' | 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         allInstructions: InstructionNode[];
         programNode: ProgramNode;
     },
@@ -162,7 +176,7 @@ function getProgramInstructionsParseFunctionFragment(
             const enumVariant = nameApi.programInstructionsEnumVariant(instruction.identifier);
             const parseFunction = use(
                 nameApi.instructionParseFunction(instruction.identifier),
-                'generatedInstructions',
+                getGeneratedNodeModule('instruction', instruction.identifier, scope),
             );
             const assertIsInstructionWithAccounts = use('assertIsInstructionWithAccounts', 'solanaInstructions');
             // Only need accounts assertion since data is guaranteed by the input type

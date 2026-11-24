@@ -13,6 +13,7 @@ import {
     type Fragment,
     getImportFromFactory,
     getImportPathFactory,
+    getIsInternalNodeFactory,
     getNameApi,
     ImportExtension,
     importMapToString,
@@ -36,9 +37,15 @@ const PRETTIER_OPTIONS: Parameters<typeof format>[1] = {
 export function getDefaultScope(): RenderScope {
     const customAccountData: ParsedCustomDataOptions = new Map();
     const customInstructionData: ParsedCustomDataOptions = new Map();
-    const getImportFrom = getImportFromFactory({}, customAccountData, customInstructionData);
-    const linkables = new LinkableDictionary();
+    const getImportPath = getImportPathFactory();
+    const isInternalNode = getIsInternalNodeFactory([]);
     const nameApi = getNameApi(DEFAULT_NAME_TRANSFORMERS);
+    const getImportFrom = getImportFromFactory({}, customAccountData, customInstructionData, {
+        getImportPath,
+        isInternalNode,
+        nameApi,
+    });
+    const linkables = new LinkableDictionary();
     const nonScalarEnums: string[] = [];
     return {
         asyncResolvers: [],
@@ -48,7 +55,8 @@ export function getDefaultScope(): RenderScope {
         dependencyVersions: {},
         erasableSyntax: false,
         getImportFrom,
-        getImportPath: getImportPathFactory(),
+        getImportPath,
+        isInternalNode,
         kitImportStrategy: DEFAULT_KIT_IMPORT_STRATEGY,
         linkables,
         nameApi,
