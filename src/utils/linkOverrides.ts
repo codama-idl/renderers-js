@@ -36,6 +36,8 @@ export type GetImportFromFunction = (node: InstructionResolver | OverridableNode
  * @param overrides - The `linkOverrides` option.
  * @param customAccountData - The parsed `customAccountData` option.
  * @param customInstructionData - The parsed `customInstructionData` option.
+ * @param scope - The import paths of the generated output, the internal nodes, which are
+ * imported from their own file, and the naming API.
  * @return The function returning the module of a linked node or resolver.
  */
 export function getImportFromFactory(

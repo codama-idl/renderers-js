@@ -69,11 +69,11 @@ export function getCustomDataOptions(
  * @param defaultSuffix - The suffix of default data type names, e.g. `AccountData`.
  * @return The parsed options, keyed by camelCase identifier.
  */
-export const parseCustomDataOptions = (
+export function parseCustomDataOptions(
     customDataOptions: CustomDataOptions[],
     defaultSuffix: string,
-): ParsedCustomDataOptions =>
-    new Map(
+): ParsedCustomDataOptions {
+    return new Map(
         customDataOptions.map(o => {
             const options = typeof o === 'string' ? { identifier: o } : o;
             const importAs = camelCase(options.importAs ?? `${options.identifier}${defaultSuffix}`);
@@ -90,6 +90,7 @@ export const parseCustomDataOptions = (
             ];
         }),
     );
+}
 
 /**
  * The defined types to render for the custom data of accounts or instructions configured with
@@ -99,11 +100,11 @@ export const parseCustomDataOptions = (
  * @param parsedCustomDataOptions - The parsed custom data options.
  * @return The defined types to render.
  */
-export const getDefinedTypeNodesToExtract = (
+export function getDefinedTypeNodesToExtract(
     nodes: AccountNode[] | InstructionNode[],
     parsedCustomDataOptions: ParsedCustomDataOptions,
-): DefinedTypeNode[] =>
-    nodes.flatMap(node => {
+): DefinedTypeNode[] {
+    return nodes.flatMap(node => {
         const options = getCustomDataOptions(parsedCustomDataOptions, node);
         if (!options || !options.extract) return [];
 
@@ -118,3 +119,4 @@ export const getDefinedTypeNodesToExtract = (
             }),
         ];
     });
+}

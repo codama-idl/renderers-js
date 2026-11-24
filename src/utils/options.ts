@@ -1,11 +1,11 @@
-import type { LinkableDictionary } from '@codama/visitors-core';
+import type { LinkableDictionary, Visitor } from '@codama/visitors-core';
 
-import type { TypeManifestVisitor } from '../visitors';
 import type { CustomDataOptions, ParsedCustomDataOptions } from './customData';
-import { PrettierOptions } from './formatCode';
+import type { PrettierOptions } from './formatCode';
 import type { IsInternalNodeFunction } from './generatedModules';
 import type { GetImportFromFunction, LinkOverrides } from './linkOverrides';
 import type { NameApi, NameTransformers } from './nameTransformers';
+import type { TypeManifest, TypeManifestNodeKind } from './typeManifest';
 
 /**
  * The options of {@link renderVisitor}: the options of {@link getRenderMapVisitor}, along with
@@ -109,7 +109,7 @@ export type RenderScope = {
     nameApi: NameApi;
     nonScalarEnums: string[];
     renderParentInstructions: boolean;
-    typeManifestVisitor: TypeManifestVisitor;
+    typeManifestVisitor: Visitor<TypeManifest, TypeManifestNodeKind>;
 };
 
 /** Defines whether a generated import path targets a file or a directory. */

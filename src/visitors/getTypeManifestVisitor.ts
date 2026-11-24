@@ -67,13 +67,15 @@ import {
     isBigIntegerFormat,
     isDefaultIntegerType,
     isScalarEnumValue,
+    isSolAmountType,
     isStructFieldCodecDefaultOverridable,
     mergeFragments,
     mergeTypeManifests,
     type NameApi,
     type ParsedCustomDataOptions,
-    type TypeManifest,
     typeManifest,
+    type TypeManifest,
+    type TypeManifestNodeKind,
     use,
 } from '../utils';
 
@@ -103,16 +105,7 @@ export function getTypeManifestVisitor(input: {
     nameApi: NameApi;
     nonScalarEnums: string[];
     stack?: NodeStack;
-}): Visitor<
-    TypeManifest,
-    | RegisteredTypeNode['kind']
-    | RegisteredValueNode['kind']
-    | 'accountNode'
-    | 'definedTypeLinkNode'
-    | 'definedTypeNode'
-    | 'eventNode'
-    | 'instructionNode'
-> {
+}): Visitor<TypeManifest, TypeManifestNodeKind> {
     const {
         nameApi,
         linkables,
@@ -547,12 +540,7 @@ export function getTypeManifestVisitor(input: {
 
                 visitFixedPointType(fixedPointType, { self }) {
                     const numberManifest = visit(fixedPointType.number, self);
-                    // SOL amounts are lamports: a fixed point of 9 decimal places with a `SOL` unit.
-                    const isSolAmount =
-                        fixedPointType.scale === 9 &&
-                        (fixedPointType.base ?? 10) === 10 &&
-                        fixedPointType.unit === 'SOL';
-                    return isSolAmount ? applyLamports(numberManifest) : numberManifest;
+                    return isSolAmountType(fixedPointType) ? applyLamports(numberManifest) : numberManifest;
                 },
 
                 visitFloatType(floatType) {
@@ -793,7 +781,10 @@ export function getTypeManifestVisitor(input: {
                 },
 
                 visitStructType(structType, { self }) {
-                    const optionalFields = (structType.fields ?? []).filter(f => !!getStructFieldCodecDefault(f));
+                    const optionalFields = (structType.fields ?? []).flatMap(field => {
+                        const defaultValue = getStructFieldCodecDefault(field);
+                        return defaultValue ? [{ defaultValue, field }] : [];
+                    });
 
                     const mergedManifest = pipe(
                         mergeTypeManifests(
@@ -831,7 +822,7 @@ export function getTypeManifestVisitor(input: {
                     const fieldDiscriminators = discriminators.filter(isNodeFilter('fieldDiscriminatorNode'));
 
                     const defaultValues = mergeFragments(
-                        optionalFields.map((f): Fragment => {
+                        optionalFields.map(({ defaultValue, field: f }): Fragment => {
                             const key = camelCase(f.identifier);
 
                             // If the field has an associated discriminator node, use the constant value instead.
@@ -844,7 +835,6 @@ export function getTypeManifestVisitor(input: {
                                     : fragment`${key}: value.${key} ?? ${constantName}`;
                             }
 
-                            const defaultValue = getStructFieldCodecDefault(f)!;
                             const value = getTypedValueFragment(defaultValue, f.type, {
                                 linkables,
                                 loose: true,

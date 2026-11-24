@@ -5,7 +5,7 @@ import * as estreePlugin from 'prettier/plugins/estree';
 import * as typeScriptPlugin from 'prettier/plugins/typescript';
 import { format } from 'prettier/standalone';
 
-import { RenderOptions } from './options';
+import type { RenderOptions } from './options';
 
 /** The options of Prettier used to format the generated code. */
 export type PrettierOptions = Parameters<typeof format>[1];

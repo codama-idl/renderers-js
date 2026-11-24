@@ -10,7 +10,7 @@ import {
     parseImportInput,
     removeFromImportMap,
 } from './importMap';
-import { RenderScope } from './options';
+import type { RenderScope } from './options';
 
 /**
  * A flag carried by a fragment to inform the pages including it, e.g. that an instruction

@@ -113,7 +113,12 @@ export function isInstructionResolver(value: unknown): value is InstructionResol
 
 /** The fields of the instruction data, in order, when the data is an inline struct. */
 export function getInstructionDataFields(instruction: InstructionNode): StructFieldTypeNode[] {
-    return instruction.data && isNode(instruction.data, 'structTypeNode') ? (instruction.data.fields ?? []) : [];
+    return getInstructionDataStruct(instruction)?.fields ?? [];
+}
+
+/** The data struct of the instruction, unless its data is absent or a link to a defined type. */
+function getInstructionDataStruct(instruction: InstructionNode): StructTypeNode | undefined {
+    return instruction.data && isNode(instruction.data, 'structTypeNode') ? instruction.data : undefined;
 }
 
 /** The inputs of the instruction that are not part of the instruction data. */
@@ -128,8 +133,18 @@ export function getAllInstructionDataFields(instruction: InstructionNode): Instr
     return [...getInstructionDataFields(instruction), ...getInstructionExtraArguments(instruction)];
 }
 
-/** Whether the instruction serialises any data, i.e. it has data that is not an empty struct. */
-export function hasInstructionData(instruction: InstructionNode): boolean {
+/**
+ * Whether the instruction serialises any data: it has data that is not an empty struct, or,
+ * when the `customInstructionData` option is given, its data is provided by it.
+ *
+ * @param instruction - The instruction.
+ * @param customInstructionData - The parsed `customInstructionData` option, if any.
+ */
+export function hasInstructionData(
+    instruction: InstructionNode,
+    customInstructionData?: ParsedCustomDataOptions,
+): boolean {
+    if (customInstructionData && getInstructionDataLink(instruction, customInstructionData)) return true;
     const { data } = instruction;
     return !!data && !(isNode(data, 'structTypeNode') && (data.fields ?? []).length === 0);
 }
@@ -379,6 +394,7 @@ function getInputEntries(
     linkables: LinkableDictionary,
 ): InputEntry[] {
     const instruction = getLastNodeFromPath(instructionPath);
+    const dataStruct = getInstructionDataStruct(instruction);
     const toEntry = <T extends Omit<InputEntry, Exclude<keyof ResolvedInputBase, 'path'>>>(
         input: T,
     ): T & ResolvedInputBase => {
@@ -399,14 +415,16 @@ function getInputEntries(
         ...(instruction.accounts ?? []).map(node =>
             toEntry({ kind: 'account' as const, node, path: [...instructionPath, node] }),
         ),
-        ...getInstructionDataFields(instruction).map(node =>
-            toEntry({
-                isExtraArgument: false,
-                kind: 'data' as const,
-                node,
-                path: [...instructionPath, instruction.data!, node],
-            }),
-        ),
+        ...(dataStruct
+            ? (dataStruct.fields ?? []).map(node =>
+                  toEntry({
+                      isExtraArgument: false,
+                      kind: 'data' as const,
+                      node,
+                      path: [...instructionPath, dataStruct, node],
+                  }),
+              )
+            : []),
         ...(instruction.plugins ?? [])
             .filter(plugin => plugin.namespace === EXTRA_ARGUMENT_PLUGIN)
             .map(plugin =>
@@ -569,7 +587,16 @@ function getResolvedAccountFlags(
     const defaultValue = entry.resolvedDefaultValue;
     switch (defaultValue?.kind) {
         case 'accountValueNode': {
-            const defaultAccount = findAccount(defaultValue.identifier)!;
+            const defaultAccount = findAccount(defaultValue.identifier);
+            // Dependencies are checked when ordering the inputs, so this only guards the invariant.
+            if (!defaultAccount) {
+                throw new CodamaError(CODAMA_ERROR__VISITORS__INVALID_INSTRUCTION_DEFAULT_VALUE_DEPENDENCY, {
+                    dependencyKind: 'accountValueNode',
+                    dependencyName: defaultValue.identifier,
+                    dependent: account.identifier,
+                    path: entry.path,
+                });
+            }
             const isPublicKey = account.isSigner === false && defaultAccount.node.isSigner === false;
             const isSigner = account.isSigner === true && defaultAccount.node.isSigner === true;
             return {

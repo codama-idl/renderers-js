@@ -52,7 +52,7 @@ function getTypeFragment(
     const instructionParsedType = scope.nameApi.instructionParsedType(scope.instructionNode.identifier);
     const instructionDataName = scope.nameApi.instructionDataType(scope.instructionNode.identifier);
 
-    const hasData = !!dataLink || hasInstructionData(scope.instructionNode);
+    const hasData = hasInstructionData(scope.instructionNode, scope.customInstructionData);
     const hasAccounts = (scope.instructionNode.accounts ?? []).length > 0;
 
     const typeParamDeclarations = mergeFragments(
@@ -97,7 +97,7 @@ function getFunctionFragment(
         ? scope.dataArgsManifest.decoder
         : fragment`${scope.nameApi.decoderFunction(instructionDataName)}()`;
 
-    const hasData = !!dataLink || hasInstructionData(scope.instructionNode);
+    const hasData = hasInstructionData(scope.instructionNode, scope.customInstructionData);
     const hasAccounts = (scope.instructionNode.accounts ?? []).length > 0;
     const hasOptionalAccounts = (scope.instructionNode.accounts ?? []).some(account => account.isOptional);
     const minimumNumberOfAccounts =
