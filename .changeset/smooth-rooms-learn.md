@@ -13,7 +13,7 @@ export const OPTIONAL_AMOUNT: Option<bigint> = some(5n); // Was `some(5)`.
 export const RENT: Lamports = lamports(890880n); // Was `890880`.
 ```
 
-Constants holding a value of a data union, e.g. `command('Wait', [30])`, are typed as the loose type of the union, which its helper returns.
+Constants holding a value of a data union, including field discriminator constants, e.g. `command('Wait', [30])`, are typed as the loose type of the union, which its helper returns.
 
 **Scalar enums nested within structs render as data unions.** An enum without data defined inline within a struct, rather than as a defined type, has no name to declare a native `enum`, so its values are `{ __kind: 'Fast' }` objects instead of code that did not compile.
 

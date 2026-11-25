@@ -14,4 +14,4 @@ Fix generated code that did not compile or behaved incorrectly in edge cases.
 
 **Kit number codecs keep their names.** The `encoderFunction` and `decoderFunction` name transformers no longer rename the number codecs imported from Kit, e.g. `getU64Encoder`, which only exist under those names.
 
-Account codecs are typed by the size of their data rather than the declared account size, parent instructions whose sub-instructions are all archived are rendered as leaves, field discriminators of data linked to a defined type are supported, and field discriminator constants holding a value of a data union are typed as its loose type.
+Field discriminators of data linked to a defined type are supported.
