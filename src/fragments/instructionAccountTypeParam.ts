@@ -39,9 +39,8 @@ export function getInstructionAccountTypeParamFragment(
         return fragment`${typeParam} extends string${accountMeta} | undefined = undefined`;
     }
 
-    // The builder fills in the resolved default, unless a resolver provides the whole value.
-    const resolvedAccount = findResolvedAccount(resolvedInputs, instructionAccountNode);
-    const defaultValue = resolvedAccount?.resolver ? undefined : resolvedAccount?.resolvedDefaultValue;
+    // The builder fills in the resolved default, which accounts with a resolver do not have.
+    const defaultValue = findResolvedAccount(resolvedInputs, instructionAccountNode)?.resolvedDefaultValue;
     const defaultAddress = getDefaultAddress(defaultValue, programNode.publicKey, linkables);
     return fragment`${typeParam} extends string${accountMeta} = ${defaultAddress}`;
 }

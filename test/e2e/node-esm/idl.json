@@ -1,72 +1,97 @@
 {
-  "kind": "rootNode",
-  "standard": "codama",
-  "version": "2.0.0",
-  "program": {
-    "kind": "programNode",
-    "identifier": "nodeEsm",
-    "publicKey": "Dummy1111111111111111111111111111111111",
-    "version": "1.0.0",
-    "instructions": [
-      {
-        "kind": "instructionNode",
-        "identifier": "useKey",
-        "optionalAccountStrategy": "programId",
-        "data": {
-          "kind": "structTypeNode",
-          "fields": [
+    "kind": "rootNode",
+    "standard": "codama",
+    "version": "2.0.0",
+    "program": {
+        "kind": "programNode",
+        "identifier": "nodeEsm",
+        "publicKey": "Dummy1111111111111111111111111111111111",
+        "version": "1.0.0",
+        "instructions": [
             {
-              "kind": "structFieldTypeNode",
-              "identifier": "discriminator",
-              "defaultValueStrategy": "omitted",
-              "type": {
-                "kind": "definedTypeLinkNode",
-                "identifier": "key"
-              },
-              "defaultValue": {
-                "kind": "enumValueNode",
-                "variant": "asset",
-                "enum": {
-                  "kind": "definedTypeLinkNode",
-                  "identifier": "key"
-                }
-              }
+                "kind": "instructionNode",
+                "identifier": "useKey",
+                "optionalAccountStrategy": "programId",
+                "data": {
+                    "kind": "structTypeNode",
+                    "fields": [
+                        {
+                            "kind": "structFieldTypeNode",
+                            "identifier": "discriminator",
+                            "defaultValueStrategy": "omitted",
+                            "type": {
+                                "kind": "definedTypeLinkNode",
+                                "identifier": "key"
+                            },
+                            "defaultValue": {
+                                "kind": "enumValueNode",
+                                "variant": "asset",
+                                "enum": {
+                                    "kind": "definedTypeLinkNode",
+                                    "identifier": "key"
+                                }
+                            }
+                        }
+                    ]
+                },
+                "discriminators": [
+                    {
+                        "kind": "fieldDiscriminatorNode",
+                        "path": "discriminator",
+                        "offset": 0
+                    }
+                ]
             }
-          ]
-        },
-        "discriminators": [
-          {
-            "kind": "fieldDiscriminatorNode",
-            "path": "discriminator",
-            "offset": 0
-          }
-        ]
-      }
-    ],
-    "definedTypes": [
-      {
-        "kind": "definedTypeNode",
-        "identifier": "key",
-        "docs": "Identifies a key.",
-        "type": {
-          "kind": "enumTypeNode",
-          "variants": [
+        ],
+        "definedTypes": [
             {
-              "kind": "enumVariantTypeNode",
-              "identifier": "uninitialized"
+                "kind": "definedTypeNode",
+                "identifier": "key",
+                "docs": "Identifies a key.",
+                "type": {
+                    "kind": "enumTypeNode",
+                    "variants": [
+                        {
+                            "kind": "enumVariantTypeNode",
+                            "identifier": "uninitialized"
+                        },
+                        {
+                            "kind": "enumVariantTypeNode",
+                            "identifier": "asset"
+                        }
+                    ],
+                    "size": {
+                        "kind": "integerTypeNode",
+                        "format": "u8",
+                        "endian": "le"
+                    }
+                }
             },
             {
-              "kind": "enumVariantTypeNode",
-              "identifier": "asset"
+                "kind": "definedTypeNode",
+                "identifier": "delta",
+                "docs": "A signed step.",
+                "type": {
+                    "kind": "enumTypeNode",
+                    "variants": [
+                        {
+                            "kind": "enumVariantTypeNode",
+                            "identifier": "down",
+                            "discriminator": -1
+                        },
+                        {
+                            "kind": "enumVariantTypeNode",
+                            "identifier": "up",
+                            "discriminator": 1
+                        }
+                    ],
+                    "size": {
+                        "kind": "integerTypeNode",
+                        "format": "i8",
+                        "endian": "le"
+                    }
+                }
             }
-          ],
-          "size": {
-            "kind": "integerTypeNode",
-            "format": "u8",
-            "endian": "le"
-          }
-        }
-      }
-    ]
-  }
+        ]
+    }
 }

@@ -8,6 +8,8 @@
 import assert from 'node:assert/strict';
 
 import {
+    Delta,
+    getDeltaCodec,
     getKeyCodec,
     getUseKeyInstruction,
     identifyNodeEsmInstruction,
@@ -26,6 +28,12 @@ assert.equal(Key[Key.Asset], 'Asset');
 
 const codec = getKeyCodec();
 assert.equal(codec.decode(codec.encode(Key.Asset)), Key.Asset);
+
+// Negative discriminators render as computed keys, which must stay valid once stripped.
+assert.equal(Delta.Down, -1);
+assert.equal(Delta[Delta.Down], 'Down');
+const deltaCodec = getDeltaCodec();
+assert.equal(deltaCodec.decode(deltaCodec.encode(Delta.Down)), Delta.Down);
 
 const instruction = getUseKeyInstruction();
 assert.equal(identifyNodeEsmInstruction(instruction), NodeEsmInstruction.UseKey);
