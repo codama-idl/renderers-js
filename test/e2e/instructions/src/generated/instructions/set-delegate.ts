@@ -109,8 +109,7 @@ export function getSetDelegateInstruction<
     const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedInstructionAccount>;
 
     // Original args.
-    const originalArgs = { ...input, delegate: input.delegateArg };
-    const args: typeof originalArgs & { delegate?: Address | HasAddress } = originalArgs;
+    const args = { ...input, delegate: input.delegateArg };
 
     return Object.freeze({
         accounts: [getAccountMeta('delegate', accounts.delegate)],

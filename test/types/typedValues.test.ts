@@ -24,7 +24,9 @@ import {
     stringTypeNode,
     stringValueNode,
     structFieldTypeNode,
+    structFieldValueNode,
     structTypeNode,
+    structValueNode,
     tupleTypeNode,
     tupleValueNode,
 } from '@codama/nodes';
@@ -103,6 +105,48 @@ test('it types constants holding data union values as their loose type', async (
     // Then the constant is typed as the loose type of the union.
     await renderMapContains(renderMap, 'constants/my-program.ts', [
         "export const DEFAULT_COMMAND: CommandArgs = command('Wait', [30]);",
+    ]);
+});
+
+test('it types constants nesting data union values within structs as their loose type', async () => {
+    // Given a constant holding a struct whose field is a value of a data union.
+    const node = rootNode(
+        programNode({
+            constants: [
+                constantNode(
+                    'defaultSchedule',
+                    definedTypeLinkNode('schedule'),
+                    structValueNode([
+                        structFieldValueNode(
+                            'command',
+                            enumValueNode('command', 'wait', { value: integerValueNode('30') }),
+                        ),
+                    ]),
+                ),
+            ],
+            definedTypes: [
+                definedTypeNode({
+                    identifier: 'command',
+                    type: enumTypeNode([enumVariantTypeNode('stop'), enumVariantTypeNode('wait', { data: u64() })]),
+                }),
+                definedTypeNode({
+                    identifier: 'schedule',
+                    type: structTypeNode([
+                        structFieldTypeNode({ identifier: 'command', type: definedTypeLinkNode('command') }),
+                    ]),
+                }),
+            ],
+            identifier: 'myProgram',
+            publicKey: '1111',
+        }),
+    );
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the constant is typed as the loose type of the struct, whose field accepts the loose union.
+    await renderMapContains(renderMap, 'constants/my-program.ts', [
+        "export const DEFAULT_SCHEDULE: ScheduleArgs = { command: command('Wait', [30]) };",
     ]);
 });
 

@@ -88,8 +88,7 @@ export async function getSyncLimitsInstructionAsync<
     const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;
 
     // Original args.
-    const originalArgs = { ...input };
-    const args: typeof originalArgs & { owner?: Address | HasAddress } = originalArgs;
+    const args = { ...input };
 
     // Resolver scope.
     const resolverScope = { programAddress, args };
@@ -119,8 +118,7 @@ export function getSyncLimitsInstruction<TProgramAddress extends Address = typeo
     const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;
 
     // Original args.
-    const originalArgs = { ...input };
-    const args: typeof originalArgs & { owner?: Address | HasAddress } = originalArgs;
+    const args = { ...input };
 
     return Object.freeze({
         data: getSyncLimitsInstructionDataEncoder().encode(args as SyncLimitsInstructionDataArgs),
