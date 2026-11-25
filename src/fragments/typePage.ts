@@ -1,7 +1,7 @@
 import { DefinedTypeNode } from '@codama/nodes';
 import { NodePath, pipe, visit } from '@codama/visitors-core';
 
-import { Fragment, mergeFragments, removeFragmentImports, RenderScope } from '../utils';
+import { Fragment, getGeneratedNodeModule, mergeFragments, removeFragmentImports, RenderScope } from '../utils';
 import { getTypeDiscriminatedUnionHelpersFragment } from './typeDiscriminatedUnionHelpers';
 import { getTypeWithCodecFragment } from './typeWithCodec';
 
@@ -12,7 +12,10 @@ import { getTypeWithCodecFragment } from './typeWithCodec';
  * @return The fragment of the type page.
  */
 export function getTypePageFragment(
-    scope: Pick<RenderScope, 'erasableSyntax' | 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
+    scope: Pick<
+        RenderScope,
+        'erasableSyntax' | 'getImportPath' | 'isInternalNode' | 'linkables' | 'nameApi' | 'typeManifestVisitor'
+    > & {
         node: DefinedTypeNode;
         size: number | null;
         typePath: NodePath<DefinedTypeNode>;
@@ -39,8 +42,9 @@ export function getTypePageFragment(
             ],
             cs => cs.join('\n\n'),
         ),
+        // Recursive types refer to themselves, from the barrel or from their own file when internal.
         f =>
-            removeFragmentImports(f, 'generatedTypes', [
+            removeFragmentImports(f, getGeneratedNodeModule('definedType', node.identifier, scope), [
                 scope.nameApi.dataType(node.identifier),
                 scope.nameApi.dataArgsType(node.identifier),
                 scope.nameApi.encoderFunction(node.identifier),

@@ -86,7 +86,6 @@ function getFunctionFragment(
     scope: Pick<RenderScope, 'customInstructionData' | 'nameApi'> & {
         dataArgsManifest: TypeManifest;
         instructionNode: InstructionNode;
-        programAddressConstant: Fragment;
     },
 ): Fragment {
     const dataLink = getInstructionDataLink(scope.instructionNode, scope.customInstructionData);
@@ -156,10 +155,12 @@ const getNextOptionalAccount = () => {
   return getNextAccount();
 };`;
     } else if (hasOptionalAccounts) {
+        // Builders fill in omitted optional accounts with the program address of the
+        // instruction, which may differ from the address declared in the IDL.
         accountHelpers = fragment`${accountHelpers}
 const getNextOptionalAccount = () => {
   const accountMeta = getNextAccount();
-  return accountMeta.address === ${scope.programAddressConstant} ? undefined : accountMeta;
+  return accountMeta.address === instruction.programAddress ? undefined : accountMeta;
 };`;
     }
 

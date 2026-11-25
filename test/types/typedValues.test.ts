@@ -16,6 +16,9 @@ import {
     injectedValueNode,
     integerTypeNode,
     integerValueNode,
+    mapEntryValueNode,
+    mapTypeNode,
+    mapValueNode,
     optionTypeNode,
     prefixedCountNode,
     programNode,
@@ -24,7 +27,9 @@ import {
     stringTypeNode,
     stringValueNode,
     structFieldTypeNode,
+    structFieldValueNode,
     structTypeNode,
+    structValueNode,
     tupleTypeNode,
     tupleValueNode,
 } from '@codama/nodes';
@@ -103,6 +108,54 @@ test('it types constants holding data union values as their loose type', async (
     // Then the constant is typed as the loose type of the union.
     await renderMapContains(renderMap, 'constants/my-program.ts', [
         "export const DEFAULT_COMMAND: CommandArgs = command('Wait', [30]);",
+    ]);
+});
+
+test('it types constants nesting data union values within structs and maps as their loose type', async () => {
+    // Given constants holding a struct field and a map entry whose values are data unions.
+    const wait = enumValueNode('command', 'wait', { value: integerValueNode('30') });
+    const node = rootNode(
+        programNode({
+            constants: [
+                constantNode(
+                    'defaultSchedule',
+                    definedTypeLinkNode('schedule'),
+                    structValueNode([structFieldValueNode('command', wait)]),
+                ),
+                constantNode(
+                    'commandsByName',
+                    mapTypeNode(
+                        stringTypeNode('utf8'),
+                        definedTypeLinkNode('command'),
+                        prefixedCountNode(integerTypeNode('u8')),
+                    ),
+                    mapValueNode([mapEntryValueNode(stringValueNode('wait'), wait)]),
+                ),
+            ],
+            definedTypes: [
+                definedTypeNode({
+                    identifier: 'command',
+                    type: enumTypeNode([enumVariantTypeNode('stop'), enumVariantTypeNode('wait', { data: u64() })]),
+                }),
+                definedTypeNode({
+                    identifier: 'schedule',
+                    type: structTypeNode([
+                        structFieldTypeNode({ identifier: 'command', type: definedTypeLinkNode('command') }),
+                    ]),
+                }),
+            ],
+            identifier: 'myProgram',
+            publicKey: '1111',
+        }),
+    );
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the constants are typed loosely, so that their fields and entries accept the loose union.
+    await renderMapContains(renderMap, 'constants/my-program.ts', [
+        "export const DEFAULT_SCHEDULE: ScheduleArgs = { command: command('Wait', [30]) };",
+        "export const COMMANDS_BY_NAME: Map<string, CommandArgs> = new Map([ ['wait', command('Wait', [30])] ]);",
     ]);
 });
 

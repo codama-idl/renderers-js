@@ -66,6 +66,31 @@
             "endian": "le"
           }
         }
+      },
+      {
+        "kind": "definedTypeNode",
+        "identifier": "delta",
+        "docs": "A signed step.",
+        "type": {
+          "kind": "enumTypeNode",
+          "variants": [
+            {
+              "kind": "enumVariantTypeNode",
+              "identifier": "down",
+              "discriminator": -1
+            },
+            {
+              "kind": "enumVariantTypeNode",
+              "identifier": "up",
+              "discriminator": 1
+            }
+          ],
+          "size": {
+            "kind": "integerTypeNode",
+            "format": "i8",
+            "endian": "le"
+          }
+        }
       }
     ]
   }

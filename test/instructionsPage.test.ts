@@ -45,6 +45,7 @@ import {
     pdaValueNode,
     pluginNode,
     prefixedCountNode,
+    programIdValueNode,
     programLinkNode,
     programNode,
     providedNode,
@@ -2038,4 +2039,73 @@ test('it fails on data union conditions of default values', () => {
     // Then rendering fails on that conditional value.
     const error = getCodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, () => visit(node, getRenderMapVisitor()));
     expect(error.context.path.at(-1)).toBe(conditional);
+});
+
+test('it parses omitted optional accounts against the program address of the instruction', async () => {
+    // Given an instruction with an optional account filled in with the program address when omitted.
+    const node = programNode({
+        identifier: 'myProgram',
+        instructions: [
+            instructionNode({
+                accounts: [
+                    instructionAccountNode({
+                        identifier: 'authority',
+                        isOptional: true,
+                        isSigner: false,
+                        isWritable: false,
+                    }),
+                ],
+                identifier: 'transfer',
+                optionalAccountStrategy: 'programId',
+            }),
+        ],
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the parse function compares omitted accounts with the address the instruction was built with.
+    await renderMapContains(renderMap, 'instructions/transfer.ts', [
+        'return accountMeta.address === instruction.programAddress ? undefined : accountMeta;',
+    ]);
+});
+
+test('it defaults account type parameters to the addresses builders fill in', async () => {
+    // Given an account defaulting to an injected program address, and one with a resolver
+    // alongside a public key default.
+    const node = programNode({
+        identifier: 'myProgram',
+        instructions: [
+            instructionNode({
+                accounts: [
+                    instructionAccountNode({
+                        defaultValue: injectedValueNode({ key: 'tokenProgram' }),
+                        identifier: 'tokenProgram',
+                        isSigner: false,
+                        isWritable: false,
+                    }),
+                    instructionAccountNode({
+                        defaultValue: publicKeyValueNode('2222'),
+                        identifier: 'vault',
+                        isSigner: false,
+                        isWritable: true,
+                        plugins: [pluginNode('codama.resolver', { name: 'resolveVault' })],
+                    }),
+                ],
+                identifier: 'transfer',
+                provides: [providedNode('tokenProgram', programIdValueNode())],
+            }),
+        ],
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the injected default is resolved to its address, whilst the resolved account has none.
+    await renderMapContains(renderMap, 'instructions/transfer.ts', [
+        "TAccountTokenProgram extends string | AccountMeta<string> = '1111'",
+        'TAccountVault extends string | AccountMeta<string> = string',
+    ]);
 });

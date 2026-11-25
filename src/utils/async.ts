@@ -213,10 +213,7 @@ export function getInstructionFunctionInputFlags(
         return !resolvedArg || !isAsyncInput(resolvedArg, asyncResolvers);
     };
     const omittedArgs = resolvedInputs.filter(
-        (input): input is ResolvedInstructionDataField =>
-            input.kind === 'data' &&
-            input.node.defaultValueStrategy === 'omitted' &&
-            (useAsync || !isAsyncInput(input, asyncResolvers)),
+        (input): input is ResolvedInstructionDataField => input.kind === 'data' && !argIsNotOmitted(input.node),
     );
     const hasOmittedDataArgs = omittedArgs.some(input => !input.isExtraArgument);
     const hasDataArgs =

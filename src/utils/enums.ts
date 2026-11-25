@@ -7,7 +7,7 @@ import {
     isNode,
     isScalarEnum,
     Node,
-    VALUE_NODE_KINDS,
+    REGISTERED_VALUE_NODE_KINDS,
 } from '@codama/nodes';
 import { getLastNodeFromPath, LinkableDictionary, NodePath } from '@codama/visitors-core';
 
@@ -89,7 +89,10 @@ export function containsDataUnionValue(
     if (isNode(value, 'enumValueNode') && !isScalarEnumValue(value, path, scope)) return true;
     return Object.values(value).some(child =>
         (Array.isArray(child) ? child : [child]).some(
-            item => isNodeObject(item) && isNode(item, VALUE_NODE_KINDS) && containsDataUnionValue(item, path, scope),
+            item =>
+                isNodeObject(item) &&
+                isNode(item, REGISTERED_VALUE_NODE_KINDS) &&
+                containsDataUnionValue(item, path, scope),
         ),
     );
 }

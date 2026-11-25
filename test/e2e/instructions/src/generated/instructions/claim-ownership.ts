@@ -80,8 +80,7 @@ export function getClaimOwnershipInstruction<TProgramAddress extends Address = t
     const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;
 
     // Original args.
-    const originalArgs = { ...input };
-    const args: typeof originalArgs & { newOwner?: Address | HasAddress } = originalArgs;
+    const args = { ...input };
 
     return Object.freeze({
         data: getClaimOwnershipInstructionDataEncoder().encode(args as ClaimOwnershipInstructionDataArgs),

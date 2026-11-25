@@ -11,6 +11,7 @@ import {
     hasInstructionData,
     mergeFragments,
     RenderScope,
+    ResolvedInstructionInput,
     use,
 } from '../utils';
 import { getInstructionAccountMetaFragment } from './instructionAccountMeta';
@@ -20,12 +21,13 @@ import { getInstructionAccountTypeParamFragment } from './instructionAccountType
  * Renders the type of an instruction, e.g. `TransferInstruction`, with one type parameter
  * per account so that its account metas reflect the values provided for them.
  *
- * @param scope - The render scope and the path of the instruction.
+ * @param scope - The render scope, the path of the instruction and its resolved inputs.
  * @return The fragment of the instruction type.
  */
 export function getInstructionTypeFragment(
     scope: Pick<RenderScope, 'customInstructionData' | 'getImportPath' | 'isInternalNode' | 'linkables' | 'nameApi'> & {
         instructionPath: NodePath<InstructionNode>;
+        resolvedInputs: readonly ResolvedInstructionInput[];
     },
 ): Fragment {
     const { instructionPath, nameApi, customInstructionData } = scope;

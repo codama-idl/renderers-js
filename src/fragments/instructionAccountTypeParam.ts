@@ -2,29 +2,34 @@ import { InstructionAccountNode, InstructionInputValueNode, InstructionNode } fr
 import { getLastNodeFromPath, LinkableDictionary, NodePath } from '@codama/visitors-core';
 
 import {
-    fragment,
+    findResolvedAccount,
     Fragment,
+    fragment,
     getAccountTypeParamName,
     getProgramNodeFromPath,
     getStringLiteral,
     RenderScope,
+    ResolvedInstructionInput,
     use,
 } from '../utils';
 
 /**
  * Renders the type parameter of an instruction account in instruction types, accepting
- * account metas and defaulting to the address of the account when it is known statically,
- * e.g. a program or public key default.
+ * account metas and defaulting to the address of the account when the builder fills it in
+ * with one known statically, e.g. a program or public key default.
  *
  * @param instructionAccountNode - The instruction account.
- * @param scope - The render scope and the path of the instruction.
+ * @param scope - The render scope, the path of the instruction and its resolved inputs.
  * @return The fragment of the type parameter.
  */
 export function getInstructionAccountTypeParamFragment(
     instructionAccountNode: InstructionAccountNode,
-    scope: Pick<RenderScope, 'linkables'> & { instructionPath: NodePath<InstructionNode> },
+    scope: Pick<RenderScope, 'linkables'> & {
+        instructionPath: NodePath<InstructionNode>;
+        resolvedInputs: readonly ResolvedInstructionInput[];
+    },
 ): Fragment {
-    const { instructionPath, linkables } = scope;
+    const { instructionPath, linkables, resolvedInputs } = scope;
     const instructionNode = getLastNodeFromPath(instructionPath);
     const programNode = getProgramNodeFromPath(instructionPath);
     const typeParam = getAccountTypeParamName(instructionAccountNode.identifier);
@@ -34,7 +39,9 @@ export function getInstructionAccountTypeParamFragment(
         return fragment`${typeParam} extends string${accountMeta} | undefined = undefined`;
     }
 
-    const defaultAddress = getDefaultAddress(instructionAccountNode.defaultValue, programNode.publicKey, linkables);
+    // The builder fills in the resolved default, which accounts with a resolver do not have.
+    const defaultValue = findResolvedAccount(resolvedInputs, instructionAccountNode)?.resolvedDefaultValue;
+    const defaultAddress = getDefaultAddress(defaultValue, programNode.publicKey, linkables);
     return fragment`${typeParam} extends string${accountMeta} = ${defaultAddress}`;
 }
 

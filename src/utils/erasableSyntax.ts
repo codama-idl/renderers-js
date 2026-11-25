@@ -28,7 +28,9 @@ export function getEnumBody(variantNames: string[], erasableSyntax: boolean, val
     }
 
     const resolvedValues = values ?? variantNames.map((_, index) => index);
-    const reverseEntries = variantNames.map((name, index) => `${resolvedValues[index]}: '${name}'`);
+    // Negative numbers are not valid property names, so they are given as computed keys.
+    const reverseKey = (value: number) => (value < 0 ? `[${value}]` : `${value}`);
+    const reverseEntries = variantNames.map((name, index) => `${reverseKey(resolvedValues[index])}: '${name}'`);
     const forwardEntries = variantNames.map((name, index) => `${name}: ${resolvedValues[index]}`);
     return [...reverseEntries, ...forwardEntries].join(', ');
 }

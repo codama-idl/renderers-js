@@ -143,3 +143,31 @@ test('it renders the program plugin object with an angle-bracket assertion by de
     // Then we expect the angle-bracket assertion to be preserved.
     await renderMapContains(renderMap, 'programs/spl-token.ts', ['<SplTokenPlugin>{']);
 });
+
+test('it renders negative enum discriminators as computed keys when erasableSyntax is enabled', async () => {
+    // Given a scalar enum with a negative discriminator.
+    const node = programNode({
+        definedTypes: [
+            definedTypeNode({
+                identifier: 'delta',
+                type: enumTypeNode(
+                    [
+                        enumVariantTypeNode('down', { discriminator: -1 }),
+                        enumVariantTypeNode('up', { discriminator: 1 }),
+                    ],
+                    { size: integerTypeNode('i8') },
+                ),
+            }),
+        ],
+        identifier: 'myProgram',
+        publicKey: '1111',
+    });
+
+    // When we render it with the erasableSyntax option.
+    const renderMap = visit(node, getRenderMapVisitor({ erasableSyntax: true }));
+
+    // Then the reverse mapping of the negative value is a computed key, since `-1:` is not valid syntax.
+    await renderMapContains(renderMap, 'types/delta.ts', [
+        "export const Delta = { [-1]: 'Down', 1: 'Up', Down: -1, Up: 1 } as const;",
+    ]);
+});
