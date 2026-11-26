@@ -1,5 +1,5 @@
 import { mapFragmentContent } from '@codama/fragments';
-import { InstructionNode } from '@codama/nodes';
+import { InstructionNode, parseOptionalAccountStrategy } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath } from '@codama/visitors-core';
 
 import {
@@ -51,7 +51,8 @@ export function getInstructionTypeFragment(
         ? fragment` & ${use('type InstructionWithData', 'solanaInstructions')}<${use('type ReadonlyUint8Array', 'solanaCodecsCore')}>`
         : undefined;
 
-    const usesLegacyOptionalAccounts = instructionNode.optionalAccountStrategy === 'omitted';
+    const usesLegacyOptionalAccounts =
+        parseOptionalAccountStrategy(instructionNode.optionalAccountStrategy) === 'omitted';
     const accountMetasFragment = mergeFragments(
         (instructionNode.accounts ?? []).map(account =>
             mapFragmentContent(getInstructionAccountMetaFragment(account), c => {

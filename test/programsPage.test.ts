@@ -18,7 +18,7 @@ import {
     type TypeNode,
 } from '@codama/nodes';
 import { visit } from '@codama/visitors-core';
-import { expect, test } from 'vitest';
+import { test } from 'vitest';
 
 import { getRenderMapVisitor } from '../src';
 import { renderMapContains, renderMapContainsImports, renderMapDoesNotContain } from './_setup';
@@ -512,8 +512,7 @@ test('it does not render parse function when no instructions have discriminators
     ]);
 
     // And we do NOT expect the parse function.
-    const programFile = renderMap.get('programs/spl-token.ts');
-    expect(programFile).not.toContain('parseSplTokenInstruction');
+    await renderMapDoesNotContain(renderMap, 'programs/spl-token.ts', ['parseSplTokenInstruction']);
 });
 
 test('it matches u8 array discriminators as raw bytes unless their type is transformed', async () => {
@@ -556,5 +555,31 @@ test('it matches u8 array discriminators as raw bytes unless their type is trans
     await renderMapContains(renderMap, 'programs/my-program.ts', [
         'if (containsBytes(data, new Uint8Array([1, 2]), 0)) { return MyProgramAccount.Plain; }',
         'containsBytes( data, getHiddenPrefixEncoder(getArrayEncoder(getU8Encoder(), { size: 2 }), [ getConstantEncoder(new Uint8Array([255])) ]).encode([1, 2]), 0 )',
+    ]);
+});
+
+test('it leaves internal accounts and instructions out of the program plugin', async () => {
+    // Given a program with an internal account and an internal instruction next to public ones.
+    const node = programNode({
+        accounts: [accountNode({ identifier: 'vault' }), accountNode({ identifier: 'secretVault' })],
+        identifier: 'myProgram',
+        instructions: [instructionNode({ identifier: 'reset' }), instructionNode({ identifier: 'secretReset' })],
+        publicKey: '1111',
+    });
+
+    // When we render it with the secret nodes marked as internal.
+    const renderMap = visit(node, getRenderMapVisitor({ internalNodes: ['secretVault', 'secretReset'] }));
+
+    // Then the plugin exposes the public nodes only.
+    await renderMapContains(renderMap, 'programs/my-program.ts', [
+        'export type MyProgramPluginAccounts = { vault: ReturnType<typeof getVaultCodec> & SelfFetchFunctions<VaultArgs, Vault>; };',
+        /reset: \(\s*input: ResetInput,/,
+    ]);
+    // Whilst the page keeps identifying and parsing them, the plugin leaves them out.
+    await renderMapDoesNotContain(renderMap, 'programs/my-program.ts', [
+        'secretVault:',
+        'getSecretVaultCodec',
+        'secretReset:',
+        'getSecretResetInstruction',
     ]);
 });

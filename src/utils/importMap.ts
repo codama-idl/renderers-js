@@ -249,16 +249,12 @@ function getDefaultExternalModuleMap(kitImportStrategy: KitImportStrategy): Reco
 
 function getDefaultInternalModuleMap(getImportPath: GetImportPathFunction): Record<string, string> {
     return {
-        errors: getImportPath('../errors', 'directory'),
-        generated: getImportPath('..', 'directory'),
         generatedAccounts: getImportPath('../accounts', 'directory'),
-        generatedErrors: getImportPath('../errors', 'directory'),
         generatedInstructions: getImportPath('../instructions', 'directory'),
         generatedPdas: getImportPath('../pdas', 'directory'),
         generatedPrograms: getImportPath('../programs', 'directory'),
         generatedTypes: getImportPath('../types', 'directory'),
         hooked: getImportPath('../../hooked', 'directory'),
-        types: getImportPath('../types', 'directory'),
     };
 }
 

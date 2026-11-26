@@ -10,6 +10,7 @@ export * from './all-omitted';
 export * from './byte-deltas';
 export * from './child';
 export * from './claim-ownership';
+export * from './configure';
 export * from './contextual-data';
 export * from './get-balance';
 export * from './get-stats';

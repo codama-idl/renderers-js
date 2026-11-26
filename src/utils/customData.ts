@@ -1,15 +1,5 @@
 import { camelCase } from '@codama/fragments/casing';
-import {
-    AccountNode,
-    DefinedTypeLinkNode,
-    definedTypeLinkNode,
-    DefinedTypeNode,
-    definedTypeNode,
-    InstructionNode,
-    isNode,
-} from '@codama/nodes';
-
-import { getInstructionDataNode } from './instructionInputs';
+import { AccountNode, DefinedTypeLinkNode, definedTypeLinkNode, InstructionNode } from '@codama/nodes';
 
 /**
  * The data of an account or instruction written manually rather than generated, given by the
@@ -90,33 +80,4 @@ export function parseCustomDataOptions(
             ];
         }),
     );
-}
-
-/**
- * The defined types to render for the custom data of accounts or instructions configured with
- * `extract: true`, holding the data they would have generated.
- *
- * @param nodes - The accounts or instructions, e.g. the ones rendered as pages.
- * @param parsedCustomDataOptions - The parsed custom data options.
- * @return The defined types to render.
- */
-export function getDefinedTypeNodesToExtract(
-    nodes: AccountNode[] | InstructionNode[],
-    parsedCustomDataOptions: ParsedCustomDataOptions,
-): DefinedTypeNode[] {
-    return nodes.flatMap(node => {
-        const options = getCustomDataOptions(parsedCustomDataOptions, node);
-        if (!options || !options.extract) return [];
-
-        if (isNode(node, 'accountNode')) {
-            return [definedTypeNode({ identifier: options.extractAs, type: { ...node.data } })];
-        }
-
-        return [
-            definedTypeNode({
-                identifier: options.extractAs,
-                type: getInstructionDataNode(node),
-            }),
-        ];
-    });
 }

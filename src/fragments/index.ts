@@ -6,6 +6,7 @@ export * from './accountType';
 export * from './constantPage';
 export * from './discriminatorCondition';
 export * from './discriminatorConstants';
+export * from './enumDeclaration';
 export * from './errorPage';
 export * from './eventPage';
 export * from './indexPage';

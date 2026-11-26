@@ -1,5 +1,5 @@
 import { camelCase } from '@codama/fragments/casing';
-import { InstructionNode } from '@codama/nodes';
+import { InstructionNode, parseOptionalAccountStrategy } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath, pipe } from '@codama/visitors-core';
 
 import {
@@ -99,10 +99,11 @@ function getFunctionFragment(
     const hasData = hasInstructionData(scope.instructionNode, scope.customInstructionData);
     const hasAccounts = (scope.instructionNode.accounts ?? []).length > 0;
     const hasOptionalAccounts = (scope.instructionNode.accounts ?? []).some(account => account.isOptional);
-    const minimumNumberOfAccounts =
-        scope.instructionNode.optionalAccountStrategy === 'omitted'
-            ? (scope.instructionNode.accounts ?? []).filter(account => !account.isOptional).length
-            : (scope.instructionNode.accounts ?? []).length;
+    const omitsOptionalAccounts =
+        parseOptionalAccountStrategy(scope.instructionNode.optionalAccountStrategy) === 'omitted';
+    const minimumNumberOfAccounts = omitsOptionalAccounts
+        ? (scope.instructionNode.accounts ?? []).filter(account => !account.isOptional).length
+        : (scope.instructionNode.accounts ?? []).length;
 
     const typeParams = ['TProgram', hasAccounts ? 'TAccountMetas' : undefined].filter(Boolean).join(', ');
     const typeParamDeclarations = mergeFragments(
@@ -146,7 +147,7 @@ const getNextAccount = () => {
   return accountMeta;
 }`;
     }
-    if (hasOptionalAccounts && scope.instructionNode.optionalAccountStrategy === 'omitted') {
+    if (hasOptionalAccounts && omitsOptionalAccounts) {
         accountHelpers = fragment`${accountHelpers}
 let optionalAccountsRemaining = instruction.accounts.length - ${minimumNumberOfAccounts};
 const getNextOptionalAccount = () => {

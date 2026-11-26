@@ -25,7 +25,8 @@ import {
     type ReadonlyUint8Array,
 } from '@solana/kit';
 import type { InstructionWithByteDelta } from '@solana/kit/program-client-core';
-import { resolveByteDelta, resolveRemainingAccounts } from '../../hooked';
+import { resolveRemainingAccounts } from '../../hooked';
+import { resolveByteDelta } from '../../hooked/byteDeltas';
 import { INSTRUCTIONS_PROGRAM_ADDRESS } from '../programs';
 
 export const RESOLVED_EXTRAS_DISCRIMINATOR = 2;

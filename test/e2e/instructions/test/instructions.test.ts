@@ -2,11 +2,13 @@ import { address, BASE_ACCOUNT_SIZE, createNoopSigner } from '@solana/kit';
 import { expect, test } from 'vitest';
 
 import {
+    findSettingsPda,
     getAllOmittedInstruction,
     getByteDeltasInstruction,
     getChildInstruction,
     getClaimOwnershipInstruction,
     getClaimOwnershipInstructionDataDecoder,
+    getConfigureInstructionAsync,
     getContextualDataInstruction,
     getCounterSize,
     getGetBalanceInstructionReturnDataDecoder,
@@ -23,6 +25,7 @@ import {
     identifyInstructionsInstruction,
     INSTRUCTIONS_ERROR__TEMPLATED,
     InstructionsInstruction,
+    Mode,
 } from '../src/index.js';
 
 const owner = address('11111111111111111111111111111111');
@@ -119,4 +122,22 @@ test('it requires omitted inputs defaulting to the payer in instruction builders
     // Then the given addresses are encoded.
     expect(getClaimOwnershipInstructionDataDecoder().decode(claim.data).newOwner).toBe(owner);
     expect(getSetDelegateInstructionDataDecoder().decode(delegate.data).delegate).toBe(owner);
+});
+
+test('it derives pinned PDAs from the program address and picks conditional defaults from enum arguments', async () => {
+    // Given a custom program address and a signer.
+    const programAddress = address('Custom1111111111111111111111111111111111111');
+    const authority = createNoopSigner(owner);
+
+    // When we build the instruction in strict and relaxed modes.
+    const strict = await getConfigureInstructionAsync({ authority, mode: Mode.Strict }, { programAddress });
+    const relaxed = await getConfigureInstructionAsync({ authority, mode: Mode.Relaxed }, { programAddress });
+
+    // Then the settings PDA, pinned to the address of the program, is derived from the custom address.
+    const [settings] = await findSettingsPda({ programAddress });
+    expect(strict.accounts[1].address).toBe(settings);
+
+    // And the recipient follows the mode.
+    expect(strict.accounts[2].address).toBe(owner);
+    expect(relaxed.accounts[2].address).toBe(settings);
 });

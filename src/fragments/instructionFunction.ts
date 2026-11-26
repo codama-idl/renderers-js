@@ -250,7 +250,7 @@ function getReturnStatementFragment(
     const { instructionNode, hasByteDeltas, hasData, hasDataArgs, hasRemainingAccounts, nameApi } = scope;
     const hasAccounts = (instructionNode.accounts ?? []).length > 0;
     const hasLegacyOptionalAccounts =
-        instructionNode.optionalAccountStrategy === 'omitted' &&
+        parseOptionalAccountStrategy(instructionNode.optionalAccountStrategy) === 'omitted' &&
         (instructionNode.accounts ?? []).some(account => account.isOptional);
 
     // Accounts.
