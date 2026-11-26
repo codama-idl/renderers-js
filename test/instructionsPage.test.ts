@@ -562,6 +562,45 @@ test('it forwards the program address to PDAs pinned to the address of their own
     ]);
 });
 
+test('it renders instruction arguments with inlined PDA default values as addresses', async () => {
+    // Given an instruction argument defaulting to an inlined PDA.
+    const node = programNode({
+        identifier: 'counter',
+        instructions: [
+            instructionNode({
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: injectedValueNode({ key: 'counterAddress' }),
+                        identifier: 'counterAddress',
+                        type: publicKeyTypeNode(),
+                    }),
+                ]),
+                identifier: 'increment',
+                provides: [
+                    providedNode(
+                        'counterAddress',
+                        pdaValueNode(
+                            pdaNode({
+                                identifier: 'counter',
+                                seeds: [constantPdaSeedNodeFromString('utf8', 'counter')],
+                            }),
+                        ),
+                    ),
+                ],
+            }),
+        ],
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the argument holds the address of the PDA rather than the address and bump pair.
+    await renderMapContains(renderMap, 'instructions/increment.ts', [
+        "args.counterAddress = ( await getProgramDerivedAddress({ programAddress, seeds: [getUtf8Encoder().encode('counter')] }) )[0];",
+    ]);
+});
+
 test('it renders instruction accounts with inlined PDAs as default value', async () => {
     // Given the following instruction with an inlined PDA default value.
     const node = programNode({

@@ -122,7 +122,7 @@ Page builders mostly compose subfragments rather than embedding all logic inline
 - `packageJson.ts`: derive dependency requirements from actual imports and sync/create package.json.
 - `customData.ts`: support extracting or importing account/instruction data types from elsewhere.
 - `linkOverrides.ts`: remap generated/internal import targets.
-- `async.ts`: decide whether instructions need async variants, which arguments their builders take as input (`isInputArgument`, `getInstructionFunctionInputFlags`) and compute resolver dependencies.
+- `async.ts`: decide whether instructions need async variants, which arguments their builders take as input (`isInputArgument`, `getInstructionFunctionInputFlags`), how arguments named like an account are renamed in that input (`getRenamedArgsMap`) and compute resolver dependencies.
 - `formatCode.ts`: Prettier integration.
 - `typeManifest.ts`: helpers for building and merging type manifests, and the node kinds the type manifest visitor accepts.
 - `generatedModules.ts`: decide the module a generated node is imported from, i.e. its folder barrel, or its own file for nodes listed in `internalNodes`, which barrels leave out. Use it wherever a generated node is imported instead of hardcoding a `generated*` module.

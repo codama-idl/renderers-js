@@ -139,6 +139,9 @@ export function getInstructionInputDefaultFragment(
             );
 
         case 'pdaValueNode':
+            // Account values accept the derived address with its bump, whilst data fields hold the address.
+            const pdaDefault = (pda: Fragment) =>
+                defaultFragment(input.kind === 'account' ? pda : fragment`(${pda})[0]`);
             let pdaProgramValue: Fragment | undefined;
             if (isNode(defaultValue.programId, 'accountValueNode')) {
                 const name = camelCase(defaultValue.programId.identifier);
@@ -195,7 +198,7 @@ export function getInstructionInputDefaultFragment(
                 const programAddress =
                     pdaProgram.content === 'programAddress' ? pdaProgram : fragment`programAddress: ${pdaProgram}`;
                 const seeds = mergeFragments(pdaSeeds, s => s.join(', '));
-                return defaultFragment(
+                return pdaDefault(
                     fragment`await ${getProgramDerivedAddress}({ ${programAddress}, seeds: [${seeds}] })`,
                 );
             }
@@ -236,9 +239,7 @@ export function getInstructionInputDefaultFragment(
             } else if (isPdaDerivedFromInstructionProgram(pdaPath, instructionPath)) {
                 pdaArgs.push(fragment`{ programAddress }`);
             }
-            // Account values accept the derived address with its bump, whilst data fields hold the address.
-            const pda = fragment`await ${pdaFunction}(${mergeFragments(pdaArgs, c => c.join(', '))})`;
-            return defaultFragment(input.kind === 'account' ? pda : fragment`(${pda})[0]`);
+            return pdaDefault(fragment`await ${pdaFunction}(${mergeFragments(pdaArgs, c => c.join(', '))})`);
 
         case 'publicKeyValueNode':
             return defaultFragment(
