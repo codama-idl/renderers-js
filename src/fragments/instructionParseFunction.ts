@@ -38,10 +38,12 @@ export function getInstructionParseFunctionFragment(
     );
     const childScope = { ...scope, instructionNode, programAddressConstant };
 
-    return mergeFragments([getTypeFragment(childScope), getFunctionFragment(childScope)], cs => cs.join('\n\n'));
+    return mergeFragments([getParsedTypeFragment(childScope), getParseFunctionFragment(childScope)], cs =>
+        cs.join('\n\n'),
+    );
 }
 
-function getTypeFragment(
+function getParsedTypeFragment(
     scope: Pick<RenderScope, 'customInstructionData' | 'nameApi'> & {
         dataArgsManifest: TypeManifest;
         instructionNode: InstructionNode;
@@ -82,7 +84,7 @@ function getTypeFragment(
     return fragment`export type ${instructionParsedType}<${typeParamDeclarations}> = { programAddress: ${use('type Address', 'solanaAddresses')}<TProgram>;${accounts}${data} };`;
 }
 
-function getFunctionFragment(
+function getParseFunctionFragment(
     scope: Pick<RenderScope, 'customInstructionData' | 'nameApi'> & {
         dataArgsManifest: TypeManifest;
         instructionNode: InstructionNode;

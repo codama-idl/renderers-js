@@ -1,4 +1,5 @@
-import { isNodeFilter, type PdaNode, type ProgramNode } from '@codama/nodes';
+import type { PdaNode, ProgramNode } from '@codama/nodes';
+import { isNodeFilter } from '@codama/nodes';
 
 /**
  * Whether a PDA takes variable seeds, so that its find function takes a `seeds` argument.

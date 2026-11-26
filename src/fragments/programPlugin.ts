@@ -3,8 +3,9 @@ import { AccountNode, InstructionNode, isNode, PdaNode, ProgramNode } from '@cod
 import { getLastNodeFromPath, NodePath } from '@codama/visitors-core';
 
 import {
-    Fragment,
     fragment,
+    Fragment,
+    GeneratedNodeModuleScope,
     getDocblockFragment,
     getGeneratedNodeModule,
     getInstructionDataFields,
@@ -16,7 +17,6 @@ import {
     getResolvedInstructionInputs,
     hasAsyncFunction,
     hasVariablePdaSeeds,
-    isInputArgument,
     isPdaDerivedFromProgram,
     mergeFragments,
     RenderScope,
@@ -125,7 +125,7 @@ function getProgramPluginTypeFragment(
 }
 
 function getProgramPluginAccountsTypeFragment(
-    scope: ModuleScope & { accounts: AccountNode[]; programNode: ProgramNode },
+    scope: GeneratedNodeModuleScope & { accounts: AccountNode[]; programNode: ProgramNode },
 ): Fragment | undefined {
     const { accounts, programNode, nameApi } = scope;
     if (accounts.length === 0) return;
@@ -148,7 +148,7 @@ function getProgramPluginAccountsTypeFragment(
 }
 
 function getProgramPluginInstructionsTypeFragment(
-    scope: ModuleScope & { instructions: PluginInstruction[]; programNode: ProgramNode },
+    scope: GeneratedNodeModuleScope & { instructions: PluginInstruction[]; programNode: ProgramNode },
 ): Fragment | undefined {
     const { instructions, programNode, nameApi } = scope;
     if (instructions.length === 0) return;
@@ -182,7 +182,7 @@ function getProgramPluginInstructionsTypeFragment(
 }
 
 function getProgramPluginPdasTypeFragment(
-    scope: ModuleScope & { pdas: PdaNode[]; programNode: ProgramNode },
+    scope: GeneratedNodeModuleScope & { pdas: PdaNode[]; programNode: ProgramNode },
 ): Fragment | undefined {
     const { pdas, programNode, nameApi } = scope;
     if (pdas.length === 0) return;
@@ -204,7 +204,7 @@ function getProgramPluginPdasTypeFragment(
 }
 
 function getProgramPluginPdasObjectFragment(
-    scope: ModuleScope & { pdas: PdaNode[]; programNode: ProgramNode },
+    scope: GeneratedNodeModuleScope & { pdas: PdaNode[]; programNode: ProgramNode },
 ): Fragment | undefined {
     const { pdas, programNode, nameApi } = scope;
     if (pdas.length === 0) return;
@@ -260,7 +260,7 @@ function getProgramPluginRequirementsTypeFragment(
 }
 
 function getProgramPluginFunctionFragment(
-    scope: ModuleScope &
+    scope: GeneratedNodeModuleScope &
         Pick<RenderScope, 'erasableSyntax' | 'renderParentInstructions'> & {
             accounts: AccountNode[];
             instructions: PluginInstruction[];
@@ -314,7 +314,7 @@ function getProgramPluginFunctionFragment(
 }
 
 function getProgramPluginAccountsObjectFragment(
-    scope: ModuleScope & { accounts: AccountNode[] },
+    scope: GeneratedNodeModuleScope & { accounts: AccountNode[] },
 ): Fragment | undefined {
     const { accounts, nameApi } = scope;
     if (accounts.length === 0) return;
@@ -336,7 +336,7 @@ function getProgramPluginAccountsObjectFragment(
 }
 
 function getProgramPluginInstructionsObjectFragment(
-    scope: ModuleScope & { instructions: PluginInstruction[] },
+    scope: GeneratedNodeModuleScope & { instructions: PluginInstruction[] },
 ): Fragment | undefined {
     const { instructions, nameApi } = scope;
     if (instructions.length === 0) return;
@@ -379,9 +379,6 @@ function getMakeOptionalHelperTypeFragment(scope: { instructions: PluginInstruct
     return fragment`type MakeOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;`;
 }
 
-/** The scope the plugin needs to import generated nodes, from their barrel or their own file. */
-type ModuleScope = Pick<RenderScope, 'getImportPath' | 'isInternalNode' | 'nameApi'>;
-
 /** An instruction exposed by the plugin, with what the plugin needs to know about its builders. */
 type PluginInstruction = {
     /** Whether the builder the plugin calls takes an `input` parameter. */
@@ -398,14 +395,11 @@ function getPluginInstruction(
     scope: Pick<RenderScope, 'asyncResolvers' | 'customInstructionData' | 'linkables'>,
 ): PluginInstruction {
     const node = getLastNodeFromPath(path);
-    const { asyncResolvers } = scope;
     const resolvedInputs = getResolvedInstructionInputs(path, scope.linkables);
-    const isAsync = hasAsyncFunction(node, resolvedInputs, asyncResolvers);
-    // Synchronous builders accept every input asynchronous ones do, and more.
-    const renamedArgs = getRenamedArgsMap(path, arg =>
-        isInputArgument(arg, { asyncResolvers, resolvedInputs, useAsync: false }),
-    );
-    const { hasInput } = getInstructionFunctionInputFlags(node, { ...scope, resolvedInputs, useAsync: isAsync });
+    const isAsync = hasAsyncFunction(node, resolvedInputs, scope.asyncResolvers);
+    const builderScope = { ...scope, resolvedInputs, useAsync: isAsync };
+    const renamedArgs = getRenamedArgsMap(path, builderScope);
+    const { hasInput } = getInstructionFunctionInputFlags(node, builderScope);
     const payerDefaultValues = getPayerDefaultValues(node, resolvedInputs, renamedArgs);
     return { hasInput, isAsync, node, payerDefaultValues };
 }

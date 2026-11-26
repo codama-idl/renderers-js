@@ -27,7 +27,9 @@ export function getInstructionDataFragment(
 ): Fragment | undefined {
     const { instructionPath, dataArgsManifest, nameApi, customInstructionData } = scope;
     const instructionNode = getLastNodeFromPath(instructionPath);
-    if (!hasInstructionData(instructionNode) || getInstructionDataLink(instructionNode, customInstructionData)) return;
+    // Linked data is imported rather than rendered.
+    if (getInstructionDataLink(instructionNode, customInstructionData)) return;
+    if (!hasInstructionData(instructionNode, customInstructionData)) return;
 
     const instructionDataName = nameApi.instructionDataType(instructionNode.identifier);
     return getTypeWithCodecFragment({

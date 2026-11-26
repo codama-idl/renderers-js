@@ -236,7 +236,9 @@ export function getInstructionInputDefaultFragment(
             } else if (isPdaDerivedFromInstructionProgram(pdaPath, instructionPath)) {
                 pdaArgs.push(fragment`{ programAddress }`);
             }
-            return defaultFragment(fragment`await ${pdaFunction}(${mergeFragments(pdaArgs, c => c.join(', '))})`);
+            // Account values accept the derived address with its bump, whilst data fields hold the address.
+            const pda = fragment`await ${pdaFunction}(${mergeFragments(pdaArgs, c => c.join(', '))})`;
+            return defaultFragment(input.kind === 'account' ? pda : fragment`(${pda})[0]`);
 
         case 'publicKeyValueNode':
             return defaultFragment(

@@ -1,6 +1,7 @@
 import { address, BASE_ACCOUNT_SIZE, createNoopSigner } from '@solana/kit';
 import { expect, test } from 'vitest';
 
+import { findSecretCounterPda } from '../src/generated/pdas/secret-counter.js';
 import {
     findSettingsPda,
     getAllOmittedInstruction,
@@ -15,6 +16,8 @@ import {
     getGetBalanceInstructionReturnDataEncoder,
     getGetStatsInstructionReturnDataDecoder,
     getInstructionsErrorMessage,
+    getLinkVaultInstructionAsync,
+    getLinkVaultInstructionDataDecoder,
     getResolvedExtrasInstruction,
     getSetDelegateInstruction,
     getSetDelegateInstructionDataDecoder,
@@ -140,4 +143,18 @@ test('it derives pinned PDAs from the program address and picks conditional defa
     // And the recipient follows the mode.
     expect(strict.accounts[2].address).toBe(owner);
     expect(relaxed.accounts[2].address).toBe(settings);
+});
+
+test('it fills in omitted data fields named like an account from their PDA', async () => {
+    // Given a signer and the vault account.
+    const ownerSigner = createNoopSigner(owner);
+    const vault = address('Vau1t11111111111111111111111111111111111111');
+
+    // When we build the instruction without the `vault` data field, which is omitted from the input.
+    const instruction = await getLinkVaultInstructionAsync({ owner: ownerSigner, vault });
+
+    // Then the data field holds the address of the PDA, not the vault account given as input.
+    const [expected] = await findSecretCounterPda({ owner });
+    expect(getLinkVaultInstructionDataDecoder().decode(instruction.data).vault).toBe(expected);
+    expect(instruction.accounts[1].address).toBe(vault);
 });

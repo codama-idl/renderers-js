@@ -14,6 +14,7 @@ export * from './configure';
 export * from './contextual-data';
 export * from './get-balance';
 export * from './get-stats';
+export * from './link-vault';
 export * from './new-transfer';
 export * from './old-transfer';
 export * from './resolved-extras';

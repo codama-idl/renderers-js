@@ -2,11 +2,11 @@ import { CODAMA_ERROR__UNEXPECTED_NODE_KIND, CodamaError } from '@codama/errors'
 import { camelCase } from '@codama/fragments/casing';
 import { AccountLinkNode, DefinedTypeLinkNode, InstructionLinkNode, PdaLinkNode, ProgramLinkNode } from '@codama/nodes';
 
-import { ParsedCustomDataOptions } from './customData';
-import { getGeneratedNodeModule, type IsInternalNodeFunction } from './generatedModules';
-import { InstructionResolver, isInstructionResolver } from './instructionInputs';
-import type { NameApi } from './nameTransformers';
-import type { GetImportPathFunction } from './options';
+import type { ParsedCustomDataOptions } from './customData';
+import type { GeneratedNodeModuleScope } from './generatedModules';
+import { getGeneratedNodeModule } from './generatedModules';
+import type { InstructionResolver } from './instructionInputs';
+import { isInstructionResolver } from './instructionInputs';
 
 /**
  * Maps the names of linked nodes to the module they should be imported from.
@@ -44,7 +44,7 @@ export function getImportFromFactory(
     overrides: LinkOverrides,
     customAccountData: ParsedCustomDataOptions,
     customInstructionData: ParsedCustomDataOptions,
-    scope: { getImportPath: GetImportPathFunction; isInternalNode: IsInternalNodeFunction; nameApi: NameApi },
+    scope: GeneratedNodeModuleScope,
 ): GetImportFromFunction {
     const customDataOverrides = Object.fromEntries(
         [...customAccountData.values(), ...customInstructionData.values()].map(({ importFrom, importAs }) => [

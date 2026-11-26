@@ -1,3 +1,4 @@
+import { CodamaError, CodamaErrorCode, isCodamaError } from '@codama/errors';
 import { getFromRenderMap, RenderMap } from '@codama/fragments';
 import { LinkableDictionary } from '@codama/visitors-core';
 import { Plugin } from 'prettier';
@@ -256,4 +257,15 @@ async function inlineCode(code: string) {
 
 function escapeRegex(stringAsRegex: string) {
     return stringAsRegex.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+}
+
+/** The Codama error thrown by the given function, failing if it does not throw one with that code. */
+export function getCodamaError<TCode extends CodamaErrorCode>(code: TCode, fn: () => unknown): CodamaError<TCode> {
+    try {
+        fn();
+    } catch (error) {
+        if (isCodamaError(error, code)) return error;
+        throw error;
+    }
+    throw new Error(`Expected a Codama error with code ${code} to be thrown.`);
 }

@@ -244,7 +244,7 @@ describe('addToImportMap', () => {
 });
 
 describe('removeFromImportMap', () => {
-    test('it removes type-only imports from an existing import map', () => {
+    test('it removes imports from an existing import map', () => {
         const importMap = addToImportMap(createImportMap(), 'module-a', ['import1', 'type import2']);
         expect(removeFromImportMap(importMap, 'module-a', ['import1'])).toStrictEqual(
             new Map([['module-a', new Map([['import2', parseImportInput('type import2')]])]]),

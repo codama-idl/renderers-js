@@ -16,7 +16,7 @@ import {
  * Renders program constants as TypeScript value declarations.
  *
  * @param scope - The rendering scope and constants to render.
- * @returns The generated constants page fragment, if constants exist.
+ * @return The generated constants page fragment, if constants exist.
  */
 export function getConstantsPageFragment(
     scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'nonScalarEnums' | 'typeManifestVisitor'> & {

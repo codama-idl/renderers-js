@@ -27,6 +27,13 @@ const GENERATED_FOLDERS: Record<GeneratedNodeKind, { folder: string; module: str
 /** Whether a node, given by its identifier, is listed in the `internalNodes` option. */
 export type IsInternalNodeFunction = (identifier: string) => boolean;
 
+/** The scope needed to import a generated node: whether it is internal, its file name and import paths. */
+export type GeneratedNodeModuleScope = {
+    getImportPath: GetImportPathFunction;
+    isInternalNode: IsInternalNodeFunction;
+    nameApi: NameApi;
+};
+
 /**
  * Creates the function telling whether a node is listed in the `internalNodes` option,
  * matching identifiers by their camelCase form.
@@ -56,7 +63,7 @@ export function getIsInternalNodeFactory(internalNodes: readonly string[]): IsIn
 export function getGeneratedNodeModule(
     kind: GeneratedNodeKind,
     identifier: string,
-    scope: { getImportPath: GetImportPathFunction; isInternalNode: IsInternalNodeFunction; nameApi: NameApi },
+    scope: GeneratedNodeModuleScope,
 ): string {
     const { folder, module } = GENERATED_FOLDERS[kind];
     if (!scope.isInternalNode(identifier)) return module;

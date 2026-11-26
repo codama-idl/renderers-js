@@ -52,7 +52,6 @@ test('it renders program constants in a program-specific constants page', async 
     await renderMapContains(renderMap, 'constants/index.ts', "export * from './governance';");
 
     expect(renderMap.has('constants.ts')).toBe(false);
-    expect(renderMap.size).toBeGreaterThan(0);
 });
 
 test('it renders one constants file per program', async () => {

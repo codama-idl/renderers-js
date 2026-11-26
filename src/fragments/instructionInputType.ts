@@ -39,7 +39,7 @@ export function getInstructionInputTypeFragment(
         dataArgsManifest: TypeManifest;
         instructionPath: NodePath<InstructionNode>;
         renamedArgs: Map<string, string>;
-        resolvedInputs: ResolvedInstructionInput[];
+        resolvedInputs: readonly ResolvedInstructionInput[];
         useAsync: boolean;
     },
 ): Fragment {
@@ -94,7 +94,7 @@ export function getInstructionAccountInputConstraintFragment(
 function getAccountsFragment(
     scope: Pick<RenderScope, 'asyncResolvers' | 'customInstructionData' | 'nameApi'> & {
         instructionPath: NodePath<InstructionNode>;
-        resolvedInputs: ResolvedInstructionInput[];
+        resolvedInputs: readonly ResolvedInstructionInput[];
         useAsync: boolean;
     },
 ): Fragment {
@@ -119,7 +119,7 @@ function getDataArgumentsFragments(
         dataArgsManifest: TypeManifest;
         instructionPath: NodePath<InstructionNode>;
         renamedArgs: Map<string, string>;
-        resolvedInputs: ResolvedInstructionInput[];
+        resolvedInputs: readonly ResolvedInstructionInput[];
         useAsync: boolean;
     },
 ): [Fragment | undefined, Fragment] {
@@ -153,7 +153,7 @@ function getExtraArgumentsFragment(
     scope: Pick<RenderScope, 'asyncResolvers' | 'nameApi'> & {
         instructionPath: NodePath<InstructionNode>;
         renamedArgs: Map<string, string>;
-        resolvedInputs: ResolvedInstructionInput[];
+        resolvedInputs: readonly ResolvedInstructionInput[];
         useAsync: boolean;
     },
 ): Fragment | undefined {
@@ -176,7 +176,7 @@ function getArgumentFragment(
     argsType: string,
     scope: Pick<RenderScope, 'asyncResolvers'> & {
         renamedArgs: Map<string, string>;
-        resolvedInputs: ResolvedInstructionInput[];
+        resolvedInputs: readonly ResolvedInstructionInput[];
         useAsync: boolean;
     },
 ): Fragment | undefined {

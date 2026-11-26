@@ -456,10 +456,7 @@ test('it renders a plugin with only PDAs', async () => {
     // When we get the program plugin fragment.
     const fragment = getProgramPluginFragment({ ...getDefaultScope(), programNode: node, programPath: [node] });
 
-    // Then we expect the fragment to be defined.
-    expect(fragment).toBeDefined();
-
-    // And we expect the plugin type to have only the pdas field.
+    // Then we expect the plugin type to have only the pdas field.
     await fragmentContains(fragment, ['export type SplTokenPlugin = { pdas: SplTokenPluginPdas }']);
     await fragmentContains(fragment, [
         'export type SplTokenPluginPdas = { associatedTokenAccount: typeof findAssociatedTokenAccountPda; }',

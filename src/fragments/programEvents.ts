@@ -11,7 +11,7 @@ import { getEnumDeclarationFragment } from './enumDeclaration';
  * and a function identifying which event some given data belongs to.
  *
  * @param scope - The render scope with the program node.
- * @returns A {@link Fragment} with the event helpers, or `undefined` when the program has no events.
+ * @return A {@link Fragment} with the event helpers, or `undefined` when the program has no events.
  */
 export function getProgramEventsFragment(
     scope: Pick<RenderScope, 'erasableSyntax' | 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {

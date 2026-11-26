@@ -5,7 +5,7 @@
   "program": {
     "kind": "programNode",
     "identifier": "instructions",
-    "publicKey": "Instructions1111111111111111111111111111111",
+    "publicKey": "86ZVX2iJXaMkKSJHacQcH2dJ9kGMudi1iZovGpPS9y2P",
     "version": "1.0.0",
     "accounts": [
       {
@@ -860,6 +860,88 @@
       },
       {
         "kind": "instructionNode",
+        "identifier": "linkVault",
+        "optionalAccountStrategy": "programId",
+        "accounts": [
+          {
+            "kind": "instructionAccountNode",
+            "identifier": "owner",
+            "isWritable": false,
+            "isSigner": true,
+            "isOptional": false
+          },
+          {
+            "kind": "instructionAccountNode",
+            "identifier": "vault",
+            "isWritable": true,
+            "isSigner": false,
+            "isOptional": false
+          }
+        ],
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "discriminator",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u8",
+                "endian": "le"
+              },
+              "defaultValue": {
+                "kind": "integerValueNode",
+                "value": "17"
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "vault",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "publicKeyTypeNode"
+              },
+              "defaultValue": {
+                "kind": "injectedValueNode",
+                "key": "vault"
+              }
+            }
+          ]
+        },
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "path": "discriminator",
+            "offset": 0
+          }
+        ],
+        "provides": [
+          {
+            "kind": "providedNode",
+            "identifier": "vault",
+            "node": {
+              "kind": "pdaValueNode",
+              "pda": {
+                "kind": "pdaLinkNode",
+                "identifier": "secretCounter"
+              },
+              "seeds": [
+                {
+                  "kind": "pdaSeedValueNode",
+                  "identifier": "owner",
+                  "value": {
+                    "kind": "accountValueNode",
+                    "identifier": "owner"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "kind": "instructionNode",
         "identifier": "configure",
         "optionalAccountStrategy": "programId",
         "accounts": [
@@ -1157,7 +1239,7 @@
       {
         "kind": "pdaNode",
         "identifier": "settings",
-        "programId": "Instructions1111111111111111111111111111111",
+        "programId": "86ZVX2iJXaMkKSJHacQcH2dJ9kGMudi1iZovGpPS9y2P",
         "seeds": [
           {
             "kind": "constantPdaSeedNode",

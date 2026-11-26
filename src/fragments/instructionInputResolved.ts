@@ -20,7 +20,7 @@ export function getInstructionInputResolvedFragment(
         'asyncResolvers' | 'getImportFrom' | 'linkables' | 'nameApi' | 'nonScalarEnums' | 'typeManifestVisitor'
     > & {
         instructionPath: NodePath<InstructionNode>;
-        resolvedInputs: ResolvedInstructionInput[];
+        resolvedInputs: readonly ResolvedInstructionInput[];
         useAsync: boolean;
     },
 ): Fragment {

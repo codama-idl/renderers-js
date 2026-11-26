@@ -5,7 +5,8 @@
  */
 
 import { CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, CodamaError } from '@codama/errors';
-import { decimalString, integerString, isNode, type Node, type NodeKind } from '@codama/nodes';
+import type { Node, NodeKind } from '@codama/nodes';
+import { decimalString, integerString, isNode } from '@codama/nodes';
 import type { NodePath } from '@codama/visitors-core';
 
 import { EXTRA_ARGUMENT_PLUGIN } from './instructionInputs';

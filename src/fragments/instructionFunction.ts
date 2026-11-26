@@ -14,6 +14,7 @@ import {
     getInstructionDocs,
     getInstructionFunctionInputFlags,
     getProgramNodeFromPath,
+    getRenamedArgsMap,
     hasAsyncFunction,
     hasInstructionData,
     hasRemainingAccountInputs,
@@ -58,8 +59,7 @@ export function getInstructionFunctionFragment(
         dataArgsManifest: TypeManifest;
         extraArgsManifest: TypeManifest;
         instructionPath: NodePath<InstructionNode>;
-        renamedArgs: Map<string, string>;
-        resolvedInputs: ResolvedInstructionInput[];
+        resolvedInputs: readonly ResolvedInstructionInput[];
         useAsync: boolean;
     },
 ): Fragment | undefined {
@@ -67,6 +67,7 @@ export function getInstructionFunctionFragment(
     const instructionNode = getLastNodeFromPath(instructionPath);
     const programNode = getProgramNodeFromPath(instructionPath);
     if (useAsync && !hasAsyncFunction(instructionNode, resolvedInputs, asyncResolvers)) return;
+    const renamedArgs = getRenamedArgsMap(instructionPath, scope);
 
     const hasAccounts = (instructionNode.accounts ?? []).length > 0;
     const hasData = hasInstructionData(instructionNode, customInstructionData);
@@ -91,18 +92,18 @@ export function getInstructionFunctionFragment(
     const hasRemainingAccounts = !!remainingAccountsFragment;
     const hasByteDeltas = !!byteDeltaFragment;
     const hasResolver = resolvedInputFragment.features.has('instruction:resolverScopeVariable');
-    const instructionTypeFragment = getInstructionTypeFragment(scope);
+    const instructionTypeFragment = getReturnedInstructionTypeFragment(scope);
 
     const typeParams = getTypeParamsFragment(instructionNode, programAddressConstant);
     const returnType = getReturnTypeFragment(instructionTypeFragment, hasByteDeltas, useAsync);
-    const inputType = getInstructionInputTypeFragment(scope);
+    const inputType = getInstructionInputTypeFragment({ ...scope, renamedArgs });
     const inputArg = mapFragmentContent(getInputTypeCallFragment(scope), c => (hasInput ? `input: ${c}, ` : ''));
     const functionBody = mergeFragments(
         [
             getProgramAddressInitializationFragment(programAddressConstant),
             getAccountMetaHelperFragment(instructionNode, hasAccounts || hasRemainingAccountInputs(instructionNode)),
             getAccountsInitializationFragment(instructionNode, resolvedInputs),
-            getArgumentsInitializationFragment({ ...scope, hasAnyArgs, hasInput, omittedArgs }),
+            getArgumentsInitializationFragment({ ...scope, hasAnyArgs, hasInput, omittedArgs, renamedArgs }),
             getResolverScopeInitializationFragment(hasResolver, hasAccounts, hasAnyArgs),
             resolvedInputFragment,
             getReturnStatementFragment({
@@ -146,7 +147,7 @@ const getAccountMeta = ${use('getAccountMetaFactory', 'solanaProgramClientCore')
 
 function getAccountsInitializationFragment(
     instructionNode: InstructionNode,
-    resolvedInputs: ResolvedInstructionInput[],
+    resolvedInputs: readonly ResolvedInstructionInput[],
 ): Fragment | undefined {
     if ((instructionNode.accounts ?? []).length === 0) return;
 
@@ -175,7 +176,10 @@ const accounts = originalAccounts as Record<keyof typeof originalAccounts, ${use
  * never upgraded, even when it defaults to a signer account, so that any signer provided for
  * it merely carries its address.
  */
-function getRuntimeIsSignerFlag(account: InstructionAccountNode, resolvedInputs: ResolvedInstructionInput[]): string {
+function getRuntimeIsSignerFlag(
+    account: InstructionAccountNode,
+    resolvedInputs: readonly ResolvedInstructionInput[],
+): string {
     if (account.isSigner === false) return 'false';
     const resolvedAccount = findResolvedAccount(resolvedInputs, account);
     const resolvedIsSigner = resolvedAccount?.resolvedIsSigner ?? account.isSigner;
@@ -186,13 +190,14 @@ function getArgumentsInitializationFragment(
     scope: Pick<RenderScope, 'typeManifestVisitor'> & {
         hasAnyArgs: boolean;
         hasInput: boolean;
+        instructionPath: NodePath<InstructionNode>;
         omittedArgs: ResolvedInstructionDataField[];
         renamedArgs: Map<string, string>;
     },
 ): Fragment | undefined {
-    const { hasAnyArgs, hasInput, omittedArgs, renamedArgs, typeManifestVisitor } = scope;
+    const { hasAnyArgs, hasInput, instructionPath, omittedArgs, renamedArgs, typeManifestVisitor } = scope;
     if (!hasAnyArgs) return;
-    const renamedArgsText = [...renamedArgs.entries()].map(([k, v]) => `${k}: input.${v}`).join(', ');
+    const instructionNode = getLastNodeFromPath(instructionPath);
 
     // Arguments omitted from the input but filled in by the builder are declared on `args`.
     const omittedArgsType = mergeFragments(
@@ -208,13 +213,29 @@ function getArgumentsInitializationFragment(
 const args: ${omittedArgsType} = {};
 `;
     }
+
+    // Arguments renamed in the input, since they are named like an account, are mapped back.
+    const renamedArgsText = [...renamedArgs.entries()].map(([k, v]) => `${k}: input.${v}`).join(', ');
+    const inputArgs = `{ ...input, ${renamedArgsText} }`;
+
+    // Omitted arguments named like an account would otherwise read the account from the input.
+    const accountNames = new Set((instructionNode.accounts ?? []).map(account => camelCase(account.identifier)));
+    const shadowedArgsText = omittedArgs
+        .map(input => camelCase(input.node.identifier))
+        .filter(name => accountNames.has(name))
+        .map(name => `${name}: _${name}, `)
+        .join('');
+    const originalArgs = shadowedArgsText
+        ? `{ ${shadowedArgsText}...originalArgs } = ${inputArgs}`
+        : `originalArgs = ${inputArgs}`;
+
     if (omittedArgs.length === 0) {
         return fragment`// Original args.
-const args = { ...input, ${renamedArgsText} };
+const args = ${inputArgs};
 `;
     }
     return fragment`// Original args.
-const originalArgs = { ...input, ${renamedArgsText} };
+const ${originalArgs};
 const args: typeof originalArgs & ${omittedArgsType} = originalArgs;
 `;
 }
@@ -303,7 +324,7 @@ function getReturnTypeFragment(instructionTypeFragment: Fragment, hasByteDeltas:
 /**
  * Instruction builders declare one type parameter per account, holding the input value
  * provided for that account, so that the account metas of the returned instruction can be
- * derived from the exact values provided (see {@link getInstructionTypeFragment}). Since the
+ * derived from the exact values provided (see {@link getReturnedInstructionTypeFragment}). Since the
  * `input` parameter remains a concrete object type once these are inferred, TypeScript keeps
  * performing excess property checks on it — e.g. a misspelled optional account is a compile
  * error rather than silently falling back to its default value.
@@ -329,7 +350,10 @@ function getTypeParamsFragment(instructionNode: InstructionNode, programAddressC
  * account's address type parameter — which the instruction type then maps to the account
  * meta declared by the program's IDL.
  */
-function getInstructionTypeFragment(scope: { instructionPath: NodePath<InstructionNode>; nameApi: NameApi }): Fragment {
+function getReturnedInstructionTypeFragment(scope: {
+    instructionPath: NodePath<InstructionNode>;
+    nameApi: NameApi;
+}): Fragment {
     const { instructionPath, nameApi } = scope;
     const instructionNode = getLastNodeFromPath(instructionPath);
     const instructionTypeName = nameApi.instructionType(instructionNode.identifier);

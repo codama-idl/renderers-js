@@ -268,8 +268,8 @@ test('it can extracts account data and import it from another source', async () 
     // And we expect the existing account data to be extracted into a new type
     // so it can be imported from the hooked directory.
     await renderMapContains(renderMap, 'types/counter-account-data.ts', [
-        'export type CounterAccountData',
-        'export type CounterAccountDataArgs',
+        'export type CounterAccountData = { value: number };',
+        'export type CounterAccountDataArgs = CounterAccountData;',
         'export function getCounterAccountDataEncoder',
         'export function getCounterAccountDataDecoder',
         'export function getCounterAccountDataCodec',

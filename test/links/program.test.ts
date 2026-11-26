@@ -48,7 +48,7 @@ test('it imports constants from the linked program', async () => {
     });
 });
 
-test('it can override the import of a linked account', async () => {
+test('it can override the import of a linked program', async () => {
     // Given the following node.
     const node = rootNode(
         programNode({

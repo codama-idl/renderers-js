@@ -10,7 +10,7 @@
  * @param erasableSyntax - Whether to render the runtime object used for erasable enums.
  * @param values - The explicit value of each variant, in declaration order. Variants are
  * numbered from zero when omitted.
- * @returns The object body, without the surrounding braces.
+ * @return The object body, without the surrounding braces.
  *
  * @example
  * ```ts

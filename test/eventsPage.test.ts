@@ -315,7 +315,7 @@ test('it applies custom name transformations to the event APIs', async () => {
     await renderMapContains(renderMap, 'events/renamed.ts', [
         'export const RENAMED_PAYLOAD_DISCRIMINATOR',
         'export function bytesRenamedPayloadDiscriminator(): ReadonlyUint8Array',
-        'export type RenamedPayload',
+        'export type RenamedPayload = {',
         'export function read_renamed(',
     ]);
 });

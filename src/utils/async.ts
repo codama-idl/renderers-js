@@ -1,10 +1,13 @@
+import { CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, CodamaError } from '@codama/errors';
 import { camelCase } from '@codama/fragments/casing';
 import { InstructionNode, isNode, isNodeFilter } from '@codama/nodes';
+import { getLastNodeFromPath, NodePath } from '@codama/visitors-core';
 
 import type { ParsedCustomDataOptions } from './customData';
 import {
     deduplicateInstructionDependencies,
     findResolvedDataField,
+    getAllInstructionDataFields,
     getByteDeltaResolver,
     getDataPathRoot,
     getDefaultValueDependencies,
@@ -42,7 +45,7 @@ export function isAsyncResolver(resolverName: string, asyncResolvers: string[]):
  */
 export function hasAsyncFunction(
     instructionNode: InstructionNode,
-    resolvedInputs: ResolvedInstructionInput[],
+    resolvedInputs: readonly ResolvedInstructionInput[],
     asyncResolvers: string[],
 ): boolean {
     const hasByteDeltasAsync = (instructionNode.byteDeltas ?? []).some(byteDelta => {
@@ -57,7 +60,7 @@ export function hasAsyncFunction(
     return hasAsyncDefaultValues(resolvedInputs, asyncResolvers) || hasByteDeltasAsync || hasRemainingAccountsAsync;
 }
 
-function hasAsyncDefaultValues(resolvedInputs: ResolvedInstructionInput[], asyncResolvers: string[]): boolean {
+function hasAsyncDefaultValues(resolvedInputs: readonly ResolvedInstructionInput[], asyncResolvers: string[]): boolean {
     return resolvedInputs.some(input => isAsyncInput(input, asyncResolvers));
 }
 
@@ -94,7 +97,7 @@ function isAsyncDefaultValue(defaultValue: InstructionInputDefaultValue): boolea
  */
 function getInstructionDependencies(
     instructionNode: InstructionNode,
-    resolvedInputs: ResolvedInstructionInput[],
+    resolvedInputs: readonly ResolvedInstructionInput[],
     asyncResolvers: string[],
     useAsync: boolean,
 ): InstructionDependency[] {
@@ -173,6 +176,45 @@ export function isInputArgument(
 }
 
 /**
+ * Maps the camelCase name of each input argument conflicting with an account of the
+ * instruction to the camelCase name it is renamed to in the input type of a builder,
+ * e.g. `authority` to `authorityArg`. Arguments left out of that input, e.g. omitted
+ * arguments the builder fills in, never conflict, so the map depends on the builder:
+ * the synchronous one accepts every input the asynchronous one does, and more.
+ *
+ * Names are compared by their camelCase form since that is how they are emitted.
+ *
+ * @param instructionPath - The path of the instruction.
+ * @param scope - The resolved inputs, the asynchronous resolvers and whether the builder is asynchronous.
+ * @throws `CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE` with the path of the instruction when two
+ * of its data fields or extra arguments share a name.
+ *
+ * @example
+ * ```ts
+ * getRenamedArgsMap(instructionPath, { ...scope, useAsync: false }); // Map { 'authority' => 'authorityArg' }
+ * ```
+ */
+export function getRenamedArgsMap(
+    instructionPath: NodePath<InstructionNode>,
+    scope: { asyncResolvers: string[]; resolvedInputs: readonly ResolvedInstructionInput[]; useAsync: boolean },
+): Map<string, string> {
+    const instruction = getLastNodeFromPath(instructionPath);
+    const args = getAllInstructionDataFields(instruction);
+    const argNames = args.map(arg => camelCase(arg.identifier));
+    // Data fields and extra arguments share the input type, so their names must be unique.
+    if (new Set(argNames).size !== argNames.length) {
+        throw new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, { path: instructionPath });
+    }
+
+    const accountNames = new Set((instruction.accounts ?? []).map(account => camelCase(account.identifier)));
+    const conflictingNames = args
+        .filter(arg => isInputArgument(arg, scope))
+        .map(arg => camelCase(arg.identifier))
+        .filter(name => accountNames.has(name));
+    return new Map(conflictingNames.map(name => [name, camelCase(`${name}Arg`)]));
+}
+
+/**
  * Determines which inputs the sync or async builder of an instruction accepts, so that
  * callers such as the program plugin can invoke it with the same arguments it declares.
  *
@@ -188,7 +230,7 @@ export function getInstructionFunctionInputFlags(
     scope: {
         asyncResolvers: string[];
         customInstructionData: ParsedCustomDataOptions;
-        resolvedInputs: ResolvedInstructionInput[];
+        resolvedInputs: readonly ResolvedInstructionInput[];
         useAsync: boolean;
     },
 ): { hasAnyArgs: boolean; hasDataArgs: boolean; hasInput: boolean; omittedArgs: ResolvedInstructionDataField[] } {
@@ -204,7 +246,8 @@ export function getInstructionFunctionInputFlags(
     const argDependencies = instructionDependencies
         .filter(isNodeFilter('dataValueNode'))
         .map(node => getDataPathRoot(node.path));
-    const argIsNotOmitted = (arg: InstructionDataField) => isInputArgument(arg, scope);
+    const isInput = (arg: InstructionDataField) => isInputArgument(arg, scope);
+    const hasInputDataFields = getInstructionDataFields(instructionNode).some(isInput);
     const argIsDependent = (arg: InstructionDataField) => argDependencies.includes(arg.identifier);
     const argHasDefaultValue = (arg: InstructionDataField) => {
         if (!hasInputDefault(arg)) return false;
@@ -213,25 +256,17 @@ export function getInstructionFunctionInputFlags(
         return !resolvedArg || !isAsyncInput(resolvedArg, asyncResolvers);
     };
     const omittedArgs = resolvedInputs.filter(
-        (input): input is ResolvedInstructionDataField => input.kind === 'data' && !argIsNotOmitted(input.node),
+        (input): input is ResolvedInstructionDataField => input.kind === 'data' && !isInput(input.node),
     );
     const hasOmittedDataArgs = omittedArgs.some(input => !input.isExtraArgument);
-    const hasDataArgs =
-        !!dataLink ||
-        hasOmittedDataArgs ||
-        getInstructionDataFields(instructionNode).filter(argIsNotOmitted).length > 0;
-    const hasExtraArgs =
-        getInstructionExtraArguments(instructionNode).filter(
-            field => argIsNotOmitted(field) && (argIsDependent(field) || argHasDefaultValue(field)),
-        ).length > 0;
+    const hasDataArgs = !!dataLink || hasOmittedDataArgs || hasInputDataFields;
+    const hasExtraArgs = getInstructionExtraArguments(instructionNode).some(
+        field => isInput(field) && (argIsDependent(field) || argHasDefaultValue(field)),
+    );
     const hasRemainingAccountArgs = (instructionNode.remainingAccounts ?? []).some(
         remainingAccounts => getRemainingAccountsName(remainingAccounts) !== undefined,
     );
-    const hasInputArgs =
-        !!dataLink ||
-        getInstructionDataFields(instructionNode).filter(argIsNotOmitted).length > 0 ||
-        hasExtraArgs ||
-        hasRemainingAccountArgs;
+    const hasInputArgs = !!dataLink || hasInputDataFields || hasExtraArgs || hasRemainingAccountArgs;
     const hasAnyArgs = hasInputArgs || omittedArgs.length > 0;
     return { hasAnyArgs, hasDataArgs, hasInput: hasAccounts || hasInputArgs, omittedArgs };
 }
