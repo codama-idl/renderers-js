@@ -135,18 +135,10 @@ function getProgramPluginAccountsTypeFragment(
     const fields = mergeFragments(
         accounts.map(account => {
             const name = nameApi.programPluginAccountKey(account.identifier);
-            const codecFunction = use(
-                'type ' + nameApi.codecFunction(account.identifier),
-                getGeneratedNodeModule('account', account.identifier, scope),
-            );
-            const fromType = use(
-                'type ' + nameApi.dataArgsType(account.identifier),
-                getGeneratedNodeModule('account', account.identifier, scope),
-            );
-            const toType = use(
-                'type ' + nameApi.dataType(account.identifier),
-                getGeneratedNodeModule('account', account.identifier, scope),
-            );
+            const accountModule = getGeneratedNodeModule('account', account.identifier, scope);
+            const codecFunction = use('type ' + nameApi.codecFunction(account.identifier), accountModule);
+            const fromType = use('type ' + nameApi.dataArgsType(account.identifier), accountModule);
+            const toType = use('type ' + nameApi.dataType(account.identifier), accountModule);
             return fragment`${name}: ReturnType<typeof ${codecFunction}> & ${selfFetchFunctions}<${fromType}, ${toType}>;`;
         }),
         c => c.join(' '),
@@ -167,24 +159,13 @@ function getProgramPluginInstructionsTypeFragment(
     const fields = mergeFragments(
         instructions.map(({ isAsync, node: instruction, payerDefaultValues }) => {
             const name = nameApi.programPluginInstructionKey(instruction.identifier);
+            const instructionModule = getGeneratedNodeModule('instruction', instruction.identifier, scope);
             let instructionInputType = isAsync
-                ? use(
-                      'type ' + nameApi.instructionAsyncInputType(instruction.identifier),
-                      getGeneratedNodeModule('instruction', instruction.identifier, scope),
-                  )
-                : use(
-                      'type ' + nameApi.instructionSyncInputType(instruction.identifier),
-                      getGeneratedNodeModule('instruction', instruction.identifier, scope),
-                  );
+                ? use('type ' + nameApi.instructionAsyncInputType(instruction.identifier), instructionModule)
+                : use('type ' + nameApi.instructionSyncInputType(instruction.identifier), instructionModule);
             const instructionFunction = isAsync
-                ? use(
-                      'type ' + nameApi.instructionAsyncFunction(instruction.identifier),
-                      getGeneratedNodeModule('instruction', instruction.identifier, scope),
-                  )
-                : use(
-                      'type ' + nameApi.instructionSyncFunction(instruction.identifier),
-                      getGeneratedNodeModule('instruction', instruction.identifier, scope),
-                  );
+                ? use('type ' + nameApi.instructionAsyncFunction(instruction.identifier), instructionModule)
+                : use('type ' + nameApi.instructionSyncFunction(instruction.identifier), instructionModule);
 
             if (payerDefaultValues.length > 0) {
                 const fieldStringUnion = payerDefaultValues.map(({ name }) => `"${name}"`).join(' | ');
@@ -363,15 +344,10 @@ function getProgramPluginInstructionsObjectFragment(
     const fields = mergeFragments(
         instructions.map(({ hasInput, isAsync, node: instruction, payerDefaultValues }) => {
             const name = nameApi.programPluginInstructionKey(instruction.identifier);
+            const instructionModule = getGeneratedNodeModule('instruction', instruction.identifier, scope);
             const instructionFunction = isAsync
-                ? use(
-                      nameApi.instructionAsyncFunction(instruction.identifier),
-                      getGeneratedNodeModule('instruction', instruction.identifier, scope),
-                  )
-                : use(
-                      nameApi.instructionSyncFunction(instruction.identifier),
-                      getGeneratedNodeModule('instruction', instruction.identifier, scope),
-                  );
+                ? use(nameApi.instructionAsyncFunction(instruction.identifier), instructionModule)
+                : use(nameApi.instructionSyncFunction(instruction.identifier), instructionModule);
             const addSelfPlanAndSendFunctions = use('addSelfPlanAndSendFunctions', 'solanaProgramClientCore');
             let input = fragment`input`;
             if (payerDefaultValues.length > 0) {
