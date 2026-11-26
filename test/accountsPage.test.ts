@@ -1,5 +1,6 @@
 import {
     accountNode,
+    arrayTypeNode,
     booleanTypeNode,
     constantDiscriminatorNode,
     constantValueNodeFromBytes,
@@ -13,6 +14,7 @@ import {
     integerValueNode,
     pdaLinkNode,
     pdaNode,
+    prefixedCountNode,
     programNode,
     publicKeyTypeNode,
     structFieldTypeNode,
@@ -271,5 +273,80 @@ test('it can extracts account data and import it from another source', async () 
         'export function getCounterAccountDataEncoder',
         'export function getCounterAccountDataDecoder',
         'export function getCounterAccountDataCodec',
+    ]);
+});
+
+test('it types account codecs by the size of their data rather than their declared size', async () => {
+    // Given a fixed-size account declaring a larger size, and a variable-size account declaring one.
+    const node = programNode({
+        accounts: [
+            accountNode({
+                data: structTypeNode([structFieldTypeNode({ identifier: 'value', type: integerTypeNode('u32') })]),
+                identifier: 'counter',
+                size: 100,
+            }),
+            accountNode({
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        identifier: 'items',
+                        type: arrayTypeNode(integerTypeNode('u8'), prefixedCountNode(integerTypeNode('u32'))),
+                    }),
+                ]),
+                identifier: 'list',
+                size: 100,
+            }),
+        ],
+        identifier: 'myProgram',
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the fixed-size data gets fixed-size codecs typed by its own size, whilst the variable data does not.
+    await renderMapContains(renderMap, 'accounts/counter.ts', [
+        'export function getCounterDecoder(): FixedSizeDecoder<Counter>',
+        'export function getCounterSize(): number { return 100; }',
+    ]);
+    await renderMapContains(renderMap, 'accounts/list.ts', [
+        'export function getListDecoder(): Decoder<List>',
+        'export function getListSize(): number { return 100; }',
+    ]);
+});
+
+test('it matches field discriminators of accounts whose data links to a defined type', async () => {
+    // Given an account whose data is a defined type holding its discriminator field.
+    const node = programNode({
+        accounts: [
+            accountNode({
+                data: definedTypeLinkNode('vaultData'),
+                discriminators: [fieldDiscriminatorNode('kind')],
+                identifier: 'vault',
+            }),
+        ],
+        definedTypes: [
+            definedTypeNode({
+                identifier: 'vaultData',
+                type: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: integerValueNode('7'),
+                        defaultValueStrategy: 'omitted',
+                        identifier: 'kind',
+                        type: integerTypeNode('u8'),
+                    }),
+                ]),
+            }),
+        ],
+        identifier: 'myProgram',
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the discriminator constant and the program identifier read the field through the link.
+    await renderMapContains(renderMap, 'accounts/vault.ts', ['export const VAULT_KIND = 7;']);
+    await renderMapContains(renderMap, 'programs/my-program.ts', [
+        'if (containsBytes(data, getU8Encoder().encode(7), 0)) { return MyProgramAccount.Vault; }',
     ]);
 });

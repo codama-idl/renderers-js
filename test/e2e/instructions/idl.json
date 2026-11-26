@@ -860,6 +860,98 @@
       },
       {
         "kind": "instructionNode",
+        "identifier": "configure",
+        "optionalAccountStrategy": "programId",
+        "accounts": [
+          {
+            "kind": "instructionAccountNode",
+            "identifier": "authority",
+            "isWritable": false,
+            "isSigner": true,
+            "isOptional": false
+          },
+          {
+            "kind": "instructionAccountNode",
+            "identifier": "settings",
+            "isWritable": true,
+            "isSigner": false,
+            "isOptional": false,
+            "defaultValue": {
+              "kind": "pdaValueNode",
+              "pda": {
+                "kind": "pdaLinkNode",
+                "identifier": "settings"
+              }
+            }
+          },
+          {
+            "kind": "instructionAccountNode",
+            "identifier": "recipient",
+            "isWritable": true,
+            "isSigner": false,
+            "isOptional": false,
+            "defaultValue": {
+              "kind": "conditionalValueNode",
+              "condition": {
+                "kind": "dataValueNode",
+                "path": "mode"
+              },
+              "value": {
+                "kind": "enumValueNode",
+                "variant": "strict",
+                "enum": {
+                  "kind": "definedTypeLinkNode",
+                  "identifier": "mode"
+                }
+              },
+              "ifTrue": {
+                "kind": "accountValueNode",
+                "identifier": "authority"
+              },
+              "ifFalse": {
+                "kind": "accountValueNode",
+                "identifier": "settings"
+              }
+            }
+          }
+        ],
+        "data": {
+          "kind": "structTypeNode",
+          "fields": [
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "discriminator",
+              "defaultValueStrategy": "omitted",
+              "type": {
+                "kind": "integerTypeNode",
+                "format": "u8",
+                "endian": "le"
+              },
+              "defaultValue": {
+                "kind": "integerValueNode",
+                "value": "16"
+              }
+            },
+            {
+              "kind": "structFieldTypeNode",
+              "identifier": "mode",
+              "type": {
+                "kind": "definedTypeLinkNode",
+                "identifier": "mode"
+              }
+            }
+          ]
+        },
+        "discriminators": [
+          {
+            "kind": "fieldDiscriminatorNode",
+            "path": "discriminator",
+            "offset": 0
+          }
+        ]
+      },
+      {
+        "kind": "instructionNode",
         "identifier": "useSecret",
         "optionalAccountStrategy": "programId",
         "accounts": [
@@ -1024,6 +1116,30 @@
         ]
       }
     ],
+    "definedTypes": [
+      {
+        "kind": "definedTypeNode",
+        "identifier": "mode",
+        "type": {
+          "kind": "enumTypeNode",
+          "variants": [
+            {
+              "kind": "enumVariantTypeNode",
+              "identifier": "relaxed"
+            },
+            {
+              "kind": "enumVariantTypeNode",
+              "identifier": "strict"
+            }
+          ],
+          "size": {
+            "kind": "integerTypeNode",
+            "format": "u8",
+            "endian": "le"
+          }
+        }
+      }
+    ],
     "pdas": [
       {
         "kind": "pdaNode",
@@ -1034,6 +1150,24 @@
             "identifier": "owner",
             "type": {
               "kind": "publicKeyTypeNode"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "pdaNode",
+        "identifier": "settings",
+        "programId": "Instructions1111111111111111111111111111111",
+        "seeds": [
+          {
+            "kind": "constantPdaSeedNode",
+            "type": {
+              "kind": "stringTypeNode",
+              "encoding": "utf8"
+            },
+            "value": {
+              "kind": "stringValueNode",
+              "string": "settings"
             }
           }
         ]

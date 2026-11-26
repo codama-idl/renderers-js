@@ -1,5 +1,6 @@
 import { camelCase } from '@codama/fragments/casing';
 import { InstructionNode, ProgramNode } from '@codama/nodes';
+import type { NodePath } from '@codama/visitors-core';
 
 import {
     Fragment,
@@ -35,6 +36,7 @@ export function getProgramInstructionsFragment(
         | 'typeManifestVisitor'
     > & {
         programNode: ProgramNode;
+        programPath: NodePath<ProgramNode>;
     },
 ): Fragment | undefined {
     // Sub-instructions come first, so that their more specific discriminators are matched first.
@@ -75,6 +77,7 @@ function getProgramInstructionsIdentifierFunctionFragment(
     scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         allInstructions: InstructionNode[];
         programNode: ProgramNode;
+        programPath: NodePath<ProgramNode>;
     },
 ): Fragment | undefined {
     const { programNode, nameApi, allInstructions } = scope;
@@ -95,7 +98,7 @@ function getProgramInstructionsIdentifierFunctionFragment(
                 discriminators: instruction.discriminators ?? [],
                 fields: getStructFields(
                     getInstructionDataNode(instruction),
-                    [programNode, instruction],
+                    [...scope.programPath, instruction],
                     scope.linkables,
                 ),
                 ifTrue: `return ${programInstructionsEnum}.${variant};`,

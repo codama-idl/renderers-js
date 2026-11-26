@@ -1,5 +1,6 @@
 import { camelCase } from '@codama/fragments/casing';
 import { ProgramNode } from '@codama/nodes';
+import type { NodePath } from '@codama/visitors-core';
 
 import { Fragment, fragment, getStructFields, mergeFragments, RenderScope, use } from '../utils';
 import { getDiscriminatorConditionFragment } from './discriminatorCondition';
@@ -15,6 +16,7 @@ import { getEnumDeclarationFragment } from './enumDeclaration';
 export function getProgramEventsFragment(
     scope: Pick<RenderScope, 'erasableSyntax' | 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         programNode: ProgramNode;
+        programPath: NodePath<ProgramNode>;
     },
 ): Fragment | undefined {
     if ((scope.programNode.events ?? []).length === 0) return;
@@ -39,6 +41,7 @@ function getProgramEventsEnumFragment(
 function getProgramEventsIdentifierFunctionFragment(
     scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {
         programNode: ProgramNode;
+        programPath: NodePath<ProgramNode>;
     },
 ): Fragment | undefined {
     const { programNode, nameApi } = scope;
@@ -57,7 +60,7 @@ function getProgramEventsIdentifierFunctionFragment(
                 ...scope,
                 dataName: 'data',
                 discriminators: event.discriminators ?? [],
-                fields: getStructFields(event.data, [programNode, event], scope.linkables),
+                fields: getStructFields(event.data, [...scope.programPath, event], scope.linkables),
                 ifTrue: `return ${programEventsEnum}.${variant};`,
             });
         }),

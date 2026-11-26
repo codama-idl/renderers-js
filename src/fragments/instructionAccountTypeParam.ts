@@ -1,4 +1,9 @@
-import { InstructionAccountNode, InstructionInputValueNode, InstructionNode } from '@codama/nodes';
+import {
+    InstructionAccountNode,
+    InstructionInputValueNode,
+    InstructionNode,
+    parseOptionalAccountStrategy,
+} from '@codama/nodes';
 import { getLastNodeFromPath, LinkableDictionary, NodePath } from '@codama/visitors-core';
 
 import {
@@ -35,7 +40,8 @@ export function getInstructionAccountTypeParamFragment(
     const typeParam = getAccountTypeParamName(instructionAccountNode.identifier);
     const accountMeta = fragment` | ${use('type AccountMeta', 'solanaInstructions')}<string>`;
 
-    if (instructionNode.optionalAccountStrategy === 'omitted' && instructionAccountNode.isOptional) {
+    const omitsOptionalAccounts = parseOptionalAccountStrategy(instructionNode.optionalAccountStrategy) === 'omitted';
+    if (omitsOptionalAccounts && instructionAccountNode.isOptional) {
         return fragment`${typeParam} extends string${accountMeta} | undefined = undefined`;
     }
 

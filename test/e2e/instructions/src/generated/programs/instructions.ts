@@ -39,6 +39,7 @@ import {
     getByteDeltasInstruction,
     getChildInstruction,
     getClaimOwnershipInstruction,
+    getConfigureInstructionAsync,
     getContextualDataInstruction,
     getGetBalanceInstruction,
     getGetStatsInstruction,
@@ -53,6 +54,7 @@ import {
     parseByteDeltasInstruction,
     parseChildInstruction,
     parseClaimOwnershipInstruction,
+    parseConfigureInstruction,
     parseContextualDataInstruction,
     parseGetBalanceInstruction,
     parseGetStatsInstruction,
@@ -67,6 +69,7 @@ import {
     type ByteDeltasInput,
     type ChildInput,
     type ClaimOwnershipInput,
+    type ConfigureAsyncInput,
     type ContextualDataInput,
     type GetBalanceInput,
     type GetStatsInput,
@@ -76,6 +79,7 @@ import {
     type ParsedByteDeltasInstruction,
     type ParsedChildInstruction,
     type ParsedClaimOwnershipInstruction,
+    type ParsedConfigureInstruction,
     type ParsedContextualDataInstruction,
     type ParsedGetBalanceInstruction,
     type ParsedGetStatsInstruction,
@@ -93,6 +97,7 @@ import {
     type UseSecretAsyncInput,
 } from '../instructions';
 import { parseSecretResetInstruction, type ParsedSecretResetInstruction } from '../instructions/secret-reset';
+import { findSettingsPda } from '../pdas';
 
 export const INSTRUCTIONS_PROGRAM_ADDRESS =
     'Instructions1111111111111111111111111111111' as Address<'Instructions1111111111111111111111111111111'>;
@@ -115,6 +120,7 @@ export enum InstructionsInstruction {
     SyncLimits,
     ClaimOwnership,
     SetDelegate,
+    Configure,
     UseSecret,
     SecretReset,
     Child,
@@ -160,6 +166,9 @@ export function identifyInstructionsInstruction(
     if (containsBytes(data, getU8Encoder().encode(15), 0)) {
         return InstructionsInstruction.SetDelegate;
     }
+    if (containsBytes(data, getU8Encoder().encode(16), 0)) {
+        return InstructionsInstruction.Configure;
+    }
     if (containsBytes(data, getU8Encoder().encode(11), 0)) {
         return InstructionsInstruction.UseSecret;
     }
@@ -188,6 +197,7 @@ export type ParsedInstructionsInstruction<TProgram extends string = 'Instruction
     | ({ instructionType: InstructionsInstruction.SyncLimits } & ParsedSyncLimitsInstruction<TProgram>)
     | ({ instructionType: InstructionsInstruction.ClaimOwnership } & ParsedClaimOwnershipInstruction<TProgram>)
     | ({ instructionType: InstructionsInstruction.SetDelegate } & ParsedSetDelegateInstruction<TProgram>)
+    | ({ instructionType: InstructionsInstruction.Configure } & ParsedConfigureInstruction<TProgram>)
     | ({ instructionType: InstructionsInstruction.UseSecret } & ParsedUseSecretInstruction<TProgram>)
     | ({ instructionType: InstructionsInstruction.SecretReset } & ParsedSecretResetInstruction<TProgram>)
     | ({ instructionType: InstructionsInstruction.Child } & ParsedChildInstruction<TProgram>);
@@ -255,6 +265,10 @@ export function parseInstructionsInstruction<TProgram extends string>(
                 ...parseSetDelegateInstruction(instruction),
             };
         }
+        case InstructionsInstruction.Configure: {
+            assertIsInstructionWithAccounts(instruction);
+            return { instructionType: InstructionsInstruction.Configure, ...parseConfigureInstruction(instruction) };
+        }
         case InstructionsInstruction.UseSecret: {
             assertIsInstructionWithAccounts(instruction);
             return { instructionType: InstructionsInstruction.UseSecret, ...parseUseSecretInstruction(instruction) };
@@ -280,6 +294,7 @@ export function parseInstructionsInstruction<TProgram extends string>(
 export type InstructionsPlugin = {
     accounts: InstructionsPluginAccounts;
     instructions: InstructionsPluginInstructions;
+    pdas: InstructionsPluginPdas;
     identifyInstruction: typeof identifyInstructionsInstruction;
     parseInstruction: typeof parseInstructionsInstruction;
 };
@@ -347,6 +362,10 @@ export type InstructionsPluginInstructions = {
         input: MakeOptional<SetDelegateInput, 'delegateArg'>,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getSetDelegateInstruction> & SelfPlanAndSendFunctions;
+    configure: (
+        input: ConfigureAsyncInput,
+        config?: { programAddress?: Address | HasAddress },
+    ) => ReturnType<typeof getConfigureInstructionAsync> & SelfPlanAndSendFunctions;
     useSecret: (
         input: UseSecretAsyncInput,
         config?: { programAddress?: Address | HasAddress },
@@ -356,6 +375,8 @@ export type InstructionsPluginInstructions = {
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getChildInstruction> & SelfPlanAndSendFunctions;
 };
+
+export type InstructionsPluginPdas = { settings: typeof findSettingsPda };
 
 export type InstructionsPluginRequirements = ClientWithRpc<GetAccountInfoApi & GetMultipleAccountsApi> &
     ClientWithPayer &
@@ -458,6 +479,13 @@ export function instructionsProgram(config: { programAddress?: Address | HasAddr
                                 { programAddress: instructionConfig?.programAddress ?? config.programAddress },
                             ),
                         ),
+                    configure: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getConfigureInstructionAsync(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
+                        ),
                     useSecret: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(
                             client,
@@ -472,6 +500,10 @@ export function instructionsProgram(config: { programAddress?: Address | HasAddr
                                 programAddress: instructionConfig?.programAddress ?? config.programAddress,
                             }),
                         ),
+                },
+                pdas: {
+                    settings: pdaConfig =>
+                        findSettingsPda({ programAddress: pdaConfig?.programAddress ?? config.programAddress }),
                 },
                 identifyInstruction: identifyInstructionsInstruction,
                 parseInstruction: parseInstructionsInstruction,

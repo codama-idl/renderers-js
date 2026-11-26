@@ -6,6 +6,7 @@ import {
     Fragment,
     fragment,
     getDocblockFragment,
+    getGeneratedNodeModule,
     getInstructionDataFields,
     getInstructionDocs,
     getInstructionFunctionInputFlags,
@@ -39,6 +40,7 @@ export function getProgramPluginFragment(
         | 'asyncResolvers'
         | 'customInstructionData'
         | 'erasableSyntax'
+        | 'getImportPath'
         | 'isInternalNode'
         | 'linkables'
         | 'nameApi'
@@ -123,7 +125,7 @@ function getProgramPluginTypeFragment(
 }
 
 function getProgramPluginAccountsTypeFragment(
-    scope: Pick<RenderScope, 'nameApi'> & { accounts: AccountNode[]; programNode: ProgramNode },
+    scope: ModuleScope & { accounts: AccountNode[]; programNode: ProgramNode },
 ): Fragment | undefined {
     const { accounts, programNode, nameApi } = scope;
     if (accounts.length === 0) return;
@@ -133,9 +135,18 @@ function getProgramPluginAccountsTypeFragment(
     const fields = mergeFragments(
         accounts.map(account => {
             const name = nameApi.programPluginAccountKey(account.identifier);
-            const codecFunction = use('type ' + nameApi.codecFunction(account.identifier), 'generatedAccounts');
-            const fromType = use('type ' + nameApi.dataArgsType(account.identifier), 'generatedAccounts');
-            const toType = use('type ' + nameApi.dataType(account.identifier), 'generatedAccounts');
+            const codecFunction = use(
+                'type ' + nameApi.codecFunction(account.identifier),
+                getGeneratedNodeModule('account', account.identifier, scope),
+            );
+            const fromType = use(
+                'type ' + nameApi.dataArgsType(account.identifier),
+                getGeneratedNodeModule('account', account.identifier, scope),
+            );
+            const toType = use(
+                'type ' + nameApi.dataType(account.identifier),
+                getGeneratedNodeModule('account', account.identifier, scope),
+            );
             return fragment`${name}: ReturnType<typeof ${codecFunction}> & ${selfFetchFunctions}<${fromType}, ${toType}>;`;
         }),
         c => c.join(' '),
@@ -145,10 +156,7 @@ function getProgramPluginAccountsTypeFragment(
 }
 
 function getProgramPluginInstructionsTypeFragment(
-    scope: Pick<RenderScope, 'nameApi'> & {
-        instructions: PluginInstruction[];
-        programNode: ProgramNode;
-    },
+    scope: ModuleScope & { instructions: PluginInstruction[]; programNode: ProgramNode },
 ): Fragment | undefined {
     const { instructions, programNode, nameApi } = scope;
     if (instructions.length === 0) return;
@@ -160,11 +168,23 @@ function getProgramPluginInstructionsTypeFragment(
         instructions.map(({ isAsync, node: instruction, payerDefaultValues }) => {
             const name = nameApi.programPluginInstructionKey(instruction.identifier);
             let instructionInputType = isAsync
-                ? use('type ' + nameApi.instructionAsyncInputType(instruction.identifier), 'generatedInstructions')
-                : use('type ' + nameApi.instructionSyncInputType(instruction.identifier), 'generatedInstructions');
+                ? use(
+                      'type ' + nameApi.instructionAsyncInputType(instruction.identifier),
+                      getGeneratedNodeModule('instruction', instruction.identifier, scope),
+                  )
+                : use(
+                      'type ' + nameApi.instructionSyncInputType(instruction.identifier),
+                      getGeneratedNodeModule('instruction', instruction.identifier, scope),
+                  );
             const instructionFunction = isAsync
-                ? use('type ' + nameApi.instructionAsyncFunction(instruction.identifier), 'generatedInstructions')
-                : use('type ' + nameApi.instructionSyncFunction(instruction.identifier), 'generatedInstructions');
+                ? use(
+                      'type ' + nameApi.instructionAsyncFunction(instruction.identifier),
+                      getGeneratedNodeModule('instruction', instruction.identifier, scope),
+                  )
+                : use(
+                      'type ' + nameApi.instructionSyncFunction(instruction.identifier),
+                      getGeneratedNodeModule('instruction', instruction.identifier, scope),
+                  );
 
             if (payerDefaultValues.length > 0) {
                 const fieldStringUnion = payerDefaultValues.map(({ name }) => `"${name}"`).join(' | ');
@@ -181,7 +201,7 @@ function getProgramPluginInstructionsTypeFragment(
 }
 
 function getProgramPluginPdasTypeFragment(
-    scope: Pick<RenderScope, 'nameApi'> & { pdas: PdaNode[]; programNode: ProgramNode },
+    scope: ModuleScope & { pdas: PdaNode[]; programNode: ProgramNode },
 ): Fragment | undefined {
     const { pdas, programNode, nameApi } = scope;
     if (pdas.length === 0) return;
@@ -190,7 +210,10 @@ function getProgramPluginPdasTypeFragment(
     const fields = mergeFragments(
         pdas.map(pda => {
             const name = nameApi.programPluginPdaKey(pda.identifier);
-            const pdaFindFunction = use('type ' + nameApi.pdaFindFunction(pda.identifier), 'generatedPdas');
+            const pdaFindFunction = use(
+                'type ' + nameApi.pdaFindFunction(pda.identifier),
+                getGeneratedNodeModule('pda', pda.identifier, scope),
+            );
             return fragment`${name}: typeof ${pdaFindFunction};`;
         }),
         c => c.join(' '),
@@ -200,7 +223,7 @@ function getProgramPluginPdasTypeFragment(
 }
 
 function getProgramPluginPdasObjectFragment(
-    scope: Pick<RenderScope, 'nameApi'> & { pdas: PdaNode[]; programNode: ProgramNode },
+    scope: ModuleScope & { pdas: PdaNode[]; programNode: ProgramNode },
 ): Fragment | undefined {
     const { pdas, programNode, nameApi } = scope;
     if (pdas.length === 0) return;
@@ -208,7 +231,10 @@ function getProgramPluginPdasObjectFragment(
     const fields = mergeFragments(
         pdas.map(pda => {
             const name = nameApi.programPluginPdaKey(pda.identifier);
-            const pdaFindFunction = use(nameApi.pdaFindFunction(pda.identifier), 'generatedPdas');
+            const pdaFindFunction = use(
+                nameApi.pdaFindFunction(pda.identifier),
+                getGeneratedNodeModule('pda', pda.identifier, scope),
+            );
             if (!isPdaDerivedFromProgram(pda, programNode)) return fragment`${name}: ${pdaFindFunction}`;
             return hasVariablePdaSeeds(pda)
                 ? fragment`${name}: (seeds, pdaConfig) => ${pdaFindFunction}(seeds, { programAddress: pdaConfig?.programAddress ?? config.programAddress })`
@@ -253,15 +279,13 @@ function getProgramPluginRequirementsTypeFragment(
 }
 
 function getProgramPluginFunctionFragment(
-    scope: Pick<
-        RenderScope,
-        'asyncResolvers' | 'customInstructionData' | 'erasableSyntax' | 'nameApi' | 'renderParentInstructions'
-    > & {
-        accounts: AccountNode[];
-        instructions: PluginInstruction[];
-        pdas: PdaNode[];
-        programNode: ProgramNode;
-    },
+    scope: ModuleScope &
+        Pick<RenderScope, 'erasableSyntax' | 'renderParentInstructions'> & {
+            accounts: AccountNode[];
+            instructions: PluginInstruction[];
+            pdas: PdaNode[];
+            programNode: ProgramNode;
+        },
 ): Fragment {
     const { pdas, instructions, programNode, nameApi, renderParentInstructions, erasableSyntax } = scope;
     const programPluginFunction = nameApi.programPluginFunction(programNode.identifier);
@@ -309,7 +333,7 @@ function getProgramPluginFunctionFragment(
 }
 
 function getProgramPluginAccountsObjectFragment(
-    scope: Pick<RenderScope, 'nameApi'> & { accounts: AccountNode[] },
+    scope: ModuleScope & { accounts: AccountNode[] },
 ): Fragment | undefined {
     const { accounts, nameApi } = scope;
     if (accounts.length === 0) return;
@@ -318,7 +342,10 @@ function getProgramPluginAccountsObjectFragment(
         accounts.map(account => {
             const name = nameApi.programPluginAccountKey(account.identifier);
             const addSelfFetchFunctions = use('addSelfFetchFunctions', 'solanaProgramClientCore');
-            const codecFunction = use(nameApi.codecFunction(account.identifier), 'generatedAccounts');
+            const codecFunction = use(
+                nameApi.codecFunction(account.identifier),
+                getGeneratedNodeModule('account', account.identifier, scope),
+            );
             return fragment`${name}: ${addSelfFetchFunctions}(client, ${codecFunction}())`;
         }),
         c => c.join(', '),
@@ -328,10 +355,7 @@ function getProgramPluginAccountsObjectFragment(
 }
 
 function getProgramPluginInstructionsObjectFragment(
-    scope: Pick<RenderScope, 'asyncResolvers' | 'customInstructionData' | 'nameApi'> & {
-        instructions: PluginInstruction[];
-        programNode: ProgramNode;
-    },
+    scope: ModuleScope & { instructions: PluginInstruction[] },
 ): Fragment | undefined {
     const { instructions, nameApi } = scope;
     if (instructions.length === 0) return;
@@ -340,8 +364,14 @@ function getProgramPluginInstructionsObjectFragment(
         instructions.map(({ hasInput, isAsync, node: instruction, payerDefaultValues }) => {
             const name = nameApi.programPluginInstructionKey(instruction.identifier);
             const instructionFunction = isAsync
-                ? use(nameApi.instructionAsyncFunction(instruction.identifier), 'generatedInstructions')
-                : use(nameApi.instructionSyncFunction(instruction.identifier), 'generatedInstructions');
+                ? use(
+                      nameApi.instructionAsyncFunction(instruction.identifier),
+                      getGeneratedNodeModule('instruction', instruction.identifier, scope),
+                  )
+                : use(
+                      nameApi.instructionSyncFunction(instruction.identifier),
+                      getGeneratedNodeModule('instruction', instruction.identifier, scope),
+                  );
             const addSelfPlanAndSendFunctions = use('addSelfPlanAndSendFunctions', 'solanaProgramClientCore');
             let input = fragment`input`;
             if (payerDefaultValues.length > 0) {
@@ -372,6 +402,9 @@ function getMakeOptionalHelperTypeFragment(scope: { instructions: PluginInstruct
     if (!hasPayerDefaultValues(scope.instructions)) return;
     return fragment`type MakeOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;`;
 }
+
+/** The scope the plugin needs to import generated nodes, from their barrel or their own file. */
+type ModuleScope = Pick<RenderScope, 'getImportPath' | 'isInternalNode' | 'nameApi'>;
 
 /** An instruction exposed by the plugin, with what the plugin needs to know about its builders. */
 type PluginInstruction = {

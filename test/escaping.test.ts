@@ -3,6 +3,9 @@ import {
     accountNode,
     addTypeNodeTransforms,
     arrayTypeNode,
+    bytesTypeNode,
+    bytesValueNode,
+    constantDiscriminatorNode,
     constantNode,
     constantValueNodeFromBytes,
     definedTypeNode,
@@ -18,6 +21,7 @@ import {
     type Node,
     pdaNode,
     pluginNode,
+    preOffsetTransformNode,
     programNode,
     type ProgramNode,
     publicKeyValueNode,
@@ -163,6 +167,40 @@ const invalidNodes: [string, () => Node, (node: never) => Partial<Parameters<typ
         node => ({
             definedTypes: [definedTypeNode({ identifier: 'items', type: arrayTypeNode(integerTypeNode('u8'), node) })],
         }),
+    ],
+    [
+        'a discriminator offset',
+        () => constantDiscriminatorNode(constantValueNodeFromBytes('base16', 'ff'), { offset: invalid('0, evil()') }),
+        node => ({ accounts: [accountNode({ discriminators: [node], identifier: 'counter' })] }),
+    ],
+    [
+        'a pre-offset',
+        () => preOffsetTransformNode(invalid('1); evil(')),
+        node => ({
+            definedTypes: [
+                definedTypeNode({ identifier: 'padded', type: addTypeNodeTransforms(integerTypeNode('u8'), [node]) }),
+            ],
+        }),
+    ],
+    [
+        'a number format',
+        () => integerTypeNode(invalid('u8(); evil')),
+        node => ({ definedTypes: [definedTypeNode({ identifier: 'amount', type: node })] }),
+    ],
+    [
+        'a byte order',
+        () => integerTypeNode('u32', { endian: invalid('be(); evil') }),
+        node => ({ definedTypes: [definedTypeNode({ identifier: 'amount', type: node })] }),
+    ],
+    [
+        'a string encoding',
+        () => stringTypeNode(invalid('utf8(); evil')),
+        node => ({ definedTypes: [definedTypeNode({ identifier: 'name', type: node })] }),
+    ],
+    [
+        'a bytes encoding',
+        () => bytesValueNode(invalid('base64(); evil'), 'ff'),
+        node => ({ constants: [constantNode('seed', bytesTypeNode(), node)] }),
     ],
     [
         'a size discriminator',

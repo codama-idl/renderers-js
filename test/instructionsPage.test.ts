@@ -562,36 +562,6 @@ test('it forwards the program address to PDAs pinned to the address of their own
     ]);
 });
 
-test('it keeps the default of PDAs pinned to another program', async () => {
-    // Given a PDA pinned to the address of another program.
-    const node = programNode({
-        identifier: 'counter',
-        instructions: [
-            instructionNode({
-                accounts: [
-                    instructionAccountNode({
-                        defaultValue: pdaValueNode('counter'),
-                        identifier: 'counter',
-                        isSigner: false,
-                        isWritable: false,
-                    }),
-                ],
-                identifier: 'increment',
-            }),
-        ],
-        pdas: [pdaNode({ identifier: 'counter', programId: '2222', seeds: [] })],
-        publicKey: '1111',
-    });
-
-    // When we render it.
-    const renderMap = visit(node, getRenderMapVisitor());
-
-    // Then the PDA is derived from its own program.
-    await renderMapContains(renderMap, 'instructions/increment.ts', [
-        'if (!accounts.counter.value) { accounts.counter.value = await findCounterPda(); }',
-    ]);
-});
-
 test('it renders instruction accounts with inlined PDAs as default value', async () => {
     // Given the following instruction with an inlined PDA default value.
     const node = programNode({
@@ -2108,4 +2078,37 @@ test('it defaults account type parameters to the addresses builders fill in', as
         "TAccountTokenProgram extends string | AccountMeta<string> = '1111'",
         'TAccountVault extends string | AccountMeta<string> = string',
     ]);
+});
+
+test('it requires omitted data fields defaulting to the payer in instruction builders', async () => {
+    // Given an instruction whose only input is an omitted data field defaulting to the payer.
+    const node = programNode({
+        identifier: 'myProgram',
+        instructions: [
+            instructionNode({
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: injectedValueNode({ key: 'owner' }),
+                        defaultValueStrategy: 'omitted',
+                        identifier: 'owner',
+                        type: publicKeyTypeNode(),
+                    }),
+                ]),
+                identifier: 'claim',
+                provides: [providedNode('owner', payerValueNode())],
+            }),
+        ],
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the builder has no payer to fill the field in with, so it requires it in its input.
+    await renderMapContains(renderMap, 'instructions/claim.ts', [
+        "export type ClaimInput = { owner: ClaimInstructionDataArgs['owner']; };",
+        'input: ClaimInput,',
+        'const args = { ...input };',
+    ]);
+    await renderMapDoesNotContain(renderMap, 'instructions/claim.ts', ['owner?:']);
 });

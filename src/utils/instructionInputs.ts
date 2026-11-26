@@ -18,12 +18,15 @@ import {
 } from '@codama/errors';
 import { camelCase, pascalCase } from '@codama/fragments/casing';
 import {
-    AccountValueNode,
+    AccountNode,
     accountValueNode,
+    AccountValueNode,
     DataValueNode,
     dataValueNode,
     DefaultValueStrategy,
     DefinedTypeLinkNode,
+    DefinedTypeNode,
+    definedTypeNode,
     IdentifierString,
     INSTRUCTION_INPUT_VALUE_NODE_KINDS,
     InstructionAccountNode,
@@ -33,15 +36,15 @@ import {
     InstructionRemainingAccountsNode,
     isNode,
     Node,
-    PathString,
     pathString,
+    PathString,
     PluginNode,
     REGISTERED_TYPE_NODE_KINDS,
     REGISTERED_VALUE_NODE_KINDS,
     StructFieldTypeNode,
     structFieldTypeNode,
-    StructTypeNode,
     structTypeNode,
+    StructTypeNode,
     TextNode,
     TypeNode,
     VALUE_NODE_KINDS,
@@ -57,7 +60,7 @@ import {
     resolveTypePath,
 } from '@codama/visitors-core';
 
-import type { ParsedCustomDataOptions } from './customData';
+import { getCustomDataOptions, type ParsedCustomDataOptions } from './customData';
 import { isNodeObject } from './nodePaths';
 
 const RESOLVER_PLUGIN = 'codama.resolver';
@@ -157,7 +160,7 @@ export function getInstructionDataLink(
     instruction: InstructionNode,
     customInstructionData: ParsedCustomDataOptions,
 ): DefinedTypeLinkNode | undefined {
-    const customDataLink = customInstructionData.get(camelCase(instruction.identifier))?.linkNode;
+    const customDataLink = getCustomDataOptions(customInstructionData, instruction)?.linkNode;
     if (customDataLink) return customDataLink;
     return instruction.data && isNode(instruction.data, 'definedTypeLinkNode') ? instruction.data : undefined;
 }
@@ -172,6 +175,35 @@ export function getInstructionDataNode(instruction: InstructionNode): DefinedTyp
     if (!instruction.data) return structTypeNode([]);
     if (isNode(instruction.data, ['structTypeNode', 'definedTypeLinkNode'])) return instruction.data;
     throw new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, { path: [instruction, instruction.data] });
+}
+
+/**
+ * The defined types to render for the custom data of accounts or instructions configured with
+ * `extract: true`, holding the data they would have generated.
+ *
+ * @param nodes - The accounts or instructions, e.g. the ones rendered as pages.
+ * @param parsedCustomDataOptions - The parsed custom data options.
+ * @return The defined types to render.
+ */
+export function getDefinedTypeNodesToExtract(
+    nodes: AccountNode[] | InstructionNode[],
+    parsedCustomDataOptions: ParsedCustomDataOptions,
+): DefinedTypeNode[] {
+    return nodes.flatMap(node => {
+        const options = getCustomDataOptions(parsedCustomDataOptions, node);
+        if (!options || !options.extract) return [];
+
+        if (isNode(node, 'accountNode')) {
+            return [definedTypeNode({ identifier: options.extractAs, type: { ...node.data } })];
+        }
+
+        return [
+            definedTypeNode({
+                identifier: options.extractAs,
+                type: getInstructionDataNode(node),
+            }),
+        ];
+    });
 }
 
 /**

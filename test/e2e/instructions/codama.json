@@ -9,7 +9,12 @@
                     "asyncResolvers": ["resolveFeeAsync"],
                     "kitImportStrategy": "rootOnly",
                     "syncPackageJson": false,
-                    "internalNodes": ["secretCounter", "secretVault", "secretReset"]
+                    "internalNodes": ["secretCounter", "secretVault", "secretReset"],
+                    "linkOverrides": {
+                        "resolvers": {
+                            "resolveByteDelta": "../../hooked/byteDeltas"
+                        }
+                    }
                 }
             ]
         }

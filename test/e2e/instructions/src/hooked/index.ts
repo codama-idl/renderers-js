@@ -13,11 +13,6 @@ export function resolveRemainingAccounts(scope: { args: { signerCount: number } 
     }));
 }
 
-/** Resolves the bytes allocated by the instruction from its space argument. */
-export function resolveByteDelta(scope: { args: { space: number | bigint } }): number {
-    return Number(scope.args.space);
-}
-
 /** Resolves a fee asynchronously, e.g. from an RPC call. */
 export async function resolveFeeAsync(_scope: object): Promise<number> {
     return await Promise.resolve(5000);
