@@ -45,7 +45,7 @@ test('it imports functions from the linked pda', async () => {
     });
 });
 
-test('it can override the import of a linked account', async () => {
+test('it can override the import of a linked PDA', async () => {
     // Given the following node.
     const node = programNode({
         identifier: 'myProgram',

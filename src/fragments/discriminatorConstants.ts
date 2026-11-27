@@ -80,7 +80,7 @@ function getConstantDiscriminatorConstantFragment(
     const index = discriminatorNodes.filter(isNodeFilter('constantDiscriminatorNode')).indexOf(discriminatorNode);
     const name = getConstantDiscriminatorName(prefix, index);
     const { type, value } = discriminatorNode.constant;
-    return getConstantFragment({ ...scope, name, type, value });
+    return getConstantDeclarationFragment({ ...scope, name, type, value });
 }
 
 function getFieldDiscriminatorConstantFragment(
@@ -94,10 +94,10 @@ function getFieldDiscriminatorConstantFragment(
     const { fields, prefix } = scope;
     const { defaultValue, field } = getFieldDiscriminatorField(discriminatorNode, fields);
     const name = getFieldDiscriminatorName(prefix, field.identifier);
-    return getConstantFragment({ ...scope, name, type: field.type, value: defaultValue });
+    return getConstantDeclarationFragment({ ...scope, name, type: field.type, value: defaultValue });
 }
 
-function getConstantFragment(
+function getConstantDeclarationFragment(
     scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'nonScalarEnums' | 'typeManifestVisitor'> & {
         name: string;
         path: NodePath;

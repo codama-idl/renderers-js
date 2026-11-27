@@ -24,7 +24,7 @@ export async function findSecretCounterPda(
 ): Promise<ProgramDerivedAddress> {
     const {
         programAddress:
-            programAddressInput = 'Instructions1111111111111111111111111111111' as Address<'Instructions1111111111111111111111111111111'>,
+            programAddressInput = '86ZVX2iJXaMkKSJHacQcH2dJ9kGMudi1iZovGpPS9y2P' as Address<'86ZVX2iJXaMkKSJHacQcH2dJ9kGMudi1iZovGpPS9y2P'>,
     } = config;
     const programAddress = typeof programAddressInput === 'string' ? programAddressInput : programAddressInput.address;
     return await getProgramDerivedAddress({ programAddress, seeds: [getAddressEncoder().encode(seeds.owner)] });

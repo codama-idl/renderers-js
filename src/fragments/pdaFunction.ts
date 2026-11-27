@@ -3,12 +3,13 @@ import { isNode, isNodeFilter, PdaNode, PdaSeedNode } from '@codama/nodes';
 import { getLastNodeFromPath, NodePath, visit } from '@codama/visitors-core';
 
 import {
-    fragment,
     Fragment,
+    fragment,
     getDocblockFragment,
     getProgramNodeFromPath,
     getStringLiteral,
     getTypedValueFragment,
+    hasVariablePdaSeeds,
     mergeFragments,
     RenderScope,
     use,
@@ -29,7 +30,7 @@ export function getPdaFunctionFragment(
     const pdaNode = getLastNodeFromPath(scope.pdaPath);
     const seeds = parsePdaSeedNodes(pdaNode.seeds ?? [], scope);
 
-    return mergeFragments([getSeedInputTypeFragment(seeds, scope), getFunctionFragment(seeds, scope)], cs =>
+    return mergeFragments([getSeedInputTypeFragment(seeds, scope), getFindPdaFunctionFragment(seeds, scope)], cs =>
         cs.join('\n\n'),
     );
 }
@@ -53,7 +54,7 @@ function getSeedInputTypeFragment(
     return fragment`export type ${seedTypeName} = {\n${seedAttributes}\n};`;
 }
 
-function getFunctionFragment(
+function getFindPdaFunctionFragment(
     seeds: ParsedPdaSeedNode[],
     scope: Pick<RenderScope, 'nameApi' | 'typeManifestVisitor'> & {
         pdaPath: NodePath<PdaNode>;
@@ -71,7 +72,7 @@ function getFunctionFragment(
     const findPdaFunction = scope.nameApi.pdaFindFunction(pdaNode.identifier);
 
     const docs = getDocblockFragment(pdaNode.docs, true);
-    const hasVariableSeeds = seeds.filter(isNodeFilter('variablePdaSeedNode')).length > 0;
+    const hasVariableSeeds = hasVariablePdaSeeds(pdaNode);
     const seedArgument = hasVariableSeeds ? `seeds: ${seedTypeName}, ` : '';
     const programAddress = pdaNode.programId ?? programNode.publicKey;
     const encodedSeeds = mergeFragments(

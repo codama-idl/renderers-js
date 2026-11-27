@@ -9,7 +9,6 @@ import {
     getProgramNodeFromPath,
     getRenamedArgsMap,
     getStructFields,
-    isInputArgument,
     mergeFragments,
     RenderScope,
     ResolvedInstructionInput,
@@ -45,7 +44,7 @@ export function getInstructionPageFragment(
         | 'typeManifestVisitor'
     > & {
         instructionPath: NodePath<InstructionNode>;
-        resolvedInputs: ResolvedInstructionInput[];
+        resolvedInputs: readonly ResolvedInstructionInput[];
         size: number | null;
     },
 ): Fragment {
@@ -63,15 +62,14 @@ export function getInstructionPageFragment(
             }),
             scope.typeManifestVisitor,
         ),
-        // Synchronous builders accept every input asynchronous ones do, and more.
-        renamedArgs: getRenamedArgsMap(scope.instructionPath, arg =>
-            isInputArgument(arg, { ...scope, useAsync: false }),
-        ),
     };
-    if (childScope.renamedArgs.size > 0) {
+    // Each builder renames the arguments of its own input; the synchronous input, which
+    // accepts every input the asynchronous one does, lists every renamed argument.
+    const renamedArgs = getRenamedArgsMap(scope.instructionPath, { ...scope, useAsync: false });
+    if (renamedArgs.size > 0) {
         logWarn(
             `[JavaScript] Accounts and args of instruction [${node.identifier}] have the following ` +
-                `conflicting attributes [${[...childScope.renamedArgs.keys()].join(', ')}]. ` +
+                `conflicting attributes [${[...renamedArgs.keys()].join(', ')}]. ` +
                 `Thus, the arguments have been renamed to avoid conflicts in the input type.`,
         );
     }

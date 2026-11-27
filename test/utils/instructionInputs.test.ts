@@ -4,8 +4,6 @@ import {
     CODAMA_ERROR__VISITORS__CANNOT_USE_OPTIONAL_ACCOUNT_AS_PDA_SEED_VALUE,
     CODAMA_ERROR__VISITORS__CYCLIC_DEPENDENCY_DETECTED_WHEN_RESOLVING_INSTRUCTION_DEFAULT_VALUES,
     CODAMA_ERROR__VISITORS__INVALID_INSTRUCTION_DEFAULT_VALUE_DEPENDENCY,
-    type CodamaErrorCode,
-    isCodamaError,
 } from '@codama/errors';
 import {
     accountBumpValueNode,
@@ -55,6 +53,7 @@ import {
     isInstructionResolver,
     isRemainingAccountsBackedByArgument,
 } from '../../src/utils';
+import { getCodamaError } from '../_setup';
 
 const amount = structFieldTypeNode({ identifier: 'amount', type: integerTypeNode('u64') });
 const useAta = { identifier: 'useAta', type: integerTypeNode('u8') };
@@ -70,7 +69,7 @@ test('it exposes the data fields and extra arguments of an instruction', () => {
     expect(getInstructionDataFields(instruction)).toStrictEqual([amount]);
     expect(getInstructionExtraArguments(instruction)).toStrictEqual([useAta]);
     expect(getAllInstructionDataFields(instruction)).toStrictEqual([amount, useAta]);
-    expect(hasInstructionData(instruction)).toBe(true);
+    expect(hasInstructionData(instruction, new Map())).toBe(true);
     expect(getInstructionDataNode(instruction)).toStrictEqual(structTypeNode([amount]));
     expect(getInstructionExtraArgumentsNode(instruction)).toStrictEqual(structTypeNode([structFieldTypeNode(useAta)]));
 });
@@ -78,7 +77,7 @@ test('it exposes the data fields and extra arguments of an instruction', () => {
 test('it reports instructions without data', () => {
     const instruction = instructionNode({ identifier: 'noop', plugins: [useAtaPlugin] });
 
-    expect(hasInstructionData(instruction)).toBe(false);
+    expect(hasInstructionData(instruction, new Map())).toBe(false);
     expect(getInstructionDataNode(instruction)).toStrictEqual(structTypeNode([]));
 });
 
@@ -86,7 +85,7 @@ test('it exposes instruction data linked to a defined type', () => {
     const data = definedTypeLinkNode('transferArgs');
     const instruction = instructionNode({ data, identifier: 'transfer' });
 
-    expect(hasInstructionData(instruction)).toBe(true);
+    expect(hasInstructionData(instruction, new Map())).toBe(true);
     expect(getInstructionDataNode(instruction)).toBe(data);
     expect(getInstructionDataFields(instruction)).toStrictEqual([]);
 });
@@ -204,17 +203,6 @@ function resolve(
     );
     const path: NodePath<InstructionNode> = [root, root.program, root.program.instructions![0]];
     return getResolvedInstructionInputs(path, getLinkablesFromNode(root));
-}
-
-/** The Codama error thrown by the given function, failing if it does not throw one with that code. */
-function getCodamaError<TCode extends CodamaErrorCode>(code: TCode, fn: () => unknown) {
-    try {
-        fn();
-    } catch (error) {
-        if (isCodamaError(error, code)) return error;
-        throw error;
-    }
-    throw new Error(`Expected a Codama error with code ${code} to be thrown.`);
 }
 
 const account = (identifier: string, options: Partial<Parameters<typeof instructionAccountNode>[0]> = {}) =>

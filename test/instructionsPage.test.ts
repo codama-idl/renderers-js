@@ -4,8 +4,6 @@ import {
     CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE,
     CODAMA_ERROR__VISITORS__INVALID_PDA_SEED_VALUES,
     CodamaError,
-    type CodamaErrorCode,
-    isCodamaError,
 } from '@codama/errors';
 import { getFromRenderMap } from '@codama/fragments';
 import {
@@ -17,6 +15,7 @@ import {
     booleanTypeNode,
     booleanValueNode,
     conditionalValueNode,
+    type ConditionalValueNode,
     constantDiscriminatorNode,
     constantPdaSeedNodeFromString,
     constantValueNode,
@@ -67,6 +66,7 @@ import { getResolvedInstructionInputs } from '../src/utils';
 import {
     codeContains,
     codeDoesNotContain,
+    getCodamaError,
     renderMapContains,
     renderMapContainsImports,
     renderMapDoesNotContain,
@@ -491,9 +491,9 @@ test('it renders instruction arguments with linked PDA default values that forwa
     // When we render it.
     const renderMap = visit(node, getRenderMapVisitor());
 
-    // Then we expect the argument default to use the program address of the instruction.
+    // Then the argument defaults to the address of the PDA derived from the program address of the instruction.
     await renderMapContains(renderMap, 'instructions/increment.ts', [
-        'if (args.counterAddress === undefined) { args.counterAddress = await findCounterPda({ programAddress }); }',
+        'if (args.counterAddress === undefined) { args.counterAddress = (await findCounterPda({ programAddress }))[0]; }',
     ]);
 });
 
@@ -559,6 +559,45 @@ test('it forwards the program address to PDAs pinned to the address of their own
     // Then the PDA is derived from the program address of the instruction, as for unpinned PDAs.
     await renderMapContains(renderMap, 'instructions/increment.ts', [
         'if (!accounts.counter.value) { accounts.counter.value = await findCounterPda({ programAddress }); }',
+    ]);
+});
+
+test('it renders instruction arguments with inlined PDA default values as addresses', async () => {
+    // Given an instruction argument defaulting to an inlined PDA.
+    const node = programNode({
+        identifier: 'counter',
+        instructions: [
+            instructionNode({
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: injectedValueNode({ key: 'counterAddress' }),
+                        identifier: 'counterAddress',
+                        type: publicKeyTypeNode(),
+                    }),
+                ]),
+                identifier: 'increment',
+                provides: [
+                    providedNode(
+                        'counterAddress',
+                        pdaValueNode(
+                            pdaNode({
+                                identifier: 'counter',
+                                seeds: [constantPdaSeedNodeFromString('utf8', 'counter')],
+                            }),
+                        ),
+                    ),
+                ],
+            }),
+        ],
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+
+    // Then the argument holds the address of the PDA rather than the address and bump pair.
+    await renderMapContains(renderMap, 'instructions/increment.ts', [
+        "args.counterAddress = ( await getProgramDerivedAddress({ programAddress, seeds: [getUtf8Encoder().encode('counter')] }) )[0];",
     ]);
 });
 
@@ -1509,17 +1548,6 @@ test('it fails on nested data paths that do not exist', () => {
     expect(error.context.pathString).toBe('mint.typo');
 });
 
-/** The Codama error thrown by the given function, failing if it does not throw one with that code. */
-function getCodamaError<TCode extends CodamaErrorCode>(code: TCode, fn: () => unknown) {
-    try {
-        fn();
-    } catch (error) {
-        if (isCodamaError(error, code)) return error;
-        throw error;
-    }
-    throw new Error(`Expected a Codama error with code ${code} to be thrown.`);
-}
-
 test('it fails on inline PDA defaults missing a seed value', () => {
     // Given an account defaulting to an inline PDA without a value for its variable seed.
     const node = programNode({
@@ -1836,6 +1864,18 @@ test('it renders parents whose sub-instructions are all archived as leaves', () 
     expect(renderMap.has('instructions/transfer-v1.ts')).toBe(false);
 });
 
+/** A `transfer` instruction whose `target` account defaults to the given conditional value. */
+function transferWithConditionalTarget(defaultValue: ConditionalValueNode) {
+    return instructionNode({
+        accounts: [
+            instructionAccountNode({ identifier: 'authority', isSigner: 'either', isWritable: false }),
+            instructionAccountNode({ identifier: 'fallback', isSigner: false, isWritable: false }),
+            instructionAccountNode({ defaultValue, identifier: 'target', isSigner: false, isWritable: false }),
+        ],
+        identifier: 'transfer',
+    });
+}
+
 test('it compares integer conditions of default values as bigints', async () => {
     // Given an account defaulting to another one when a u64 argument equals 5.
     const node = programNode({
@@ -1876,7 +1916,7 @@ test('it compares account conditions of default values by address', async () => 
     const node = programNode({
         identifier: 'myProgram',
         instructions: [
-            instructionInputAccounts(
+            transferWithConditionalTarget(
                 conditionalValueNode({
                     condition: accountValueNode('authority'),
                     ifTrue: accountValueNode('fallback'),
@@ -1906,7 +1946,7 @@ test('it fails on conditions of default values that cannot be compared', () => {
     });
     const node = programNode({
         identifier: 'myProgram',
-        instructions: [instructionInputAccounts(conditional)],
+        instructions: [transferWithConditionalTarget(conditional)],
         publicKey: '1111',
     });
 
@@ -1914,18 +1954,6 @@ test('it fails on conditions of default values that cannot be compared', () => {
     const error = getCodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, () => visit(node, getRenderMapVisitor()));
     expect(error.context.path.at(-1)).toBe(conditional);
 });
-
-/** A `transfer` instruction whose `target` account defaults to the given conditional value. */
-function instructionInputAccounts(defaultValue: ReturnType<typeof conditionalValueNode>) {
-    return instructionNode({
-        accounts: [
-            instructionAccountNode({ identifier: 'authority', isSigner: 'either', isWritable: false }),
-            instructionAccountNode({ identifier: 'fallback', isSigner: false, isWritable: false }),
-            instructionAccountNode({ defaultValue, identifier: 'target', isSigner: false, isWritable: false }),
-        ],
-        identifier: 'transfer',
-    });
-}
 
 test('it compares scalar enum conditions of default values as native enum members', async () => {
     // Given an account defaulting to another one when a scalar enum argument holds a given variant.
@@ -2111,4 +2139,43 @@ test('it requires omitted data fields defaulting to the payer in instruction bui
         'const args = { ...input };',
     ]);
     await renderMapDoesNotContain(renderMap, 'instructions/claim.ts', ['owner?:']);
+});
+
+test('it renames arguments named like an account in the builder whose input includes them only', async () => {
+    // Given an omitted `vault` data field, filled in from a PDA asynchronously, next to a `vault` account.
+    const node = programNode({
+        identifier: 'myProgram',
+        instructions: [
+            instructionNode({
+                accounts: [instructionAccountNode({ identifier: 'vault', isSigner: false, isWritable: true })],
+                data: structTypeNode([
+                    structFieldTypeNode({
+                        defaultValue: injectedValueNode({ key: 'vault' }),
+                        defaultValueStrategy: 'omitted',
+                        identifier: 'vault',
+                        type: publicKeyTypeNode(),
+                    }),
+                ]),
+                identifier: 'transfer',
+                provides: [providedNode('vault', pdaValueNode('vault'))],
+            }),
+        ],
+        pdas: [pdaNode({ identifier: 'vault', seeds: [] })],
+        publicKey: '1111',
+    });
+
+    // When we render it.
+    const renderMap = visit(node, getRenderMapVisitor());
+    const [asyncFunction, syncFunction] = (renderMap.get('instructions/transfer.ts')?.content ?? '').split(
+        'export type TransferInput<',
+    );
+
+    // Then the synchronous builder, which requires the field, renames it, whilst the asynchronous
+    // builder, which fills it in, leaves its input alone and keeps the account out of the args.
+    await codeContains(syncFunction, ['vaultArg: TransferInstructionDataArgs["vault"];', 'vault: input.vaultArg']);
+    await codeDoesNotContain(asyncFunction, ['vaultArg']);
+    await codeContains(asyncFunction, [
+        'const { vault: _vault, ...originalArgs } = { ...input };',
+        'args.vault = (await findVaultPda({ programAddress }))[0];',
+    ]);
 });

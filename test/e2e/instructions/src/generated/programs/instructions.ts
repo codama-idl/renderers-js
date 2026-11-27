@@ -43,6 +43,7 @@ import {
     getContextualDataInstruction,
     getGetBalanceInstruction,
     getGetStatsInstruction,
+    getLinkVaultInstructionAsync,
     getNewTransferInstruction,
     getOldTransferInstruction,
     getResolvedExtrasInstruction,
@@ -58,6 +59,7 @@ import {
     parseContextualDataInstruction,
     parseGetBalanceInstruction,
     parseGetStatsInstruction,
+    parseLinkVaultInstruction,
     parseNewTransferInstruction,
     parseOldTransferInstruction,
     parseResolvedExtrasInstruction,
@@ -73,6 +75,7 @@ import {
     type ContextualDataInput,
     type GetBalanceInput,
     type GetStatsInput,
+    type LinkVaultAsyncInput,
     type NewTransferInput,
     type OldTransferInput,
     type ParsedAllOmittedInstruction,
@@ -83,6 +86,7 @@ import {
     type ParsedContextualDataInstruction,
     type ParsedGetBalanceInstruction,
     type ParsedGetStatsInstruction,
+    type ParsedLinkVaultInstruction,
     type ParsedNewTransferInstruction,
     type ParsedOldTransferInstruction,
     type ParsedResolvedExtrasInstruction,
@@ -100,7 +104,7 @@ import { parseSecretResetInstruction, type ParsedSecretResetInstruction } from '
 import { findSettingsPda } from '../pdas';
 
 export const INSTRUCTIONS_PROGRAM_ADDRESS =
-    'Instructions1111111111111111111111111111111' as Address<'Instructions1111111111111111111111111111111'>;
+    '86ZVX2iJXaMkKSJHacQcH2dJ9kGMudi1iZovGpPS9y2P' as Address<'86ZVX2iJXaMkKSJHacQcH2dJ9kGMudi1iZovGpPS9y2P'>;
 
 export enum InstructionsAccount {
     Counter,
@@ -120,6 +124,7 @@ export enum InstructionsInstruction {
     SyncLimits,
     ClaimOwnership,
     SetDelegate,
+    LinkVault,
     Configure,
     UseSecret,
     SecretReset,
@@ -166,6 +171,9 @@ export function identifyInstructionsInstruction(
     if (containsBytes(data, getU8Encoder().encode(15), 0)) {
         return InstructionsInstruction.SetDelegate;
     }
+    if (containsBytes(data, getU8Encoder().encode(17), 0)) {
+        return InstructionsInstruction.LinkVault;
+    }
     if (containsBytes(data, getU8Encoder().encode(16), 0)) {
         return InstructionsInstruction.Configure;
     }
@@ -184,7 +192,7 @@ export function identifyInstructionsInstruction(
     });
 }
 
-export type ParsedInstructionsInstruction<TProgram extends string = 'Instructions1111111111111111111111111111111'> =
+export type ParsedInstructionsInstruction<TProgram extends string = '86ZVX2iJXaMkKSJHacQcH2dJ9kGMudi1iZovGpPS9y2P'> =
     | ({ instructionType: InstructionsInstruction.AllOmitted } & ParsedAllOmittedInstruction<TProgram>)
     | ({ instructionType: InstructionsInstruction.SomeOmitted } & ParsedSomeOmittedInstruction<TProgram>)
     | ({ instructionType: InstructionsInstruction.ResolvedExtras } & ParsedResolvedExtrasInstruction<TProgram>)
@@ -197,6 +205,7 @@ export type ParsedInstructionsInstruction<TProgram extends string = 'Instruction
     | ({ instructionType: InstructionsInstruction.SyncLimits } & ParsedSyncLimitsInstruction<TProgram>)
     | ({ instructionType: InstructionsInstruction.ClaimOwnership } & ParsedClaimOwnershipInstruction<TProgram>)
     | ({ instructionType: InstructionsInstruction.SetDelegate } & ParsedSetDelegateInstruction<TProgram>)
+    | ({ instructionType: InstructionsInstruction.LinkVault } & ParsedLinkVaultInstruction<TProgram>)
     | ({ instructionType: InstructionsInstruction.Configure } & ParsedConfigureInstruction<TProgram>)
     | ({ instructionType: InstructionsInstruction.UseSecret } & ParsedUseSecretInstruction<TProgram>)
     | ({ instructionType: InstructionsInstruction.SecretReset } & ParsedSecretResetInstruction<TProgram>)
@@ -264,6 +273,10 @@ export function parseInstructionsInstruction<TProgram extends string>(
                 instructionType: InstructionsInstruction.SetDelegate,
                 ...parseSetDelegateInstruction(instruction),
             };
+        }
+        case InstructionsInstruction.LinkVault: {
+            assertIsInstructionWithAccounts(instruction);
+            return { instructionType: InstructionsInstruction.LinkVault, ...parseLinkVaultInstruction(instruction) };
         }
         case InstructionsInstruction.Configure: {
             assertIsInstructionWithAccounts(instruction);
@@ -362,6 +375,10 @@ export type InstructionsPluginInstructions = {
         input: MakeOptional<SetDelegateInput, 'delegateArg'>,
         config?: { programAddress?: Address | HasAddress },
     ) => ReturnType<typeof getSetDelegateInstruction> & SelfPlanAndSendFunctions;
+    linkVault: (
+        input: LinkVaultAsyncInput,
+        config?: { programAddress?: Address | HasAddress },
+    ) => ReturnType<typeof getLinkVaultInstructionAsync> & SelfPlanAndSendFunctions;
     configure: (
         input: ConfigureAsyncInput,
         config?: { programAddress?: Address | HasAddress },
@@ -478,6 +495,13 @@ export function instructionsProgram(config: { programAddress?: Address | HasAddr
                                 { ...input, delegateArg: input.delegateArg ?? client.payer.address },
                                 { programAddress: instructionConfig?.programAddress ?? config.programAddress },
                             ),
+                        ),
+                    linkVault: (input, instructionConfig) =>
+                        addSelfPlanAndSendFunctions(
+                            client,
+                            getLinkVaultInstructionAsync(input, {
+                                programAddress: instructionConfig?.programAddress ?? config.programAddress,
+                            }),
                         ),
                     configure: (input, instructionConfig) =>
                         addSelfPlanAndSendFunctions(

@@ -20,7 +20,7 @@ import { getTypeWithCodecFragment } from './typeWithCodec';
  * its codec functions and a parse helper validating the event discriminators.
  *
  * @param scope - The render scope with the path to the {@link EventNode} and its byte size.
- * @returns A {@link Fragment} containing the full event page.
+ * @return A {@link Fragment} containing the full event page.
  */
 export function getEventPageFragment(
     scope: Pick<RenderScope, 'erasableSyntax' | 'linkables' | 'nameApi' | 'nonScalarEnums' | 'typeManifestVisitor'> & {
@@ -69,7 +69,7 @@ export function getEventPageFragment(
  * discriminators before decoding the provided bytes.
  *
  * @param scope - The render scope with the event node and its path.
- * @returns A {@link Fragment} containing the parse function.
+ * @return A {@link Fragment} containing the parse function.
  */
 function getEventParseFunctionFragment(
     scope: Pick<RenderScope, 'linkables' | 'nameApi' | 'typeManifestVisitor'> & {

@@ -4,7 +4,7 @@ import { Fragment, fragment, getEnumBody, RenderScope } from '../utils';
  * Renders an enum declaration whose variants are numbered sequentially from zero.
  *
  * @param scope - The exported name, the variant names and the render scope.
- * @returns A {@link Fragment} declaring the enum.
+ * @return A {@link Fragment} declaring the enum.
  *
  * @see {@link getEnumDeclarationFromBodyFragment}
  */
@@ -29,7 +29,7 @@ export function getEnumDeclarationFragment(
  * value union of a native enum.
  *
  * @param scope - The exported name, the object body, an optional docblock and the render scope.
- * @returns A {@link Fragment} declaring the enum.
+ * @return A {@link Fragment} declaring the enum.
  *
  * @example
  * ```ts

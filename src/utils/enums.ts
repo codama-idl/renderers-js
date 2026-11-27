@@ -18,7 +18,7 @@ import { isNodeObject } from './nodePaths';
  * otherwise its position in the enum, starting at zero.
  *
  * @param variants - The variants of the enum, in declaration order.
- * @returns The discriminator value of each variant, in the same order.
+ * @return The discriminator value of each variant, in the same order.
  */
 export function getEnumVariantDiscriminators(variants: readonly EnumVariantTypeNode[]): number[] {
     return variants.map((variant, index) => variant.discriminator ?? index);

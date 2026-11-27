@@ -18,15 +18,12 @@ import {
 } from '@codama/errors';
 import { camelCase, pascalCase } from '@codama/fragments/casing';
 import {
-    AccountNode,
     accountValueNode,
     AccountValueNode,
     DataValueNode,
     dataValueNode,
     DefaultValueStrategy,
     DefinedTypeLinkNode,
-    DefinedTypeNode,
-    definedTypeNode,
     IdentifierString,
     INSTRUCTION_INPUT_VALUE_NODE_KINDS,
     InstructionAccountNode,
@@ -60,7 +57,8 @@ import {
     resolveTypePath,
 } from '@codama/visitors-core';
 
-import { getCustomDataOptions, type ParsedCustomDataOptions } from './customData';
+import type { ParsedCustomDataOptions } from './customData';
+import { getCustomDataOptions } from './customData';
 import { isNodeObject } from './nodePaths';
 
 const RESOLVER_PLUGIN = 'codama.resolver';
@@ -141,13 +139,13 @@ export function getAllInstructionDataFields(instruction: InstructionNode): Instr
  * when the `customInstructionData` option is given, its data is provided by it.
  *
  * @param instruction - The instruction.
- * @param customInstructionData - The parsed `customInstructionData` option, if any.
+ * @param customInstructionData - The parsed `customInstructionData` option.
  */
 export function hasInstructionData(
     instruction: InstructionNode,
-    customInstructionData?: ParsedCustomDataOptions,
+    customInstructionData: ParsedCustomDataOptions,
 ): boolean {
-    if (customInstructionData && getInstructionDataLink(instruction, customInstructionData)) return true;
+    if (getInstructionDataLink(instruction, customInstructionData)) return true;
     const { data } = instruction;
     return !!data && !(isNode(data, 'structTypeNode') && (data.fields ?? []).length === 0);
 }
@@ -175,35 +173,6 @@ export function getInstructionDataNode(instruction: InstructionNode): DefinedTyp
     if (!instruction.data) return structTypeNode([]);
     if (isNode(instruction.data, ['structTypeNode', 'definedTypeLinkNode'])) return instruction.data;
     throw new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, { path: [instruction, instruction.data] });
-}
-
-/**
- * The defined types to render for the custom data of accounts or instructions configured with
- * `extract: true`, holding the data they would have generated.
- *
- * @param nodes - The accounts or instructions, e.g. the ones rendered as pages.
- * @param parsedCustomDataOptions - The parsed custom data options.
- * @return The defined types to render.
- */
-export function getDefinedTypeNodesToExtract(
-    nodes: AccountNode[] | InstructionNode[],
-    parsedCustomDataOptions: ParsedCustomDataOptions,
-): DefinedTypeNode[] {
-    return nodes.flatMap(node => {
-        const options = getCustomDataOptions(parsedCustomDataOptions, node);
-        if (!options || !options.extract) return [];
-
-        if (isNode(node, 'accountNode')) {
-            return [definedTypeNode({ identifier: options.extractAs, type: { ...node.data } })];
-        }
-
-        return [
-            definedTypeNode({
-                identifier: options.extractAs,
-                type: getInstructionDataNode(node),
-            }),
-        ];
-    });
 }
 
 /**
@@ -920,46 +889,6 @@ function parseExtraArgumentPlugin(plugin: PluginNode, instruction: InstructionNo
         ...(payload.docs !== undefined ? { docs: payload.docs } : {}),
         ...(plugin.plugins ? { plugins: plugin.plugins } : {}),
     });
-}
-
-/**
- * Maps the camelCase name of each input argument conflicting with an account of the
- * instruction to the camelCase name it is renamed to in the instruction input type,
- * e.g. `authority` to `authorityArg`. Omitted arguments are not part of the input type,
- * so they never conflict.
- *
- * Names are compared by their camelCase form since that is how they are emitted.
- *
- * @param instructionPath - The path of the instruction.
- * @param isInputArgument - Whether an argument is part of the input of the builders, which
- * should be the input of the synchronous builder, since it accepts every input the
- * asynchronous one does, and more.
- * @throws `CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE` with the path of the instruction when two
- * of its data fields or extra arguments share a name.
- *
- * @example
- * ```ts
- * getRenamedArgsMap(instructionPath, arg => isInputArgument(arg, scope)); // Map { 'authority' => 'authorityArg' }
- * ```
- */
-export function getRenamedArgsMap(
-    instructionPath: NodePath<InstructionNode>,
-    isInputArgument: (arg: InstructionDataField) => boolean,
-): Map<string, string> {
-    const instruction = getLastNodeFromPath(instructionPath);
-    const args = getAllInstructionDataFields(instruction);
-    const argNames = args.map(arg => camelCase(arg.identifier));
-    // Data fields and extra arguments share the input type, so their names must be unique.
-    if (new Set(argNames).size !== argNames.length) {
-        throw new CodamaError(CODAMA_ERROR__RENDERERS__UNSUPPORTED_NODE, { path: instructionPath });
-    }
-
-    const accountNames = new Set((instruction.accounts ?? []).map(account => camelCase(account.identifier)));
-    const conflictingNames = args
-        .filter(isInputArgument)
-        .map(arg => camelCase(arg.identifier))
-        .filter(name => accountNames.has(name));
-    return new Map(conflictingNames.map(name => [name, camelCase(`${name}Arg`)]));
 }
 
 /**

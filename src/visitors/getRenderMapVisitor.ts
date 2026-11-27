@@ -2,13 +2,17 @@ import { CODAMA_ERROR__VERSION_MISMATCH, CodamaError } from '@codama/errors';
 import { createRenderMap, mergeRenderMaps, RenderMap } from '@codama/fragments';
 import { camelCase } from '@codama/fragments/casing';
 import {
+    AccountNode,
     CODAMA_VERSION,
+    definedTypeNode,
+    DefinedTypeNode,
     getAllAccounts,
     getAllDefinedTypes,
     getAllEvents,
     getAllPdas,
     getAllPrograms,
     getCodamaVersionMajor,
+    InstructionNode,
     isNode,
 } from '@codama/nodes';
 import {
@@ -42,18 +46,20 @@ import {
     DEFAULT_KIT_IMPORT_STRATEGY,
     DEFAULT_NAME_TRANSFORMERS,
     Fragment,
-    getDefinedTypeNodesToExtract,
+    getCustomDataOptions,
     getImportFromFactory,
     getImportPathFactory,
+    getInstructionDataNode,
     getIsInternalNodeFactory,
     getNameApi,
     getPageFragment,
     getRenderedInstructions,
-    getResolvedInstructionInputs,
     GetRenderMapOptions,
+    getResolvedInstructionInputs,
     isArchivedInstruction,
     isRenderedInstruction,
     parseCustomDataOptions,
+    ParsedCustomDataOptions,
     RenderScope,
 } from '../utils';
 import { getTypeManifestVisitor } from './getTypeManifestVisitor';
@@ -85,7 +91,7 @@ export function getRenderMapVisitor(
     const getImportPath = getImportPathFactory(options.importExtension);
     const isInternalNode = getIsInternalNodeFactory(options.internalNodes ?? []);
     const nameApi = getNameApi({ ...DEFAULT_NAME_TRANSFORMERS, ...options.nameTransformers });
-    const renderScopeWithTypeManifestVisitor: Omit<RenderScope, 'typeManifestVisitor'> = {
+    const renderScopeWithoutTypeManifestVisitor: Omit<RenderScope, 'typeManifestVisitor'> = {
         asyncResolvers: (options.asyncResolvers ?? []).map(camelCase),
         customAccountData,
         customInstructionData,
@@ -106,8 +112,8 @@ export function getRenderMapVisitor(
         renderParentInstructions: options.renderParentInstructions ?? false,
     };
 
-    const typeManifestVisitor = getTypeManifestVisitor({ ...renderScopeWithTypeManifestVisitor, stack });
-    const renderScope: RenderScope = { ...renderScopeWithTypeManifestVisitor, typeManifestVisitor };
+    const typeManifestVisitor = getTypeManifestVisitor({ ...renderScopeWithoutTypeManifestVisitor, stack });
+    const renderScope: RenderScope = { ...renderScopeWithoutTypeManifestVisitor, typeManifestVisitor };
 
     const isNotInternal = (node: { identifier: string }) => !isInternalNode(node.identifier);
     const byteSizeVisitor = getByteSizeVisitor(linkables, { stack });
@@ -319,4 +325,33 @@ export function getRenderMapVisitor(
                 return next(node);
             }),
     );
+}
+
+/**
+ * The defined types to render for the custom data of accounts or instructions configured with
+ * `extract: true`, holding the data they would have generated.
+ *
+ * @param nodes - The accounts or instructions, e.g. the ones rendered as pages.
+ * @param parsedCustomDataOptions - The parsed custom data options.
+ * @return The defined types to render.
+ */
+function getDefinedTypeNodesToExtract(
+    nodes: AccountNode[] | InstructionNode[],
+    parsedCustomDataOptions: ParsedCustomDataOptions,
+): DefinedTypeNode[] {
+    return nodes.flatMap(node => {
+        const options = getCustomDataOptions(parsedCustomDataOptions, node);
+        if (!options || !options.extract) return [];
+
+        if (isNode(node, 'accountNode')) {
+            return [definedTypeNode({ identifier: options.extractAs, type: { ...node.data } })];
+        }
+
+        return [
+            definedTypeNode({
+                identifier: options.extractAs,
+                type: getInstructionDataNode(node),
+            }),
+        ];
+    });
 }
